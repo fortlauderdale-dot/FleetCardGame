@@ -86,10 +86,7 @@
     border-top:1px dashed var(--blue-light);padding-top:8px;margin-top:8px}
   .log div{padding:2px 0}
 
-  .mapwrap{position:relative;margin:0 auto;background:#82b85a;border:3px solid #5f8f42;border-radius:14px;overflow:hidden;box-shadow:inset 0 0 0 2px #a8d477}
-  .maproad{position:absolute;left:0;right:0;height:56px;background:#b9b9b2;border-top:3px solid #9b9b95;border-bottom:3px solid #9b9b95;box-shadow:inset 0 7px 0 #c9c9c2,inset 0 -7px 0 #aaa9a2}
-  .maproad::after{content:'';position:absolute;left:0;right:0;top:25px;border-top:3px dashed #eee9c8}
-  .maproad-branch{position:absolute;height:12px;background:#b9b9b2;border-top:2px solid #9b9b95;border-bottom:2px solid #9b9b95;transform-origin:left center;z-index:1}
+  .mapwrap{position:relative;margin:0 auto;background:#78ad52;border:3px solid #5f8f42;border-radius:14px;overflow:hidden;box-shadow:inset 0 0 0 2px #a8d477}
   .mapnode{z-index:3}
   .mapnode-wrap{z-index:4}
   .map-sort{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 4px}
@@ -187,7 +184,7 @@ function damageFor(cards, mult) { return Math.round(cards.reduce((a, c) => a + c
 /* ========== PLAYER VEHICLE CATALOG ========== */
 const VEHICLES = {
   sidebyside: { id: 'sidebyside', name: 'Side-by-Side',   icon: '🛞', slot: 2, minTier: 1, cost: 0,  note: 'Needs a Pair.' },
-  admin:      { id: 'admin',      name: 'Admin Vehicle',  icon: '🚗', slot: 2, minTier: 0, cost: 0,  note: 'Works with 1 card. +50% if you play a Pair.' },
+  admin:      { id: 'admin',      name: 'Admin Vehicle',  icon: '🚗', slot: 2, minTier: 0, cost: 0, maxCards: 2, note: 'Uses 1 or 2 cards. A Pair gets a +50% damage bonus.' },
   interstate: { id: 'interstate', name: 'Interstate Racer', icon: '🏁', slot: 4, minTier: 4, cost: 0, note: 'Needs a Straight.' },
   convoy:     { id: 'convoy',     name: 'Armored Convoy',   icon: '🚛', slot: 4, minTier: 5, cost: 0, note: 'Needs a Flush.' },
   garbage: { id: 'garbage', name: 'Garbage Truck',   icon: '🗑️', slot: 3, minTier: 3, cost: 60,  note: 'Needs Three of a Kind.' },
@@ -215,15 +212,15 @@ function starterLockNote(id) {
 
 /* ========== OPPONENT ROSTER (ranked bad -> good, 3 per tier, plus boss) ========== */
 const OPPONENT_TIERS = [
-  [ { id: 'vespa', name: 'Rusty Vespa', icon: '🛵', hp: 70, minTier: 0, drawRate: 1, turnLimit: 6 },
-    { id: 'cart', name: 'Beat-Up Golf Cart', icon: '⛳', hp: 75, minTier: 0, drawRate: 1, turnLimit: 6 },
-    { id: 'bike', name: 'Wobbly Bicycle', icon: '🚲', hp: 60, minTier: 0, drawRate: 1, turnLimit: 6 } ],
-  [ { id: 'smart', name: 'Smart Car', icon: '🚗', hp: 110, minTier: 1, drawRate: 1, turnLimit: 6 },
-    { id: 'hatch', name: 'Beater Hatchback', icon: '🚙', hp: 115, minTier: 1, drawRate: 1, turnLimit: 6 },
-    { id: 'prius', name: 'Rideshare Prius', icon: '🔋', hp: 100, minTier: 0, drawRate: 1, turnLimit: 6 } ],
-  [ { id: 'sedan', name: 'Sedan', icon: '🚘', hp: 150, minTier: 1, drawRate: 1, turnLimit: 7 },
-    { id: 'minivan', name: 'Minivan', icon: '👨‍👩‍👧', hp: 160, minTier: 1, drawRate: 2, turnLimit: 7 },
-    { id: 'delivery', name: 'Delivery Van', icon: '📦', hp: 155, minTier: 2, drawRate: 1, turnLimit: 7 } ],
+  [ { id: 'vespa', name: 'Rusty Vespa', icon: '🛵', hp: 35, minTier: 0, drawRate: 1, turnLimit: 6 },
+    { id: 'cart', name: 'Beat-Up Golf Cart', icon: '⛳', hp: 40, minTier: 0, drawRate: 1, turnLimit: 6 },
+    { id: 'bike', name: 'Wobbly Bicycle', icon: '🚲', hp: 45, minTier: 0, drawRate: 1, turnLimit: 6 } ],
+  [ { id: 'smart', name: 'Smart Car', icon: '🚗', hp: 65, minTier: 1, drawRate: 1, turnLimit: 6 },
+    { id: 'hatch', name: 'Beater Hatchback', icon: '🚙', hp: 70, minTier: 1, drawRate: 1, turnLimit: 6 },
+    { id: 'prius', name: 'Rideshare Prius', icon: '🔋', hp: 60, minTier: 0, drawRate: 1, turnLimit: 6 } ],
+  [ { id: 'sedan', name: 'Sedan', icon: '🚘', hp: 95, minTier: 1, drawRate: 1, turnLimit: 7 },
+    { id: 'minivan', name: 'Minivan', icon: '👨‍👩‍👧', hp: 105, minTier: 1, drawRate: 2, turnLimit: 7 },
+    { id: 'delivery', name: 'Delivery Van', icon: '📦', hp: 110, minTier: 2, drawRate: 1, turnLimit: 7 } ],
   [ { id: 'pickup', name: 'Pickup Truck', icon: '🛻', hp: 195, minTier: 2, drawRate: 1, turnLimit: 7 },
     { id: 'muscle', name: 'Muscle Car', icon: '🔥', hp: 185, minTier: 3, drawRate: 1, turnLimit: 7 },
     { id: 'jeep', name: 'Off-Road Jeep', icon: '🌲', hp: 205, minTier: 1, drawRate: 2, turnLimit: 7 },
@@ -247,7 +244,7 @@ const Upgrade_DEFS = [
   { id: 'hp',      label: 'Max Hp',           desc: '+15 max health per level.',                                       baseCost: 30, inc: 15 },
   { id: 'fuelpen', label: 'Fuel Efficiency',  desc: 'Running out of fuel costs less score when it happens.',            baseCost: 40, inc: 15 },
   { id: 'garage',  label: 'Garage Expansion', desc: '+1 vehicle slot you can own at once.',                             baseCost: 25, inc: 12 },
-  { id: 'hand',    label: 'Extra Draw',       desc: '+1 card drawn every turn per level.',                              baseCost: 20, inc: 15 },
+  { id: 'hand',    label: 'Hand Capacity & Draw', desc: '+1 card drawn each turn and +2 maximum hand capacity per level.', baseCost: 20, inc: 15 },
   { id: 'range',   label: 'Scout Range',      desc: 'See one more row of the route map clearly ahead.',                 baseCost: 20, inc: 10 },
   { id: 'gem',     label: 'Gem Efficiency',   desc: '+1 card drawn per gem spent.',                                     baseCost: 20, inc: 12 },
 ];
@@ -266,7 +263,13 @@ function saveMeta() { try { localStorage.setItem(META_KEY, JSON.stringify(META))
 function earnPoints(n) { META.points += n; META.lifetimePoints += n; if (RUN) RUN.scoreThisRun += n; saveMeta(); }
 
 /* ========== RUN SAVE (mid-run continuity, roguelite-style) ========== */
-const RUN_KEY = 'fleetduel-run-v5';
+const RUN_KEY = 'fleetduel-run-v6';
+function syncRunHandUpgrades() {
+  if (!RUN) return;
+  RUN.handSize = 5 + (META.levels.hand || 0) * 2;
+  RUN.drawPerTurn = 2 + (META.levels.draw || 0);
+}
+
 function saveRun() { try { localStorage.setItem(RUN_KEY, JSON.stringify(RUN)); } catch (e) {} }
 function loadRunSave() { try { const raw = localStorage.getItem(RUN_KEY); if (raw) return JSON.parse(raw); } catch (e) {} return null; }
 function clearRunSave() { try { localStorage.removeItem(RUN_KEY); } catch (e) {} }
@@ -358,7 +361,10 @@ const Max_ENERGY = 20;
 const STARTING_GEMS = 3;
 const STARTING_FUEL = 10;
 const STARTING_HAND = 5;
-const CARDS_DRAWN_PER_TURN = 2;
+const STARTING_DRAW = 2;
+const HAND_CAPACITY_PER_LEVEL = 2;
+function handDrawAmount() { return STARTING_DRAW + (META.levels.hand || 0); }
+function handMaxAmount() { return STARTING_HAND + (META.levels.hand || 0) * HAND_CAPACITY_PER_LEVEL; }
 const BASE_GAS_PENALTY = 15;
 
 function initRunWithStarter(id) {
@@ -367,8 +373,9 @@ function initRunWithStarter(id) {
     map: generateMap(), currentRow: -1, currentCol: null, path: [],
     health: 100 + L.hp * 15, maxHealth: 100 + L.hp * 15,
     chips: 15 + L.chips * 5, gems: 3, fuel: 10 + L.fuel * 2, energy: 0,
-    ownedVehicles: [id], vehicleCap: 2 + L.garage, handSize: 6 + L.hand,
-    scoreThisRun: 0, lastNotice: null, cardBoosts: [],
+    ownedVehicles: [id], vehicleCap: 2 + L.garage, handSize: handDrawAmount(), handMax: handMaxAmount(),
+    maxGems: MAX_GEMS, maxFuel: MAX_FUEL, maxEnergy: MAX_ENERGY,
+    scoreThisRun: 0, lastNotice: null, cardBoosts: [], adminPairBonus: 0.5,
   };
   saveRun();
   render(mapScreen());
@@ -485,7 +492,7 @@ function assignSelectedTo(vId) {
   if (!selectedIdx.length) return;
   const v = VEHICLES[vId];
   if (!BATTLE.slots[vId]) BATTLE.slots[vId] = [];
-  const room = v.slot - BATTLE.slots[vId].length;
+  const room = Math.min(v.slot, v.maxCards || v.slot) - BATTLE.slots[vId].length;
   if (room <= 0) return;
   const take = selectedIdx.filter(i => !BATTLE.slots[vId].includes(i)).slice(0, room);
   BATTLE.slots[vId].push(...take);
@@ -533,7 +540,11 @@ function useAbility(vId) {
   saveRun(); render(battleScreen());
 }
 
-function resolveTurn() {
+function resolveTurn(isPass = false) {
+  if (!isPass) {
+    const committed = Object.values(BATTLE.slots).reduce((a, arr) => a + arr.length, 0) + BATTLE.turnDiscard.length;
+    if (committed < 2) return;
+  }
   let totalDamage = 0;
   const usedIdx = new Set();
   for (const vId of RUN.ownedVehicles) {
@@ -544,7 +555,11 @@ function resolveTurn() {
     const evalRes = evaluateHand(cards);
     if (evalRes.tier < v.minTier) { battleLog(`${v.name} — ${evalRes.label}, not enough for ${TIERS[v.minTier]}. No effect.`); }
     else {
-      const amount = damageFor(cards, evalRes.mult);
+      let amount = damageFor(cards, evalRes.mult);
+      if (vId === 'admin' && evalRes.tier === 1 && cards.length === 2) {
+        amount = Math.round(damageFor(cards, 1 + (RUN.adminPairBonus || 0.5)));
+        battleLog(`${v.name} — Pair! +${Math.round((RUN.adminPairBonus || 0.5) * 100)}% bonus damage.`);
+      }
       if (v.kind === 'defense') { BATTLE.playerArmor += amount; battleLog(`${v.name} — ${evalRes.label}! +${amount} armor.`); }
       else if (v.kind === 'poison') { BATTLE.opponent.poison = (BATTLE.opponent.poison || 0) + Math.round(amount / 2); battleLog(`${v.name} — ${evalRes.label}! Poisoned for ${Math.round(amount / 2)}.`); }
       else { totalDamage += amount; battleLog(`${v.name} — ${evalRes.label}! ${amount} damage.`); }
@@ -613,7 +628,7 @@ function resolveTurn() {
 
   BATTLE.turn++;
   if (BATTLE.turn > BATTLE.opponent.turnLimit) { winBattle(true); return; }
-  drawCards(CARDS_DRAWN_PER_TURN);
+  drawCards(handDrawAmount());
   drawOpponentCards();
   battleLog(`— Turn ${BATTLE.turn} of ${BATTLE.opponent.turnLimit} —`);
   render(battleScreen());
@@ -663,20 +678,7 @@ function mapScreen() {
     return rowY[c];
   };
 
-  let roads = '';
-  for (let r = 0; r < cols.length - 1; r++) {
-    roads += `<div class="maproad" style="left:${r * colW}px;top:${nodeY(r,0) - 28}px;width:${colW + 4}px"></div>`;
-    for (const e of RUN.map.edges.filter(e => e.fromRow === r)) {
-      const x1 = nodeX(e.fromRow, e.fromCol);
-      const y1 = nodeY(e.fromRow, e.fromCol);
-      const x2 = nodeX(e.toRow, e.toCol);
-      const y2 = nodeY(e.toRow, e.toCol);
-      const dx = x2 - x1, dy = y2 - y1;
-      const len = Math.sqrt(dx * dx + dy * dy);
-      const angle = Math.atan2(dy, dx) * 180 / Math.PI;
-      roads += `<div class="maproad-branch" style="left:${x1}px;top:${y1 - 6}px;width:${len}px;transform:rotate(${angle}deg)"></div>`;
-    }
-  }
+  const roads = '';
 
   let nodesHTML = '';
   for (let r = 0; r < cols.length; r++) {
@@ -714,6 +716,7 @@ function mapScreen() {
       <div class="hdr"><span>Health: ${RUN.health}/${RUN.maxHealth}</span><span>Vehicles: ${RUN.ownedVehicles.length}/${RUN.vehicleCap}</span></div>
       ${currencyBar()}
       <div class="hdr" style="margin-top:8px"><span>Route map</span><span>Select your next stop</span></div>
+      <button class="wo-btn amber" id="mapHandUpgradeBtn" style="width:100%;margin:8px 0">Upgrade Hand & Draw</button>
       <div style="overflow-x:auto;padding-bottom:6px">
         <div class="mapwrap" style="width:${totalW}px;height:${totalH}px">
           ${roads}
@@ -752,7 +755,10 @@ function battleScreen() {
     const cards = idxs.map(i => BATTLE.hand[i]);
     const evalRes = cards.length ? evaluateHand(cards) : null;
     const ready = evalRes && evalRes.tier >= v.minTier;
-    const preview = ready ? damageFor(cards, evalRes.mult) : null;
+    let preview = ready ? damageFor(cards, evalRes.mult) : null;
+    if (ready && vId === 'admin' && evalRes.tier === 1 && cards.length === 2) {
+      preview = Math.round(damageFor(cards, 1 + (RUN.adminPairBonus || 0.5)));
+    }
     const effectWord = v.kind === 'defense' ? 'armor' : v.kind === 'poison' ? 'poison' : 'dmg';
     const cardHTML = idxs.map(cardHandIdx => {
       const c = BATTLE.hand[cardHandIdx];
@@ -824,8 +830,12 @@ function battleScreen() {
       <div class="grid">${vehicleHTML}</div>
     </div>
     <div class="panel">
-      <button class="wo-btn" id="dispatchBtn" style="width:100%" ${committedCount < 2 ? 'disabled' : ''}>Dispatch This Turn</button>
-      ${committedCount < 2 ? `<div class="note" style="text-align:center;margin-top:6px">Play or discard at least 2 cards to end your turn (${committedCount}/2 so far)</div>` : ''}
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="wo-btn" id="dispatchBtn" style="flex:1;min-width:180px" ${committedCount < 2 ? 'disabled' : ''}>Dispatch This Turn</button>
+        <button class="wo-btn gray" id="passTurnBtn" style="flex:1;min-width:180px">Pass Turn (+${handDrawAmount()} cards)</button>
+        <button class="wo-btn amber" id="battleHandUpgradeBtn" style="flex:1;min-width:180px" ${META.points < upgradeCost(Upgrade_DEFS.find(u => u.id === 'hand'), META.levels.hand || 0) || (META.levels.hand || 0) >= Max_LEVEL ? 'disabled' : ''}>Upgrade Hand</button>
+      </div>
+      ${committedCount < 2 ? `<div class="note" style="text-align:center;margin-top:6px">Play or discard at least 2 cards to dispatch. Or pass to draw ${handDrawAmount()} cards without playing any.</div>` : ''}
       <div class="log">${BATTLE.logLines.map(l => `<div>${l}</div>`).join('')}</div>
     </div>
   `;
@@ -888,6 +898,12 @@ function garageScreen() {
 }
 
 function blacksmithScreen() {
+  const adminBonus = RUN.adminPairBonus || 0.5;
+  const adminUpgrade = RUN.ownedVehicles.includes('admin') ? `<div class="shopcard">
+      <div class="hdr"><span>Admin Vehicle Pair Bonus</span><span>+${Math.round(adminBonus * 100)}%</span></div>
+      <div class="note" style="margin:0 0 6px">Increase the Admin Vehicle's Pair bonus by 50 percentage points.</div>
+      <button class="wo-btn amber" data-admin-upgrade style="padding:8px 12px;font-size:13px">Upgrade to +${Math.round((adminBonus + 0.5) * 100)}%</button>
+    </div>` : '';
   const rows = BLACKSMITH_OPTIONS.map((c, i) => {
     const b = findBoost(c.rank, c.suit);
     const bonus = b ? b.bonus : 0;
@@ -905,7 +921,7 @@ function blacksmithScreen() {
         <div class="wo-eyebrow">Tuning Garage</div>
         <h1>Upgrade a <em>Card</em></h1>
         <div class="wo-sub">Pick one card to permanently strengthen for this run. You can come back and stack it further at another Tuning Garage.</div>
-        <div style="margin:12px 0">${rows}</div>
+        <div style="margin:12px 0">${adminUpgrade}${rows}</div>
         <button class="wo-btn" id="leaveBlacksmithBtn">Back on the Road</button>
       </div>
     </div>
@@ -981,8 +997,8 @@ function upgradeScreen(returnTo) {
         <div class="wo-eyebrow">Upgrades</div>
         <h1>Spend Your <em>Points</em></h1>
         <div class="wo-sub">Points: ${META.points} &middot; Lifetime: ${META.lifetimePoints} &middot; High score: ${META.highScore}</div>
-        <div style="margin:12px 0">${rows}</div>
-        <button class="wo-btn" id="upgradeContinueBtn" data-return="${returnTo}">${returnTo === 'map' ? 'Continue Route' : 'Back'}</button>
+        <div style="margin:12px 0">${adminUpgrade}${rows}</div>
+        <button class="wo-btn" id="upgradeContinueBtn" data-return="${returnTo}">${returnTo === 'map' ? 'Continue Route' : returnTo === 'battle' ? 'Back to Battle' : 'Back'}</button>
       </div>
     </div>
   `;
@@ -1019,6 +1035,9 @@ function render(html) {
   app.querySelectorAll('[data-clear]').forEach(el => el.onclick = (e) => { e.stopPropagation(); clearSlot(el.dataset.clear); });
   app.querySelectorAll('[data-ability]').forEach(el => el.onclick = (e) => { e.stopPropagation(); useAbility(el.dataset.ability); });
   const dispatchBtn = document.getElementById('dispatchBtn'); if (dispatchBtn) dispatchBtn.onclick = resolveTurn;
+  const passTurnBtn = document.getElementById('passTurnBtn'); if (passTurnBtn) passTurnBtn.onclick = () => resolveTurn(true);
+  const battleHandUpgradeBtn = document.getElementById('battleHandUpgradeBtn'); if (battleHandUpgradeBtn) battleHandUpgradeBtn.onclick = () => render(upgradeScreen('battle'));
+  const mapHandUpgradeBtn = document.getElementById('mapHandUpgradeBtn'); if (mapHandUpgradeBtn) mapHandUpgradeBtn.onclick = () => render(upgradeScreen('map'));
   const scoutBtn = document.getElementById('scoutBtn'); if (scoutBtn) scoutBtn.onclick = scoutOpponent;
   const gemDrawBtn = document.getElementById('gemDrawBtn'); if (gemDrawBtn) gemDrawBtn.onclick = drawWithGem;
   const discardSelectedBtn = document.getElementById('discardSelectedBtn'); if (discardSelectedBtn) discardSelectedBtn.onclick = markSelectedForDiscard;
@@ -1040,6 +1059,7 @@ function render(html) {
   if (upgradeContinueBtn) upgradeContinueBtn.onclick = () => {
     const ret = upgradeContinueBtn.dataset.return;
     if (ret === 'map') { if (RUN.currentRow === ROWS) endRun(true); else render(mapScreen()); }
+    else if (ret === 'battle') render(battleScreen());
     else render(metaScreen());
   };
   const viewUpgradesBtn = document.getElementById('viewUpgradesBtn'); if (viewUpgradesBtn) viewUpgradesBtn.onclick = () => render(upgradeScreen('home'));
@@ -1050,6 +1070,13 @@ function render(html) {
     const cost = upgradeCost(u, lvl);
     if (META.points < cost) return;
     META.points -= cost; META.levels[u.id]++;
+    if (RUN) { syncRunHandUpgrades(); saveRun(); }
+    if (RUN) {
+      RUN.handSize = handDrawAmount();
+      RUN.handMax = Math.max(RUN.handMax || STARTING_HAND, handMaxAmount());
+    RUN.adminPairBonus = RUN.adminPairBonus || 0.5;
+      saveRun();
+    }
     saveMeta();
     const ret = document.getElementById('upgradeContinueBtn')?.dataset.return || 'home';
     render(upgradeScreen(ret));
@@ -1058,6 +1085,8 @@ function render(html) {
   const leaveShopBtn = document.getElementById('leaveShopBtn'); if (leaveShopBtn) leaveShopBtn.onclick = () => render(mapScreen());
   const leaveBlacksmithBtn = document.getElementById('leaveBlacksmithBtn'); if (leaveBlacksmithBtn) leaveBlacksmithBtn.onclick = () => { BLACKSMITH_OPTIONS = null; render(mapScreen()); };
   const leaveTreasureBtn = document.getElementById('leaveTreasureBtn'); if (leaveTreasureBtn) leaveTreasureBtn.onclick = () => render(mapScreen());
+  const adminUpgradeBtn = document.querySelector('[data-admin-upgrade]');
+  if (adminUpgradeBtn) adminUpgradeBtn.onclick = () => { RUN.adminPairBonus = (RUN.adminPairBonus || 0.5) + 0.5; saveRun(); render(blacksmithScreen()); };
   app.querySelectorAll('[data-forge]').forEach(el => el.onclick = () => {
     const c = BLACKSMITH_OPTIONS[+el.dataset.forge];
     boostCard(c.rank, c.suit);
@@ -1080,8 +1109,9 @@ function render(html) {
     RUN.gems = Math.min(RUN.gems ?? STARTING_GEMS, RUN.maxGems);
     RUN.fuel = Math.min(RUN.fuel ?? STARTING_FUEL, RUN.maxFuel);
     RUN.energy = Math.min(RUN.energy ?? 0, RUN.maxEnergy);
-    RUN.handMax = RUN.handMax || STARTING_HAND + (META.levels.hand || 0);
-    RUN.handSize = RUN.handSize || STARTING_HAND;
+    RUN.handMax = Math.max(RUN.handMax || STARTING_HAND, handMaxAmount());
+    RUN.adminPairBonus = RUN.adminPairBonus || 0.5;
+    RUN.handSize = handDrawAmount();
     saveRun();
     render(mapScreen());
   };

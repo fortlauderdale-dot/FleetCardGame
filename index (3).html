@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Fleet Duel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;700;800&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --blue:#2451e0; --blue-dark:#173aa8; --blue-light:#e8edfd;
+    --white:#ffffff; --bg:#eef1fb; --ink:#12163a; --dim:#5c6280;
+    --amber:#ff9f1c; --red:#e5484d; --green:#2fae66; --purple:#8a4fe0; --gold:#d4af00;
+    --disp:'Saira Condensed',system-ui,sans-serif;
+    --mono:'IBM Plex Mono',ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:var(--disp);font-size:16px}
+  button{font-family:var(--disp);cursor:pointer}
+  #app{max-width:920px;margin:0 auto;padding:14px 14px 60px}
+
+  .wo{background:var(--white);color:var(--ink);border:3px solid var(--blue);border-radius:12px;box-shadow:6px 6px 0 var(--blue-dark);padding:0;margin:16px 0;overflow:hidden}
+  .wo-stripe{height:10px;background:repeating-linear-gradient(-45deg,var(--amber) 0 16px,var(--blue) 16px 32px)}
+  .wo-body{padding:20px 22px 24px}
+  .wo-eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--dim);text-transform:uppercase}
+  .wo h1{margin:6px 0 2px;font-size:clamp(28px,7vw,42px);line-height:.95;font-weight:800;text-transform:uppercase;color:var(--blue-dark)}
+  .wo h1 em{font-style:normal;color:var(--amber)}
+  .wo-sub{font-family:var(--mono);font-size:13px;color:var(--dim);margin:8px 0 14px}
+  .wo-btn{padding:13px 18px;font-size:17px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;
+    background:var(--blue);color:#fff;border:3px solid var(--blue-dark);border-radius:8px;box-shadow:3px 3px 0 var(--blue-dark)}
+  .wo-btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--blue-dark)}
+  .wo-btn.amber{background:var(--amber);border-color:#c97600}
+  .wo-btn.gray{background:#8a90ab;border-color:#5c6280}
+  .wo-btn.purple{background:var(--purple);border-color:#5c2ea0}
+  .wo-btn:disabled{opacity:.4;cursor:default}
+  .wo-btn.half{width:48%}
+
+  .panel{background:var(--white);border:2px solid var(--blue-light);border-radius:10px;padding:14px;margin-bottom:12px}
+  .hdr{display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-size:12px;
+    letter-spacing:.06em;text-transform:uppercase;color:var(--dim);margin-bottom:8px}
+  .bar-wrap{height:14px;background:var(--blue-light);border-radius:7px;overflow:hidden;border:1px solid var(--blue-light)}
+  .bar-fill{height:100%;transition:width .25s}
+  .bar-hp{background:var(--red)} .bar-health{background:var(--blue)}
+
+  .grid{display:flex;flex-wrap:wrap;gap:10px}
+  .currencies{display:flex;gap:10px;flex-wrap:wrap;font-family:var(--mono);font-size:11.5px}
+  .cur{background:var(--bg);border:1px solid var(--blue-light);border-radius:6px;padding:4px 8px}
+  .cur.gem{color:var(--purple)} .cur.fuel{color:var(--green)} .cur.energy{color:var(--gold)} .cur.chip{color:var(--amber)} .cur.pts{color:var(--blue-dark)}
+
+  .duelHead{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center}
+  .duelSide h3{margin:0 0 4px;font-size:20px;color:var(--blue-dark)}
+  .duelSide.opp{text-align:right}
+  .vsMark{font-family:var(--mono);font-weight:800;color:var(--dim);font-size:13px}
+  .bigicon{font-size:30px;line-height:1}
+
+  .duelBoard{display:grid;grid-template-columns:1fr 66px 1fr;gap:8px;align-items:start}
+  @media (max-width:700px){ .duelBoard{grid-template-columns:1fr} .deckStack{display:none} .duelHead{grid-template-columns:1fr 1fr} .vsMark{display:none} }
+  .deckStack{text-align:center;padding-top:36px}
+
+  .vslot{border:2px dashed var(--blue-light);border-radius:8px;padding:10px;width:160px;background:var(--bg);cursor:pointer}
+  .vslot.filled{border-style:solid;border-color:var(--amber)}
+  .vslot.ready{border-color:var(--green)}
+  .vslot.defense{border-color:#4a7fd8}
+  .vslot.poison{border-color:#5a8a3a}
+  .vslot .vname{font-weight:700;font-size:15px;color:var(--blue-dark)}
+  .vslot .vreq{font-family:var(--mono);font-size:10.5px;color:var(--dim);text-transform:uppercase;margin:3px 0}
+  .vslot .vcards{display:flex;gap:3px;flex-wrap:wrap;min-height:30px;margin-top:6px}
+
+  .card{width:38px;height:52px;border-radius:5px;background:var(--white);color:var(--ink);display:flex;
+    flex-direction:column;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700;
+    font-size:14px;border:2px solid var(--blue);cursor:pointer;user-select:none;flex-shrink:0}
+  .card.red{color:var(--red)}
+  .card.selected{outline:3px solid var(--amber);transform:translateY(-6px)}
+  .card.mini{width:26px;height:36px;font-size:10px;cursor:pointer}
+  .card.back{background:var(--blue);color:transparent;position:relative;margin:0 auto}
+  .card.back::after{content:'?';color:var(--white);position:absolute;font-size:16px}
+  .card.back.mini::after{font-size:12px}
+
+  .hand{display:flex;gap:6px;flex-wrap:wrap;padding:6px 0}
+  .note{color:var(--dim);font-size:12px;margin:6px 0;font-family:var(--mono)}
+  .kv{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px dashed var(--blue-light);font-family:var(--mono);font-size:12.5px}
+  .kv b{color:var(--blue-dark)}
+  .price{color:var(--amber);font-weight:700}
+  .log{font-family:var(--mono);font-size:11.5px;color:var(--dim);max-height:110px;overflow-y:auto;
+    border-top:1px dashed var(--blue-light);padding-top:8px;margin-top:8px}
+  .log div{padding:2px 0}
+
+  .mapwrap{position:relative;margin:0 auto}
+  .mapnode-wrap{position:absolute;transform:translate(-50%,-50%)}
+  .mapnode-wrap:hover .tooltip{display:block}
+  .tooltip{display:none;position:absolute;bottom:120%;left:50%;transform:translateX(-50%);
+    background:var(--ink);color:#fff;font-family:var(--mono);font-size:10.5px;line-height:1.5;
+    padding:7px 10px;border-radius:6px;white-space:nowrap;z-index:5;box-shadow:2px 3px 6px #0004;text-align:left}
+  .mapnode{position:relative;width:40px;height:40px;border-radius:50%;
+    font-size:19px;display:flex;align-items:center;justify-content:center;border:2px solid;background:var(--white)}
+  .mapnode.future{background:var(--blue-light);border-color:var(--blue-light);color:#9aa1c4;cursor:default;opacity:.85}
+  .mapnode.farfuture{background:var(--blue-light);border-color:var(--blue-light);color:#c3cae8;cursor:default;opacity:.5}
+  .mapnode.avail{background:var(--white);border-color:var(--amber);box-shadow:0 0 0 5px #ff9f1c33;cursor:pointer}
+  .mapnode.done{background:var(--green);border-color:var(--green);color:#fff;cursor:default}
+
+  .shopcard{border:1px solid var(--blue-light);background:var(--bg);border-radius:6px;padding:10px;margin-bottom:8px}
+  .pickcard{border:2px solid var(--blue-light);background:var(--bg);border-radius:10px;padding:16px;width:160px;text-align:center}
+  .pickcard .picon{font-size:46px}
+  .pickcard .pname{font-weight:700;font-size:16px;color:var(--blue-dark);margin-top:6px}
+  .pickcard .ptag{font-family:var(--mono);font-size:11px;color:var(--dim);margin:4px 0 10px}
+  .pickcard.locked{opacity:.55}
+  .pickcard.locked .picon{filter:grayscale(1)}
+  .levelbar{height:8px;background:var(--blue-light);border-radius:4px;overflow:hidden;margin:6px 0}
+  .levelbar i{display:block;height:100%;background:var(--gold)}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+/* ========== CARD MODEL ========== */
+const SUITS = [{ s: '♦', color: 'red' }, { s: '♣', color: 'blk' }, { s: '♥', color: 'red' }, { s: '♠', color: 'blk' }];
+const RANK_LABEL = { 11: 'J', 12: 'Q', 13: 'K', 14: 'A' };
+function rankLabel(r) { return RANK_LABEL[r] || String(r); }
+function cardValue(r) { if (r === 14) return 11; if (r >= 11) return 10; return r; }
+function freshDeck() {
+  const d = [];
+  for (const su of SUITS) for (let r = 2; r <= 14; r++) d.push({ rank: r, suit: su.s, color: su.color, revealed: false });
+  return d;
+}
+function shuffle(arr) { for (let i = arr.length - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0; [arr[i], arr[j]] = [arr[j], arr[i]]; } return arr; }
+
+/* ========== HAND EVALUATION ========== */
+const TIERS = ['High Card', 'Pair', 'Two Pair', 'Three of a Kind', 'Straight', 'Flush', 'Full House', 'Four of a Kind', 'Straight Flush'];
+const TIER_MULT = [1.0, 1.5, 1.7, 2.0, 2.5, 2.8, 3.2, 4.0, 5.0];
+function evaluateHand(cards) {
+  if (!cards.length) return { tier: 0, label: 'No Cards', mult: 0 };
+  const ranks = cards.map(c => c.rank);
+  const rankCounts = {}; for (const r of ranks) rankCounts[r] = (rankCounts[r] || 0) + 1;
+  const counts = Object.values(rankCounts).sort((a, b) => b - a);
+  const suitSet = new Set(cards.map(c => c.suit));
+  const isFlush = cards.length >= 3 && suitSet.size === 1;
+  const uniqueRanks = [...new Set(ranks)].sort((a, b) => a - b);
+  const isStraight = cards.length >= 3 && uniqueRanks.length === cards.length && (uniqueRanks[uniqueRanks.length - 1] - uniqueRanks[0] === cards.length - 1);
+  let tier = 0;
+  if (counts[0] === 4) tier = 7;
+  else if (cards.length === 5 && counts[0] === 3 && counts[1] === 2) tier = 6;
+  else if (isFlush && isStraight) tier = 8;
+  else if (isFlush) tier = 5;
+  else if (isStraight) tier = 4;
+  else if (counts[0] === 3) tier = 3;
+  else if (counts[0] === 2 && counts[1] === 2) tier = 2;
+  else if (counts[0] === 2) tier = 1;
+  else tier = 0;
+  return { tier, label: TIERS[tier], mult: TIER_MULT[tier] };
+}
+function combinations(arr, k) {
+  const results = [];
+  function helper(start, combo) { if (combo.length === k) { results.push(combo.slice()); return; } for (let i = start; i < arr.length; i++) { combo.push(arr[i]); helper(i + 1, combo); combo.pop(); } }
+  helper(0, []); return results;
+}
+function bestFiveFromPool(pool) {
+  if (!pool.length) return { cards: [], tier: -1, label: 'Nothing', mult: 0 };
+  if (pool.length <= 5) { const ev = evaluateHand(pool); return { cards: pool, ...ev }; }
+  let best = null;
+  for (const combo of combinations(pool, 5)) {
+    const ev = evaluateHand(combo);
+    const rankSum = combo.reduce((a, c) => a + c.rank, 0);
+    if (!best || ev.tier > best.tier || (ev.tier === best.tier && rankSum > best.rankSum)) best = { cards: combo, ...ev, rankSum };
+  }
+  return best;
+}
+function damageFor(cards, mult) { return Math.round(cards.reduce((a, c) => a + cardValue(c.rank) + (c.bonus || 0), 0) * mult); }
+
+/* ========== PLAYER VEHICLE CATALOG ========== */
+const VEHICLES = {
+  sidebyside: { id: 'sidebyside', name: 'Side-by-Side',   icon: '🛞', slot: 2, minTier: 1, cost: 0,  note: 'Needs a Pair.' },
+  admin:      { id: 'admin',      name: 'Admin Vehicle',  icon: '🚗', slot: 2, minTier: 0, cost: 0,  note: 'Works with 1 card. +50% if you play a Pair.' },
+  interstate: { id: 'interstate', name: 'Interstate Racer', icon: '🏁', slot: 4, minTier: 4, cost: 0, note: 'Needs a Straight.' },
+  convoy:     { id: 'convoy',     name: 'Armored Convoy',   icon: '🚛', slot: 4, minTier: 5, cost: 0, note: 'Needs a Flush.' },
+  garbage: { id: 'garbage', name: 'Garbage Truck',   icon: '🗑️', slot: 3, minTier: 3, cost: 60,  note: 'Needs Three of a Kind.' },
+  sweeper: { id: 'sweeper', name: 'Street Sweeper',  icon: '🧹', slot: 3, minTier: 1, cost: 50,  note: 'Needs a Pair, using up to 3 cards.' },
+  bucket:  { id: 'bucket',  name: 'Bucket Truck',    icon: '🪜', slot: 4, minTier: 4, cost: 90,  note: 'Needs a Straight.' },
+  tractor: { id: 'tractor', name: 'Beach Tractor',   icon: '🚜', slot: 3, minTier: 3, cost: 55,  note: 'Needs Three of a Kind.' },
+  pump:    { id: 'pump',    name: 'Vac Truck',       icon: '🚰', slot: 4, minTier: 5, cost: 100, note: 'Needs a Flush.' },
+  evvan:   { id: 'evvan',   name: 'Electric Van',    icon: '🔋', slot: 2, minTier: 1, cost: 70,  note: 'Needs a Pair. Refunds one card to your hand.' },
+  armor:   { id: 'armor',   name: 'Armored Escort',  icon: '🛡️', slot: 2, minTier: 1, cost: 65,  note: 'Needs a Pair. Blocks damage instead of dealing it.', kind: 'defense' },
+  hazmat:  { id: 'hazmat',  name: 'Hazmat Truck',    icon: '☣️', slot: 3, minTier: 3, cost: 75,  note: 'Needs Three of a Kind. Poisons instead of hitting directly.', kind: 'poison' },
+  tow:     { id: 'tow',     name: 'Tow Truck',       icon: '🚨', slot: 2, minTier: 1, cost: 80,  note: 'Needs a Pair. Ability: spend 3 Energy to stun them a turn.', ability: { cost: 3, name: 'Stun' } },
+};
+const STARTERS = ['sidebyside', 'admin', 'interstate', 'convoy'];
+function isStarterUnlocked(id) {
+  if (id === 'sidebyside' || id === 'admin') return true;
+  if (id === 'interstate') return META.lifetimePoints >= 150;
+  if (id === 'convoy') return META.bestRun >= ROWS + 1;
+  return false;
+}
+function starterLockNote(id) {
+  if (id === 'interstate') return `Unlocks at 150 lifetime points (${Math.min(META.lifetimePoints, 150)}/150)`;
+  if (id === 'convoy') return `Unlocks after clearing a full route`;
+  return '';
+}
+
+/* ========== OPPONENT ROSTER (ranked bad -> good, 3 per tier, plus boss) ========== */
+const OPPONENT_TIERS = [
+  [ { id: 'vespa', name: 'Rusty Vespa', icon: '🛵', hp: 70, minTier: 0, drawRate: 1, turnLimit: 6 },
+    { id: 'cart', name: 'Beat-Up Golf Cart', icon: '⛳', hp: 75, minTier: 0, drawRate: 1, turnLimit: 6 },
+    { id: 'bike', name: 'Wobbly Bicycle', icon: '🚲', hp: 60, minTier: 0, drawRate: 1, turnLimit: 6 } ],
+  [ { id: 'smart', name: 'Smart Car', icon: '🚗', hp: 110, minTier: 1, drawRate: 1, turnLimit: 6 },
+    { id: 'hatch', name: 'Beater Hatchback', icon: '🚙', hp: 115, minTier: 1, drawRate: 1, turnLimit: 6 },
+    { id: 'prius', name: 'Rideshare Prius', icon: '🔋', hp: 100, minTier: 0, drawRate: 1, turnLimit: 6 } ],
+  [ { id: 'sedan', name: 'Sedan', icon: '🚘', hp: 150, minTier: 1, drawRate: 1, turnLimit: 7 },
+    { id: 'minivan', name: 'Minivan', icon: '👨‍👩‍👧', hp: 160, minTier: 1, drawRate: 2, turnLimit: 7 },
+    { id: 'delivery', name: 'Delivery Van', icon: '📦', hp: 155, minTier: 2, drawRate: 1, turnLimit: 7 } ],
+  [ { id: 'pickup', name: 'Pickup Truck', icon: '🛻', hp: 195, minTier: 2, drawRate: 1, turnLimit: 7 },
+    { id: 'muscle', name: 'Muscle Car', icon: '🔥', hp: 185, minTier: 3, drawRate: 1, turnLimit: 7 },
+    { id: 'jeep', name: 'Off-Road Jeep', icon: '🌲', hp: 205, minTier: 1, drawRate: 2, turnLimit: 7 },
+    { id: 'bombsquad', name: 'Bomb Squad Truck', icon: '💣', hp: 190, locked: true, lockThreshold: 45, lockAttack: 39, drawRate: 2, turnLimit: 8 } ],
+  [ { id: 'sportscar', name: 'Sports Car', icon: '🏎️', hp: 240, minTier: 3, drawRate: 2, turnLimit: 8 },
+    { id: 'moto', name: 'Motorcycle Gang', icon: '🏍️', hp: 225, minTier: 2, drawRate: 2, turnLimit: 8 },
+    { id: 'armoredvan', name: 'Armored Van', icon: '🚐', hp: 260, minTier: 1, drawRate: 1, turnLimit: 8 } ],
+  [ { id: 'suv', name: 'Luxury SUV', icon: '🚙', hp: 290, minTier: 3, drawRate: 2, turnLimit: 8 },
+    { id: 'exotic', name: 'Exotic Supercar', icon: '🏁', hp: 275, minTier: 4, drawRate: 2, turnLimit: 8 },
+    { id: 'limo', name: 'Armored Limo', icon: '🚘', hp: 310, minTier: 2, drawRate: 2, turnLimit: 8 },
+    { id: 'vault', name: 'Armored Vault Truck', icon: '🔐', hp: 300, locked: true, lockThreshold: 70, lockAttack: 60, drawRate: 2, turnLimit: 9 } ],
+];
+const BOSS = { id: 'swat', name: 'SWAT Truck', icon: '🚔', hp: 480, minTier: 3, drawRate: 2, turnLimit: 10, boss: true };
+function revealFraction(row) { return [1.0, 0.8, 0.6, 0.4, 0.25, 0.1, 0][Math.min(row, 6)]; }
+
+/* ========== LEVELED UPGRADE TREE (permanent, up to 20 levels each) ========== */
+const UPGRADE_DEFS = [
+  { id: 'reveal',  label: 'Battle Scan',      desc: 'Start every battle with N extra opponent cards already revealed.', baseCost: 0,  inc: 15 },
+  { id: 'chips',   label: 'Starting Coins',   desc: '+5 starting coins per level.',                                     baseCost: 10, inc: 8  },
+  { id: 'fuel',    label: 'Starting Fuel',    desc: '+2 starting fuel per level.',                                      baseCost: 10, inc: 8  },
+  { id: 'hp',      label: 'Max HP',           desc: '+15 max health per level.',                                       baseCost: 30, inc: 15 },
+  { id: 'fuelpen', label: 'Fuel Efficiency',  desc: 'Running out of fuel costs less score when it happens.',            baseCost: 40, inc: 15 },
+  { id: 'garage',  label: 'Garage Expansion', desc: '+1 vehicle slot you can own at once.',                             baseCost: 25, inc: 12 },
+  { id: 'hand',    label: 'Extra Draw',       desc: '+1 card drawn every turn per level.',                              baseCost: 20, inc: 15 },
+  { id: 'range',   label: 'Scout Range',      desc: 'See one more row of the route map clearly ahead.',                 baseCost: 20, inc: 10 },
+  { id: 'gem',     label: 'Gem Efficiency',   desc: '+1 card drawn per gem spent.',                                     baseCost: 20, inc: 12 },
+];
+const MAX_LEVEL = 20;
+function upgradeCost(def, atLevel) { return def.baseCost + atLevel * def.inc; } // cost to go from atLevel -> atLevel+1
+
+/* ========== META (persists forever) ========== */
+const META_KEY = 'fleetduel-meta-v4';
+function loadMeta() {
+  try { const raw = localStorage.getItem(META_KEY); if (raw) return JSON.parse(raw); } catch (e) {}
+  const levels = {}; UPGRADE_DEFS.forEach(u => levels[u.id] = 0);
+  return { points: 0, lifetimePoints: 0, highScore: 0, bestRun: 0, runsPlayed: 0, levels };
+}
+let META = loadMeta();
+function saveMeta() { try { localStorage.setItem(META_KEY, JSON.stringify(META)); } catch (e) {} }
+function earnPoints(n) { META.points += n; META.lifetimePoints += n; if (RUN) RUN.scoreThisRun += n; saveMeta(); }
+
+/* ========== RUN SAVE (mid-run continuity, roguelite-style) ========== */
+const RUN_KEY = 'fleetduel-run-v5';
+function saveRun() { try { localStorage.setItem(RUN_KEY, JSON.stringify(RUN)); } catch (e) {} }
+function loadRunSave() { try { const raw = localStorage.getItem(RUN_KEY); if (raw) return JSON.parse(raw); } catch (e) {} return null; }
+function clearRunSave() { try { localStorage.removeItem(RUN_KEY); } catch (e) {} }
+
+/* ========== MAP GENERATION (branching board, 6 rows + boss) ========== */
+const ROWS = 6;
+function pickNodeType() {
+  const r = Math.random();
+  if (r < 0.50) return 'battle';
+  if (r < 0.68) return 'shop';
+  if (r < 0.80) return 'rest';
+  if (r < 0.90) return 'blacksmith';
+  return 'treasure';
+}
+function generateMap() {
+  const nodes = [];
+  for (let r = 0; r < ROWS; r++) {
+    const tierPool = shuffle([...OPPONENT_TIERS[r]]);
+    const row = [];
+    for (let c = 0; c < 3; c++) { const type = pickNodeType(); row.push(type === 'battle' ? { type, opponent: tierPool[c] } : { type }); }
+    nodes.push(row);
+  }
+  nodes.push([{ type: 'battle', opponent: BOSS }]);
+  const edges = [];
+  for (let r = 0; r < ROWS; r++) {
+    const nextCols = (r === ROWS - 1) ? [0] : [0, 1, 2];
+    for (let c = 0; c < 3; c++) {
+      const candidates = [c - 1, c, c + 1].filter(x => nextCols.includes(x));
+      const primary = candidates[(Math.random() * candidates.length) | 0];
+      edges.push({ fromRow: r, fromCol: c, toRow: r + 1, toCol: primary });
+      if (r < ROWS - 1 && candidates.length > 1 && Math.random() < 0.35) {
+        const secondary = candidates[(Math.random() * candidates.length) | 0];
+        if (secondary !== primary) edges.push({ fromRow: r, fromCol: c, toRow: r + 1, toCol: secondary });
+      }
+    }
+  }
+  for (let r = 1; r <= ROWS; r++) {
+    const cols = r === ROWS ? [0] : [0, 1, 2];
+    for (const c of cols) if (!edges.some(e => e.toRow === r && e.toCol === c)) edges.push({ fromRow: r - 1, fromCol: Math.min(2, c), toRow: r, toCol: c });
+  }
+  return { nodes, edges };
+}
+
+/* ========== RUN STATE ========== */
+let RUN = null;
+let BATTLE = null;
+let selectedIdx = [];
+const FUEL_COST_PER_MOVE = 1;
+const ENERGY_PER_MOVE = 2;
+const BASE_GAS_PENALTY = 15;
+
+function initRunWithStarter(id) {
+  const L = META.levels;
+  RUN = {
+    map: generateMap(), currentRow: -1, currentCol: null, path: [],
+    health: 100 + L.hp * 15, maxHealth: 100 + L.hp * 15,
+    chips: 15 + L.chips * 5, gems: 3, fuel: 10 + L.fuel * 2, energy: 0,
+    ownedVehicles: [id], vehicleCap: 2 + L.garage, handSize: 6 + L.hand,
+    scoreThisRun: 0, lastNotice: null, cardBoosts: [],
+  };
+  saveRun();
+  render(mapScreen());
+}
+function availableNextNodes() {
+  if (RUN.currentRow === -1) return [{ row: 0, col: 0 }, { row: 0, col: 1 }, { row: 0, col: 2 }];
+  return RUN.map.edges.filter(e => e.fromRow === RUN.currentRow && e.fromCol === RUN.currentCol).map(e => ({ row: e.toRow, col: e.toCol }));
+}
+function payTravelCost() {
+  RUN.fuel -= FUEL_COST_PER_MOVE;
+  RUN.energy += ENERGY_PER_MOVE;
+  if (RUN.fuel < 0) {
+    RUN.fuel = 0;
+    const reduction = META.levels.fuelpen * 2;
+    const loss = Math.max(3, BASE_GAS_PENALTY - reduction);
+    META.points = Math.max(0, META.points - loss);
+    RUN.scoreThisRun = Math.max(0, RUN.scoreThisRun - loss);
+    saveMeta();
+    RUN.lastNotice = `Ran out of fuel — lost ${loss} points getting towed to the next stop.`;
+  }
+}
+function commitNode(row, col) { RUN.currentRow = row; RUN.currentCol = col; RUN.path.push({ row, col }); saveRun(); }
+function selectNode(row, col) {
+  payTravelCost();
+  const node = RUN.map.nodes[row][col];
+  if (node.type === 'battle') { startBattle(node.opponent, row, col); return; }
+  commitNode(row, col);
+  if (node.type === 'shop') render(shopScreen());
+  else if (node.type === 'rest') render(garageScreen());
+  else if (node.type === 'blacksmith') { BLACKSMITH_OPTIONS = pickBlacksmithOptions(); render(blacksmithScreen()); }
+  else if (node.type === 'treasure') { const found = rollTreasure(); render(treasureScreen(found)); }
+}
+let BLACKSMITH_OPTIONS = null;
+function pickBlacksmithOptions() {
+  const all = [];
+  for (const su of SUITS) for (let r = 2; r <= 14; r++) all.push({ rank: r, suit: su.s, color: su.color });
+  return shuffle(all).slice(0, 3);
+}
+function findBoost(rank, suit) { return RUN.cardBoosts.find(b => b.rank === rank && b.suit === suit); }
+function boostCard(rank, suit) {
+  let b = findBoost(rank, suit);
+  if (!b) { b = { rank, suit, bonus: 0 }; RUN.cardBoosts.push(b); }
+  if (b.bonus >= 9) return;
+  b.bonus += 3;
+  saveRun();
+}
+function rollTreasure() {
+  const coins = 10 + Math.floor(Math.random() * 20);
+  const fuel = 3 + Math.floor(Math.random() * 6);
+  const gems = 1 + Math.floor(Math.random() * 3);
+  RUN.chips += coins; RUN.fuel += fuel; RUN.gems += gems;
+  saveRun();
+  return { coins, fuel, gems };
+}
+function endRun(won) {
+  const bonus = Math.round(RUN.path.length * (won ? 5 : 2) + (won ? 40 : 0));
+  earnPoints(bonus);
+  META.bestRun = Math.max(META.bestRun, RUN.path.length);
+  META.highScore = Math.max(META.highScore, RUN.scoreThisRun);
+  META.runsPlayed++;
+  saveMeta();
+  clearRunSave();
+  render(runEndScreen(won, bonus));
+}
+
+/* ========== BATTLE LOGIC ========== */
+function startBattle(opponentDef, row, col) {
+  BATTLE = {
+    opponent: { ...opponentDef, hpNow: opponentDef.hp, poison: 0, lockProgress: 0 }, row, col,
+    deck: shuffle(freshDeck()), discard: [],
+    oppDeck: shuffle(freshDeck()), oppDiscard: [],
+    hand: [], oppPool: [], scoutedThisTurn: false, abilityUsedThisTurn: false, opponentStunned: false,
+    playerArmor: 0, turn: 1, slots: {}, turnDiscard: [], logLines: [],
+  };
+  BATTLE.deck.forEach(c => { const b = RUN.cardBoosts.find(x => x.rank === c.rank && x.suit === c.suit); if (b) c.bonus = b.bonus; });
+  drawCards(RUN.handSize);
+  drawOpponentCards();
+  for (let i = 0; i < META.levels.reveal; i++) {
+    const hidden = BATTLE.oppPool.filter(c => !c.revealed);
+    if (!hidden.length) break;
+    hidden[(Math.random() * hidden.length) | 0].revealed = true;
+  }
+  battleLog(`You're facing a ${BATTLE.opponent.name}. Turn 1 of ${BATTLE.opponent.turnLimit}.`);
+  render(battleScreen());
+}
+function drawCards(n) {
+  // draws n NEW cards on top of whatever's already in hand — hand is never capped, so
+  // skipping a turn (or not playing everything) lets it grow, at the cost of not attacking.
+  for (let i = 0; i < n; i++) {
+    if (!BATTLE.deck.length) { if (!BATTLE.discard.length) break; BATTLE.deck = shuffle(BATTLE.discard); BATTLE.discard = []; }
+    BATTLE.hand.push(BATTLE.deck.pop());
+  }
+}
+function drawOpponentCards() {
+  BATTLE.scoutedThisTurn = false; BATTLE.abilityUsedThisTurn = false;
+  for (let i = 0; i < BATTLE.opponent.drawRate; i++) {
+    if (!BATTLE.oppDeck.length) { if (!BATTLE.oppDiscard.length) break; BATTLE.oppDeck = shuffle(BATTLE.oppDiscard); BATTLE.oppDiscard = []; }
+    const c = BATTLE.oppDeck.pop();
+    c.revealed = Math.random() < revealFraction(BATTLE.row);
+    BATTLE.oppPool.push(c);
+    if (BATTLE.opponent.locked) BATTLE.opponent.lockProgress += cardValue(c.rank);
+  }
+}
+function battleLog(msg) { BATTLE.logLines.unshift(msg); if (BATTLE.logLines.length > 30) BATTLE.logLines.pop(); }
+
+function toggleCardSelect(i) { const pos = selectedIdx.indexOf(i); if (pos === -1) selectedIdx.push(i); else selectedIdx.splice(pos, 1); render(battleScreen()); }
+function assignSelectedTo(vId) {
+  if (!selectedIdx.length) return;
+  const v = VEHICLES[vId];
+  if (!BATTLE.slots[vId]) BATTLE.slots[vId] = [];
+  const room = v.slot - BATTLE.slots[vId].length;
+  if (room <= 0) return;
+  const take = selectedIdx.filter(i => !BATTLE.slots[vId].includes(i)).slice(0, room);
+  BATTLE.slots[vId].push(...take);
+  selectedIdx = [];
+  render(battleScreen());
+}
+function removeCardFromSlot(vId, idx) { if (!BATTLE.slots[vId]) return; BATTLE.slots[vId] = BATTLE.slots[vId].filter(i => i !== idx); render(battleScreen()); }
+function clearSlot(vId) { BATTLE.slots[vId] = []; render(battleScreen()); }
+function markSelectedForDiscard() {
+  if (!selectedIdx.length) return;
+  selectedIdx.forEach(i => { if (!BATTLE.turnDiscard.includes(i)) BATTLE.turnDiscard.push(i); });
+  selectedIdx = [];
+  render(battleScreen());
+}
+function unmarkDiscard(i) { BATTLE.turnDiscard = BATTLE.turnDiscard.filter(x => x !== i); render(battleScreen()); }
+
+function scoutOpponent() {
+  const cost = 10;
+  if (RUN.chips < cost || BATTLE.scoutedThisTurn) return;
+  RUN.chips -= cost; BATTLE.scoutedThisTurn = true;
+  const hidden = BATTLE.oppPool.filter(c => !c.revealed);
+  const revealCount = Math.max(1, Math.ceil(BATTLE.oppPool.length / 2));
+  shuffle(hidden).slice(0, revealCount).forEach(c => c.revealed = true);
+  battleLog(`Scouted the ${BATTLE.opponent.name}.`);
+  saveRun(); render(battleScreen());
+}
+function drawWithGem() {
+  if (RUN.gems < 1) return;
+  RUN.gems -= 1;
+  const n = 1 + META.levels.gem;
+  for (let i = 0; i < n; i++) {
+    if (!BATTLE.deck.length) { if (!BATTLE.discard.length) break; BATTLE.deck = shuffle(BATTLE.discard); BATTLE.discard = []; }
+    BATTLE.hand.push(BATTLE.deck.pop());
+  }
+  battleLog(`Spent a gem, drew ${n} card${n > 1 ? 's' : ''}.`);
+  saveRun(); render(battleScreen());
+}
+function useAbility(vId) {
+  const v = VEHICLES[vId];
+  if (!v.ability || BATTLE.abilityUsedThisTurn || RUN.energy < v.ability.cost) return;
+  RUN.energy -= v.ability.cost;
+  BATTLE.abilityUsedThisTurn = true;
+  BATTLE.opponentStunned = true;
+  battleLog(`${v.name} used ${v.ability.name}! They won't counter-attack this turn.`);
+  saveRun(); render(battleScreen());
+}
+
+function resolveTurn() {
+  let totalDamage = 0;
+  const usedIdx = new Set();
+  for (const vId of RUN.ownedVehicles) {
+    const idxs = BATTLE.slots[vId] || [];
+    if (!idxs.length) continue;
+    const cards = idxs.map(i => BATTLE.hand[i]);
+    const v = VEHICLES[vId];
+    const evalRes = evaluateHand(cards);
+    if (evalRes.tier < v.minTier) { battleLog(`${v.name} — ${evalRes.label}, not enough for ${TIERS[v.minTier]}. No effect.`); }
+    else {
+      const amount = damageFor(cards, evalRes.mult);
+      if (v.kind === 'defense') { BATTLE.playerArmor += amount; battleLog(`${v.name} — ${evalRes.label}! +${amount} armor.`); }
+      else if (v.kind === 'poison') { BATTLE.opponent.poison = (BATTLE.opponent.poison || 0) + Math.round(amount / 2); battleLog(`${v.name} — ${evalRes.label}! Poisoned for ${Math.round(amount / 2)}.`); }
+      else { totalDamage += amount; battleLog(`${v.name} — ${evalRes.label}! ${amount} damage.`); }
+    }
+    idxs.forEach(i => usedIdx.add(i));
+  }
+  BATTLE.opponent.hpNow = Math.max(0, BATTLE.opponent.hpNow - totalDamage);
+
+  if (BATTLE.opponent.poison > 0) {
+    const pdmg = BATTLE.opponent.poison;
+    BATTLE.opponent.hpNow = Math.max(0, BATTLE.opponent.hpNow - pdmg);
+    battleLog(`Poison ticks for ${pdmg}.`);
+    BATTLE.opponent.poison = Math.floor(BATTLE.opponent.poison * 0.75);
+  }
+  battleLog(`${BATTLE.opponent.name} at ${BATTLE.opponent.hpNow}/${BATTLE.opponent.hp}.`);
+
+  if (BATTLE.turnDiscard.length) battleLog(`Discarded ${BATTLE.turnDiscard.length} card${BATTLE.turnDiscard.length > 1 ? 's' : ''}.`);
+  const evvanUsed = (BATTLE.slots.evvan || []).length > 0 && evaluateHand((BATTLE.slots.evvan || []).map(i => BATTLE.hand[i])).tier >= VEHICLES.evvan.minTier;
+  const allRemove = new Set([...usedIdx, ...BATTLE.turnDiscard]);
+  const sorted = [...allRemove].sort((a, b) => b - a);
+  let refunded = false;
+  for (const i of sorted) {
+    if (evvanUsed && !refunded && usedIdx.has(i)) { refunded = true; continue; }
+    BATTLE.discard.push(BATTLE.hand[i]);
+    BATTLE.hand.splice(i, 1);
+  }
+  BATTLE.slots = {}; BATTLE.turnDiscard = []; selectedIdx = [];
+
+  if (BATTLE.opponent.hpNow <= 0) { winBattle(); return; }
+
+  if (BATTLE.opponentStunned) {
+    battleLog(`${BATTLE.opponent.name} is stunned and doesn't counter-attack.`);
+    BATTLE.opponentStunned = false;
+  } else if (BATTLE.opponent.locked) {
+    if (BATTLE.opponent.lockProgress >= BATTLE.opponent.lockThreshold) {
+      let oppDmg = BATTLE.opponent.lockAttack;
+      if (BATTLE.playerArmor > 0) {
+        const blocked = Math.min(BATTLE.playerArmor, oppDmg);
+        BATTLE.playerArmor -= blocked; oppDmg -= blocked;
+        battleLog(`Your armor absorbed ${blocked} damage.`);
+      }
+      RUN.health = Math.max(0, RUN.health - oppDmg);
+      battleLog(`${BATTLE.opponent.name} clears the lock and hits for a flat ${oppDmg}! It locks back up. Your health: ${RUN.health}/${RUN.maxHealth}.`);
+      BATTLE.opponent.lockProgress = 0;
+      BATTLE.oppPool = [];
+    } else {
+      battleLog(`${BATTLE.opponent.name} is still locked (${BATTLE.opponent.lockProgress}/${BATTLE.opponent.lockThreshold}). No attack yet.`);
+    }
+  } else {
+    const best = bestFiveFromPool(BATTLE.oppPool);
+    if (best.tier >= BATTLE.opponent.minTier) {
+      let oppDmg = damageFor(best.cards, best.mult);
+      if (BATTLE.playerArmor > 0) {
+        const blocked = Math.min(BATTLE.playerArmor, oppDmg);
+        BATTLE.playerArmor -= blocked; oppDmg -= blocked;
+        battleLog(`Your armor absorbed ${blocked} damage.`);
+      }
+      RUN.health = Math.max(0, RUN.health - oppDmg);
+      const usedText = best.cards.map(c => `${rankLabel(c.rank)}${c.suit}`).join(' ');
+      battleLog(`${BATTLE.opponent.name} played ${best.label} (${usedText}) — ${oppDmg} damage. Your health: ${RUN.health}/${RUN.maxHealth}.`);
+      BATTLE.oppPool = BATTLE.oppPool.filter(c => !best.cards.includes(c));
+    } else { battleLog(`${BATTLE.opponent.name} didn't have enough to attack this turn.`); }
+  }
+
+  if (RUN.health <= 0) { render(nodeResultScreen(false, {})); return; }
+
+  BATTLE.turn++;
+  if (BATTLE.turn > BATTLE.opponent.turnLimit) { winBattle(true); return; }
+  drawCards(RUN.handSize);
+  drawOpponentCards();
+  battleLog(`— Turn ${BATTLE.turn} of ${BATTLE.opponent.turnLimit} —`);
+  render(battleScreen());
+}
+function winBattle(outlast) {
+  const scale = outlast ? 0.7 : 1;
+  const chipReward = Math.round((16 + BATTLE.opponent.hp / 8) * scale);
+  const gemReward = 2 + BATTLE.row;
+  const fuelReward = 3 + BATTLE.row;
+  const pointsReward = Math.round((5 + BATTLE.row * 3) * scale);
+  RUN.chips += chipReward; RUN.gems += gemReward; RUN.fuel += fuelReward;
+  earnPoints(pointsReward);
+  battleLog(outlast ? `You outlasted the ${BATTLE.opponent.name}!` : `${BATTLE.opponent.name} is done for!`);
+  battleLog(`+${chipReward} coins, +${gemReward} gems, +${fuelReward} fuel, +${pointsReward} points.`);
+  render(nodeResultScreen(true, { chipReward, gemReward, fuelReward, pointsReward }));
+}
+
+/* ========== SCREENS ========== */
+function noticeHTML() {
+  if (!RUN || !RUN.lastNotice) return '';
+  const msg = RUN.lastNotice; RUN.lastNotice = null;
+  return `<div class="panel" style="border-color:var(--red)"><div class="note" style="color:var(--red);margin:0">${msg}</div></div>`;
+}
+function currencyBar() {
+  return `<div class="currencies">
+    <div class="cur chip">🪙 ${RUN.chips} coins</div>
+    <div class="cur gem">💎 ${RUN.gems} gems</div>
+    <div class="cur fuel">⛽ ${RUN.fuel} fuel</div>
+    <div class="cur energy">⚡ ${RUN.energy} energy</div>
+    <div class="cur pts">★ ${META.points} points</div>
+  </div>`;
+}
+
+function mapScreen() {
+  const rows = RUN.map.nodes;
+  const rowH = 66;
+  const totalH = rows.length * rowH;
+  const colX = [50, 150, 250];
+  const avail = availableNextNodes();
+  const visibleRange = 1 + META.levels.range;
+  let svgLines = '';
+  for (const e of RUN.map.edges) {
+    const x1 = rows[e.fromRow].length === 1 ? 150 : colX[e.fromCol];
+    const y1 = e.fromRow * rowH + rowH / 2;
+    const x2 = rows[e.toRow].length === 1 ? 150 : colX[e.toCol];
+    const y2 = e.toRow * rowH + rowH / 2;
+    const traveled = RUN.path.some(p => p.row === e.fromRow && p.col === e.fromCol) && RUN.path.some(p => p.row === e.toRow && p.col === e.toCol);
+    svgLines += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${traveled ? '#ff9f1c' : '#c9d3f7'}" stroke-width="${traveled ? 3 : 2}"/>`;
+  }
+  let nodesHTML = '';
+  for (let r = 0; r < rows.length; r++) {
+    for (let c = 0; c < rows[r].length; c++) {
+      const node = rows[r][c];
+      const x = rows[r].length === 1 ? 150 : colX[c];
+      const y = r * rowH + rowH / 2;
+      const isDone = RUN.path.some(p => p.row === r && p.col === c);
+      const isAvail = !isDone && avail.some(n => n.row === r && n.col === c);
+      const withinSight = r <= RUN.currentRow + visibleRange;
+      const cls = isDone ? 'done' : isAvail ? 'avail' : withinSight ? 'future' : 'farfuture';
+      const showReal = isDone || isAvail || withinSight;
+      const NODE_ICON = { shop: '🛒', rest: '🔧', blacksmith: '🛠️', treasure: '🎁' };
+      const NODE_TITLE = { shop: 'Shop', rest: 'Pit Stop', blacksmith: 'Tuning Garage', treasure: 'Treasure' };
+      const icon = !showReal ? '❔' : (node.type === 'battle' ? node.opponent.icon : NODE_ICON[node.type]);
+      const title = !showReal ? 'Unscouted' : (node.type === 'battle' ? node.opponent.name : NODE_TITLE[node.type]);
+      let tip;
+      if (!showReal) tip = 'Move closer to scout this stop';
+      else if (node.type === 'battle') {
+        const o = node.opponent;
+        tip = o.locked
+          ? `${o.name}<br>HP: ${o.hp}<br>🔒 Locks at ${o.lockThreshold}, hits for ${o.lockAttack} flat<br>Draws ${o.drawRate}/turn`
+          : `${o.name}<br>HP: ${o.hp}<br>Needs ${TIERS[o.minTier]}+ to attack<br>Draws ${o.drawRate}/turn`;
+      } else if (node.type === 'shop') tip = 'Buy vehicles with coins';
+      else if (node.type === 'rest') tip = 'Restore +30 Health';
+      else if (node.type === 'blacksmith') tip = 'Permanently upgrade one card';
+      else tip = 'Free coins, fuel, and gems';
+      nodesHTML += `<div class="mapnode-wrap" style="left:${(x / 300 * 100)}%;top:${y}px">
+        <button class="mapnode ${cls}" ${isAvail ? `data-goto="${r}:${c}"` : 'disabled'}>${icon}</button>
+        <div class="tooltip"><b>${title}</b><br>${tip}</div>
+      </div>`;
+    }
+  }
+  return `${noticeHTML()}
+    <div class="panel">
+      <div class="hdr"><span>Health: ${RUN.health}/${RUN.maxHealth}</span><span>Vehicles: ${RUN.ownedVehicles.length}/${RUN.vehicleCap}</span></div>
+      ${currencyBar()}
+      <div class="hdr" style="margin-top:8px"><span>Route Map</span><span>Tap a glowing stop</span></div>
+      <div class="mapwrap" style="width:100%;height:${totalH}px">
+        <svg width="100%" height="${totalH}" viewBox="0 0 300 ${totalH}" preserveAspectRatio="none" style="position:absolute;left:0;top:0">${svgLines}</svg>
+        ${nodesHTML}
+      </div>
+    </div>
+  `;
+}
+
+function battleScreen() {
+  const opp = BATTLE.opponent;
+  const hpPct = Math.max(0, (opp.hpNow / opp.hp) * 100);
+  const healthPct = Math.max(0, (RUN.health / RUN.maxHealth) * 100);
+
+  const poolHTML = BATTLE.oppPool.map(c => c.revealed
+    ? `<div class="card mini ${c.color === 'red' ? 'red' : ''}">${rankLabel(c.rank)}${c.suit}</div>`
+    : `<div class="card mini back"></div>`).join('') || '<span class="note" style="margin:0">empty</span>';
+
+  const vehicleHTML = RUN.ownedVehicles.map(vId => {
+    const v = VEHICLES[vId];
+    const idxs = BATTLE.slots[vId] || [];
+    const cards = idxs.map(i => BATTLE.hand[i]);
+    const evalRes = cards.length ? evaluateHand(cards) : null;
+    const ready = evalRes && evalRes.tier >= v.minTier;
+    const preview = ready ? damageFor(cards, evalRes.mult) : null;
+    const effectWord = v.kind === 'defense' ? 'armor' : v.kind === 'poison' ? 'poison' : 'dmg';
+    const cardHTML = idxs.map(cardHandIdx => {
+      const c = BATTLE.hand[cardHandIdx];
+      return `<div class="card mini ${c.color === 'red' ? 'red' : ''}" data-unassign="${vId}:${cardHandIdx}">${rankLabel(c.rank)}${c.suit}</div>`;
+    }).join('') || `<span class="note" style="margin:0">empty</span>`;
+    const abilityBtn = v.ability ? `<button class="wo-btn purple" style="padding:5px 8px;font-size:11px;margin-top:5px" data-ability="${vId}" ${BATTLE.abilityUsedThisTurn || RUN.energy < v.ability.cost ? 'disabled' : ''}>⚡ ${v.ability.name} (${v.ability.cost})</button>` : '';
+    return `<div class="vslot ${idxs.length ? 'filled' : ''} ${ready ? 'ready' : ''} ${v.kind || ''}" data-assign="${vId}">
+      <div class="vname">${v.icon} ${v.name}</div>
+      <div class="vreq">Needs ${TIERS[v.minTier]}+ · ${idxs.length}/${v.slot} cards</div>
+      <div class="vcards">${cardHTML}</div>
+      ${evalRes ? `<div class="note" style="margin:4px 0 0">${evalRes.label}${ready ? ` ✓ ${preview} ${effectWord}` : ' ✗'}</div>` : ''}
+      ${idxs.length ? `<button class="wo-btn gray" style="padding:5px 8px;font-size:11px;margin-top:5px" data-clear="${vId}">Clear</button>` : ''}
+      ${abilityBtn}
+    </div>`;
+  }).join('');
+
+  const assignedIdx = new Set(Object.values(BATTLE.slots).flat());
+  const handHTML = BATTLE.hand.map((c, i) => {
+    if (assignedIdx.has(i) || BATTLE.turnDiscard.includes(i)) return '';
+    return `<div class="card ${c.color === 'red' ? 'red' : ''} ${selectedIdx.includes(i) ? 'selected' : ''}" data-card="${i}" style="position:relative">
+    ${c.bonus ? `<div style="position:absolute;bottom:1px;right:2px;font-size:8px;color:var(--green)">+${c.bonus}</div>` : ''}
+    <div>${rankLabel(c.rank)}</div><div style="font-size:16px">${c.suit}</div>
+  </div>`;
+  }).join('');
+  const discardStagedHTML = BATTLE.turnDiscard.map(i => {
+    const c = BATTLE.hand[i];
+    return `<div class="card mini" data-undiscard="${i}" style="opacity:.6">${rankLabel(c.rank)}${c.suit}</div>`;
+  }).join('');
+  const committedCount = Object.values(BATTLE.slots).reduce((a, arr) => a + arr.length, 0) + BATTLE.turnDiscard.length;
+
+  return `
+    <div class="panel">${currencyBar()}</div>
+    <div class="panel duelHead">
+      <div class="duelSide you"><div class="bigicon">🚚</div><h3>Your Fleet</h3>
+        <div class="bar-wrap"><div class="bar-fill bar-health" style="width:${healthPct}%"></div></div>
+        <div class="note">${RUN.health} / ${RUN.maxHealth}${BATTLE.playerArmor ? ` &middot; 🛡️ ${BATTLE.playerArmor} armor` : ''}</div>
+      </div>
+      <div class="vsMark">VS</div>
+      <div class="duelSide opp"><div class="bigicon">${opp.icon}</div><h3>${opp.name}</h3>
+        <div class="bar-wrap"><div class="bar-fill bar-hp" style="width:${hpPct}%"></div></div>
+        <div class="note">${opp.hpNow} / ${opp.hp}${opp.poison ? ` &middot; ☣️ ${opp.poison} poison` : ''} &middot; Turn ${BATTLE.turn}/${opp.turnLimit}</div>
+      </div>
+    </div>
+    <div class="duelBoard">
+      <div class="panel">
+        <div class="hdr"><span>Your Hand</span><span>${BATTLE.hand.length - assignedIdx.size - BATTLE.turnDiscard.length} in hand</span></div>
+        <div class="hand">${handHTML}</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="wo-btn amber" id="gemDrawBtn" style="padding:8px 12px;font-size:12px" title="Spend 1 gem to immediately draw ${1 + META.levels.gem} extra card${1 + META.levels.gem > 1 ? 's' : ''}." ${RUN.gems < 1 ? 'disabled' : ''}>💎 Draw with Gem (-1)</button>
+          <button class="wo-btn gray" id="discardSelectedBtn" style="padding:8px 12px;font-size:12px" title="Fold selected cards face-down instead of playing them. Still counts toward this turn's 2-card minimum." ${!selectedIdx.length ? 'disabled' : ''}>Discard Selected</button>
+        </div>
+        ${BATTLE.turnDiscard.length ? `<div class="note" style="margin-top:8px">Discarding this turn (tap to undo):</div><div class="hand">${discardStagedHTML}</div>` : ''}
+      </div>
+      <div class="deckStack"><div class="card back"></div><div class="note">${BATTLE.deck.length} left</div></div>
+      <div class="panel">
+        <div class="hdr"><span>Their Cards (${BATTLE.oppPool.length})</span><span></span></div>
+        <div class="hand">${poolHTML}</div>
+        <div class="note">${opp.locked ? `🔒 Locked: ${opp.lockProgress}/${opp.lockThreshold} — clears the lock and hits for a flat ${opp.lockAttack}, no cards needed that turn` : `Needs ${TIERS[opp.minTier]}+ to attack`}</div>
+        <button class="wo-btn amber" id="scoutBtn" style="padding:8px 12px;font-size:12px" ${BATTLE.scoutedThisTurn || RUN.chips < 10 ? 'disabled' : ''}>Scout (-10 coins)</button>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="hdr"><span>Your Fleet</span><span>Select cards, then tap a vehicle</span></div>
+      <div class="grid">${vehicleHTML}</div>
+    </div>
+    <div class="panel">
+      <button class="wo-btn" id="dispatchBtn" style="width:100%" ${committedCount < 2 ? 'disabled' : ''}>Dispatch This Turn</button>
+      ${committedCount < 2 ? `<div class="note" style="text-align:center;margin-top:6px">Play or discard at least 2 cards to end your turn (${committedCount}/2 so far)</div>` : ''}
+      <div class="log">${BATTLE.logLines.map(l => `<div>${l}</div>`).join('')}</div>
+    </div>
+  `;
+}
+
+function nodeResultScreen(won, rewards) {
+  const rewardLine = won ? `+${rewards.chipReward} coins, +${rewards.gemReward} gems, +${rewards.fuelReward} fuel, +${rewards.pointsReward} points.` : `Your health ran out. Run ends here.`;
+  return `
+    <div class="wo">
+      <div class="wo-stripe"></div>
+      <div class="wo-body">
+        <div class="wo-eyebrow">${won ? 'Battle Won' : 'Battle Lost'}</div>
+        <h1>${won ? 'Nice <em>Work</em>' : 'Fleet <em>Beaten</em>'}</h1>
+        <div class="wo-sub">${rewardLine}</div>
+        ${won ? `<button class="wo-btn half" id="continueBtn">Continue</button><button class="wo-btn half amber" id="upgradeBtn" style="float:right">Upgrade</button>`
+              : `<button class="wo-btn" id="continueBtn" style="width:100%">See Run Summary</button>`}
+      </div>
+    </div>
+  `;
+}
+
+function shopScreen() {
+  const owned = new Set(RUN.ownedVehicles);
+  const atCap = RUN.ownedVehicles.length >= RUN.vehicleCap;
+  const options = Object.values(VEHICLES).filter(v => !owned.has(v.id) && v.cost > 0);
+  const shown = shuffle([...options]).slice(0, 3);
+  const vehicleRows = shown.map(v => `<div class="shopcard">
+      <div class="hdr"><span>${v.icon} ${v.name}</span><span class="price">${v.cost} coins</span></div>
+      <div class="note" style="margin:0 0 6px">${v.note}</div>
+      <button class="wo-btn amber" data-buy="${v.id}" data-cost="${v.cost}" ${RUN.chips < v.cost || atCap ? 'disabled' : ''} style="padding:8px 12px;font-size:13px">${atCap ? 'Garage full' : 'Purchase'}</button>
+    </div>`).join('') || '<div class="note">No new vehicles in stock right now.</div>';
+
+  return `${noticeHTML()}
+    <div class="wo">
+      <div class="wo-stripe"></div>
+      <div class="wo-body">
+        <div class="wo-eyebrow">Shop</div>
+        <h1>Pick Up <em>New Gear</em></h1>
+        ${currencyBar()}
+        <div class="hdr" style="margin-top:10px"><span>Vehicles (${RUN.ownedVehicles.length}/${RUN.vehicleCap} garage slots)</span><span></span></div>
+        <div style="margin:6px 0 12px">${vehicleRows}</div>
+        <button class="wo-btn" id="leaveShopBtn">Back on the Road</button>
+      </div>
+    </div>
+  `;
+}
+
+function garageScreen() {
+  return `${noticeHTML()}
+    <div class="wo">
+      <div class="wo-stripe"></div>
+      <div class="wo-body">
+        <div class="wo-eyebrow">Pit Stop</div>
+        <h1>Quick <em>Rest</em></h1>
+        <div class="wo-sub">A calm stop before the next battle.</div>
+        <button class="wo-btn" id="restBtn">Rest (+30 Health)</button>
+      </div>
+    </div>
+  `;
+}
+
+function blacksmithScreen() {
+  const rows = BLACKSMITH_OPTIONS.map((c, i) => {
+    const b = findBoost(c.rank, c.suit);
+    const bonus = b ? b.bonus : 0;
+    const maxed = bonus >= 9;
+    return `<div class="shopcard">
+      <div class="hdr"><span>${rankLabel(c.rank)}${c.suit} ${bonus ? `(currently +${bonus})` : ''}</span><span></span></div>
+      <div class="note" style="margin:0 0 6px">Permanently adds +3 damage to this exact card, for the rest of the run.</div>
+      <button class="wo-btn amber" data-forge="${i}" style="padding:8px 12px;font-size:13px" ${maxed ? 'disabled' : ''}>${maxed ? 'Maxed out' : 'Upgrade (+3)'}</button>
+    </div>`;
+  }).join('');
+  return `${noticeHTML()}
+    <div class="wo">
+      <div class="wo-stripe"></div>
+      <div class="wo-body">
+        <div class="wo-eyebrow">Tuning Garage</div>
+        <h1>Upgrade a <em>Card</em></h1>
+        <div class="wo-sub">Pick one card to permanently strengthen for this run. You can come back and stack it further at another Tuning Garage.</div>
+        <div style="margin:12px 0">${rows}</div>
+        <button class="wo-btn" id="leaveBlacksmithBtn">Back on the Road</button>
+      </div>
+    </div>
+  `;
+}
+function treasureScreen(found) {
+  return `
+    <div class="wo">
+      <div class="wo-stripe"></div>
+      <div class="wo-body">
+        <div class="wo-eyebrow">Treasure Chest</div>
+        <h1>Nice <em>Find</em></h1>
+        <div class="wo-sub">+${found.coins} coins, +${found.fuel} fuel, +${found.gems} gems.</div>
+        <button class="wo-btn" id="leaveTreasureBtn">Back on the Road</button>
+      </div>
+    </div>
+  `;
+}
+function runEndScreen(won, bonus) {
+  return `
+    <div class="wo">
+      <div class="wo-stripe"></div>
+      <div class="wo-body">
+        <div class="wo-eyebrow">${won ? 'Route Complete' : 'Run Ended'}</div>
+        <h1>${won ? 'Route <em>Cleared</em>' : 'Back to <em>Base</em>'}</h1>
+        <div class="wo-sub">Reached stop ${RUN.path.length} of ${ROWS + 1}. This run's score: ${RUN.scoreThisRun} (+${bonus} completion bonus). High score: ${META.highScore}.</div>
+        <button class="wo-btn" id="backToMetaBtn">Back to Home Base</button>
+      </div>
+    </div>
+  `;
+}
+
+function starterSelectScreen() {
+  const cards = STARTERS.map(id => {
+    const v = VEHICLES[id];
+    const unlocked = isStarterUnlocked(id);
+    return `<div class="pickcard ${unlocked ? '' : 'locked'}">
+      <div class="picon">${unlocked ? v.icon : '🔒'}</div>
+      <div class="pname">${v.name}</div>
+      <div class="ptag">${unlocked ? v.note : starterLockNote(id)}</div>
+      ${unlocked ? `<button class="wo-btn amber" data-pick="${v.id}" style="padding:8px 12px;font-size:13px;width:100%">Choose</button>` : ''}
+    </div>`;
+  }).join('');
+  return `
+    <div class="wo">
+      <div class="wo-stripe"></div>
+      <div class="wo-body">
+        <div class="wo-eyebrow">Before You Roll Out</div>
+        <h1>Pick Your <em>Starter</em></h1>
+        <div class="wo-sub">Each vehicle fights one way. More unlock permanently as you play.</div>
+        <div class="grid" style="margin:12px 0">${cards}</div>
+      </div>
+    </div>
+  `;
+}
+
+function upgradeScreen(returnTo) {
+  const rows = UPGRADE_DEFS.map(u => {
+    const lvl = META.levels[u.id];
+    const maxed = lvl >= MAX_LEVEL;
+    const cost = maxed ? 0 : upgradeCost(u, lvl);
+    return `<div class="shopcard">
+      <div class="hdr"><span>${u.label} (Lv ${lvl}/${MAX_LEVEL})</span><span class="price">${maxed ? 'MAX' : cost + ' pts'}</span></div>
+      <div class="note" style="margin:0 0 4px">${u.desc}</div>
+      <div class="levelbar"><i style="width:${(lvl / MAX_LEVEL) * 100}%"></i></div>
+      ${maxed ? '' : `<button class="wo-btn amber" data-levelup="${u.id}" style="padding:8px 12px;font-size:13px" ${META.points < cost ? 'disabled' : ''}>Level Up</button>`}
+    </div>`;
+  }).join('');
+  return `
+    <div class="wo">
+      <div class="wo-stripe"></div>
+      <div class="wo-body">
+        <div class="wo-eyebrow">Upgrades</div>
+        <h1>Spend Your <em>Points</em></h1>
+        <div class="wo-sub">Points: ${META.points} &middot; Lifetime: ${META.lifetimePoints} &middot; High score: ${META.highScore}</div>
+        <div style="margin:12px 0">${rows}</div>
+        <button class="wo-btn" id="upgradeContinueBtn" data-return="${returnTo}">${returnTo === 'map' ? 'Continue Route' : 'Back'}</button>
+      </div>
+    </div>
+  `;
+}
+
+function metaScreen() {
+  const hasSave = !!loadRunSave();
+  return `
+    <div class="wo">
+      <div class="wo-stripe"></div>
+      <div class="wo-body">
+        <div class="wo-eyebrow">Home Base</div>
+        <h1>Fleet <em>Duel</em></h1>
+        <div class="wo-sub">Points: ${META.points} &middot; Best route: ${META.bestRun}/${ROWS + 1} &middot; High score: ${META.highScore} &middot; Runs played: ${META.runsPlayed}</div>
+        <button class="wo-btn amber" id="viewUpgradesBtn" style="width:100%;margin-bottom:10px">View Upgrades</button>
+        ${hasSave ? `<button class="wo-btn" id="continueRunBtn" style="margin-bottom:10px;width:100%">Continue Run</button>` : ''}
+        <button class="wo-btn ${hasSave ? 'gray' : ''}" id="startRunBtn" style="width:100%">${hasSave ? 'Start New Run (overwrites save)' : 'Start Run'}</button>
+      </div>
+    </div>
+  `;
+}
+
+/* ========== RENDER + EVENTS ========== */
+function render(html) {
+  const app = document.getElementById('app');
+  app.innerHTML = html;
+
+  app.querySelectorAll('[data-card]').forEach(el => el.onclick = () => toggleCardSelect(+el.dataset.card));
+  app.querySelectorAll('[data-assign]').forEach(el => el.onclick = (e) => {
+    if (e.target.closest('[data-clear]') || e.target.closest('[data-unassign]') || e.target.closest('[data-ability]')) return;
+    assignSelectedTo(el.dataset.assign);
+  });
+  app.querySelectorAll('[data-unassign]').forEach(el => el.onclick = (e) => { e.stopPropagation(); const [vId, idx] = el.dataset.unassign.split(':'); removeCardFromSlot(vId, +idx); });
+  app.querySelectorAll('[data-clear]').forEach(el => el.onclick = (e) => { e.stopPropagation(); clearSlot(el.dataset.clear); });
+  app.querySelectorAll('[data-ability]').forEach(el => el.onclick = (e) => { e.stopPropagation(); useAbility(el.dataset.ability); });
+  const dispatchBtn = document.getElementById('dispatchBtn'); if (dispatchBtn) dispatchBtn.onclick = resolveTurn;
+  const scoutBtn = document.getElementById('scoutBtn'); if (scoutBtn) scoutBtn.onclick = scoutOpponent;
+  const gemDrawBtn = document.getElementById('gemDrawBtn'); if (gemDrawBtn) gemDrawBtn.onclick = drawWithGem;
+  const discardSelectedBtn = document.getElementById('discardSelectedBtn'); if (discardSelectedBtn) discardSelectedBtn.onclick = markSelectedForDiscard;
+  app.querySelectorAll('[data-undiscard]').forEach(el => el.onclick = () => unmarkDiscard(+el.dataset.undiscard));
+
+  app.querySelectorAll('[data-goto]').forEach(el => el.onclick = () => { const [r, c] = el.dataset.goto.split(':').map(Number); selectNode(r, c); });
+
+  const continueBtn = document.getElementById('continueBtn');
+  if (continueBtn) continueBtn.onclick = () => {
+    const won = continueBtn.parentElement.querySelector('.wo-eyebrow').textContent.includes('Won');
+    if (won) { commitNode(BATTLE.row, BATTLE.col); if (BATTLE.row === ROWS) endRun(true); else render(mapScreen()); }
+    else endRun(false);
+  };
+  const upgradeBtn = document.getElementById('upgradeBtn');
+  if (upgradeBtn) upgradeBtn.onclick = () => { commitNode(BATTLE.row, BATTLE.col); render(upgradeScreen('map')); };
+  const upgradeContinueBtn = document.getElementById('upgradeContinueBtn');
+  if (upgradeContinueBtn) upgradeContinueBtn.onclick = () => {
+    const ret = upgradeContinueBtn.dataset.return;
+    if (ret === 'map') { if (RUN.currentRow === ROWS) endRun(true); else render(mapScreen()); }
+    else render(metaScreen());
+  };
+  const viewUpgradesBtn = document.getElementById('viewUpgradesBtn'); if (viewUpgradesBtn) viewUpgradesBtn.onclick = () => render(upgradeScreen('home'));
+  app.querySelectorAll('[data-levelup]').forEach(el => el.onclick = () => {
+    const u = UPGRADE_DEFS.find(x => x.id === el.dataset.levelup);
+    const lvl = META.levels[u.id];
+    if (lvl >= MAX_LEVEL) return;
+    const cost = upgradeCost(u, lvl);
+    if (META.points < cost) return;
+    META.points -= cost; META.levels[u.id]++;
+    saveMeta();
+    const ret = document.getElementById('upgradeContinueBtn')?.dataset.return || 'home';
+    render(upgradeScreen(ret));
+  });
+
+  const leaveShopBtn = document.getElementById('leaveShopBtn'); if (leaveShopBtn) leaveShopBtn.onclick = () => render(mapScreen());
+  const leaveBlacksmithBtn = document.getElementById('leaveBlacksmithBtn'); if (leaveBlacksmithBtn) leaveBlacksmithBtn.onclick = () => { BLACKSMITH_OPTIONS = null; render(mapScreen()); };
+  const leaveTreasureBtn = document.getElementById('leaveTreasureBtn'); if (leaveTreasureBtn) leaveTreasureBtn.onclick = () => render(mapScreen());
+  app.querySelectorAll('[data-forge]').forEach(el => el.onclick = () => {
+    const c = BLACKSMITH_OPTIONS[+el.dataset.forge];
+    boostCard(c.rank, c.suit);
+    render(blacksmithScreen());
+  });
+  app.querySelectorAll('[data-buy]').forEach(el => el.onclick = () => {
+    const cost = +el.dataset.cost;
+    if (RUN.chips < cost || RUN.ownedVehicles.length >= RUN.vehicleCap) return;
+    RUN.chips -= cost; RUN.ownedVehicles.push(el.dataset.buy); saveRun(); render(shopScreen());
+  });
+
+  const restBtn = document.getElementById('restBtn'); if (restBtn) restBtn.onclick = () => { RUN.health = Math.min(RUN.maxHealth, RUN.health + 30); saveRun(); render(mapScreen()); };
+  const backToMetaBtn = document.getElementById('backToMetaBtn'); if (backToMetaBtn) backToMetaBtn.onclick = () => render(metaScreen());
+  const startRunBtn = document.getElementById('startRunBtn'); if (startRunBtn) startRunBtn.onclick = () => { clearRunSave(); render(starterSelectScreen()); };
+  const continueRunBtn = document.getElementById('continueRunBtn'); if (continueRunBtn) continueRunBtn.onclick = () => { RUN = loadRunSave(); render(mapScreen()); };
+  app.querySelectorAll('[data-pick]').forEach(el => el.onclick = () => initRunWithStarter(el.dataset.pick));
+}
+
+/* ========== BOOT ========== */
+render(metaScreen());
+</script>
+</body>
+</html>

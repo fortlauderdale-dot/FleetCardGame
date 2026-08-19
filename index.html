@@ -24,10 +24,10 @@
   .wo-stripe{height:10px;background:repeating-linear-gradient(-45deg,var(--amber) 0 16px,var(--blue) 16px 32px)}
   .wo-body{padding:20px 22px 24px}
   .wo-eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--dim);text-transform:uppercase}
-  .wo h1{margin:6px 0 2px;font-size:clamp(28px,7vw,42px);line-height:.95;font-weight:800;text-transform:uppercase;color:var(--blue-dark)}
+  .wo h1{margin:6px 0 2px;font-size:clamp(28px,7vw,42px);line-height:.95;font-weight:800;color:var(--blue-dark)}
   .wo h1 em{font-style:normal;color:var(--amber)}
   .wo-sub{font-family:var(--mono);font-size:13px;color:var(--dim);margin:8px 0 14px}
-  .wo-btn{padding:13px 18px;font-size:17px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;
+  .wo-btn{padding:13px 18px;font-size:17px;font-weight:800;letter-spacing:.04em;
     background:var(--blue);color:#fff;border:3px solid var(--blue-dark);border-radius:8px;box-shadow:3px 3px 0 var(--blue-dark)}
   .wo-btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--blue-dark)}
   .wo-btn.amber{background:var(--amber);border-color:#c97600}
@@ -38,7 +38,7 @@
 
   .panel{background:var(--white);border:2px solid var(--blue-light);border-radius:10px;padding:14px;margin-bottom:12px}
   .hdr{display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-size:12px;
-    letter-spacing:.06em;text-transform:uppercase;color:var(--dim);margin-bottom:8px}
+    letter-spacing:.06em;color:var(--dim);margin-bottom:8px}
   .bar-wrap{height:14px;background:var(--blue-light);border-radius:7px;overflow:hidden;border:1px solid var(--blue-light)}
   .bar-fill{height:100%;transition:width .25s}
   .bar-hp{background:var(--red)} .bar-health{background:var(--blue)}
@@ -64,7 +64,7 @@
   .vslot.defense{border-color:#4a7fd8}
   .vslot.poison{border-color:#5a8a3a}
   .vslot .vname{font-weight:700;font-size:15px;color:var(--blue-dark)}
-  .vslot .vreq{font-family:var(--mono);font-size:10.5px;color:var(--dim);text-transform:uppercase;margin:3px 0}
+  .vslot .vreq{font-family:var(--mono);font-size:10.5px;color:var(--dim);margin:3px 0}
   .vslot .vcards{display:flex;gap:3px;flex-wrap:wrap;min-height:30px;margin-top:6px}
 
   .card{width:38px;height:52px;border-radius:5px;background:var(--white);color:var(--ink);display:flex;
@@ -86,7 +86,24 @@
     border-top:1px dashed var(--blue-light);padding-top:8px;margin-top:8px}
   .log div{padding:2px 0}
 
-  .mapwrap{position:relative;margin:0 auto}
+  .mapwrap{position:relative;margin:0 auto;background:#82b85a;border:3px solid #5f8f42;border-radius:14px;overflow:hidden;box-shadow:inset 0 0 0 2px #a8d477}
+  .maproad{position:absolute;left:0;right:0;height:56px;background:#b9b9b2;border-top:3px solid #9b9b95;border-bottom:3px solid #9b9b95;box-shadow:inset 0 7px 0 #c9c9c2,inset 0 -7px 0 #aaa9a2}
+  .maproad::after{content:'';position:absolute;left:0;right:0;top:25px;border-top:3px dashed #eee9c8}
+  .maproad-branch{position:absolute;height:12px;background:#b9b9b2;border-top:2px solid #9b9b95;border-bottom:2px solid #9b9b95;transform-origin:left center;z-index:1}
+  .mapnode{z-index:3}
+  .mapnode-wrap{z-index:4}
+  .map-sort{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 4px}
+  .sort-btn{padding:5px 8px;border:1px solid var(--blue-light);border-radius:6px;background:var(--bg);font-family:var(--mono);font-size:10px;color:var(--dim);cursor:pointer}
+  .sort-btn.active{border-color:var(--amber);color:var(--blue-dark);background:#fff8e9}
+  .cur{position:relative;display:flex;align-items:center;gap:5px;cursor:help}
+  .resource-icon{width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:13px;background:#fff;border:1px solid #ccd2e8;box-shadow:0 1px 2px #0002}
+  .cur.gem .resource-icon{background:#eee3ff}
+  .cur.fuel .resource-icon{background:#e0f5e8}
+  .cur.energy .resource-icon{background:#fff1cf}
+  .cur.chip .resource-icon{background:#fff0d8}
+  .cur.pts .resource-icon{background:#e8edfd}
+  .hand-limit{font-size:11px;color:var(--dim);font-family:var(--mono)}
+
   .mapnode-wrap{position:absolute;transform:translate(-50%,-50%)}
   .mapnode-wrap:hover .tooltip{display:block}
   .tooltip{display:none;position:absolute;bottom:120%;left:50%;transform:translateX(-50%);
@@ -219,29 +236,29 @@ const OPPONENT_TIERS = [
     { id: 'limo', name: 'Armored Limo', icon: '🚘', hp: 310, minTier: 2, drawRate: 2, turnLimit: 8 },
     { id: 'vault', name: 'Armored Vault Truck', icon: '🔐', hp: 300, locked: true, lockThreshold: 70, lockAttack: 60, drawRate: 2, turnLimit: 9 } ],
 ];
-const BOSS = { id: 'swat', name: 'SWAT Truck', icon: '🚔', hp: 480, minTier: 3, drawRate: 2, turnLimit: 10, boss: true };
+const BOSS = { id: 'swat', name: 'Swat Truck', icon: '🚔', hp: 480, minTier: 3, drawRate: 2, turnLimit: 10, boss: true };
 function revealFraction(row) { return [1.0, 0.8, 0.6, 0.4, 0.25, 0.1, 0][Math.min(row, 6)]; }
 
-/* ========== LEVELED UPGRADE TREE (permanent, up to 20 levels each) ========== */
-const UPGRADE_DEFS = [
+/* ========== LEVELED Upgrade TREE (permanent, up to 20 levels each) ========== */
+const Upgrade_DEFS = [
   { id: 'reveal',  label: 'Battle Scan',      desc: 'Start every battle with N extra opponent cards already revealed.', baseCost: 0,  inc: 15 },
   { id: 'chips',   label: 'Starting Coins',   desc: '+5 starting coins per level.',                                     baseCost: 10, inc: 8  },
   { id: 'fuel',    label: 'Starting Fuel',    desc: '+2 starting fuel per level.',                                      baseCost: 10, inc: 8  },
-  { id: 'hp',      label: 'Max HP',           desc: '+15 max health per level.',                                       baseCost: 30, inc: 15 },
+  { id: 'hp',      label: 'Max Hp',           desc: '+15 max health per level.',                                       baseCost: 30, inc: 15 },
   { id: 'fuelpen', label: 'Fuel Efficiency',  desc: 'Running out of fuel costs less score when it happens.',            baseCost: 40, inc: 15 },
   { id: 'garage',  label: 'Garage Expansion', desc: '+1 vehicle slot you can own at once.',                             baseCost: 25, inc: 12 },
   { id: 'hand',    label: 'Extra Draw',       desc: '+1 card drawn every turn per level.',                              baseCost: 20, inc: 15 },
   { id: 'range',   label: 'Scout Range',      desc: 'See one more row of the route map clearly ahead.',                 baseCost: 20, inc: 10 },
   { id: 'gem',     label: 'Gem Efficiency',   desc: '+1 card drawn per gem spent.',                                     baseCost: 20, inc: 12 },
 ];
-const MAX_LEVEL = 20;
+const Max_LEVEL = 20;
 function upgradeCost(def, atLevel) { return def.baseCost + atLevel * def.inc; } // cost to go from atLevel -> atLevel+1
 
 /* ========== META (persists forever) ========== */
 const META_KEY = 'fleetduel-meta-v4';
 function loadMeta() {
   try { const raw = localStorage.getItem(META_KEY); if (raw) return JSON.parse(raw); } catch (e) {}
-  const levels = {}; UPGRADE_DEFS.forEach(u => levels[u.id] = 0);
+  const levels = {}; Upgrade_DEFS.forEach(u => levels[u.id] = 0);
   return { points: 0, lifetimePoints: 0, highScore: 0, bestRun: 0, runsPlayed: 0, levels };
 }
 let META = loadMeta();
@@ -254,41 +271,76 @@ function saveRun() { try { localStorage.setItem(RUN_KEY, JSON.stringify(RUN)); }
 function loadRunSave() { try { const raw = localStorage.getItem(RUN_KEY); if (raw) return JSON.parse(raw); } catch (e) {} return null; }
 function clearRunSave() { try { localStorage.removeItem(RUN_KEY); } catch (e) {} }
 
-/* ========== MAP GENERATION (branching board, 6 rows + boss) ========== */
-const ROWS = 6;
+/* ========== MAP GENERATION (left-to-right road map) ========== */
+const ROWS = 6; // number of travel columns before the boss
 function pickNodeType() {
   const r = Math.random();
-  if (r < 0.50) return 'battle';
-  if (r < 0.68) return 'shop';
-  if (r < 0.80) return 'rest';
-  if (r < 0.90) return 'blacksmith';
+  if (r < 0.58) return 'battle';
+  if (r < 0.70) return 'shop';
+  if (r < 0.82) return 'rest';
+  if (r < 0.91) return 'blacksmith';
   return 'treasure';
 }
+
 function generateMap() {
+  // Most columns have two choices: the main road plus one side road.
+  // A third choice appears only occasionally, and the first column is always one battle.
   const nodes = [];
+  const edges = [];
+  const cols = [1, 2, 2, 3, 2, 2, 1];
+
   for (let r = 0; r < ROWS; r++) {
+    const count = cols[r];
     const tierPool = shuffle([...OPPONENT_TIERS[r]]);
     const row = [];
-    for (let c = 0; c < 3; c++) { const type = pickNodeType(); row.push(type === 'battle' ? { type, opponent: tierPool[c] } : { type }); }
+    for (let c = 0; c < count; c++) {
+      const type = (r === 0) ? 'battle' : pickNodeType();
+      row.push(type === 'battle'
+        ? { type, opponent: tierPool[c % tierPool.length] }
+        : { type });
+    }
     nodes.push(row);
   }
   nodes.push([{ type: 'battle', opponent: BOSS }]);
-  const edges = [];
-  for (let r = 0; r < ROWS; r++) {
-    const nextCols = (r === ROWS - 1) ? [0] : [0, 1, 2];
-    for (let c = 0; c < 3; c++) {
-      const candidates = [c - 1, c, c + 1].filter(x => nextCols.includes(x));
-      const primary = candidates[(Math.random() * candidates.length) | 0];
-      edges.push({ fromRow: r, fromCol: c, toRow: r + 1, toCol: primary });
-      if (r < ROWS - 1 && candidates.length > 1 && Math.random() < 0.35) {
-        const secondary = candidates[(Math.random() * candidates.length) | 0];
-        if (secondary !== primary) edges.push({ fromRow: r, fromCol: c, toRow: r + 1, toCol: secondary });
+
+  // Connect each column to the next. A main path runs through the middle;
+  // side roads peel off and reconnect rather than creating three starts.
+  for (let r = 0; r < nodes.length - 1; r++) {
+    const count = nodes[r].length;
+    const nextCount = nodes[r + 1].length;
+
+    for (let c = 0; c < count; c++) {
+      let targets;
+      if (count === 1) {
+        targets = nextCount === 1 ? [0] : [Math.floor(nextCount / 2)];
+        if (nextCount === 3) targets = [1, 0];
+      } else if (nextCount === 1) {
+        targets = [0];
+      } else if (count === 2 && nextCount === 2) {
+        targets = [c];
+        if (Math.random() < 0.25) targets.push(1 - c);
+      } else if (count === 2 && nextCount === 3) {
+        targets = c === 0 ? [0, 1] : [1, 2];
+      } else if (count === 3 && nextCount === 2) {
+        targets = c === 0 ? [0] : c === 1 ? [0, 1] : [1];
+        if (Math.random() < 0.25) targets.push(c === 0 ? 1 : c === 2 ? 1 : 0);
+      } else {
+        targets = [Math.min(c, nextCount - 1)];
+      }
+      for (const toCol of targets) {
+        if (!edges.some(e => e.fromRow === r && e.fromCol === c && e.toRow === r + 1 && e.toCol === toCol)) {
+          edges.push({ fromRow: r, fromCol: c, toRow: r + 1, toCol });
+        }
       }
     }
-  }
-  for (let r = 1; r <= ROWS; r++) {
-    const cols = r === ROWS ? [0] : [0, 1, 2];
-    for (const c of cols) if (!edges.some(e => e.toRow === r && e.toCol === c)) edges.push({ fromRow: r - 1, fromCol: Math.min(2, c), toRow: r, toCol: c });
+
+    // Guarantee every destination is reachable.
+    for (let toCol = 0; toCol < nextCount; toCol++) {
+      if (!edges.some(e => e.toRow === r + 1 && e.toCol === toCol)) {
+        const fromCol = Math.min(toCol, count - 1);
+        edges.push({ fromRow: r, fromCol, toRow: r + 1, toCol });
+      }
+    }
   }
   return { nodes, edges };
 }
@@ -297,8 +349,16 @@ function generateMap() {
 let RUN = null;
 let BATTLE = null;
 let selectedIdx = [];
+let handSort = 'suit';
 const FUEL_COST_PER_MOVE = 1;
 const ENERGY_PER_MOVE = 2;
+const Max_GEMS = 10;
+const Max_FUEL = 20;
+const Max_ENERGY = 20;
+const STARTING_GEMS = 3;
+const STARTING_FUEL = 10;
+const STARTING_HAND = 5;
+const CARDS_DRAWN_PER_TURN = 2;
 const BASE_GAS_PENALTY = 15;
 
 function initRunWithStarter(id) {
@@ -314,12 +374,12 @@ function initRunWithStarter(id) {
   render(mapScreen());
 }
 function availableNextNodes() {
-  if (RUN.currentRow === -1) return [{ row: 0, col: 0 }, { row: 0, col: 1 }, { row: 0, col: 2 }];
+  if (RUN.currentRow === -1) return [{ row: 0, col: 0 }];
   return RUN.map.edges.filter(e => e.fromRow === RUN.currentRow && e.fromCol === RUN.currentCol).map(e => ({ row: e.toRow, col: e.toCol }));
 }
 function payTravelCost() {
   RUN.fuel -= FUEL_COST_PER_MOVE;
-  RUN.energy += ENERGY_PER_MOVE;
+  RUN.energy = Math.min(RUN.maxEnergy, RUN.energy + ENERGY_PER_MOVE);
   if (RUN.fuel < 0) {
     RUN.fuel = 0;
     const reduction = META.levels.fuelpen * 2;
@@ -359,7 +419,7 @@ function rollTreasure() {
   const coins = 10 + Math.floor(Math.random() * 20);
   const fuel = 3 + Math.floor(Math.random() * 6);
   const gems = 1 + Math.floor(Math.random() * 3);
-  RUN.chips += coins; RUN.fuel += fuel; RUN.gems += gems;
+  RUN.chips += coins; RUN.fuel = Math.min(RUN.maxFuel, RUN.fuel + fuel); RUN.gems = Math.min(RUN.maxGems, RUN.gems + gems);
   saveRun();
   return { coins, fuel, gems };
 }
@@ -384,7 +444,7 @@ function startBattle(opponentDef, row, col) {
     playerArmor: 0, turn: 1, slots: {}, turnDiscard: [], logLines: [],
   };
   BATTLE.deck.forEach(c => { const b = RUN.cardBoosts.find(x => x.rank === c.rank && x.suit === c.suit); if (b) c.bonus = b.bonus; });
-  drawCards(RUN.handSize);
+  drawCards(STARTING_HAND);
   drawOpponentCards();
   for (let i = 0; i < META.levels.reveal; i++) {
     const hidden = BATTLE.oppPool.filter(c => !c.revealed);
@@ -395,10 +455,16 @@ function startBattle(opponentDef, row, col) {
   render(battleScreen());
 }
 function drawCards(n) {
-  // draws n NEW cards on top of whatever's already in hand — hand is never capped, so
-  // skipping a turn (or not playing everything) lets it grow, at the cost of not attacking.
-  for (let i = 0; i < n; i++) {
-    if (!BATTLE.deck.length) { if (!BATTLE.discard.length) break; BATTLE.deck = shuffle(BATTLE.discard); BATTLE.discard = []; }
+  // Draw only enough to reach the hand cap. This keeps turns moving without
+  // letting an unused hand grow indefinitely.
+  const room = Math.max(0, RUN.handMax - BATTLE.hand.length);
+  const amount = Math.min(n, room);
+  for (let i = 0; i < amount; i++) {
+    if (!BATTLE.deck.length) {
+      if (!BATTLE.discard.length) break;
+      BATTLE.deck = shuffle(BATTLE.discard);
+      BATTLE.discard = [];
+    }
     BATTLE.hand.push(BATTLE.deck.pop());
   }
 }
@@ -449,7 +515,7 @@ function scoutOpponent() {
 function drawWithGem() {
   if (RUN.gems < 1) return;
   RUN.gems -= 1;
-  const n = 1 + META.levels.gem;
+  const n = Math.min(1 + META.levels.gem, Math.max(0, RUN.handMax - BATTLE.hand.length));
   for (let i = 0; i < n; i++) {
     if (!BATTLE.deck.length) { if (!BATTLE.discard.length) break; BATTLE.deck = shuffle(BATTLE.discard); BATTLE.discard = []; }
     BATTLE.hand.push(BATTLE.deck.pop());
@@ -547,7 +613,7 @@ function resolveTurn() {
 
   BATTLE.turn++;
   if (BATTLE.turn > BATTLE.opponent.turnLimit) { winBattle(true); return; }
-  drawCards(RUN.handSize);
+  drawCards(CARDS_DRAWN_PER_TURN);
   drawOpponentCards();
   battleLog(`— Turn ${BATTLE.turn} of ${BATTLE.opponent.turnLimit} —`);
   render(battleScreen());
@@ -558,7 +624,7 @@ function winBattle(outlast) {
   const gemReward = 2 + BATTLE.row;
   const fuelReward = 3 + BATTLE.row;
   const pointsReward = Math.round((5 + BATTLE.row * 3) * scale);
-  RUN.chips += chipReward; RUN.gems += gemReward; RUN.fuel += fuelReward;
+  RUN.chips += chipReward; RUN.gems = Math.min(RUN.maxGems, RUN.gems + gemReward); RUN.fuel = Math.min(RUN.maxFuel, RUN.fuel + fuelReward);
   earnPoints(pointsReward);
   battleLog(outlast ? `You outlasted the ${BATTLE.opponent.name}!` : `${BATTLE.opponent.name} is done for!`);
   battleLog(`+${chipReward} coins, +${gemReward} gems, +${fuelReward} fuel, +${pointsReward} points.`);
@@ -573,73 +639,102 @@ function noticeHTML() {
 }
 function currencyBar() {
   return `<div class="currencies">
-    <div class="cur chip">🪙 ${RUN.chips} coins</div>
-    <div class="cur gem">💎 ${RUN.gems} gems</div>
-    <div class="cur fuel">⛽ ${RUN.fuel} fuel</div>
-    <div class="cur energy">⚡ ${RUN.energy} energy</div>
-    <div class="cur pts">★ ${META.points} points</div>
+    <div class="cur chip" title="Coins are your spending money. Use them to buy vehicles and scout opponents."><span class="resource-icon">🪙</span>${RUN.chips} coins</div>
+    <div class="cur gem" title="Gems let you draw an extra card during a battle. Maximum ${RUN.maxGems}."><span class="resource-icon">💎</span>${RUN.gems}/${RUN.maxGems} gems</div>
+    <div class="cur fuel" title="Fuel is spent when you travel to the next stop. Maximum ${RUN.maxFuel}."><span class="resource-icon">⛽</span>${RUN.fuel}/${RUN.maxFuel} fuel</div>
+    <div class="cur energy" title="Energy is gained by traveling and powers vehicle abilities. Maximum ${RUN.maxEnergy}."><span class="resource-icon">⚡</span>${RUN.energy}/${RUN.maxEnergy} energy</div>
+    <div class="cur pts" title="Points are permanent progression currency used for upgrades between runs."><span class="resource-icon">★</span>${META.points} points</div>
   </div>`;
 }
 
 function mapScreen() {
-  const rows = RUN.map.nodes;
-  const rowH = 66;
-  const totalH = rows.length * rowH;
-  const colX = [50, 150, 250];
+  const cols = RUN.map.nodes;
+  const colW = 112;
+  const rowY = [50, 118, 186];
+  const totalW = cols.length * colW;
+  const totalH = 236;
   const avail = availableNextNodes();
   const visibleRange = 1 + META.levels.range;
-  let svgLines = '';
-  for (const e of RUN.map.edges) {
-    const x1 = rows[e.fromRow].length === 1 ? 150 : colX[e.fromCol];
-    const y1 = e.fromRow * rowH + rowH / 2;
-    const x2 = rows[e.toRow].length === 1 ? 150 : colX[e.toCol];
-    const y2 = e.toRow * rowH + rowH / 2;
-    const traveled = RUN.path.some(p => p.row === e.fromRow && p.col === e.fromCol) && RUN.path.some(p => p.row === e.toRow && p.col === e.toCol);
-    svgLines += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${traveled ? '#ff9f1c' : '#c9d3f7'}" stroke-width="${traveled ? 3 : 2}"/>`;
+
+  const nodeX = (r, c) => r === cols.length - 1 ? (cols.length - 0.5) * colW : (r * colW + colW / 2);
+  const nodeY = (r, c) => {
+    if (cols[r].length === 1) return 118;
+    if (cols[r].length === 2) return c === 0 ? 82 : 154;
+    return rowY[c];
+  };
+
+  let roads = '';
+  for (let r = 0; r < cols.length - 1; r++) {
+    roads += `<div class="maproad" style="left:${r * colW}px;top:${nodeY(r,0) - 28}px;width:${colW + 4}px"></div>`;
+    for (const e of RUN.map.edges.filter(e => e.fromRow === r)) {
+      const x1 = nodeX(e.fromRow, e.fromCol);
+      const y1 = nodeY(e.fromRow, e.fromCol);
+      const x2 = nodeX(e.toRow, e.toCol);
+      const y2 = nodeY(e.toRow, e.toCol);
+      const dx = x2 - x1, dy = y2 - y1;
+      const len = Math.sqrt(dx * dx + dy * dy);
+      const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+      roads += `<div class="maproad-branch" style="left:${x1}px;top:${y1 - 6}px;width:${len}px;transform:rotate(${angle}deg)"></div>`;
+    }
   }
+
   let nodesHTML = '';
-  for (let r = 0; r < rows.length; r++) {
-    for (let c = 0; c < rows[r].length; c++) {
-      const node = rows[r][c];
-      const x = rows[r].length === 1 ? 150 : colX[c];
-      const y = r * rowH + rowH / 2;
+  for (let r = 0; r < cols.length; r++) {
+    for (let c = 0; c < cols[r].length; c++) {
+      const node = cols[r][c];
       const isDone = RUN.path.some(p => p.row === r && p.col === c);
       const isAvail = !isDone && avail.some(n => n.row === r && n.col === c);
       const withinSight = r <= RUN.currentRow + visibleRange;
       const cls = isDone ? 'done' : isAvail ? 'avail' : withinSight ? 'future' : 'farfuture';
       const showReal = isDone || isAvail || withinSight;
       const NODE_ICON = { shop: '🛒', rest: '🔧', blacksmith: '🛠️', treasure: '🎁' };
-      const NODE_TITLE = { shop: 'Shop', rest: 'Pit Stop', blacksmith: 'Tuning Garage', treasure: 'Treasure' };
+      const NODE_TITLE = { shop: 'Shop', rest: 'Pit stop', blacksmith: 'Tuning garage', treasure: 'Treasure' };
       const icon = !showReal ? '❔' : (node.type === 'battle' ? node.opponent.icon : NODE_ICON[node.type]);
       const title = !showReal ? 'Unscouted' : (node.type === 'battle' ? node.opponent.name : NODE_TITLE[node.type]);
       let tip;
-      if (!showReal) tip = 'Move closer to scout this stop';
+      if (!showReal) tip = 'Move closer to scout this stop.';
       else if (node.type === 'battle') {
         const o = node.opponent;
         tip = o.locked
-          ? `${o.name}<br>HP: ${o.hp}<br>🔒 Locks at ${o.lockThreshold}, hits for ${o.lockAttack} flat<br>Draws ${o.drawRate}/turn`
-          : `${o.name}<br>HP: ${o.hp}<br>Needs ${TIERS[o.minTier]}+ to attack<br>Draws ${o.drawRate}/turn`;
-      } else if (node.type === 'shop') tip = 'Buy vehicles with coins';
-      else if (node.type === 'rest') tip = 'Restore +30 Health';
-      else if (node.type === 'blacksmith') tip = 'Permanently upgrade one card';
-      else tip = 'Free coins, fuel, and gems';
-      nodesHTML += `<div class="mapnode-wrap" style="left:${(x / 300 * 100)}%;top:${y}px">
+          ? `${o.name}<br>Hp: ${o.hp}<br>Locks at ${o.lockThreshold}, then hits for ${o.lockAttack}.`
+          : `${o.name}<br>Hp: ${o.hp}<br>Needs ${TIERS[o.minTier]}+ to attack.`;
+      } else if (node.type === 'shop') tip = 'Buy vehicles with coins.';
+      else if (node.type === 'rest') tip = 'Restore 30 health.';
+      else if (node.type === 'blacksmith') tip = 'Permanently upgrade one card.';
+      else tip = 'Find coins, fuel, and gems.';
+      nodesHTML += `<div class="mapnode-wrap" style="left:${nodeX(r,c)}px;top:${nodeY(r,c)}px">
         <button class="mapnode ${cls}" ${isAvail ? `data-goto="${r}:${c}"` : 'disabled'}>${icon}</button>
         <div class="tooltip"><b>${title}</b><br>${tip}</div>
       </div>`;
     }
   }
+
   return `${noticeHTML()}
     <div class="panel">
       <div class="hdr"><span>Health: ${RUN.health}/${RUN.maxHealth}</span><span>Vehicles: ${RUN.ownedVehicles.length}/${RUN.vehicleCap}</span></div>
       ${currencyBar()}
-      <div class="hdr" style="margin-top:8px"><span>Route Map</span><span>Tap a glowing stop</span></div>
-      <div class="mapwrap" style="width:100%;height:${totalH}px">
-        <svg width="100%" height="${totalH}" viewBox="0 0 300 ${totalH}" preserveAspectRatio="none" style="position:absolute;left:0;top:0">${svgLines}</svg>
-        ${nodesHTML}
+      <div class="hdr" style="margin-top:8px"><span>Route map</span><span>Select your next stop</span></div>
+      <div style="overflow-x:auto;padding-bottom:6px">
+        <div class="mapwrap" style="width:${totalW}px;height:${totalH}px">
+          ${roads}
+          ${nodesHTML}
+        </div>
       </div>
     </div>
   `;
+}
+
+function sortHand(mode) {
+  handSort = mode;
+  const suitOrder = { '♦': 0, '♣': 1, '♥': 2, '♠': 3 };
+  BATTLE.hand.sort((a, b) => {
+    if (mode === 'rank') return b.rank - a.rank || suitOrder[a.suit] - suitOrder[b.suit];
+    return suitOrder[a.suit] - suitOrder[b.suit] || b.rank - a.rank;
+  });
+  selectedIdx = [];
+  BATTLE.slots = {};
+  BATTLE.turnDiscard = [];
+  render(battleScreen());
 }
 
 function battleScreen() {
@@ -695,7 +790,7 @@ function battleScreen() {
         <div class="bar-wrap"><div class="bar-fill bar-health" style="width:${healthPct}%"></div></div>
         <div class="note">${RUN.health} / ${RUN.maxHealth}${BATTLE.playerArmor ? ` &middot; 🛡️ ${BATTLE.playerArmor} armor` : ''}</div>
       </div>
-      <div class="vsMark">VS</div>
+      <div class="vsMark">Vs</div>
       <div class="duelSide opp"><div class="bigicon">${opp.icon}</div><h3>${opp.name}</h3>
         <div class="bar-wrap"><div class="bar-fill bar-hp" style="width:${hpPct}%"></div></div>
         <div class="note">${opp.hpNow} / ${opp.hp}${opp.poison ? ` &middot; ☣️ ${opp.poison} poison` : ''} &middot; Turn ${BATTLE.turn}/${opp.turnLimit}</div>
@@ -703,10 +798,15 @@ function battleScreen() {
     </div>
     <div class="duelBoard">
       <div class="panel">
-        <div class="hdr"><span>Your Hand</span><span>${BATTLE.hand.length - assignedIdx.size - BATTLE.turnDiscard.length} in hand</span></div>
+        <div class="hdr"><span>Your Hand</span><span>${BATTLE.hand.length - assignedIdx.size - BATTLE.turnDiscard.length}/${RUN.handMax}</span></div>
+        <div class="map-sort">
+          <span class="hand-limit">Sort:</span>
+          <button class="sort-btn ${handSort === 'suit' ? 'active' : ''}" id="sortSuitBtn">Suit, then value</button>
+          <button class="sort-btn ${handSort === 'rank' ? 'active' : ''}" id="sortRankBtn">Point value, then suit</button>
+        </div>
         <div class="hand">${handHTML}</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="wo-btn amber" id="gemDrawBtn" style="padding:8px 12px;font-size:12px" title="Spend 1 gem to immediately draw ${1 + META.levels.gem} extra card${1 + META.levels.gem > 1 ? 's' : ''}." ${RUN.gems < 1 ? 'disabled' : ''}>💎 Draw with Gem (-1)</button>
+          <button class="wo-btn amber" id="gemDrawBtn" style="padding:8px 12px;font-size:12px" title="Spend 1 gem to draw an extra card, up to your hand limit." ${RUN.gems < 1 ? 'disabled' : ''}>💎 Draw with Gem (-1)</button>
           <button class="wo-btn gray" id="discardSelectedBtn" style="padding:8px 12px;font-size:12px" title="Fold selected cards face-down instead of playing them. Still counts toward this turn's 2-card minimum." ${!selectedIdx.length ? 'disabled' : ''}>Discard Selected</button>
         </div>
         ${BATTLE.turnDiscard.length ? `<div class="note" style="margin-top:8px">Discarding this turn (tap to undo):</div><div class="hand">${discardStagedHTML}</div>` : ''}
@@ -863,14 +963,14 @@ function starterSelectScreen() {
 }
 
 function upgradeScreen(returnTo) {
-  const rows = UPGRADE_DEFS.map(u => {
+  const rows = Upgrade_DEFS.map(u => {
     const lvl = META.levels[u.id];
-    const maxed = lvl >= MAX_LEVEL;
+    const maxed = lvl >= Max_LEVEL;
     const cost = maxed ? 0 : upgradeCost(u, lvl);
     return `<div class="shopcard">
-      <div class="hdr"><span>${u.label} (Lv ${lvl}/${MAX_LEVEL})</span><span class="price">${maxed ? 'MAX' : cost + ' pts'}</span></div>
+      <div class="hdr"><span>${u.label} (Lv ${lvl}/${Max_LEVEL})</span><span class="price">${maxed ? 'Max' : cost + ' pts'}</span></div>
       <div class="note" style="margin:0 0 4px">${u.desc}</div>
-      <div class="levelbar"><i style="width:${(lvl / MAX_LEVEL) * 100}%"></i></div>
+      <div class="levelbar"><i style="width:${(lvl / Max_LEVEL) * 100}%"></i></div>
       ${maxed ? '' : `<button class="wo-btn amber" data-levelup="${u.id}" style="padding:8px 12px;font-size:13px" ${META.points < cost ? 'disabled' : ''}>Level Up</button>`}
     </div>`;
   }).join('');
@@ -922,6 +1022,8 @@ function render(html) {
   const scoutBtn = document.getElementById('scoutBtn'); if (scoutBtn) scoutBtn.onclick = scoutOpponent;
   const gemDrawBtn = document.getElementById('gemDrawBtn'); if (gemDrawBtn) gemDrawBtn.onclick = drawWithGem;
   const discardSelectedBtn = document.getElementById('discardSelectedBtn'); if (discardSelectedBtn) discardSelectedBtn.onclick = markSelectedForDiscard;
+  const sortSuitBtn = document.getElementById('sortSuitBtn'); if (sortSuitBtn) sortSuitBtn.onclick = () => sortHand('suit');
+  const sortRankBtn = document.getElementById('sortRankBtn'); if (sortRankBtn) sortRankBtn.onclick = () => sortHand('rank');
   app.querySelectorAll('[data-undiscard]').forEach(el => el.onclick = () => unmarkDiscard(+el.dataset.undiscard));
 
   app.querySelectorAll('[data-goto]').forEach(el => el.onclick = () => { const [r, c] = el.dataset.goto.split(':').map(Number); selectNode(r, c); });
@@ -942,9 +1044,9 @@ function render(html) {
   };
   const viewUpgradesBtn = document.getElementById('viewUpgradesBtn'); if (viewUpgradesBtn) viewUpgradesBtn.onclick = () => render(upgradeScreen('home'));
   app.querySelectorAll('[data-levelup]').forEach(el => el.onclick = () => {
-    const u = UPGRADE_DEFS.find(x => x.id === el.dataset.levelup);
+    const u = Upgrade_DEFS.find(x => x.id === el.dataset.levelup);
     const lvl = META.levels[u.id];
-    if (lvl >= MAX_LEVEL) return;
+    if (lvl >= Max_LEVEL) return;
     const cost = upgradeCost(u, lvl);
     if (META.points < cost) return;
     META.points -= cost; META.levels[u.id]++;
@@ -970,7 +1072,19 @@ function render(html) {
   const restBtn = document.getElementById('restBtn'); if (restBtn) restBtn.onclick = () => { RUN.health = Math.min(RUN.maxHealth, RUN.health + 30); saveRun(); render(mapScreen()); };
   const backToMetaBtn = document.getElementById('backToMetaBtn'); if (backToMetaBtn) backToMetaBtn.onclick = () => render(metaScreen());
   const startRunBtn = document.getElementById('startRunBtn'); if (startRunBtn) startRunBtn.onclick = () => { clearRunSave(); render(starterSelectScreen()); };
-  const continueRunBtn = document.getElementById('continueRunBtn'); if (continueRunBtn) continueRunBtn.onclick = () => { RUN = loadRunSave(); render(mapScreen()); };
+  const continueRunBtn = document.getElementById('continueRunBtn'); if (continueRunBtn) continueRunBtn.onclick = () => {
+    RUN = loadRunSave();
+    RUN.maxGems = RUN.maxGems || MAX_GEMS;
+    RUN.maxFuel = RUN.maxFuel || MAX_FUEL;
+    RUN.maxEnergy = RUN.maxEnergy || MAX_ENERGY;
+    RUN.gems = Math.min(RUN.gems ?? STARTING_GEMS, RUN.maxGems);
+    RUN.fuel = Math.min(RUN.fuel ?? STARTING_FUEL, RUN.maxFuel);
+    RUN.energy = Math.min(RUN.energy ?? 0, RUN.maxEnergy);
+    RUN.handMax = RUN.handMax || STARTING_HAND + (META.levels.hand || 0);
+    RUN.handSize = RUN.handSize || STARTING_HAND;
+    saveRun();
+    render(mapScreen());
+  };
   app.querySelectorAll('[data-pick]').forEach(el => el.onclick = () => initRunWithStarter(el.dataset.pick));
 }
 

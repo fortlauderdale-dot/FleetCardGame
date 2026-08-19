@@ -367,14 +367,22 @@ function handDrawAmount() { return STARTING_DRAW + (META.levels.hand || 0); }
 function handMaxAmount() { return STARTING_HAND + (META.levels.hand || 0) * HAND_CAPACITY_PER_LEVEL; }
 const BASE_GAS_PENALTY = 15;
 
+// Configuration Constants
+const MAX_GEMS = 10;
+const MAX_FUEL = 20;
+const MAX_ENERGY = 20; 
+
 function initRunWithStarter(id) {
-  const L = META.levels;
-  RUN = {
-    map: generateMap(), currentRow: -1, currentCol: null, path: [],
-    health: 100 + L.hp * 15, maxHealth: 100 + L.hp * 15,
-    chips: 15 + L.chips * 5, gems: 3, fuel: 10 + L.fuel * 2, energy: 0,
-    ownedVehicles: [id], vehicleCap: 2 + L.garage, handSize: handDrawAmount(), handMax: handMaxAmount(),
-    maxGems: MAX_GEMS, maxFuel: MAX_FUEL, maxEnergy: MAX_ENERGY,
+const L = META.levels;
+RUN = {
+map: generateMap(), currentRow: -1, currentCol: null, path: [],
+health: 100 + L.hp * 15, maxHealth: 100 + L.hp * 15,
+chips: 15 + L.chips * 5, gems: 3, fuel: 10 + L.fuel * 2, energy: 0,
+ownedVehicles: [id], vehicleCap: 2 + L.garage, handSize: handDrawAmount(), handMax: handMaxAmount(),
+maxGems: MAX_GEMS, maxFuel: MAX_FUEL, maxEnergy: MAX_ENERGY,
+scoreThisRun: 0, lastNotice: null, cardBoosts: [], adminPairBonus: 0.5,
+};
+}
     scoreThisRun: 0, lastNotice: null, cardBoosts: [], adminPairBonus: 0.5,
   };
   saveRun();

@@ -401,7 +401,7 @@ const loss = Math.max(3, BASE_GAS_PENALTY - reduction);
 META.points = Math.max(0, META.points - loss);
 RUN.scoreThisRun = Math.max(0, RUN.scoreThisRun - loss);
 saveMeta();
-RUN.lastNotice = Ran out of fuel — lost ${loss} points getting towed to the next stop.;
+    RUN.lastNotice = `Ran out of fuel — lost ${loss} points getting towed to the next stop.`;
 }
 } 
 

@@ -382,33 +382,39 @@ ownedVehicles: [id], vehicleCap: 2 + L.garage, handSize: handDrawAmount(), handM
 maxGems: MAX_GEMS, maxFuel: MAX_FUEL, maxEnergy: MAX_ENERGY,
 scoreThisRun: 0, lastNotice: null, cardBoosts: [], adminPairBonus: 0.5,
 };
-}
-    scoreThisRun: 0, lastNotice: null, cardBoosts: [], adminPairBonus: 0.5,
-  };
-  saveRun();
-  render(mapScreen());
-}
+saveRun();
+render(mapScreen());
+} 
+
 function availableNextNodes() {
-  if (RUN.currentRow === -1) return [{ row: 0, col: 0 }];
-  return RUN.map.edges.filter(e => e.fromRow === RUN.currentRow && e.fromCol === RUN.currentCol).map(e => ({ row: e.toRow, col: e.toCol }));
-}
+if (RUN.currentRow === -1) return [{ row: 0, col: 0 }];
+return RUN.map.edges.filter(e => e.fromRow === RUN.currentRow && e.fromCol === RUN.currentCol).map(e => ({ row: e.toRow, col: e.toCol }));
+} 
+
 function payTravelCost() {
-  RUN.fuel -= FUEL_COST_PER_MOVE;
-  RUN.energy = Math.min(RUN.maxEnergy, RUN.energy + ENERGY_PER_MOVE);
-  if (RUN.fuel < 0) {
-    RUN.fuel = 0;
-    const reduction = META.levels.fuelpen * 2;
-    const loss = Math.max(3, BASE_GAS_PENALTY - reduction);
-    META.points = Math.max(0, META.points - loss);
-    RUN.scoreThisRun = Math.max(0, RUN.scoreThisRun - loss);
-    saveMeta();
-    RUN.lastNotice = `Ran out of fuel — lost ${loss} points getting towed to the next stop.`;
-  }
+RUN.fuel -= FUEL_COST_PER_MOVE;
+RUN.energy = Math.min(RUN.maxEnergy, RUN.energy + ENERGY_PER_MOVE);
+if (RUN.fuel < 0) {
+RUN.fuel = 0;
+const reduction = META.levels.fuelpen * 2;
+const loss = Math.max(3, BASE_GAS_PENALTY - reduction);
+META.points = Math.max(0, META.points - loss);
+RUN.scoreThisRun = Math.max(0, RUN.scoreThisRun - loss);
+saveMeta();
+RUN.lastNotice = Ran out of fuel — lost ${loss} points getting towed to the next stop.;
 }
-function commitNode(row, col) { RUN.currentRow = row; RUN.currentCol = col; RUN.path.push({ row, col }); saveRun(); }
+} 
+
+function commitNode(row, col) {
+RUN.currentRow = row;
+RUN.currentCol = col;
+RUN.path.push({ row, col });
+saveRun();
+} 
+
 function selectNode(row, col) {
-  payTravelCost();
-  const node = RUN.map.nodes[row][col];
+payTravelCost();
+const node = RUN.map.nodes[row][col];
   if (node.type === 'battle') { startBattle(node.opponent, row, col); return; }
   commitNode(row, col);
   if (node.type === 'shop') render(shopScreen());

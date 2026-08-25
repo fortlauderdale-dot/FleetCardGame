@@ -113,6 +113,20 @@
   .pickcard.locked .picon{filter:grayscale(1)}
   .levelbar{height:8px;background:var(--blue-light);border-radius:4px;overflow:hidden;margin:6px 0}
   .levelbar i{display:block;height:100%;background:var(--gold)}
+
+  .ic{width:1em;height:1em;vertical-align:-0.15em;display:inline-block}
+  .vart{display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;line-height:1;flex-shrink:0}
+  .vart img{width:100%;height:100%;object-fit:contain;display:block}
+  .fleetgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  @media (max-width:700px){ .fleetgrid{grid-template-columns:1fr} }
+  .vslot[draggable]{transition:box-shadow .12s,border-color .12s}
+  .vslot.dragover{box-shadow:0 0 0 3px var(--amber);border-color:var(--amber)}
+  .card[draggable]{cursor:grab}
+  .card.dragging{opacity:.4}
+  .attackChip{display:inline-block;margin-top:6px;padding:5px 10px;font-size:11px;font-weight:800;letter-spacing:.04em;
+    background:var(--green);color:#fff;border-radius:6px;cursor:pointer;border:2px solid #1e8a4f}
+  .attackChip:active{transform:translate(1px,1px)}
+  .resourceRow{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 </style>
 </head>
 <body>
@@ -172,21 +186,51 @@ function bestFiveFromPool(pool) {
 }
 function damageFor(cards, mult) { return Math.round(cards.reduce((a, c) => a + cardValue(c.rank) + (c.bonus || 0), 0) * mult); }
 
+/* ========== ICON SYSTEM (no emoji) ========== */
+// Small inline SVGs for currencies and UI glyphs, so nothing depends on an external image file.
+const ICON = {
+  coin:   `<svg viewBox="0 0 24 24" class="ic"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><text x="12" y="16" text-anchor="middle" font-size="11" font-family="Arial" fill="currentColor">$</text></svg>`,
+  gem:    `<svg viewBox="0 0 24 24" class="ic"><path d="M4 9l4-6h8l4 6-10 12z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M4 9h16M8 3l2 6-2 12M16 3l-2 6 2 12" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>`,
+  fuel:   `<svg viewBox="0 0 24 24" class="ic"><rect x="4" y="4" width="11" height="17" rx="1.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 8h3" stroke="currentColor" stroke-width="2"/><path d="M15 8h2a2 2 0 0 1 2 2v7a1.5 1.5 0 0 0 3 0v-5l-2-3" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>`,
+  energy: `<svg viewBox="0 0 24 24" class="ic"><path d="M13 2 4 14h6l-1 8 9-12h-6z" fill="currentColor"/></svg>`,
+  star:   `<svg viewBox="0 0 24 24" class="ic"><path d="M12 2l2.9 6.6 7.1.7-5.4 4.8 1.6 7-6.2-3.7L5.8 21l1.6-7-5.4-4.8 7.1-.7z" fill="currentColor"/></svg>`,
+  shield: `<svg viewBox="0 0 24 24" class="ic"><path d="M12 2l8 3v6c0 5-3.5 8.5-8 11-4.5-2.5-8-6-8-11V5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>`,
+  poison: `<svg viewBox="0 0 24 24" class="ic"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="2.4" fill="currentColor"/><circle cx="7.3" cy="9" r="1.5" fill="currentColor"/><circle cx="16.7" cy="9" r="1.5" fill="currentColor"/><circle cx="7.3" cy="15" r="1.5" fill="currentColor"/><circle cx="16.7" cy="15" r="1.5" fill="currentColor"/></svg>`,
+  lock:   `<svg viewBox="0 0 24 24" class="ic"><rect x="5" y="11" width="14" height="10" rx="1.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4" fill="none" stroke="currentColor" stroke-width="2"/></svg>`,
+  gift:   `<svg viewBox="0 0 24 24" class="ic"><rect x="3" y="9" width="18" height="12" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 9h18M12 9v12" stroke="currentColor" stroke-width="2"/><path d="M12 9c-2-4-8-4-8 0M12 9c2-4 8-4 8 0" fill="none" stroke="currentColor" stroke-width="2"/></svg>`,
+  wrench: `<svg viewBox="0 0 24 24" class="ic"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2-2z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>`,
+  hammer: `<svg viewBox="0 0 24 24" class="ic"><path d="M3 21l6-6M13 8l3-3 3 3-3 3M9 12l-3 3 3 3 3-3-3-3z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>`,
+  cart:   `<svg viewBox="0 0 24 24" class="ic"><path d="M3 4h2l2 11h11l2-8H6" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="9" cy="19" r="1.4" fill="currentColor"/><circle cx="16" cy="19" r="1.4" fill="currentColor"/></svg>`,
+  castle: `<svg viewBox="0 0 24 24" class="ic"><path d="M4 21V9l2-2v2h2V7l2-2 2 2v2h2V7l2 2v12z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>`,
+  fog:    `<svg viewBox="0 0 24 24" class="ic"><path d="M12 7a4 4 0 1 0-3.6 5.8M4 15h16M4 19h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`,
+  truck:  `<svg viewBox="0 0 24 24" class="ic"><path d="M2 6h11v10H2zM13 10h5l3 3v3h-8z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="6" cy="18" r="1.6" fill="currentColor"/><circle cx="17" cy="18" r="1.6" fill="currentColor"/></svg>`,
+};
+// Renders vehicle/opponent art. If `entity.image` fails to load (because the PNG hasn't been
+// added yet), it swaps itself out for entity.icon so nothing ever shows a broken image icon.
+function art(entity, px) {
+  const fb = (entity && entity.icon) || ICON.truck;
+  if (entity && entity.image) {
+    return `<span class="vart" style="width:${px}px;height:${px}px;font-size:${px}px" data-fb="${fb.replace(/"/g,'&quot;')}"><img src="${entity.image}" alt="" onerror="this.outerHTML=this.closest('.vart').dataset.fb"></span>`;
+  }
+  return `<span class="vart" style="width:${px}px;height:${px}px;font-size:${px}px">${fb}</span>`;
+}
+const PLAYER_ART = { name: 'Your Fleet', icon: '🚚', image: 'vehicles/work-truck.png' };
+
 /* ========== PLAYER VEHICLE CATALOG ========== */
 const VEHICLES = {
-  sidebyside: { id: 'sidebyside', name: 'Golf Cart', image: 'vehicles/golf-cart.png', slot: 1, minTier: 0, cost: 0, note: 'Any 1 card attack.' },
-  admin:      { id: 'admin',      name: 'Admin Vehicle',  icon: '🚗', slot: 2, minTier: 0, cost: 0,  note: 'Up to 2 cards. Damage +50% if Pair.' },
-  interstate: { id: 'interstate', name: 'Interstate Racer', icon: '🏁', slot: 4, minTier: 4, cost: 0, note: 'Needs a Straight.' },
-  convoy:     { id: 'convoy',     name: 'Armored Convoy',   icon: '🚛', slot: 4, minTier: 5, cost: 0, note: 'Needs a Flush.' },
-  garbage: { id: 'garbage', name: 'Garbage Truck',   icon: '🗑️', slot: 3, minTier: 3, cost: 45,  note: 'Needs Three of a Kind.' },
-  sweeper: { id: 'sweeper', name: 'Street Sweeper',  icon: '🧹', slot: 3, minTier: 1, cost: 35,  note: 'Needs a Pair, using up to 3 cards.' },
-  bucket:  { id: 'bucket',  name: 'Bucket Truck',    icon: '🪜', slot: 4, minTier: 4, cost: 45,  note: 'Needs a Straight.' },
-  tractor: { id: 'tractor', name: 'Beach Tractor',   icon: '🚜', slot: 3, minTier: 3, cost: 40,  note: 'Needs Three of a Kind.' },
-  pump:    { id: 'pump',    name: 'Vac Truck',       icon: '🚰', slot: 4, minTier: 5, cost: 55, note: 'Needs a Flush.' },
-  evvan:   { id: 'evvan',   name: 'Electric Van',    icon: '🔋', slot: 2, minTier: 1, cost: 50,  note: 'Needs a Pair. Refunds one card to your hand.' },
-  armor:   { id: 'armor',   name: 'Armored Escort',  icon: '🛡️', slot: 2, minTier: 1, cost: 45,  note: 'Needs a Pair. Blocks damage instead of dealing it.', kind: 'defense' },
-  hazmat:  { id: 'hazmat',  name: 'Hazmat Truck',    icon: '☣️', slot: 3, minTier: 3, cost: 55,  note: 'Needs Three of a Kind. Poisons instead of hitting directly.', kind: 'poison' },
-  tow:     { id: 'tow',     name: 'Tow Truck',       icon: '🚨', slot: 2, minTier: 1, cost: 60,  note: 'Needs a Pair. Ability: spend 3 Energy to stun them a turn.', ability: { cost: 3, name: 'Stun' } },
+  sidebyside: { id: 'sidebyside', name: 'Golf Cart', icon: '🛺', image: 'vehicles/golf-cart.png', slot: 1, minTier: 0, cost: 0, note: 'Any 1 card attacks.' },
+  admin:      { id: 'admin',      name: 'Admin Vehicle',  icon: '🚗', image: 'vehicles/admin-vehicle.png', slot: 2, minTier: 0, cost: 0,  note: 'Up to 2 cards. Damage +50% if Pair.' },
+  interstate: { id: 'interstate', name: 'Interstate Racer', icon: '🏁', image: 'vehicles/interstate-racer.png', slot: 4, minTier: 4, cost: 0, note: 'Needs a Straight.' },
+  convoy:     { id: 'convoy',     name: 'Armored Convoy',   icon: '🚛', image: 'vehicles/armored-convoy.png', slot: 4, minTier: 5, cost: 0, note: 'Needs a Flush.' },
+  garbage: { id: 'garbage', name: 'Garbage Truck',   icon: '🗑️', image: 'vehicles/garbage-truck.png', slot: 3, minTier: 3, cost: 45,  note: 'Needs Three of a Kind.' },
+  sweeper: { id: 'sweeper', name: 'Street Sweeper',  icon: '🧹', image: 'vehicles/street-sweeper.png', slot: 3, minTier: 1, cost: 35,  note: 'Needs a Pair, using up to 3 cards.' },
+  bucket:  { id: 'bucket',  name: 'Bucket Truck',    icon: '🪜', image: 'vehicles/bucket-truck.png', slot: 4, minTier: 4, cost: 45,  note: 'Needs a Straight.' },
+  tractor: { id: 'tractor', name: 'Beach Tractor',   icon: '🚜', image: 'vehicles/beach-tractor.png', slot: 3, minTier: 3, cost: 40,  note: 'Needs Three of a Kind.' },
+  pump:    { id: 'pump',    name: 'Vac Truck',       icon: '🚰', image: 'vehicles/vac-truck.png', slot: 4, minTier: 5, cost: 55, note: 'Needs a Flush.' },
+  evvan:   { id: 'evvan',   name: 'Electric Van',    icon: '🔋', image: 'vehicles/electric-van.png', slot: 2, minTier: 1, cost: 50,  note: 'Needs a Pair. Refunds one card to your hand.' },
+  armor:   { id: 'armor',   name: 'Armored Escort',  icon: '🛡️', image: 'vehicles/armored-escort.png', slot: 2, minTier: 1, cost: 45,  note: 'Needs a Pair. Blocks damage instead of dealing it.', kind: 'defense' },
+  hazmat:  { id: 'hazmat',  name: 'Hazmat Truck',    icon: '☣️', image: 'vehicles/hazmat-truck.png', slot: 3, minTier: 3, cost: 55,  note: 'Needs Three of a Kind. Poisons instead of hitting directly.', kind: 'poison' },
+  tow:     { id: 'tow',     name: 'Tow Truck',       icon: '🚨', image: 'vehicles/tow-truck.png', slot: 2, minTier: 1, cost: 60,  note: 'Needs a Pair. Ability: spend 3 Energy to stun them a turn.', ability: { cost: 3, name: 'Stun' } },
 };
 const STARTERS = ['sidebyside', 'admin', 'interstate', 'convoy'];
 function isStarterUnlocked(id) {
@@ -203,28 +247,28 @@ function starterLockNote(id) {
 
 /* ========== OPPONENT ROSTER (ranked bad -> good, 3 per tier, plus boss) ========== */
 const OPPONENT_TIERS = [
-  [ { id: 'vespa', name: 'Rusty Vespa', icon: '🛵', hp: 35, minTier: 0, drawRate: 1, turnLimit: 6 },
-    { id: 'cart', name: 'Beat-Up Golf Cart', icon: '⛳', hp: 40, minTier: 0, drawRate: 1, turnLimit: 6 },
-    { id: 'bike', name: 'Wobbly Bicycle', icon: '🚲', hp: 45, minTier: 0, drawRate: 1, turnLimit: 6 } ],
-  [ { id: 'smart', name: 'Smart Car', icon: '🚗', hp: 50, minTier: 1, drawRate: 1, turnLimit: 6 },
-    { id: 'hatch', name: 'Beater Hatchback', icon: '🚙', hp: 55, minTier: 1, drawRate: 1, turnLimit: 6 },
-    { id: 'prius', name: 'Rideshare Prius', icon: '🔋', hp: 60, minTier: 0, drawRate: 1, turnLimit: 6 } ],
-  [ { id: 'sedan', name: 'Sedan', icon: '🚘', hp: 65, minTier: 1, drawRate: 1, turnLimit: 7 },
-    { id: 'minivan', name: 'Minivan', icon: '👨‍👩‍👧', hp: 70, minTier: 1, drawRate: 2, turnLimit: 7 },
-    { id: 'delivery', name: 'Delivery Van', icon: '📦', hp: 75, minTier: 2, drawRate: 1, turnLimit: 7 } ],
-  [ { id: 'pickup', name: 'Pickup Truck', icon: '🛻', hp: 80, minTier: 2, drawRate: 1, turnLimit: 7 },
-    { id: 'muscle', name: 'Muscle Car', icon: '🔥', hp: 85, minTier: 3, drawRate: 1, turnLimit: 7 },
-    { id: 'jeep', name: 'Off-Road Jeep', icon: '🌲', hp: 90, minTier: 1, drawRate: 2, turnLimit: 7 },
-    { id: 'bombsquad', name: 'Bomb Squad Truck', icon: '💣', hp: 95, locked: true, lockThreshold: 45, lockAttack: 39, drawRate: 2, turnLimit: 8 } ],
-  [ { id: 'sportscar', name: 'Sports Car', icon: '🏎️', hp: 100, minTier: 3, drawRate: 2, turnLimit: 8 },
-    { id: 'moto', name: 'Motorcycle Gang', icon: '🏍️', hp: 105, minTier: 2, drawRate: 2, turnLimit: 8 },
-    { id: 'armoredvan', name: 'Armored Van', icon: '🚐', hp: 110, minTier: 1, drawRate: 1, turnLimit: 8 } ],
-  [ { id: 'suv', name: 'Luxury SUV', icon: '🚙', hp: 115, minTier: 3, drawRate: 2, turnLimit: 8 },
-    { id: 'exotic', name: 'Exotic Supercar', icon: '🏁', hp: 120, minTier: 4, drawRate: 2, turnLimit: 8 },
-    { id: 'limo', name: 'Armored Limo', icon: '🚘', hp: 125, minTier: 2, drawRate: 2, turnLimit: 8 },
-    { id: 'vault', name: 'Armored Vault Truck', icon: '🔐', hp: 130, locked: true, lockThreshold: 70, lockAttack: 60, drawRate: 2, turnLimit: 9 } ],
+  [ { id: 'vespa', name: 'Rusty Vespa', icon: '🛵', image: 'vehicles/rusty-vespa.png', hp: 35, minTier: 0, drawRate: 1, turnLimit: 6 },
+    { id: 'cart', name: 'Beat-Up Golf Cart', icon: '⛳', image: 'vehicles/golf-cart.png', hp: 40, minTier: 0, drawRate: 1, turnLimit: 6 },
+    { id: 'bike', name: 'Wobbly Bicycle', icon: '🚲', image: 'vehicles/wobbly-bicycle.png', hp: 45, minTier: 0, drawRate: 1, turnLimit: 6 } ],
+  [ { id: 'smart', name: 'Smart Car', icon: '🚗', image: 'vehicles/smart-car.png', hp: 50, minTier: 1, drawRate: 1, turnLimit: 6 },
+    { id: 'hatch', name: 'Beater Hatchback', icon: '🚙', image: 'vehicles/beater-hatchback.png', hp: 55, minTier: 1, drawRate: 1, turnLimit: 6 },
+    { id: 'prius', name: 'Rideshare Prius', icon: '🔋', image: 'vehicles/rideshare-prius.png', hp: 60, minTier: 0, drawRate: 1, turnLimit: 6 } ],
+  [ { id: 'sedan', name: 'Sedan', icon: '🚘', image: 'vehicles/sedan.png', hp: 65, minTier: 1, drawRate: 1, turnLimit: 7 },
+    { id: 'minivan', name: 'Minivan', icon: '🚐', image: 'vehicles/minivan.png', hp: 70, minTier: 1, drawRate: 2, turnLimit: 7 },
+    { id: 'delivery', name: 'Delivery Van', icon: '📦', image: 'vehicles/delivery-van.png', hp: 75, minTier: 2, drawRate: 1, turnLimit: 7 } ],
+  [ { id: 'pickup', name: 'Pickup Truck', icon: '🛻', image: 'vehicles/pickup-truck.png', hp: 80, minTier: 2, drawRate: 1, turnLimit: 7 },
+    { id: 'muscle', name: 'Muscle Car', icon: '🔥', image: 'vehicles/muscle-car.png', hp: 85, minTier: 3, drawRate: 1, turnLimit: 7 },
+    { id: 'jeep', name: 'Off-Road Jeep', icon: '🌲', image: 'vehicles/off-road-jeep.png', hp: 90, minTier: 1, drawRate: 2, turnLimit: 7 },
+    { id: 'bombsquad', name: 'Bomb Squad Truck', icon: '💣', image: 'vehicles/bomb-squad-truck.png', hp: 95, locked: true, lockThreshold: 45, lockAttack: 39, drawRate: 2, turnLimit: 8 } ],
+  [ { id: 'sportscar', name: 'Sports Car', icon: '🏎️', image: 'vehicles/sports-car.png', hp: 100, minTier: 3, drawRate: 2, turnLimit: 8 },
+    { id: 'moto', name: 'Motorcycle Gang', icon: '🏍️', image: 'vehicles/motorcycle-gang.png', hp: 105, minTier: 2, drawRate: 2, turnLimit: 8 },
+    { id: 'armoredvan', name: 'Armored Van', icon: '🚐', image: 'vehicles/armored-van.png', hp: 110, minTier: 1, drawRate: 1, turnLimit: 8 } ],
+  [ { id: 'suv', name: 'Luxury SUV', icon: '🚙', image: 'vehicles/luxury-suv.png', hp: 115, minTier: 3, drawRate: 2, turnLimit: 8 },
+    { id: 'exotic', name: 'Exotic Supercar', icon: '🏁', image: 'vehicles/exotic-supercar.png', hp: 120, minTier: 4, drawRate: 2, turnLimit: 8 },
+    { id: 'limo', name: 'Armored Limo', icon: '🚘', image: 'vehicles/armored-limo.png', hp: 125, minTier: 2, drawRate: 2, turnLimit: 8 },
+    { id: 'vault', name: 'Armored Vault Truck', icon: '🔐', image: 'vehicles/armored-vault-truck.png', hp: 130, locked: true, lockThreshold: 70, lockAttack: 60, drawRate: 2, turnLimit: 9 } ],
 ];
-const BOSS = { id: 'swat', name: 'SWAT Truck', icon: '🚔', hp: 145, minTier: 3, drawRate: 2, turnLimit: 10, boss: true, attackInfo: 'Attack: uses its best poker hand for about 10-35 damage, depending on the hand.' };
+const BOSS = { id: 'swat', name: 'SWAT Truck', icon: '🚔', image: 'vehicles/swat-truck.png', hp: 145, minTier: 3, drawRate: 2, turnLimit: 10, boss: true, attackInfo: 'Attack: uses its best poker hand for about 10-35 damage, depending on the hand.' };
 function revealFraction(row) { return [1.0, 0.8, 0.6, 0.4, 0.25, 0.1, 0][Math.min(row, 6)]; }
 
 /* ========== LEVELED UPGRADE TREE (permanent, up to 20 levels each) ========== */
@@ -345,7 +389,7 @@ function initRunWithStarter(id) {
     map: generateMap(), currentRow: -1, currentCol: null, path: [],
     health: 100 + L.hp * 15, maxHealth: 100 + L.hp * 15,
     chips: 40 + L.chips * 8, fuel: Math.min(20, 10 + L.fuel * 2), energy: 0,
-    ownedVehicles: [id], vehicleCap: 2 + L.garage, handSize: 5 + (L.handCap || 0) * 2, drawPerTurn: 2 + (L.draw || 0), gems: 3, maxGems: 10, maxFuel: 20, maxEnergy: 20,
+    ownedVehicles: [id], vehicleCap: 2 + L.garage, handSize: 7 + (L.handCap || 0) * 2, drawPerTurn: 2 + (L.draw || 0), gems: 3, maxGems: 10, maxFuel: 20, maxEnergy: 20,
     scoreThisRun: 0, lastNotice: null, cardBoosts: [],
   };
   saveRun();
@@ -383,8 +427,8 @@ function selectNode(row, col) {
 
 let CASTLE_STATE = null;
 
-const CASTLE_FIRST = { id:'castleGuard', name:'Castle Guard', icon:'🛡️', hp:75, minTier:2, drawRate:1, turnLimit:7 };
-const CASTLE_SECOND = { id:'castleChampion', name:'Castle Champion', icon:'🏰', hp:105, minTier:3, drawRate:2, turnLimit:8 };
+const CASTLE_FIRST = { id:'castleGuard', name:'Castle Guard', icon:'🛡️', image: 'vehicles/castle-guard.png', hp:75, minTier:2, drawRate:1, turnLimit:7 };
+const CASTLE_SECOND = { id:'castleChampion', name:'Castle Champion', icon:'🏰', image: 'vehicles/castle-champion.png', hp:105, minTier:3, drawRate:2, turnLimit:8 };
 
 function castleScreen(message='') {
   return `${noticeHTML()}
@@ -442,11 +486,11 @@ function boostCard(rank, suit) {
 }
 function rollTreasure() {
   const choices = [
-    { kind:'coins', label:'Coins', amount:20 + Math.floor(Math.random()*31), icon:'🪙' },
-    { kind:'fuel', label:'Fuel', amount:6 + Math.floor(Math.random()*7), icon:'⛽' },
-    { kind:'gems', label:'Gems', amount:1 + Math.floor(Math.random()*2), icon:'💎' },
-    { kind:'energy', label:'Energy', amount:5 + Math.floor(Math.random()*6), icon:'⚡' },
-    { kind:'points', label:'Points', amount:10 + Math.floor(Math.random()*16), icon:'⭐' }
+    { kind:'coins', label:'Coins', amount:20 + Math.floor(Math.random()*31), icon: ICON.coin },
+    { kind:'fuel', label:'Fuel', amount:6 + Math.floor(Math.random()*7), icon: ICON.fuel },
+    { kind:'gems', label:'Gems', amount:1 + Math.floor(Math.random()*2), icon: ICON.gem },
+    { kind:'energy', label:'Energy', amount:5 + Math.floor(Math.random()*6), icon: ICON.energy },
+    { kind:'points', label:'Points', amount:10 + Math.floor(Math.random()*16), icon: ICON.star }
   ];
   const prize = choices[Math.floor(Math.random()*choices.length)];
   let actual = prize.amount;
@@ -479,7 +523,7 @@ function startBattle(opponentDef, row, col) {
     playerArmor: 0, turn: 1, slots: {}, turnDiscard: [], logLines: [],
   };
   BATTLE.deck.forEach(c => { const b = RUN.cardBoosts.find(x => x.rank === c.rank && x.suit === c.suit); if (b) c.bonus = b.bonus; });
-  drawCards(Math.min(5, RUN.handSize));
+  drawCards(Math.min(7, RUN.handSize));
   drawOpponentCards();
   for (let i = 0; i < META.levels.reveal; i++) {
     const hidden = BATTLE.oppPool.filter(c => !c.revealed);
@@ -702,11 +746,11 @@ function noticeHTML() {
 }
 function currencyBar() {
   return `<div class="currencies">
-    <div class="cur chip" title="Coins are used to buy vehicles and pay for certain services.">🪙 ${RUN.chips} coins</div>
-    <div class="cur gem" title="Gems let you draw extra cards during a battle. Maximum: 10.">💎 ${RUN.gems}/${RUN.maxGems} gems</div>
-    <div class="cur fuel" title="Fuel is spent when you travel to another stop. Maximum: 20.">⛽ ${RUN.fuel}/${RUN.maxFuel} fuel</div>
-    <div class="cur energy" title="Energy powers vehicle abilities. Maximum: 20.">⚡ ${RUN.energy}/${RUN.maxEnergy} energy</div>
-    <div class="cur pts" title="Points are your long-term currency for permanent upgrades.">★ ${META.points} points</div>
+    <div class="cur chip" title="Coins are used to buy vehicles and pay for certain services.">${ICON.coin} ${RUN.chips} coins</div>
+    <div class="cur gem" title="Gems let you draw extra cards during a battle. Maximum: 10.">${ICON.gem} ${RUN.gems}/${RUN.maxGems} gems</div>
+    <div class="cur fuel" title="Fuel is spent when you travel to another stop. Maximum: 20.">${ICON.fuel} ${RUN.fuel}/${RUN.maxFuel} fuel</div>
+    <div class="cur energy" title="Energy powers vehicle abilities. Maximum: 20.">${ICON.energy} ${RUN.energy}/${RUN.maxEnergy} energy</div>
+    <div class="cur pts" title="Points are your long-term currency for permanent upgrades.">${ICON.star} ${META.points} points</div>
   </div>`;
 }
 
@@ -731,7 +775,7 @@ function mapScreen() {
   }
 
   let nodesHTML='';
-  const NODE_ICON={shop:'🛒',rest:'🔧',blacksmith:'🛠️',treasure:'🎁',castle:'🏰'};
+  const NODE_ICON={shop:ICON.cart,rest:ICON.wrench,blacksmith:ICON.hammer,treasure:ICON.gift,castle:ICON.castle};
   const NODE_TITLE={shop:'Shop',rest:'Pit Stop',blacksmith:'Tuning Garage',treasure:'Supply Cache',castle:'Fleet Castle'};
   for(let r=0;r<rows.length;r++) for(let c=0;c<rows[r].length;c++){
     const node=rows[r][c], x=25+r*colW+colW/2, y=rowY[Math.min(c,rowY.length-1)];
@@ -741,7 +785,7 @@ function mapScreen() {
     const withinSight=r<=RUN.currentRow+visibleRange;
     const showReal=isBoss||isDone||isAvail||withinSight;
     const cls=isDone?'done':isAvail?'avail':withinSight?'future':'farfuture';
-    const icon=!showReal?'❔':(node.type==='battle'?node.opponent.icon:NODE_ICON[node.type]);
+    const icon=!showReal?`<span class="vart" style="width:19px;height:19px;font-size:19px">${ICON.fog}</span>`:(node.type==='battle'?art(node.opponent,19):`<span class="vart" style="width:19px;height:19px;font-size:19px">${NODE_ICON[node.type]}</span>`);
     const title=!showReal?'Unscouted':(node.type==='battle'?node.opponent.name:NODE_TITLE[node.type]);
     let tip;
     if(!showReal) tip='Move closer to scout this stop.';
@@ -781,6 +825,7 @@ function battleScreen() {
   const opp = BATTLE.opponent;
   const hpPct = Math.max(0, (opp.hpNow / opp.hp) * 100);
   const healthPct = Math.max(0, (RUN.health / RUN.maxHealth) * 100);
+  const committedCount = Object.values(BATTLE.slots).reduce((a, arr) => a + arr.length, 0) + BATTLE.turnDiscard.length;
 
   const poolHTML = BATTLE.oppPool.map(c => c.revealed
     ? `<div class="card mini ${c.color === 'red' ? 'red' : ''}">${rankLabel(c.rank)}${c.suit}</div>`
@@ -797,22 +842,29 @@ function battleScreen() {
     const cardHTML = idxs.map(cardHandIdx => {
       const c = BATTLE.hand[cardHandIdx];
       return `<div class="card mini ${c.color === 'red' ? 'red' : ''}" data-unassign="${vId}:${cardHandIdx}">${rankLabel(c.rank)}${c.suit}</div>`;
-    }).join('') || `<span class="note" style="margin:0">empty</span>`;
-    const abilityBtn = v.ability ? `<button class="wo-btn purple" style="padding:5px 8px;font-size:11px;margin-top:5px" data-ability="${vId}" ${BATTLE.abilityUsedThisTurn || RUN.energy < v.ability.cost ? 'disabled' : ''}>⚡ ${v.ability.name} (${v.ability.cost})</button>` : '';
-    return `<div class="vslot ${idxs.length ? 'filled' : ''} ${ready ? 'ready' : ''} ${v.kind || ''}" data-assign="${vId}">
-      <div class="vname">${v.icon} ${v.name}</div>
-      <div class="vreq">Needs ${TIERS[v.minTier]}+ · ${idxs.length}/${v.slot} cards</div>
+    }).join('') || `<span class="note" style="margin:0">drag or tap cards here</span>`;
+    const abilityBtn = v.ability ? `<button class="wo-btn purple" style="padding:5px 8px;font-size:11px;margin-top:5px" data-ability="${vId}" ${BATTLE.abilityUsedThisTurn || RUN.energy < v.ability.cost ? 'disabled' : ''}><span class="vart" style="width:11px;height:11px;font-size:11px">${ICON.energy}</span> ${v.ability.name} (${v.ability.cost})</button>` : '';
+    const reqText = v.minTier === 0 ? 'Any card attacks' : `Needs ${TIERS[v.minTier]}+`;
+    const attackChip = ready ? `<span class="attackChip" data-attack="${vId}" title="${committedCount < 2 ? 'Play or discard at least 2 cards total to attack' : 'Attack now'}">Attack ▶</span>` : '';
+    return `<div class="vslot ${idxs.length ? 'filled' : ''} ${ready ? 'ready' : ''} ${v.kind || ''}" data-assign="${vId}"
+        ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleCardDrop(event,'${vId}')">
+      <div class="vname">${art(v, 18)} ${v.name}</div>
+      <div class="vreq">${reqText} · ${idxs.length}/${v.slot} cards</div>
       <div class="vcards">${cardHTML}</div>
       ${evalRes ? `<div class="note" style="margin:4px 0 0">${evalRes.label}${ready ? ` ✓ ${preview} ${effectWord}` : ' ✗'}</div>` : ''}
-      ${idxs.length ? `<button class="wo-btn gray" style="padding:5px 8px;font-size:11px;margin-top:5px" data-clear="${vId}">Clear</button>` : ''}
-      ${abilityBtn}
+      <div>
+        ${idxs.length ? `<button class="wo-btn gray" style="padding:5px 8px;font-size:11px;margin-top:5px" data-clear="${vId}">Clear</button>` : ''}
+        ${abilityBtn}
+        ${attackChip}
+      </div>
     </div>`;
   }).join('');
 
   const assignedIdx = new Set(Object.values(BATTLE.slots).flat());
   const handHTML = BATTLE.hand.map((c, i) => {
     if (assignedIdx.has(i) || BATTLE.turnDiscard.includes(i)) return '';
-    return `<div class="card ${c.color === 'red' ? 'red' : ''} ${selectedIdx.includes(i) ? 'selected' : ''}" data-card="${i}" style="position:relative">
+    return `<div class="card ${c.color === 'red' ? 'red' : ''} ${selectedIdx.includes(i) ? 'selected' : ''}" data-card="${i}" draggable="true"
+      ondragstart="event.dataTransfer.setData('text/plain','${i}');this.classList.add('dragging')" ondragend="this.classList.remove('dragging')" style="position:relative">
     ${c.bonus ? `<div style="position:absolute;bottom:1px;right:2px;font-size:8px;color:var(--green)">+${c.bonus}</div>` : ''}
     <div>${rankLabel(c.rank)}</div><div style="font-size:16px">${c.suit}</div>
   </div>`;
@@ -821,49 +873,71 @@ function battleScreen() {
     const c = BATTLE.hand[i];
     return `<div class="card mini" data-undiscard="${i}" style="opacity:.6">${rankLabel(c.rank)}${c.suit}</div>`;
   }).join('');
-  const committedCount = Object.values(BATTLE.slots).reduce((a, arr) => a + arr.length, 0) + BATTLE.turnDiscard.length;
 
   return `
     <div class="panel">${currencyBar()}</div>
     <div class="panel duelHead">
-      <div class="duelSide you"><div class="bigicon">🚚</div><h3>Your Fleet</h3>
+      <div class="duelSide you">${art(PLAYER_ART, 30)}<h3>Your Fleet</h3>
         <div class="bar-wrap"><div class="bar-fill bar-health" style="width:${healthPct}%"></div></div>
-        <div class="note">${RUN.health} / ${RUN.maxHealth}${BATTLE.playerArmor ? ` &middot; 🛡️ ${BATTLE.playerArmor} armor` : ''}</div>
+        <div class="note">${RUN.health} / ${RUN.maxHealth}${BATTLE.playerArmor ? ` &middot; <span class="vart" style="width:12px;height:12px;font-size:12px">${ICON.shield}</span> ${BATTLE.playerArmor} armor` : ''}</div>
       </div>
       <div class="vsMark">VS</div>
-      <div class="duelSide opp"><div class="bigicon">${opp.icon}</div><h3>${opp.name}</h3>
+      <div class="duelSide opp">${art(opp, 30)}<h3>${opp.name}</h3>
         <div class="bar-wrap"><div class="bar-fill bar-hp" style="width:${hpPct}%"></div></div>
-        <div class="note">${opp.hpNow} / ${opp.hp}${(BATTLE.opponent.poisonStacks||[]).length ? ` &middot; ☣️ ${(BATTLE.opponent.poisonStacks||[]).reduce((a,n)=>a+n,0)} poison` : ''}</div>
+        <div class="note">${opp.hpNow} / ${opp.hp}${(BATTLE.opponent.poisonStacks||[]).length ? ` &middot; <span class="vart" style="width:12px;height:12px;font-size:12px">${ICON.poison}</span> ${(BATTLE.opponent.poisonStacks||[]).reduce((a,n)=>a+n,0)} poison` : ''}</div>
       </div>
     </div>
-    <div class="duelBoard">
-      <div class="panel">
-        <div class="hdr"><span>Your Hand</span><span>${BATTLE.hand.length - assignedIdx.size - BATTLE.turnDiscard.length} in hand</span></div>
-        <div class="hand">${handHTML}</div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="wo-btn gray" id="sortSuitBtn" style="padding:8px 12px;font-size:12px">Sort: Suit</button><button class="wo-btn gray" id="sortValueBtn" style="padding:8px 12px;font-size:12px">Sort: Value</button><button class="wo-btn gray" id="passTurnBtn" style="padding:8px 12px;font-size:12px">Pass Turn (Draw)</button><button class="wo-btn amber" id="gemDrawBtn" style="padding:8px 12px;font-size:12px" title="Spend 1 gem to immediately draw ${1 + META.levels.gem} extra card${1 + META.levels.gem > 1 ? 's' : ''}." ${RUN.gems < 1 ? 'disabled' : ''}>💎 Draw with Gem (-1)</button>
-          <button class="wo-btn gray" id="discardSelectedBtn" style="padding:8px 12px;font-size:12px" title="Fold selected cards face-down instead of playing them. Still counts toward this turn's 2-card minimum." ${!selectedIdx.length ? 'disabled' : ''}>Discard Selected</button>
-        </div>
-        ${BATTLE.turnDiscard.length ? `<div class="note" style="margin-top:8px">Discarding this turn (tap to undo):</div><div class="hand">${discardStagedHTML}</div>` : ''}
+    <div class="panel">
+      <div class="hdr"><span>Your Hand</span><span>${BATTLE.hand.length - assignedIdx.size - BATTLE.turnDiscard.length} in hand &middot; ${BATTLE.deck.length} left in deck</span></div>
+      <div class="hand">${handHTML}</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="wo-btn gray" id="sortSuitBtn" style="padding:8px 12px;font-size:12px">Sort: Suit</button><button class="wo-btn gray" id="sortValueBtn" style="padding:8px 12px;font-size:12px">Sort: Value</button><button class="wo-btn gray" id="passTurnBtn" style="padding:8px 12px;font-size:12px">Pass Turn (Draw)</button>
+        <button class="wo-btn gray" id="discardSelectedBtn" style="padding:8px 12px;font-size:12px" title="Fold selected cards face-down instead of playing them. Still counts toward this turn's 2-card minimum." ${!selectedIdx.length ? 'disabled' : ''}>Discard Selected</button>
       </div>
-      <div class="deckStack"><div class="card back"></div><div class="note">${BATTLE.deck.length} left</div></div>
+      ${BATTLE.turnDiscard.length ? `<div class="note" style="margin-top:8px">Discarding this turn (tap to undo):</div><div class="hand">${discardStagedHTML}</div>` : ''}
+    </div>
+    <div class="fleetgrid">
       <div class="panel">
-        <div class="hdr"><span>Their Cards (${BATTLE.oppPool.length})</span><span></span></div>
+        <div class="hdr"><span>Your Fleet</span><span>Drag cards, or tap to select then tap a vehicle</span></div>
+        <div class="grid">${vehicleHTML}</div>
+        ${committedCount < 2 ? `<div class="note" style="margin-top:6px">Play or discard at least 2 cards total, then tap Attack (${committedCount}/2 so far)</div>` : ''}
+      </div>
+      <div class="panel">
+        <div class="hdr"><span>${opp.name}'s Cards (${BATTLE.oppPool.length})</span><span></span></div>
         <div class="hand">${poolHTML}</div>
-        <div class="note">${opp.locked ? `🔒 Locked: ${opp.lockProgress}/${opp.lockThreshold} — clears the lock and hits for a flat ${opp.lockAttack}, no cards needed that turn` : `Needs ${TIERS[opp.minTier]}+ to attack`}</div>
+        <div class="note">${opp.locked ? `<span class="vart" style="width:12px;height:12px;font-size:12px">${ICON.lock}</span> Locked: ${opp.lockProgress}/${opp.lockThreshold} — clears the lock and hits for a flat ${opp.lockAttack}, no cards needed that turn` : `Needs ${TIERS[opp.minTier]}+ to attack`}</div>
         <button class="wo-btn amber" id="scoutBtn" style="padding:8px 12px;font-size:12px" ${BATTLE.scoutedThisTurn || RUN.chips < 10 ? 'disabled' : ''}>Scout (-10 coins)</button>
       </div>
     </div>
     <div class="panel">
-      <div class="hdr"><span>Your Fleet</span><span>Select cards, then tap a vehicle</span></div>
-      <div class="grid">${vehicleHTML}</div>
+      <div class="hdr"><span>Resources</span><span></span></div>
+      <div class="resourceRow">
+        <button class="wo-btn amber" id="gemDrawBtn" style="padding:8px 12px;font-size:12px" title="Spend 1 gem to immediately draw ${1 + META.levels.gem} extra card${1 + META.levels.gem > 1 ? 's' : ''}." ${RUN.gems < 1 ? 'disabled' : ''}><span class="vart" style="width:12px;height:12px;font-size:12px">${ICON.gem}</span> Draw with Gem (-1)</button>
+      </div>
     </div>
     <div class="panel">
-      <button class="wo-btn" id="dispatchBtn" style="width:100%" ${committedCount < 2 ? 'disabled' : ''}>Dispatch This Turn</button>
-      ${committedCount < 2 ? `<div class="note" style="text-align:center;margin-top:6px">Play or discard at least 2 cards to end your turn (${committedCount}/2 so far)</div>` : ''}
       <div class="log">${BATTLE.logLines.map(l => `<div>${l}</div>`).join('')}</div>
     </div>
   `;
+}
+function handleCardDrop(e, vId) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('dragover');
+  const idx = +e.dataTransfer.getData('text/plain');
+  if (Number.isNaN(idx)) return;
+  const v = VEHICLES[vId];
+  if (!BATTLE.slots[vId]) BATTLE.slots[vId] = [];
+  if (BATTLE.slots[vId].includes(idx) || BATTLE.turnDiscard.includes(idx)) return;
+  if (BATTLE.slots[vId].length >= v.slot) return;
+  Object.keys(BATTLE.slots).forEach(k => { BATTLE.slots[k] = BATTLE.slots[k].filter(i => i !== idx); });
+  BATTLE.slots[vId].push(idx);
+  selectedIdx = selectedIdx.filter(i => i !== idx);
+  render(battleScreen());
+}
+function tryDispatch() {
+  const committedCount = Object.values(BATTLE.slots).reduce((a, arr) => a + arr.length, 0) + BATTLE.turnDiscard.length;
+  if (committedCount < 2) return;
+  resolveTurn();
 }
 
 function nodeResultScreen(won, rewards) {
@@ -888,7 +962,7 @@ function shopScreen(fromCastle=false) {
   const options = Object.values(VEHICLES).filter(v => !owned.has(v.id) && v.cost > 0);
   const shown = shuffle([...options]).slice(0, 3);
   const vehicleRows = shown.map(v => `<div class="shopcard">
-      <div class="hdr"><span>${v.icon} ${v.name}</span><span class="price">${v.cost} coins</span></div>
+      <div class="hdr"><span>${art(v, 18)} ${v.name}</span><span class="price">${v.cost} coins</span></div>
       <div class="note" style="margin:0 0 6px">${v.note}</div>
       <button class="wo-btn amber" data-buy="${v.id}" data-cost="${v.cost}" ${RUN.chips < v.cost || atCap ? 'disabled' : ''} style="padding:8px 12px;font-size:13px">${atCap ? 'Garage full' : 'Purchase'}</button>
     </div>`).join('') || '<div class="note">No new vehicles in stock right now.</div>';
@@ -925,7 +999,7 @@ function garageScreen() {
 function blacksmithScreen() {
   const adminLvl = META.levels.adminTune || 0;
   const adminCost = upgradeCost(UPGRADE_DEFS.find(u=>u.id==='adminTune'), adminLvl);
-  const adminTune = `<div class="shopcard"><div class="hdr"><span>🚗 Admin Vehicle Pair Bonus (Lv ${adminLvl})</span><span class="price">${adminCost} pts</span></div><div class="note">Current Pair bonus: +${50 + adminLvl*50}%. Each tuning upgrade adds another 50%.</div><button class="wo-btn purple" id="adminTuneBtn" ${META.points<adminCost?'disabled':''}>Tune Admin Vehicle</button></div>`;
+  const adminTune = `<div class="shopcard"><div class="hdr"><span>${art(VEHICLES.admin, 16)} Admin Vehicle Pair Bonus (Lv ${adminLvl})</span><span class="price">${adminCost} pts</span></div><div class="note">Current Pair bonus: +${50 + adminLvl*50}%. Each tuning upgrade adds another 50%.</div><button class="wo-btn purple" id="adminTuneBtn" ${META.points<adminCost?'disabled':''}>Tune Admin Vehicle</button></div>`;
   const rows = BLACKSMITH_OPTIONS.map((c, i) => {
     const b = findBoost(c.rank, c.suit);
     const bonus = b ? b.bonus : 0;
@@ -958,7 +1032,7 @@ function treasureScreen(found) {
         <div class="wo-body">
           <div class="wo-eyebrow">Supply Cache</div>
           <h1>Treasure <em>Found</em></h1>
-          <div class="treasure-prize">${found.icon} ${text}</div>
+          <div class="treasure-prize"><span class="vart" style="width:28px;height:28px;font-size:28px;vertical-align:-6px">${found.icon}</span> ${text}</div>
           <div class="wo-sub" style="text-align:center">The cache contained one random reward.</div>
           <div style="text-align:center"><button class="wo-btn amber" id="leaveTreasureBtn">Continue Route</button></div>
         </div>
@@ -985,7 +1059,7 @@ function starterSelectScreen() {
     const v = VEHICLES[id];
     const unlocked = isStarterUnlocked(id);
     return `<div class="pickcard ${unlocked ? '' : 'locked'}">
-      <div class="picon">${unlocked ? v.icon : '🔒'}</div>
+      <div class="picon">${unlocked ? art(v, 46) : `<span class="vart" style="width:46px;height:46px;font-size:46px">${ICON.lock}</span>`}</div>
       <div class="pname">${v.name}</div>
       <div class="ptag">${unlocked ? v.note : starterLockNote(id)}</div>
       ${unlocked ? `<button class="wo-btn amber" data-pick="${v.id}" style="padding:8px 12px;font-size:13px;width:100%">Choose</button>` : ''}
@@ -1054,13 +1128,13 @@ function render(html) {
 
   app.querySelectorAll('[data-card]').forEach(el => el.onclick = () => toggleCardSelect(+el.dataset.card));
   app.querySelectorAll('[data-assign]').forEach(el => el.onclick = (e) => {
-    if (e.target.closest('[data-clear]') || e.target.closest('[data-unassign]') || e.target.closest('[data-ability]')) return;
+    if (e.target.closest('[data-clear]') || e.target.closest('[data-unassign]') || e.target.closest('[data-ability]') || e.target.closest('[data-attack]')) return;
     assignSelectedTo(el.dataset.assign);
   });
   app.querySelectorAll('[data-unassign]').forEach(el => el.onclick = (e) => { e.stopPropagation(); const [vId, idx] = el.dataset.unassign.split(':'); removeCardFromSlot(vId, +idx); });
   app.querySelectorAll('[data-clear]').forEach(el => el.onclick = (e) => { e.stopPropagation(); clearSlot(el.dataset.clear); });
   app.querySelectorAll('[data-ability]').forEach(el => el.onclick = (e) => { e.stopPropagation(); useAbility(el.dataset.ability); });
-  const dispatchBtn = document.getElementById('dispatchBtn'); if (dispatchBtn) dispatchBtn.onclick = resolveTurn;
+  app.querySelectorAll('[data-attack]').forEach(el => el.onclick = (e) => { e.stopPropagation(); tryDispatch(); });
   const passTurnBtn = document.getElementById('passTurnBtn'); if (passTurnBtn) passTurnBtn.onclick = passTurn;
   const sortSuitBtn = document.getElementById('sortSuitBtn'); if (sortSuitBtn) sortSuitBtn.onclick = () => sortHand('suit');
   const sortValueBtn = document.getElementById('sortValueBtn'); if (sortValueBtn) sortValueBtn.onclick = () => sortHand('value');
@@ -1141,7 +1215,7 @@ function render(html) {
   const restBtn = document.getElementById('restBtn'); if (restBtn) restBtn.onclick = () => { RUN.health = Math.min(RUN.maxHealth, RUN.health + 30); saveRun(); render(mapScreen()); };
   const backToMetaBtn = document.getElementById('backToMetaBtn'); if (backToMetaBtn) backToMetaBtn.onclick = () => render(metaScreen());
   const startRunBtn = document.getElementById('startRunBtn'); if (startRunBtn) startRunBtn.onclick = () => { clearRunSave(); render(starterSelectScreen()); };
-  const continueRunBtn = document.getElementById('continueRunBtn'); if (continueRunBtn) continueRunBtn.onclick = () => { RUN = loadRunSave(); RUN.maxGems=10; RUN.maxFuel=20; RUN.maxEnergy=20; RUN.handSize=5+(META.levels.handCap||0)*2; RUN.drawPerTurn=2+(META.levels.draw||0); RUN.gems=Math.min(RUN.maxGems,RUN.gems||0); RUN.fuel=Math.min(RUN.maxFuel,RUN.fuel||0); RUN.energy=Math.min(RUN.maxEnergy,RUN.energy||0); saveRun(); render(mapScreen()); };
+  const continueRunBtn = document.getElementById('continueRunBtn'); if (continueRunBtn) continueRunBtn.onclick = () => { RUN = loadRunSave(); RUN.maxGems=10; RUN.maxFuel=20; RUN.maxEnergy=20; RUN.handSize=7+(META.levels.handCap||0)*2; RUN.drawPerTurn=2+(META.levels.draw||0); RUN.gems=Math.min(RUN.maxGems,RUN.gems||0); RUN.fuel=Math.min(RUN.maxFuel,RUN.fuel||0); RUN.energy=Math.min(RUN.maxEnergy,RUN.energy||0); saveRun(); render(mapScreen()); };
   app.querySelectorAll('[data-pick]').forEach(el => el.onclick = () => initRunWithStarter(el.dataset.pick));
 }
 

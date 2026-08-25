@@ -6,13 +6,13 @@
 <title>Fleet Duel</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;700;800&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
   :root{
     --blue:#2451e0; --blue-dark:#173aa8; --blue-light:#e8edfd;
     --white:#ffffff; --bg:#eef1fb; --ink:#12163a; --dim:#5c6280;
     --amber:#ff9f1c; --red:#e5484d; --green:#2fae66; --purple:#8a4fe0; --gold:#d4af00;
-    --disp:'Saira Condensed',system-ui,sans-serif;
+    --disp:'Aptos','Aptos Display',ui-sans-serif,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
     --mono:'IBM Plex Mono',ui-monospace,monospace;
   }
   *{box-sizing:border-box}
@@ -27,11 +27,11 @@
   .wo{background:var(--white);color:var(--ink);border:3px solid var(--blue);border-radius:12px;box-shadow:6px 6px 0 var(--blue-dark);padding:0;margin:16px 0;overflow:hidden}
   .wo-stripe{height:10px;background:repeating-linear-gradient(-45deg,var(--amber) 0 16px,var(--blue) 16px 32px)}
   .wo-body{padding:20px 22px 24px}
-  .wo-eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--dim);text-transform:uppercase}
-  .wo h1{margin:6px 0 2px;font-size:clamp(28px,7vw,42px);line-height:.95;font-weight:800;color:var(--blue-dark)}
+  .wo-eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:var(--dim);text-transform:uppercase}
+  .wo h1{margin:6px 0 2px;font-size:clamp(24px,5.5vw,34px);line-height:1.05;font-weight:700;color:var(--blue-dark)}
   .wo h1 em{font-style:normal;color:var(--amber)}
   .wo-sub{font-family:var(--mono);font-size:13px;color:var(--dim);margin:8px 0 14px}
-  .wo-btn{padding:13px 18px;font-size:17px;font-weight:800;letter-spacing:.04em;
+  .wo-btn{padding:12px 18px;font-size:15px;font-weight:700;letter-spacing:.01em;
     background:var(--blue);color:#fff;border:3px solid var(--blue-dark);border-radius:8px;box-shadow:3px 3px 0 var(--blue-dark)}
   .wo-btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--blue-dark)}
   .wo-btn.amber{background:var(--amber);border-color:#c97600}
@@ -42,7 +42,7 @@
 
   .panel{background:var(--white);border:2px solid var(--blue-light);border-radius:10px;padding:14px;margin-bottom:12px}
   .hdr{display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-size:12px;
-    letter-spacing:.06em;color:var(--dim);margin-bottom:8px}
+    letter-spacing:.02em;color:var(--dim);margin-bottom:8px}
   .bar-wrap{height:14px;background:var(--blue-light);border-radius:7px;overflow:hidden;border:1px solid var(--blue-light)}
   .bar-fill{height:100%;transition:width .25s}
   .bar-hp{background:var(--red)} .bar-health{background:var(--blue)}
@@ -77,6 +77,7 @@
     font-size:14px;border:2px solid var(--blue);cursor:pointer;user-select:none;flex-shrink:0}
   .card.red{color:var(--red)}
   .card.selected{outline:3px solid var(--amber);transform:translateY(-6px)}
+  .card.cursed{outline:2px solid var(--purple)}
   .card.mini{width:26px;height:36px;font-size:10px;cursor:pointer}
   .card.back{background:var(--blue);color:transparent;position:relative;margin:0 auto}
   .card.back::after{content:'?';color:var(--white);position:absolute;font-size:16px}
@@ -127,6 +128,11 @@
     background:var(--green);color:#fff;border-radius:6px;cursor:pointer;border:2px solid #1e8a4f}
   .attackChip:active{transform:translate(1px,1px)}
   .resourceRow{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .castleMenu{display:flex;flex-direction:column;gap:10px;margin:14px 0}
+  .castleBtn{display:block;width:100%;text-align:center;padding:16px;font-family:var(--disp);font-size:16px;font-weight:700;color:#4a2f14;
+    background:linear-gradient(180deg,#ecd6ab,#d8b077);border:2px solid #8a5a2b;border-radius:8px;box-shadow:0 3px 0 #6b431d}
+  .castleBtn:active{transform:translateY(2px);box-shadow:0 1px 0 #6b431d}
+  .castleBtn:disabled{opacity:.5;cursor:default}
 </style>
 </head>
 <body>
@@ -185,6 +191,13 @@ function bestFiveFromPool(pool) {
   return best;
 }
 function damageFor(cards, mult) { return Math.round(cards.reduce((a, c) => a + cardValue(c.rank) + (c.bonus || 0), 0) * mult); }
+function isConsecutive(cards) {
+  if (cards.length < 2) return false;
+  const ranks = [...new Set(cards.map(c => c.rank))].sort((a, b) => a - b);
+  if (ranks.length !== cards.length) return false;
+  return ranks[ranks.length - 1] - ranks[0] === cards.length - 1;
+}
+function straightMult(len) { return 1 + (len - 2) * 0.45; }
 
 /* ========== ICON SYSTEM (no emoji) ========== */
 // Small inline SVGs for currencies and UI glyphs, so nothing depends on an external image file.
@@ -204,6 +217,8 @@ const ICON = {
   castle: `<svg viewBox="0 0 24 24" class="ic"><path d="M4 21V9l2-2v2h2V7l2-2 2 2v2h2V7l2 2v12z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>`,
   fog:    `<svg viewBox="0 0 24 24" class="ic"><path d="M12 7a4 4 0 1 0-3.6 5.8M4 15h16M4 19h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`,
   truck:  `<svg viewBox="0 0 24 24" class="ic"><path d="M2 6h11v10H2zM13 10h5l3 3v3h-8z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="6" cy="18" r="1.6" fill="currentColor"/><circle cx="17" cy="18" r="1.6" fill="currentColor"/></svg>`,
+  fire:   `<svg viewBox="0 0 24 24" class="ic"><path d="M12 2c1 4-3 5-3 9a3 3 0 0 0 6 0c1.5 1 2 3 2 4.5A5.5 5.5 0 0 1 6 15.5C6 9 12 8 12 2z" fill="currentColor"/></svg>`,
+  curse:  `<svg viewBox="0 0 24 24" class="ic"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M9 9l6 6M15 9l-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`,
 };
 // Renders vehicle/opponent art. If `entity.image` fails to load (because the PNG hasn't been
 // added yet), it swaps itself out for entity.icon so nothing ever shows a broken image icon.
@@ -215,6 +230,7 @@ function art(entity, px) {
   return `<span class="vart" style="width:${px}px;height:${px}px;font-size:${px}px">${fb}</span>`;
 }
 const PLAYER_ART = { name: 'Your Fleet', icon: '🚚', image: 'vehicles/work-truck.png' };
+function fleetLabel() { return META.playerName ? `${META.playerName}'s Fleet` : 'Your Fleet'; }
 
 /* ========== PLAYER VEHICLE CATALOG ========== */
 const VEHICLES = {
@@ -223,7 +239,7 @@ const VEHICLES = {
   interstate: { id: 'interstate', name: 'Interstate Racer', icon: '🏁', image: 'vehicles/interstate-racer.png', slot: 4, minTier: 4, cost: 0, note: 'Needs a Straight.' },
   convoy:     { id: 'convoy',     name: 'Armored Convoy',   icon: '🚛', image: 'vehicles/armored-convoy.png', slot: 4, minTier: 5, cost: 0, note: 'Needs a Flush.' },
   garbage: { id: 'garbage', name: 'Garbage Truck',   icon: '🗑️', image: 'vehicles/garbage-truck.png', slot: 3, minTier: 3, cost: 45,  note: 'Needs Three of a Kind.' },
-  sweeper: { id: 'sweeper', name: 'Street Sweeper',  icon: '🧹', image: 'vehicles/street-sweeper.png', slot: 3, minTier: 1, cost: 35,  note: 'Needs a Pair, using up to 3 cards.' },
+  sweeper: { id: 'sweeper', name: 'Street Sweeper',  icon: '🧹', image: 'vehicles/street-sweeper.png', slot: 3, minTier: 1, cost: 35,  note: 'Play up to 3 cards, but 2 of them must be a Pair (example: 7-7-8).' },
   bucket:  { id: 'bucket',  name: 'Bucket Truck',    icon: '🪜', image: 'vehicles/bucket-truck.png', slot: 4, minTier: 4, cost: 45,  note: 'Needs a Straight.' },
   tractor: { id: 'tractor', name: 'Beach Tractor',   icon: '🚜', image: 'vehicles/beach-tractor.png', slot: 3, minTier: 3, cost: 40,  note: 'Needs Three of a Kind.' },
   pump:    { id: 'pump',    name: 'Vac Truck',       icon: '🚰', image: 'vehicles/vac-truck.png', slot: 4, minTier: 5, cost: 55, note: 'Needs a Flush.' },
@@ -231,6 +247,12 @@ const VEHICLES = {
   armor:   { id: 'armor',   name: 'Armored Escort',  icon: '🛡️', image: 'vehicles/armored-escort.png', slot: 2, minTier: 1, cost: 45,  note: 'Needs a Pair. Blocks damage instead of dealing it.', kind: 'defense' },
   hazmat:  { id: 'hazmat',  name: 'Hazmat Truck',    icon: '☣️', image: 'vehicles/hazmat-truck.png', slot: 3, minTier: 3, cost: 55,  note: 'Needs Three of a Kind. Poisons instead of hitting directly.', kind: 'poison' },
   tow:     { id: 'tow',     name: 'Tow Truck',       icon: '🚨', image: 'vehicles/tow-truck.png', slot: 2, minTier: 1, cost: 60,  note: 'Needs a Pair. Ability: spend 3 Energy to stun them a turn.', ability: { cost: 3, name: 'Stun' } },
+  bike2:   { id: 'bike2',   name: 'Patrol Bike',     icon: '🚲', image: 'vehicles/patrol-bike.png', slot: 2, straightLen: 2, cost: 30,  note: 'Needs a 2-card straight (example: 7-8, any suits).' },
+  vespa3:  { id: 'vespa3',  name: 'Scooter Runner',  icon: '🛵', image: 'vehicles/scooter-runner.png', slot: 3, straightLen: 3, cost: 50,  note: 'Needs a 3-card straight.' },
+  moto4:   { id: 'moto4',   name: 'Motorcycle Escort', icon: '🏍️', image: 'vehicles/motorcycle-escort.png', slot: 4, straightLen: 4, cost: 75,  note: 'Needs a 4-card straight.' },
+  harley5: { id: 'harley5', name: 'Harley Convoy',   icon: '🏍️', image: 'vehicles/harley-convoy.png', slot: 5, straightLen: 5, cost: 105, note: 'Needs a 5-card straight.' },
+  formation6: { id: 'formation6', name: 'Highway Formation', icon: '🏁', image: 'vehicles/highway-formation.png', slot: 6, straightLen: 6, cost: 140, note: 'Needs a 6-card straight.' },
+  torch:   { id: 'torch',   name: 'Torch Truck',    icon: '🔥', image: 'vehicles/torch-truck.png', slot: 2, minTier: 1, cost: 65, note: 'Needs a Pair. Burns instead of hitting directly, over 3 turns (weaker each turn) — or detonate it early for a smaller guaranteed hit.', kind: 'burn' },
 };
 const STARTERS = ['sidebyside', 'admin', 'interstate', 'convoy'];
 function isStarterUnlocked(id) {
@@ -268,7 +290,7 @@ const OPPONENT_TIERS = [
     { id: 'limo', name: 'Armored Limo', icon: '🚘', image: 'vehicles/armored-limo.png', hp: 125, minTier: 2, drawRate: 2, turnLimit: 8 },
     { id: 'vault', name: 'Armored Vault Truck', icon: '🔐', image: 'vehicles/armored-vault-truck.png', hp: 130, locked: true, lockThreshold: 70, lockAttack: 60, drawRate: 2, turnLimit: 9 } ],
 ];
-const BOSS = { id: 'swat', name: 'SWAT Truck', icon: '🚔', image: 'vehicles/swat-truck.png', hp: 145, minTier: 3, drawRate: 2, turnLimit: 10, boss: true, attackInfo: 'Attack: uses its best poker hand for about 10-35 damage, depending on the hand.' };
+const BOSS = { id: 'swat', name: 'SWAT Truck', icon: '🚔', image: 'vehicles/swat-truck.png', hp: 145, minTier: 3, drawRate: 2, turnLimit: 10, boss: true, curse: { count: 2, amount: 10, chance: 0.5 }, attackInfo: 'Attack: uses its best poker hand for about 10-35 damage, depending on the hand. Can also curse cards in your hand — play a cursed card before turn end or take its curse damage.' };
 function revealFraction(row) { return [1.0, 0.8, 0.6, 0.4, 0.25, 0.1, 0][Math.min(row, 6)]; }
 
 /* ========== LEVELED UPGRADE TREE (permanent, up to 20 levels each) ========== */
@@ -418,36 +440,65 @@ function selectNode(row, col) {
   const node = RUN.map.nodes[row][col];
   if (node.type === 'battle') { startBattle(node.opponent, row, col); return; }
   commitNode(row, col);
-  if (node.type === 'castle') render(castleScreen());
-  else if (node.type === 'shop') render(shopScreen());
+  if (node.type === 'castle') render(castleMenuScreen());
+  else if (node.type === 'shop') { RETURN_TO_CASTLE_MENU = false; render(shopScreen()); }
   else if (node.type === 'rest') render(garageScreen());
-  else if (node.type === 'blacksmith') { BLACKSMITH_OPTIONS = pickBlacksmithOptions(); render(blacksmithScreen()); }
+  else if (node.type === 'blacksmith') { RETURN_TO_CASTLE_MENU = false; BLACKSMITH_OPTIONS = pickBlacksmithOptions(); BLACKSMITH_VISIT = { primary: null, secondary: null }; render(blacksmithScreen()); }
   else if (node.type === 'treasure') { const found = rollTreasure(); render(treasureScreen(found)); }
 }
 
 let CASTLE_STATE = null;
+let RETURN_TO_CASTLE_MENU = false;
 
 const CASTLE_FIRST = { id:'castleGuard', name:'Castle Guard', icon:'🛡️', image: 'vehicles/castle-guard.png', hp:75, minTier:2, drawRate:1, turnLimit:7 };
 const CASTLE_SECOND = { id:'castleChampion', name:'Castle Champion', icon:'🏰', image: 'vehicles/castle-champion.png', hp:105, minTier:3, drawRate:2, turnLimit:8 };
 
-function castleScreen(message='') {
+function castleMenuScreen(message='') {
   return `${noticeHTML()}
   <div class="wo">
     <div class="wo-stripe"></div><div class="wo-body">
       <div class="wo-eyebrow">Fleet Castle</div>
-      <h1>Choose Your <em>Reward</em></h1>
+      <h1>Choose Where To <em>Go</em></h1>
       ${currencyBar()}
       ${message ? `<div class="panel"><div class="note">${message}</div></div>` : ''}
-      <div class="grid">
-        <div class="shopcard"><h3>Battle Challenge</h3><div class="note">Fight the Castle Guard. Win for a solid reward, then choose whether to risk a second, harder battle for a much larger reward.</div>
-          <button class="wo-btn amber" id="castleBattle1Btn" ${CASTLE_STATE?.firstDone?'disabled':''}>${CASTLE_STATE?.firstDone?'First Battle Won':'Battle 1'}</button>
-        </div>
-        <div class="shopcard"><h3>Castle Shop</h3><div class="note">Buy one vehicle at a discounted price.</div><button class="wo-btn" id="castleShopBtn">Open Shop</button></div>
-        <div class="shopcard"><h3>Cheap Refuel</h3><div class="note">Spend 5 coins to gain 10 fuel.</div><button class="wo-btn" id="castleFuelBtn" ${RUN.fuel>=RUN.maxFuel?'disabled':''}>Refuel +10</button></div>
-        <div class="shopcard"><h3>Card Match</h3><div class="note">Find a matching pair. You get 2 guesses. Match them to win coins, gems, or fuel.</div><button class="wo-btn" id="castleMatchBtn" ${CASTLE_STATE?.matchDone?'disabled':''}>Play Match Game</button></div>
+      <div class="castleMenu">
+        <button class="castleBtn" id="castleDungeonNavBtn">Visit the castle Dungeon.</button>
+        <button class="castleBtn" id="castleWizardNavBtn">Visit the castle Wizard's Tower.</button>
+        <button class="castleBtn" id="castleBlacksmithNavBtn">Visit the castle Blacksmith.</button>
+        <button class="castleBtn" id="castleShopNavBtn">Visit the castle Shop.</button>
+        <button class="castleBtn" id="castleInnNavBtn">Visit the castle Inn.</button>
+        <button class="castleBtn" id="leaveCastleBtn">Leave this area.</button>
+      </div>
+    </div>
+  </div>`;
+}
+function castleDungeonScreen(message='') {
+  return `${noticeHTML()}
+  <div class="wo">
+    <div class="wo-stripe"></div><div class="wo-body">
+      <div class="wo-eyebrow">Castle Dungeon</div>
+      <h1>Battle <em>Challenge</em></h1>
+      ${currencyBar()}
+      ${message ? `<div class="panel"><div class="note">${message}</div></div>` : ''}
+      <div class="shopcard"><h3>Battle Challenge</h3><div class="note">Fight the Castle Guard. Win for a solid reward, then choose whether to risk a second, harder battle for a much larger reward.</div>
+        <button class="wo-btn amber" id="castleBattle1Btn" ${CASTLE_STATE?.firstDone?'disabled':''}>${CASTLE_STATE?.firstDone?'First Battle Won':'Battle 1'}</button>
       </div>
       ${CASTLE_STATE?.firstDone && !CASTLE_STATE?.secondDone ? `<div class="shopcard"><h3>High-Roller Battle</h3><div class="note">The second fight is harder, but the reward is much larger.</div><button class="wo-btn amber" id="castleBattle2Btn">Battle 2</button></div>` : ''}
-      <button class="wo-btn gray" id="leaveCastleBtn">Leave Castle</button>
+      <button class="wo-btn gray" id="backToCastleMenuBtn">Back to Castle Menu</button>
+    </div>
+  </div>`;
+}
+function castleInnScreen(message='') {
+  return `${noticeHTML()}
+  <div class="wo">
+    <div class="wo-stripe"></div><div class="wo-body">
+      <div class="wo-eyebrow">Castle Inn</div>
+      <h1>Rest &amp; <em>Refuel</em></h1>
+      ${currencyBar()}
+      ${message ? `<div class="panel"><div class="note">${message}</div></div>` : ''}
+      <div class="shopcard"><h3>Cheap Refuel</h3><div class="note">Spend 5 coins to gain 10 fuel.</div><button class="wo-btn" id="castleFuelBtn" ${RUN.fuel>=RUN.maxFuel?'disabled':''}>Refuel +10</button></div>
+      <div class="shopcard"><h3>Rest Here</h3><div class="note">Restore 20 health, free of charge.</div><button class="wo-btn" id="castleRestBtn" ${RUN.health>=RUN.maxHealth?'disabled':''}>Rest +20 HP</button></div>
+      <button class="wo-btn gray" id="backToCastleMenuBtn">Back to Castle Menu</button>
     </div>
   </div>`;
 }
@@ -471,6 +522,8 @@ function castleMatchScreen() {
 }
 
 let BLACKSMITH_OPTIONS = null;
+let BLACKSMITH_VISIT = null; // { primary: idx|null, secondary: idx|null } — one paid upgrade, plus one optional paid add-on, per visit
+function tuneCost(bonus, isSecondary) { return (20 + bonus * 5) + (isSecondary ? 25 : 0); }
 function pickBlacksmithOptions() {
   const all = [];
   for (const su of SUITS) for (let r = 2; r <= 14; r++) all.push({ rank: r, suit: su.s, color: su.color });
@@ -530,7 +583,6 @@ function startBattle(opponentDef, row, col) {
     if (!hidden.length) break;
     hidden[(Math.random() * hidden.length) | 0].revealed = true;
   }
-  battleLog(`You're facing a ${BATTLE.opponent.name}.`);
   render(battleScreen());
 }
 function drawCards(n) {
@@ -550,6 +602,33 @@ function drawOpponentCards() {
   }
 }
 function battleLog(msg) { BATTLE.logLines.unshift(msg); if (BATTLE.logLines.length > 30) BATTLE.logLines.pop(); }
+
+// Curse: an opponent can curse 1, 2, 3, or a random number of cards currently in the player's hand.
+// If the player hasn't played a cursed card by the end of the turn it was checked, it deals its damage and clears.
+function tryApplyCurse() {
+  const spec = BATTLE.opponent.curse;
+  if (!spec) return;
+  if (Math.random() > (spec.chance ?? 1)) return;
+  const eligible = BATTLE.hand.filter(c => !c.curse);
+  if (!eligible.length) return;
+  const count = spec.count === 'random' ? 1 + Math.floor(Math.random() * Math.min(3, eligible.length)) : Math.min(spec.count, eligible.length);
+  const chosen = shuffle([...eligible]).slice(0, count);
+  chosen.forEach(c => { c.curse = spec.amount; });
+  battleLog(`${BATTLE.opponent.name} curses ${count} card${count > 1 ? 's' : ''} in your hand — play ${count > 1 ? 'them' : 'it'} next turn or take ${spec.amount} damage each.`);
+}
+// Burn: a decaying 3-turn damage-over-time effect. The player can detonate it early for whatever
+// the current stage is worth, forfeiting the smaller remaining ticks.
+function detonateBurn() {
+  if (!BATTLE || !BATTLE.opponent.burn) return;
+  const b = BATTLE.opponent.burn;
+  const dmg = b.stages[b.stageIdx] || 0;
+  BATTLE.opponent.hpNow = Math.max(0, BATTLE.opponent.hpNow - dmg);
+  battleLog(`Detonated the burn early for ${dmg} damage, forfeiting the remaining ticks.`);
+  BATTLE.opponent.burn = null;
+  saveRun();
+  if (BATTLE.opponent.hpNow <= 0) { winBattle(); return; }
+  render(battleScreen());
+}
 
 function toggleCardSelect(i) { const pos = selectedIdx.indexOf(i); if (pos === -1) selectedIdx.push(i); else selectedIdx.splice(pos, 1); render(battleScreen()); }
 function assignSelectedTo(vId) {
@@ -617,34 +696,49 @@ function useAbility(vId) {
 function resolveTurn() {
   let totalDamage = 0;
   const usedIdx = new Set();
+  const priorHp = BATTLE.opponent.hpNow;
   for (const vId of RUN.ownedVehicles) {
     const idxs = BATTLE.slots[vId] || [];
     if (!idxs.length) continue;
     const cards = idxs.map(i => BATTLE.hand[i]);
     const v = VEHICLES[vId];
-    const evalRes = evaluateHand(cards);
-    if (evalRes.tier < v.minTier) { battleLog(`${v.name} — ${evalRes.label}, not enough for ${TIERS[v.minTier]}. No effect.`); }
+    let ready, label, mult;
+    if (v.straightLen) {
+      ready = cards.length === v.straightLen && isConsecutive(cards);
+      label = `${v.straightLen}-Card Straight`;
+      mult = straightMult(v.straightLen);
+    } else {
+      const evalRes = evaluateHand(cards);
+      ready = evalRes.tier >= v.minTier;
+      label = evalRes.label;
+      mult = evalRes.mult;
+    }
+    if (!ready) { battleLog(`${v.name} — ${label || 'no valid play'}, not enough for its requirement. No effect.`); }
     else {
       let amount;
       if (vId === 'admin') {
         // Admin Vehicle uses raw card value. A Pair receives its separate Admin bonus.
         amount = damageFor(cards, 1);
-        if (evalRes.tier === 1 && cards.length === 2) {
+        if (cards.length === 2 && evaluateHand(cards).tier === 1) {
           const pairBonus = 1.5 + (META.levels.adminTune || 0) * 0.5;
           amount = Math.round(amount * pairBonus);
         }
       } else {
-        amount = damageFor(cards, evalRes.mult);
+        amount = damageFor(cards, mult);
       }
-      if (v.kind === 'defense') { BATTLE.playerArmor += amount; battleLog(`${v.name} — ${evalRes.label}! +${amount} armor.`); }
+      if (v.kind === 'defense') { BATTLE.playerArmor += amount; battleLog(`${v.name} — ${label}! +${amount} armor.`); }
       else if (v.kind === 'poison') { const poisonAmount = Math.round(amount / 2);
         BATTLE.opponent.poisonStacks = BATTLE.opponent.poisonStacks || [];
         BATTLE.opponent.poisonStacks.push(poisonAmount);
-        battleLog(`${v.name} — ${evalRes.label}! Applied ${poisonAmount} poison.`); }
-      else { totalDamage += amount; battleLog(`${v.name} — ${evalRes.label}! ${amount} damage.`); }
+        battleLog(`${v.name} — ${label}! Applied ${poisonAmount} poison.`); }
+      else if (v.kind === 'burn') { const stages = [amount, Math.round(amount / 2), Math.round(amount / 4)];
+        BATTLE.opponent.burn = { stages, stageIdx: 0 };
+        battleLog(`${v.name} — ${label}! Set ablaze for ${stages.join(' + ')} damage over the next 3 turns (or detonate early for less).`); }
+      else { totalDamage += amount; battleLog(`${v.name} — ${label}! ${amount} damage.`); }
     }
     idxs.forEach(i => usedIdx.add(i));
   }
+  BATTLE.exactKill = priorHp > 0 && totalDamage === priorHp;
   BATTLE.opponent.hpNow = Math.max(0, BATTLE.opponent.hpNow - totalDamage);
 
   if (BATTLE.opponent.poisonStacks?.length) {
@@ -653,7 +747,28 @@ function resolveTurn() {
     battleLog(`Poison ticks for ${pdmg}.`);
     BATTLE.opponent.poisonStacks = BATTLE.opponent.poisonStacks.map(n=>Math.max(0,n-3)).filter(n=>n>0);
   }
+  if (BATTLE.opponent.burn) {
+    const b = BATTLE.opponent.burn;
+    const bdmg = b.stages[b.stageIdx] || 0;
+    BATTLE.opponent.hpNow = Math.max(0, BATTLE.opponent.hpNow - bdmg);
+    battleLog(`Burn ticks for ${bdmg}.`);
+    b.stageIdx++;
+    if (b.stageIdx >= b.stages.length) BATTLE.opponent.burn = null;
+  }
   battleLog(`${BATTLE.opponent.name} at ${BATTLE.opponent.hpNow}/${BATTLE.opponent.hp}.`);
+
+  // Resolve any cards the opponent cursed on a previous turn: played it, curse clears; left it, take the hit.
+  BATTLE.hand.forEach((c, i) => {
+    if (c.curse) {
+      if (usedIdx.has(i)) {
+        battleLog(`Cursed ${rankLabel(c.rank)}${c.suit} played — curse cleared.`);
+      } else {
+        RUN.health = Math.max(0, RUN.health - c.curse);
+        battleLog(`Cursed ${rankLabel(c.rank)}${c.suit} left unplayed — you take ${c.curse} damage! Health: ${RUN.health}/${RUN.maxHealth}.`);
+      }
+      delete c.curse;
+    }
+  });
 
   if (BATTLE.turnDiscard.length) battleLog(`Discarded ${BATTLE.turnDiscard.length} card${BATTLE.turnDiscard.length > 1 ? 's' : ''}.`);
   const evvanUsed = (BATTLE.slots.evvan || []).length > 0 && evaluateHand((BATTLE.slots.evvan || []).map(i => BATTLE.hand[i])).tier >= VEHICLES.evvan.minTier;
@@ -701,6 +816,7 @@ function resolveTurn() {
       battleLog(`${BATTLE.opponent.name} played ${best.label} (${usedText}) — ${oppDmg} damage. Your health: ${RUN.health}/${RUN.maxHealth}.`);
       BATTLE.oppPool = BATTLE.oppPool.filter(c => !best.cards.includes(c));
     } else { battleLog(`${BATTLE.opponent.name} didn't have enough to attack this turn.`); }
+    tryApplyCurse();
   }
 
   if (RUN.health <= 0) { render(nodeResultScreen(false, {})); return; }
@@ -723,19 +839,22 @@ function winBattle(outlast) {
     if (stage === 1) CASTLE_STATE.firstDone = true;
     if (stage === 2) CASTLE_STATE.secondDone = true;
     saveRun();
-    render(castleScreen(`You won Battle ${stage}. Reward: +${reward.coins} coins, +${reward.gems} gems, +${reward.fuel} fuel.`));
+    render(castleDungeonScreen(`You won Battle ${stage}. Reward: +${reward.coins} coins, +${reward.gems} gems, +${reward.fuel} fuel.`));
     return;
   }
   const scale = outlast ? 0.7 : 1;
-  const chipReward = Math.round((22 + BATTLE.opponent.hp / 7) * scale);
+  let chipReward = Math.round((22 + BATTLE.opponent.hp / 7) * scale);
   const gemReward = 2 + BATTLE.row;
   const fuelReward = 3 + BATTLE.row;
-  const pointsReward = Math.round((5 + BATTLE.row * 3) * scale);
+  let pointsReward = Math.round((5 + BATTLE.row * 3) * scale);
+  const exactKillBonus = BATTLE.exactKill && !outlast;
+  if (exactKillBonus) { chipReward += 25; pointsReward += 15; }
   RUN.chips += chipReward; RUN.gems = Math.min(RUN.maxGems, RUN.gems + gemReward); RUN.fuel = Math.min(RUN.maxFuel, RUN.fuel + fuelReward);
   earnPoints(pointsReward);
   battleLog(outlast ? `You outlasted the ${BATTLE.opponent.name}!` : `${BATTLE.opponent.name} is done for!`);
+  if (exactKillBonus) battleLog(`Perfect elimination — exact kill bonus: +25 coins, +15 points!`);
   battleLog(`+${chipReward} coins, +${gemReward} gems, +${fuelReward} fuel, +${pointsReward} points.`);
-  render(nodeResultScreen(true, { chipReward, gemReward, fuelReward, pointsReward }));
+  render(nodeResultScreen(true, { chipReward, gemReward, fuelReward, pointsReward, exactKillBonus }));
 }
 
 /* ========== SCREENS ========== */
@@ -754,6 +873,61 @@ function currencyBar() {
   </div>`;
 }
 
+let MAP_POPUP = null; // {row, col} of the node currently shown in the map info popup
+function nodePopupContent(r, c) {
+  const node = RUN.map.nodes[r][c];
+  const glyph = (svg) => `<span class="vart" style="width:64px;height:64px;font-size:64px">${svg}</span>`;
+  if (node.type === 'battle') {
+    const o = node.opponent;
+    const chipReward = Math.round(22 + o.hp / 7), gemReward = 2 + r, fuelReward = 3 + r, pointsReward = Math.round(5 + r * 3);
+    return {
+      title: o.name, art: art(o, 64),
+      rows: [
+        ['HP', o.hp],
+        ['Requirement', o.locked ? `Locked — clears at ${o.lockThreshold}, then hits for a flat ${o.lockAttack}` : `Needs ${TIERS[o.minTier]}+ to attack`],
+        ['Draws', `${o.drawRate}/turn`],
+      ],
+      extra: `${o.attackInfo ? `<div class="note">${o.attackInfo}</div>` : ''}${o.boss ? `<div class="note" style="color:var(--red);font-weight:700">World Boss</div>` : ''}`,
+      rewards: { chipReward, gemReward, fuelReward, pointsReward },
+      actionLabel: 'Battle',
+    };
+  }
+  if (node.type === 'shop') return { title: 'Dealership', art: glyph(ICON.cart), rows: [], extra: '<div class="note">Buy a vehicle with coins.</div>', actionLabel: 'Go Here' };
+  if (node.type === 'rest') return { title: 'Pit Stop', art: glyph(ICON.wrench), rows: [], extra: '<div class="note">Restore 30 health.</div>', actionLabel: 'Go Here' };
+  if (node.type === 'blacksmith') return { title: 'Tuning Garage', art: glyph(ICON.hammer), rows: [], extra: '<div class="note">Pay to permanently upgrade a card, or tune your Admin Vehicle.</div>', actionLabel: 'Go Here' };
+  if (node.type === 'treasure') return { title: 'Supply Cache', art: glyph(ICON.gift), rows: [], extra: '<div class="note">One random reward: coins, fuel, gems, energy, or points.</div>', actionLabel: 'Go Here' };
+  return { title: 'Fleet Castle', art: glyph(ICON.castle), rows: [], extra: '<div class="note">Battles, the Dealership, refueling, a card match game, and more.</div>', actionLabel: 'Go Here' };
+}
+function nodePopupScreen(r, c) {
+  const isAvail = availableNextNodes().some(n => n.row === r && n.col === c);
+  const info = nodePopupContent(r, c);
+  const rewardsHTML = info.rewards ? `
+    <div class="hdr" style="margin-top:10px"><span>Rewards for winning</span><span></span></div>
+    <div class="currencies">
+      <div class="cur chip">${ICON.coin} ${info.rewards.chipReward} coins</div>
+      <div class="cur gem">${ICON.gem} ${info.rewards.gemReward} gems</div>
+      <div class="cur fuel">${ICON.fuel} ${info.rewards.fuelReward} fuel</div>
+      <div class="cur pts">${ICON.star} ${info.rewards.pointsReward} points</div>
+    </div>
+    <div class="note" style="margin-top:6px">Exact kill bonus: +25 coins, +15 points for a perfectly lethal hit.</div>` : '';
+  return `<div class="treasure-modal">
+    <div class="wo" style="max-width:420px;width:100%">
+      <div class="wo-stripe"></div>
+      <div class="wo-body">
+        <div class="wo-eyebrow">${info.title}</div>
+        <h1>Stop <em>Details</em></h1>
+        <div style="text-align:center;margin:8px 0">${info.art}</div>
+        ${info.rows.map(([k, v]) => `<div class="kv"><span>${k}</span><b>${v}</b></div>`).join('')}
+        ${info.extra || ''}
+        ${rewardsHTML}
+        <div style="display:flex;gap:8px;margin-top:14px">
+          ${isAvail ? `<button class="wo-btn amber" id="popupGoBtn" style="flex:1">${info.actionLabel}</button>` : ''}
+          <button class="wo-btn gray" id="popupCloseBtn" style="flex:1">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
 function mapScreen() {
   const rows = RUN.map.nodes;
   const colW = 118, rowY = [170, 90, 250];
@@ -776,7 +950,7 @@ function mapScreen() {
 
   let nodesHTML='';
   const NODE_ICON={shop:ICON.cart,rest:ICON.wrench,blacksmith:ICON.hammer,treasure:ICON.gift,castle:ICON.castle};
-  const NODE_TITLE={shop:'Shop',rest:'Pit Stop',blacksmith:'Tuning Garage',treasure:'Supply Cache',castle:'Fleet Castle'};
+  const NODE_TITLE={shop:'Dealership',rest:'Pit Stop',blacksmith:'Tuning Garage',treasure:'Supply Cache',castle:'Fleet Castle'};
   for(let r=0;r<rows.length;r++) for(let c=0;c<rows[r].length;c++){
     const node=rows[r][c], x=25+r*colW+colW/2, y=rowY[Math.min(c,rowY.length-1)];
     const isDone=RUN.path.some(p=>p.row===r&&p.col===c);
@@ -799,7 +973,7 @@ function mapScreen() {
     else tip='Find coins, fuel, and gems.';
 
     nodesHTML+=`<div class="mapnode-wrap ${isBoss?'bossnode ':''}${c===0?'toprow':c===1?'midrow':'bottomrow'}" style="left:${(x/totalW*100)}%;top:${y}px">
-      <button class="mapnode ${cls}" ${isAvail?`data-goto="${r}:${c}"`:''} ${isAvail?'':'disabled'}>${icon}</button>
+      <button class="mapnode ${cls}" ${showReal?`data-nodeinfo="${r}:${c}"`:''} ${showReal?'':'disabled'}>${icon}</button>
       <div class="tooltip"><b>${title}</b><br>${tip}</div>
     </div>`;
   }
@@ -808,7 +982,7 @@ function mapScreen() {
   <div class="panel">
     <div class="hdr"><span>Health: ${RUN.health}/${RUN.maxHealth}</span><span>Vehicles: ${RUN.ownedVehicles.length}/${RUN.vehicleCap}</span></div>
     ${currencyBar()}
-    <div class="hdr" style="margin-top:8px"><span>World 1 - City Fleet (21 spaces)</span><span>Select your next stop.</span></div>
+    <div class="hdr" style="margin-top:8px"><span>World 1 - City Fleet (21 spaces)</span><span>Tap a stop to see details.</span></div>
     <div class="mapwrap" style="width:100%;height:${totalH}px;overflow-x:auto;overflow-y:hidden">
       <div style="position:relative;width:${totalW}px;height:${totalH}px">
         <svg width="${totalW}" height="${totalH}" viewBox="0 0 ${totalW} ${totalH}" style="position:absolute;left:0;top:0;pointer-events:none">${svgLines}</svg>
@@ -818,14 +992,14 @@ function mapScreen() {
     <div style="display:flex;justify-content:flex-end;margin-top:10px">
       <button class="wo-btn amber" id="mapUpgradeBtn">View Upgrades</button>
     </div>
-  </div>`;
+  </div>
+  ${MAP_POPUP ? nodePopupScreen(MAP_POPUP.row, MAP_POPUP.col) : ''}`;
 }
 
 function battleScreen() {
   const opp = BATTLE.opponent;
   const hpPct = Math.max(0, (opp.hpNow / opp.hp) * 100);
   const healthPct = Math.max(0, (RUN.health / RUN.maxHealth) * 100);
-  const committedCount = Object.values(BATTLE.slots).reduce((a, arr) => a + arr.length, 0) + BATTLE.turnDiscard.length;
 
   const poolHTML = BATTLE.oppPool.map(c => c.revealed
     ? `<div class="card mini ${c.color === 'red' ? 'red' : ''}">${rankLabel(c.rank)}${c.suit}</div>`
@@ -835,23 +1009,32 @@ function battleScreen() {
     const v = VEHICLES[vId];
     const idxs = BATTLE.slots[vId] || [];
     const cards = idxs.map(i => BATTLE.hand[i]);
-    const evalRes = cards.length ? evaluateHand(cards) : null;
-    const ready = evalRes && evalRes.tier >= v.minTier;
-    let preview = ready ? damageFor(cards, evalRes.mult) : null; if (ready && vId === 'admin' && evalRes.tier === 1 && cards.length === 2) preview = Math.round(preview * (1.5 + (META.levels.adminTune || 0) * 0.5));
+    let ready, label, mult;
+    if (v.straightLen) {
+      ready = cards.length === v.straightLen && isConsecutive(cards);
+      label = ready ? `${v.straightLen}-Card Straight` : (cards.length ? 'Not a straight' : '');
+      mult = straightMult(v.straightLen);
+    } else {
+      const evalRes = cards.length ? evaluateHand(cards) : null;
+      ready = evalRes && evalRes.tier >= v.minTier;
+      label = evalRes ? evalRes.label : '';
+      mult = evalRes ? evalRes.mult : 0;
+    }
+    let preview = ready ? damageFor(cards, mult) : null; if (ready && vId === 'admin' && cards.length === 2 && evaluateHand(cards).tier === 1) preview = Math.round(preview * (1.5 + (META.levels.adminTune || 0) * 0.5));
     const effectWord = v.kind === 'defense' ? 'armor' : v.kind === 'poison' ? 'poison' : 'dmg';
     const cardHTML = idxs.map(cardHandIdx => {
       const c = BATTLE.hand[cardHandIdx];
       return `<div class="card mini ${c.color === 'red' ? 'red' : ''}" data-unassign="${vId}:${cardHandIdx}">${rankLabel(c.rank)}${c.suit}</div>`;
     }).join('') || `<span class="note" style="margin:0">drag or tap cards here</span>`;
     const abilityBtn = v.ability ? `<button class="wo-btn purple" style="padding:5px 8px;font-size:11px;margin-top:5px" data-ability="${vId}" ${BATTLE.abilityUsedThisTurn || RUN.energy < v.ability.cost ? 'disabled' : ''}><span class="vart" style="width:11px;height:11px;font-size:11px">${ICON.energy}</span> ${v.ability.name} (${v.ability.cost})</button>` : '';
-    const reqText = v.minTier === 0 ? 'Any card attacks' : `Needs ${TIERS[v.minTier]}+`;
-    const attackChip = ready ? `<span class="attackChip" data-attack="${vId}" title="${committedCount < 2 ? 'Play or discard at least 2 cards total to attack' : 'Attack now'}">Attack ▶</span>` : '';
+    const reqText = v.straightLen ? `Needs a ${v.straightLen}-card straight` : (v.minTier === 0 ? 'Any card attacks' : `Needs ${TIERS[v.minTier]}+`);
+    const attackChip = ready ? `<span class="attackChip" data-attack="${vId}">Attack ▶</span>` : '';
     return `<div class="vslot ${idxs.length ? 'filled' : ''} ${ready ? 'ready' : ''} ${v.kind || ''}" data-assign="${vId}"
         ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleCardDrop(event,'${vId}')">
       <div class="vname">${art(v, 18)} ${v.name}</div>
       <div class="vreq">${reqText} · ${idxs.length}/${v.slot} cards</div>
       <div class="vcards">${cardHTML}</div>
-      ${evalRes ? `<div class="note" style="margin:4px 0 0">${evalRes.label}${ready ? ` ✓ ${preview} ${effectWord}` : ' ✗'}</div>` : ''}
+      ${label ? `<div class="note" style="margin:4px 0 0">${label}${ready ? ` ✓ ${preview} ${effectWord}` : ' ✗'}</div>` : ''}
       <div>
         ${idxs.length ? `<button class="wo-btn gray" style="padding:5px 8px;font-size:11px;margin-top:5px" data-clear="${vId}">Clear</button>` : ''}
         ${abilityBtn}
@@ -863,9 +1046,10 @@ function battleScreen() {
   const assignedIdx = new Set(Object.values(BATTLE.slots).flat());
   const handHTML = BATTLE.hand.map((c, i) => {
     if (assignedIdx.has(i) || BATTLE.turnDiscard.includes(i)) return '';
-    return `<div class="card ${c.color === 'red' ? 'red' : ''} ${selectedIdx.includes(i) ? 'selected' : ''}" data-card="${i}" draggable="true"
-      ondragstart="event.dataTransfer.setData('text/plain','${i}');this.classList.add('dragging')" ondragend="this.classList.remove('dragging')" style="position:relative">
+    return `<div class="card ${c.color === 'red' ? 'red' : ''} ${selectedIdx.includes(i) ? 'selected' : ''} ${c.curse ? 'cursed' : ''}" data-card="${i}" draggable="true"
+      ondragstart="event.dataTransfer.setData('text/plain','${i}');this.classList.add('dragging')" ondragend="this.classList.remove('dragging')" style="position:relative" ${c.curse ? `title="Cursed! Play this card or take ${c.curse} damage at end of turn."` : ''}>
     ${c.bonus ? `<div style="position:absolute;bottom:1px;right:2px;font-size:8px;color:var(--green)">+${c.bonus}</div>` : ''}
+    ${c.curse ? `<div style="position:absolute;top:-6px;right:-6px;width:14px;height:14px;color:var(--purple)">${ICON.curse}</div>` : ''}
     <div>${rankLabel(c.rank)}</div><div style="font-size:16px">${c.suit}</div>
   </div>`;
   }).join('');
@@ -877,37 +1061,38 @@ function battleScreen() {
   return `
     <div class="panel">${currencyBar()}</div>
     <div class="panel duelHead">
-      <div class="duelSide you">${art(PLAYER_ART, 30)}<h3>Your Fleet</h3>
+      <div class="duelSide you">${art(PLAYER_ART, 30)}<h3>${fleetLabel()}</h3>
         <div class="bar-wrap"><div class="bar-fill bar-health" style="width:${healthPct}%"></div></div>
         <div class="note">${RUN.health} / ${RUN.maxHealth}${BATTLE.playerArmor ? ` &middot; <span class="vart" style="width:12px;height:12px;font-size:12px">${ICON.shield}</span> ${BATTLE.playerArmor} armor` : ''}</div>
       </div>
       <div class="vsMark">VS</div>
       <div class="duelSide opp">${art(opp, 30)}<h3>${opp.name}</h3>
         <div class="bar-wrap"><div class="bar-fill bar-hp" style="width:${hpPct}%"></div></div>
-        <div class="note">${opp.hpNow} / ${opp.hp}${(BATTLE.opponent.poisonStacks||[]).length ? ` &middot; <span class="vart" style="width:12px;height:12px;font-size:12px">${ICON.poison}</span> ${(BATTLE.opponent.poisonStacks||[]).reduce((a,n)=>a+n,0)} poison` : ''}</div>
+        <div class="note">${opp.hpNow} / ${opp.hp}${(BATTLE.opponent.poisonStacks||[]).length ? ` &middot; <span class="vart" style="width:12px;height:12px;font-size:12px">${ICON.poison}</span> ${(BATTLE.opponent.poisonStacks||[]).reduce((a,n)=>a+n,0)} poison` : ''}${BATTLE.opponent.burn ? ` &middot; <span class="vart" style="width:12px;height:12px;font-size:12px">${ICON.fire}</span> burning` : ''}</div>
+        ${BATTLE.opponent.burn ? `<span class="attackChip" data-detonate="1" style="background:var(--amber);border-color:#c97600;font-size:10px;padding:4px 8px">Detonate for ${BATTLE.opponent.burn.stages[BATTLE.opponent.burn.stageIdx]} now</span>` : ''}
       </div>
     </div>
-    <div class="panel">
-      <div class="hdr"><span>Your Hand</span><span>${BATTLE.hand.length - assignedIdx.size - BATTLE.turnDiscard.length} in hand &middot; ${BATTLE.deck.length} left in deck</span></div>
-      <div class="hand">${handHTML}</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="wo-btn gray" id="sortSuitBtn" style="padding:8px 12px;font-size:12px">Sort: Suit</button><button class="wo-btn gray" id="sortValueBtn" style="padding:8px 12px;font-size:12px">Sort: Value</button><button class="wo-btn gray" id="passTurnBtn" style="padding:8px 12px;font-size:12px">Pass Turn (Draw)</button>
-        <button class="wo-btn gray" id="discardSelectedBtn" style="padding:8px 12px;font-size:12px" title="Fold selected cards face-down instead of playing them. Still counts toward this turn's 2-card minimum." ${!selectedIdx.length ? 'disabled' : ''}>Discard Selected</button>
-      </div>
-      ${BATTLE.turnDiscard.length ? `<div class="note" style="margin-top:8px">Discarding this turn (tap to undo):</div><div class="hand">${discardStagedHTML}</div>` : ''}
-    </div>
-    <div class="fleetgrid">
+    <div class="duelBoard">
       <div class="panel">
-        <div class="hdr"><span>Your Fleet</span><span>Drag cards, or tap to select then tap a vehicle</span></div>
-        <div class="grid">${vehicleHTML}</div>
-        ${committedCount < 2 ? `<div class="note" style="margin-top:6px">Play or discard at least 2 cards total, then tap Attack (${committedCount}/2 so far)</div>` : ''}
+        <div class="hdr"><span>Your Hand</span><span></span></div>
+        <div class="hand">${handHTML}</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="wo-btn gray" id="sortSuitBtn" style="padding:8px 12px;font-size:12px">Sort: Suit</button><button class="wo-btn gray" id="sortValueBtn" style="padding:8px 12px;font-size:12px">Sort: Value</button><button class="wo-btn gray" id="passTurnBtn" style="padding:8px 12px;font-size:12px">Pass Turn (Draw ${RUN.drawPerTurn})</button>
+          <button class="wo-btn gray" id="discardSelectedBtn" style="padding:8px 12px;font-size:12px" title="Fold selected cards face-down instead of playing them." ${!selectedIdx.length ? 'disabled' : ''}>Discard Selected</button>
+        </div>
+        ${BATTLE.turnDiscard.length ? `<div class="note" style="margin-top:8px">Discarding this turn (tap to undo):</div><div class="hand">${discardStagedHTML}</div>` : ''}
       </div>
+      <div class="deckStack"><div class="card back" style="position:relative"><span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-family:var(--mono);font-weight:700;font-size:13px">${BATTLE.deck.length}</span></div></div>
       <div class="panel">
-        <div class="hdr"><span>${opp.name}'s Cards (${BATTLE.oppPool.length})</span><span></span></div>
+        <div class="hdr"><span>${opp.name}'s Cards</span><span></span></div>
         <div class="hand">${poolHTML}</div>
         <div class="note">${opp.locked ? `<span class="vart" style="width:12px;height:12px;font-size:12px">${ICON.lock}</span> Locked: ${opp.lockProgress}/${opp.lockThreshold} — clears the lock and hits for a flat ${opp.lockAttack}, no cards needed that turn` : `Needs ${TIERS[opp.minTier]}+ to attack`}</div>
         <button class="wo-btn amber" id="scoutBtn" style="padding:8px 12px;font-size:12px" ${BATTLE.scoutedThisTurn || RUN.chips < 10 ? 'disabled' : ''}>Scout (-10 coins)</button>
       </div>
+    </div>
+    <div class="panel">
+      <div class="hdr"><span>${fleetLabel()}</span><span>Drag cards, or tap to select then tap a vehicle</span></div>
+      <div class="grid">${vehicleHTML}</div>
     </div>
     <div class="panel">
       <div class="hdr"><span>Resources</span><span></span></div>
@@ -935,8 +1120,6 @@ function handleCardDrop(e, vId) {
   render(battleScreen());
 }
 function tryDispatch() {
-  const committedCount = Object.values(BATTLE.slots).reduce((a, arr) => a + arr.length, 0) + BATTLE.turnDiscard.length;
-  if (committedCount < 2) return;
   resolveTurn();
 }
 
@@ -948,6 +1131,7 @@ function nodeResultScreen(won, rewards) {
       <div class="wo-body">
         <div class="wo-eyebrow">${won ? 'Battle Won' : 'Battle Lost'}</div>
         <h1>${won ? 'Nice <em>Work</em>' : 'Fleet <em>Beaten</em>'}</h1>
+        ${rewards.exactKillBonus ? `<div class="note" style="color:var(--green);font-weight:700">Perfect elimination! Exact kill bonus included.</div>` : ''}
         <div class="wo-sub">${rewardLine}</div>
         ${won ? `<button class="wo-btn half" id="continueBtn">Continue</button><button class="wo-btn half amber" id="upgradeBtn" style="float:right">Upgrade</button>`
               : `<button class="wo-btn" id="continueBtn" style="width:100%">See Run Summary</button>`}
@@ -971,8 +1155,8 @@ function shopScreen(fromCastle=false) {
     <div class="wo">
       <div class="wo-stripe"></div>
       <div class="wo-body">
-        <div class="wo-eyebrow">Shop</div>
-        <h1>Pick Up <em>New Gear</em></h1>
+        <div class="wo-eyebrow">Dealership</div>
+        <h1>Purchase a <em>New Vehicle</em></h1>
         ${currencyBar()}
         <div class="hdr" style="margin-top:10px"><span>Vehicles (${RUN.ownedVehicles.length}/${RUN.vehicleCap} garage slots)</span><span></span></div>
         <div style="margin:6px 0 12px">${vehicleRows}</div>
@@ -1004,19 +1188,41 @@ function blacksmithScreen() {
     const b = findBoost(c.rank, c.suit);
     const bonus = b ? b.bonus : 0;
     const maxed = bonus >= 9;
+    const isPrimary = BLACKSMITH_VISIT.primary === i;
+    const isSecondary = BLACKSMITH_VISIT.secondary === i;
+    const primaryTaken = BLACKSMITH_VISIT.primary !== null;
+    const secondaryTaken = BLACKSMITH_VISIT.secondary !== null;
+    let btnHTML;
+    if (isPrimary || isSecondary) {
+      btnHTML = `<button class="wo-btn gray" disabled style="padding:8px 12px;font-size:13px">Upgraded ✓</button>`;
+    } else if (maxed) {
+      btnHTML = `<button class="wo-btn gray" disabled style="padding:8px 12px;font-size:13px">Maxed out</button>`;
+    } else if (!primaryTaken) {
+      const cost = tuneCost(bonus, false);
+      btnHTML = `<button class="wo-btn amber" data-forge="${i}" style="padding:8px 12px;font-size:13px" ${RUN.chips < cost ? 'disabled' : ''}>Upgrade (+3, ${cost} coins)</button>`;
+    } else if (!secondaryTaken) {
+      const cost = tuneCost(bonus, true);
+      btnHTML = `<button class="wo-btn purple" data-forge="${i}" style="padding:8px 12px;font-size:13px" ${RUN.chips < cost ? 'disabled' : ''}>Also upgrade (+3, ${cost} coins)</button>`;
+    } else {
+      btnHTML = `<button class="wo-btn gray" disabled style="padding:8px 12px;font-size:13px">Visit's extra upgrade used</button>`;
+    }
     return `<div class="shopcard">
       <div class="hdr"><span>${rankLabel(c.rank)}${c.suit} ${bonus ? `(currently +${bonus})` : ''}</span><span></span></div>
       <div class="note" style="margin:0 0 6px">Permanently adds +3 damage to this exact card, for the rest of the run.</div>
-      <button class="wo-btn amber" data-forge="${i}" style="padding:8px 12px;font-size:13px" ${maxed ? 'disabled' : ''}>${maxed ? 'Maxed out' : 'Upgrade (+3)'}</button>
+      ${btnHTML}
     </div>`;
   }).join('');
+  const visitNote = BLACKSMITH_VISIT.primary === null
+    ? `Pick one card to pay for a main upgrade. You can pay a bit more to also upgrade a second card in the same visit.`
+    : (BLACKSMITH_VISIT.secondary === null ? `You can pay extra to also upgrade one more card this visit, or move on.` : `You've used both upgrades this visit. Come back another time to tune more.`);
   return `${noticeHTML()}
     <div class="wo">
       <div class="wo-stripe"></div>
       <div class="wo-body">
         <div class="wo-eyebrow">Tuning Garage</div>
         <h1>Tune Your <em>Fleet</em></h1>
-        <div class="wo-sub">Pick one card to permanently strengthen for this run. You can come back and stack it further at another Tuning Garage.</div>
+        <div class="wo-sub">${visitNote}</div>
+        ${currencyBar()}
         <div style="margin:12px 0">${adminTune}${rows}</div>
         <button class="wo-btn" id="leaveBlacksmithBtn">Back on the Road</button>
       </div>
@@ -1113,6 +1319,10 @@ function metaScreen() {
         <div class="wo-eyebrow">Home Base</div>
         <h1>Fleet <em>Duel</em></h1>
         <div class="wo-sub">Points: ${META.points} &middot; Best route: ${META.bestRun}/21 &middot; High score: ${META.highScore} &middot; Runs played: ${META.runsPlayed}</div>
+        <div class="panel" style="margin-bottom:10px">
+          <div class="hdr"><span>Fleet Name</span><span></span></div>
+          <input id="playerNameInput" type="text" maxlength="18" placeholder="Your name" value="${(META.playerName||'').replace(/"/g,'&quot;')}" style="width:100%;padding:9px 10px;border:2px solid var(--blue-light);border-radius:6px;font-family:var(--disp);font-size:15px;color:var(--ink)">
+        </div>
         <button class="wo-btn amber" id="viewUpgradesBtn" style="width:100%;margin-bottom:10px">View Upgrades</button>
         ${hasSave ? `<button class="wo-btn" id="continueRunBtn" style="margin-bottom:10px;width:100%">Continue Run</button>` : ''}
         <button class="wo-btn ${hasSave ? 'gray' : ''}" id="startRunBtn" style="width:100%">${hasSave ? 'Start New Run (overwrites save)' : 'Start Run'}</button>
@@ -1135,6 +1345,7 @@ function render(html) {
   app.querySelectorAll('[data-clear]').forEach(el => el.onclick = (e) => { e.stopPropagation(); clearSlot(el.dataset.clear); });
   app.querySelectorAll('[data-ability]').forEach(el => el.onclick = (e) => { e.stopPropagation(); useAbility(el.dataset.ability); });
   app.querySelectorAll('[data-attack]').forEach(el => el.onclick = (e) => { e.stopPropagation(); tryDispatch(); });
+  app.querySelectorAll('[data-detonate]').forEach(el => el.onclick = (e) => { e.stopPropagation(); detonateBurn(); });
   const passTurnBtn = document.getElementById('passTurnBtn'); if (passTurnBtn) passTurnBtn.onclick = passTurn;
   const sortSuitBtn = document.getElementById('sortSuitBtn'); if (sortSuitBtn) sortSuitBtn.onclick = () => sortHand('suit');
   const sortValueBtn = document.getElementById('sortValueBtn'); if (sortValueBtn) sortValueBtn.onclick = () => sortHand('value');
@@ -1143,7 +1354,9 @@ function render(html) {
   const discardSelectedBtn = document.getElementById('discardSelectedBtn'); if (discardSelectedBtn) discardSelectedBtn.onclick = markSelectedForDiscard;
   app.querySelectorAll('[data-undiscard]').forEach(el => el.onclick = () => unmarkDiscard(+el.dataset.undiscard));
 
-  app.querySelectorAll('[data-goto]').forEach(el => el.onclick = () => { const [r, c] = el.dataset.goto.split(':').map(Number); selectNode(r, c); });
+  app.querySelectorAll('[data-nodeinfo]').forEach(el => el.onclick = () => { const [r, c] = el.dataset.nodeinfo.split(':').map(Number); MAP_POPUP = { row: r, col: c }; render(mapScreen()); });
+  const popupCloseBtn = document.getElementById('popupCloseBtn'); if (popupCloseBtn) popupCloseBtn.onclick = () => { MAP_POPUP = null; render(mapScreen()); };
+  const popupGoBtn = document.getElementById('popupGoBtn'); if (popupGoBtn) popupGoBtn.onclick = () => { const p = MAP_POPUP; MAP_POPUP = null; if (p) selectNode(p.row, p.col); };
 
   const continueBtn = document.getElementById('continueBtn');
   if (continueBtn) continueBtn.onclick = () => {
@@ -1159,6 +1372,8 @@ function render(html) {
     if (ret === 'map') { if (RUN.currentRow === ROWS) endRun(true); else render(mapScreen()); }
     else render(metaScreen());
   };
+  const playerNameInput = document.getElementById('playerNameInput');
+  if (playerNameInput) playerNameInput.onchange = () => { META.playerName = playerNameInput.value.trim().slice(0, 18); saveMeta(); };
   const viewUpgradesBtn = document.getElementById('viewUpgradesBtn'); if (viewUpgradesBtn) viewUpgradesBtn.onclick = () => render(upgradeScreen('home'));
   app.querySelectorAll('[data-levelup]').forEach(el => el.onclick = () => {
     const u = UPGRADE_DEFS.find(x => x.id === el.dataset.levelup);
@@ -1173,13 +1388,18 @@ function render(html) {
   });
 
   const mapUpgradeBtn = document.getElementById('mapUpgradeBtn'); if (mapUpgradeBtn) mapUpgradeBtn.onclick = () => render(upgradeScreen('map'));
+  const castleDungeonNavBtn = document.getElementById('castleDungeonNavBtn'); if (castleDungeonNavBtn) castleDungeonNavBtn.onclick = () => render(castleDungeonScreen());
+  const castleWizardNavBtn = document.getElementById('castleWizardNavBtn'); if (castleWizardNavBtn) castleWizardNavBtn.onclick = () => { CASTLE_STATE = CASTLE_STATE || {}; CASTLE_STATE.matchCards = null; render(castleMatchScreen()); };
+  const castleBlacksmithNavBtn = document.getElementById('castleBlacksmithNavBtn'); if (castleBlacksmithNavBtn) castleBlacksmithNavBtn.onclick = () => { RETURN_TO_CASTLE_MENU = true; BLACKSMITH_OPTIONS = pickBlacksmithOptions(); BLACKSMITH_VISIT = { primary: null, secondary: null }; render(blacksmithScreen()); };
+  const castleShopNavBtn = document.getElementById('castleShopNavBtn'); if (castleShopNavBtn) castleShopNavBtn.onclick = () => { RETURN_TO_CASTLE_MENU = true; render(shopScreen(true)); };
+  const castleInnNavBtn = document.getElementById('castleInnNavBtn'); if (castleInnNavBtn) castleInnNavBtn.onclick = () => render(castleInnScreen());
+  const backToCastleMenuBtn = document.getElementById('backToCastleMenuBtn'); if (backToCastleMenuBtn) backToCastleMenuBtn.onclick = () => render(castleMenuScreen());
   const castleBattle1Btn = document.getElementById('castleBattle1Btn'); if (castleBattle1Btn) castleBattle1Btn.onclick = () => { CASTLE_STATE = CASTLE_STATE || {}; CASTLE_STATE.stage=1; startBattle(CASTLE_FIRST, 10, 0); };
   const castleBattle2Btn = document.getElementById('castleBattle2Btn'); if (castleBattle2Btn) castleBattle2Btn.onclick = () => { CASTLE_STATE = CASTLE_STATE || {}; CASTLE_STATE.stage=2; startBattle(CASTLE_SECOND, 10, 0); };
-  const castleShopBtn = document.getElementById('castleShopBtn'); if (castleShopBtn) castleShopBtn.onclick = () => render(shopScreen(true));
-  const castleFuelBtn = document.getElementById('castleFuelBtn'); if (castleFuelBtn) castleFuelBtn.onclick = () => { if (RUN.chips>=5) { RUN.chips-=5; RUN.fuel=Math.min(RUN.maxFuel,RUN.fuel+10); saveRun(); render(castleScreen('You refueled for 5 coins.')); } };
-  const castleMatchBtn = document.getElementById('castleMatchBtn'); if (castleMatchBtn) castleMatchBtn.onclick = () => { CASTLE_STATE = CASTLE_STATE || {}; CASTLE_STATE.matchCards=null; render(castleMatchScreen()); };
+  const castleFuelBtn = document.getElementById('castleFuelBtn'); if (castleFuelBtn) castleFuelBtn.onclick = () => { if (RUN.chips>=5) { RUN.chips-=5; RUN.fuel=Math.min(RUN.maxFuel,RUN.fuel+10); saveRun(); render(castleInnScreen('You refueled for 5 coins.')); } };
+  const castleRestBtn = document.getElementById('castleRestBtn'); if (castleRestBtn) castleRestBtn.onclick = () => { RUN.health=Math.min(RUN.maxHealth,RUN.health+20); saveRun(); render(castleInnScreen('You rested and recovered 20 health.')); };
   const leaveCastleBtn = document.getElementById('leaveCastleBtn'); if (leaveCastleBtn) leaveCastleBtn.onclick = () => render(mapScreen());
-  const leaveMatchBtn = document.getElementById('leaveMatchBtn'); if (leaveMatchBtn) leaveMatchBtn.onclick = () => render(castleScreen());
+  const leaveMatchBtn = document.getElementById('leaveMatchBtn'); if (leaveMatchBtn) leaveMatchBtn.onclick = () => render(castleMenuScreen());
   app.querySelectorAll('[data-match]').forEach(el => el.onclick = () => {
     const i=+el.dataset.match, st=CASTLE_STATE;
     if (!st || st.matchGuesses<=0 || st.matchPick.includes(i) || st.matchCards[i].flipped) return;
@@ -1189,21 +1409,32 @@ function render(html) {
       if (st.matchCards[a].suit===st.matchCards[b].suit) {
         const reward=Math.random()<0.5 ? {coins:20+Math.floor(Math.random()*21),gems:1} : {coins:15,fuel:8};
         RUN.chips+=reward.coins||0; RUN.gems=Math.min(RUN.maxGems,RUN.gems+(reward.gems||0)); RUN.fuel=Math.min(RUN.maxFuel,RUN.fuel+(reward.fuel||0));
-        st.matchDone=true; saveRun(); render(castleScreen(`Match! You won ${reward.coins||0} coins${reward.gems?`, ${reward.gems} gem`:''}${reward.fuel?`, ${reward.fuel} fuel`:''}.`));
+        st.matchDone=true; saveRun(); render(castleMenuScreen(`Match! You won ${reward.coins||0} coins${reward.gems?`, ${reward.gems} gem`:''}${reward.fuel?`, ${reward.fuel} fuel`:''}.`));
       } else {
         st.matchGuesses--;
-        setTimeout(()=>{ st.matchPick.forEach(x=>st.matchCards[x].flipped=false); st.matchPick=[]; render(st.matchGuesses>0?castleMatchScreen():castleScreen('No match. The game is over for this visit.')); },350);
+        setTimeout(()=>{ st.matchPick.forEach(x=>st.matchCards[x].flipped=false); st.matchPick=[]; render(st.matchGuesses>0?castleMatchScreen():castleMenuScreen('No match. The game is over for this visit.')); },350);
       }
     }
     else render(castleMatchScreen());
   });
-  const leaveShopBtn = document.getElementById('leaveShopBtn'); if (leaveShopBtn) leaveShopBtn.onclick = () => render(document.querySelector('.wo-eyebrow')?.textContent==='Shop' && CASTLE_STATE?.stage===0 && RUN.currentRow===10 ? castleScreen() : mapScreen());
+  const leaveShopBtn = document.getElementById('leaveShopBtn'); if (leaveShopBtn) leaveShopBtn.onclick = () => render(RETURN_TO_CASTLE_MENU ? castleMenuScreen() : mapScreen());
   const adminTuneBtn = document.getElementById('adminTuneBtn'); if (adminTuneBtn) adminTuneBtn.onclick = () => { const u=UPGRADE_DEFS.find(x=>x.id==='adminTune'); const lvl=META.levels.adminTune||0; const cost=upgradeCost(u,lvl); if(META.points<cost)return; META.points-=cost; META.levels.adminTune=lvl+1; saveMeta(); render(blacksmithScreen()); };
-  const leaveBlacksmithBtn = document.getElementById('leaveBlacksmithBtn'); if (leaveBlacksmithBtn) leaveBlacksmithBtn.onclick = () => { BLACKSMITH_OPTIONS = null; render(mapScreen()); };
+  const leaveBlacksmithBtn = document.getElementById('leaveBlacksmithBtn'); if (leaveBlacksmithBtn) leaveBlacksmithBtn.onclick = () => { BLACKSMITH_OPTIONS = null; BLACKSMITH_VISIT = null; render(RETURN_TO_CASTLE_MENU ? castleMenuScreen() : mapScreen()); };
   const leaveTreasureBtn = document.getElementById('leaveTreasureBtn'); if (leaveTreasureBtn) leaveTreasureBtn.onclick = () => render(mapScreen());
   app.querySelectorAll('[data-forge]').forEach(el => el.onclick = () => {
-    const c = BLACKSMITH_OPTIONS[+el.dataset.forge];
+    const i = +el.dataset.forge;
+    const c = BLACKSMITH_OPTIONS[i];
+    const b = findBoost(c.rank, c.suit);
+    const bonus = b ? b.bonus : 0;
+    if (bonus >= 9) return;
+    const isSecondary = BLACKSMITH_VISIT.primary !== null;
+    if (isSecondary && BLACKSMITH_VISIT.secondary !== null) return;
+    const cost = tuneCost(bonus, isSecondary);
+    if (RUN.chips < cost) return;
+    RUN.chips -= cost;
     boostCard(c.rank, c.suit);
+    if (!isSecondary) BLACKSMITH_VISIT.primary = i; else BLACKSMITH_VISIT.secondary = i;
+    saveRun();
     render(blacksmithScreen());
   });
   app.querySelectorAll('[data-buy]').forEach(el => el.onclick = () => {

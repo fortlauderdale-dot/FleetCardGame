@@ -16,10 +16,10 @@
     --mono:'IBM Plex Mono',ui-monospace,monospace;
   }
   *{box-sizing:border-box}
-  html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:var(--disp);font-size:16px}
+  html,body{margin:0;min-height:3200px;background:var(--bg);color:var(--ink);font-family:var(--disp);font-size:16px}
   button{font-family:var(--disp);cursor:pointer}
-  #app{max-width:920px;margin:0 auto;padding:14px 14px 60px;min-height:1800px}
-  .game-stage{min-height:1500px}
+  #app{max-width:1180px;margin:0 auto;padding:14px 18px 100px;min-height:3600px}
+  .game-stage{min-height:3000px}
   .treasure-modal{position:fixed;inset:0;background:#12163acc;display:flex;align-items:center;justify-content:center;z-index:100;padding:20px}
   .treasure-modal .wo{max-width:560px;width:100%;margin:0}
   .treasure-prize{font-size:28px;font-weight:800;color:var(--blue-dark);text-align:center;margin:16px 0}
@@ -61,7 +61,7 @@
 
   .duelBoard{display:grid;grid-template-columns:1fr 66px 1fr;gap:8px;align-items:start}
   @media (max-width:700px){ .duelBoard{grid-template-columns:1fr} .deckStack{display:none} .duelHead{grid-template-columns:1fr 1fr} .vsMark{display:none} }
-  .deckStack{text-align:center;padding-top:36px}
+  .deckStack{text-align:center;padding-top:36px}.deckStack .card.back{cursor:default;pointer-events:none}
 
   .vslot{border:2px dashed var(--blue-light);border-radius:8px;padding:10px;width:160px;background:var(--bg);cursor:pointer}
   .vslot.filled{border-style:solid;border-color:var(--amber)}
@@ -91,9 +91,9 @@
     border-top:1px dashed var(--blue-light);padding-top:8px;margin-top:8px}
   .log div{padding:2px 0}
 
-  .mapwrap{position:relative;margin:0 auto;overflow-x:auto;overflow-y:hidden;background:linear-gradient(180deg,#dfead7,#edf4e8);border:2px solid #c8d8bf;border-radius:12px;padding:10px}.mapnode-wrap{position:absolute;transform:translate(-50%,-50%)}
+  .mapwrap{position:relative;margin:0 auto;overflow-x:auto;overflow-y:visible;background:linear-gradient(180deg,#dfead7,#edf4e8);border:2px solid #c8d8bf;border-radius:12px;padding:10px}.mapnode-wrap{position:absolute;transform:translate(-50%,-50%)}
   .mapnode-wrap{position:absolute;transform:translate(-50%,-50%)}
-  .mapnode-wrap:hover .tooltip{display:block}
+  .mapnode-wrap:hover .tooltip{display:block}.mapnode-wrap .tooltip{top:120%;bottom:auto}
   .tooltip{display:none;position:absolute;bottom:120%;left:50%;transform:translateX(-50%);
     background:var(--ink);color:#fff;font-family:var(--mono);font-size:10.5px;line-height:1.5;
     padding:7px 10px;border-radius:6px;white-space:nowrap;z-index:5;box-shadow:2px 3px 6px #0004;text-align:left}
@@ -174,8 +174,8 @@ function damageFor(cards, mult) { return Math.round(cards.reduce((a, c) => a + c
 
 /* ========== PLAYER VEHICLE CATALOG ========== */
 const VEHICLES = {
-  sidebyside: { id: 'sidebyside', name: 'Side-by-Side',   icon: '🛞', slot: 2, minTier: 1, cost: 0,  note: 'Needs a Pair.' },
-  admin:      { id: 'admin',      name: 'Admin Vehicle',  icon: '🚗', slot: 2, minTier: 0, cost: 0,  note: 'Attack with 1 or 2 cards. A Pair gets the Admin bonus.' },
+  sidebyside: { id: 'sidebyside', name: 'Golf Cart', icon: '⛳', slot: 1, minTier: 0, cost: 0, note: 'Any 1 card attack.' },
+  admin:      { id: 'admin',      name: 'Admin Vehicle',  icon: '🚗', slot: 2, minTier: 0, cost: 0,  note: 'Up to 2 cards. Damage +50% if Pair.' },
   interstate: { id: 'interstate', name: 'Interstate Racer', icon: '🏁', slot: 4, minTier: 4, cost: 0, note: 'Needs a Straight.' },
   convoy:     { id: 'convoy',     name: 'Armored Convoy',   icon: '🚛', slot: 4, minTier: 5, cost: 0, note: 'Needs a Flush.' },
   garbage: { id: 'garbage', name: 'Garbage Truck',   icon: '🗑️', slot: 3, minTier: 3, cost: 45,  note: 'Needs Three of a Kind.' },
@@ -224,7 +224,7 @@ const OPPONENT_TIERS = [
     { id: 'limo', name: 'Armored Limo', icon: '🚘', hp: 125, minTier: 2, drawRate: 2, turnLimit: 8 },
     { id: 'vault', name: 'Armored Vault Truck', icon: '🔐', hp: 130, locked: true, lockThreshold: 70, lockAttack: 60, drawRate: 2, turnLimit: 9 } ],
 ];
-const BOSS = { id: 'swat', name: 'SWAT Truck', icon: '🚔', hp: 145, minTier: 3, drawRate: 2, turnLimit: 10, boss: true, attackInfo: 'Uses its best poker hand; attacks usually deal about 10-35 damage depending on the hand.' };
+const BOSS = { id: 'swat', name: 'SWAT Truck', icon: '🚔', hp: 145, minTier: 3, drawRate: 2, turnLimit: 10, boss: true, attackInfo: 'Attack: uses its best poker hand for about 10-35 damage, depending on the hand.' };
 function revealFraction(row) { return [1.0, 0.8, 0.6, 0.4, 0.25, 0.1, 0][Math.min(row, 6)]; }
 
 /* ========== LEVELED UPGRADE TREE (permanent, up to 20 levels each) ========== */
@@ -256,7 +256,7 @@ function saveMeta() { try { localStorage.setItem(META_KEY, JSON.stringify(META))
 function earnPoints(n) { META.points += n; META.lifetimePoints += n; if (RUN) RUN.scoreThisRun += n; saveMeta(); }
 
 /* ========== RUN SAVE (mid-run continuity, roguelite-style) ========== */
-const RUN_KEY = 'fleetduel-run-v75';
+const RUN_KEY = 'fleetduel-run-v76';
 function saveRun() { try { localStorage.setItem(RUN_KEY, JSON.stringify(RUN)); } catch (e) {} }
 function loadRunSave() { try { const raw = localStorage.getItem(RUN_KEY); if (raw) return JSON.parse(raw); } catch (e) {} return null; }
 function clearRunSave() { try { localStorage.removeItem(RUN_KEY); } catch (e) {} }
@@ -486,7 +486,7 @@ function startBattle(opponentDef, row, col) {
     if (!hidden.length) break;
     hidden[(Math.random() * hidden.length) | 0].revealed = true;
   }
-  battleLog(`You're facing a ${BATTLE.opponent.name}. Turn 1 of ${BATTLE.opponent.turnLimit}.`);
+  battleLog(`You're facing a ${BATTLE.opponent.name}.`);
   render(battleScreen());
 }
 function drawCards(n) {
@@ -581,10 +581,16 @@ function resolveTurn() {
     const evalRes = evaluateHand(cards);
     if (evalRes.tier < v.minTier) { battleLog(`${v.name} — ${evalRes.label}, not enough for ${TIERS[v.minTier]}. No effect.`); }
     else {
-      let amount = damageFor(cards, evalRes.mult);
-      if (vId === 'admin' && evalRes.tier === 1 && cards.length === 2) {
-        const pairBonus = 1.5 + (META.levels.adminTune || 0) * 0.5;
-        amount = Math.round(amount * pairBonus);
+      let amount;
+      if (vId === 'admin') {
+        // Admin Vehicle uses raw card value. A Pair receives its separate Admin bonus.
+        amount = damageFor(cards, 1);
+        if (evalRes.tier === 1 && cards.length === 2) {
+          const pairBonus = 1.5 + (META.levels.adminTune || 0) * 0.5;
+          amount = Math.round(amount * pairBonus);
+        }
+      } else {
+        amount = damageFor(cards, evalRes.mult);
       }
       if (v.kind === 'defense') { BATTLE.playerArmor += amount; battleLog(`${v.name} — ${evalRes.label}! +${amount} armor.`); }
       else if (v.kind === 'poison') { const poisonAmount = Math.round(amount / 2);
@@ -656,10 +662,9 @@ function resolveTurn() {
   if (RUN.health <= 0) { render(nodeResultScreen(false, {})); return; }
 
   BATTLE.turn++;
-  if (BATTLE.turn > BATTLE.opponent.turnLimit) { winBattle(true); return; }
   drawCards(RUN.drawPerTurn);
   drawOpponentCards();
-  battleLog(`— Turn ${BATTLE.turn} of ${BATTLE.opponent.turnLimit} —`);
+  battleLog(`— Turn ${BATTLE.turn} —`);
   render(battleScreen());
 }
 function winBattle(outlast) {
@@ -707,9 +712,9 @@ function currencyBar() {
 
 function mapScreen() {
   const rows = RUN.map.nodes;
-  const colW = 118, rowY = [118, 55, 181];
+  const colW = 118, rowY = [170, 90, 250];
   const totalW = rows.length * colW + 50;
-  const totalH = 330;
+  const totalH = 420;
   const avail = availableNextNodes();
   const visibleRange = 3 + META.levels.range;
   let svgLines = '';
@@ -749,7 +754,7 @@ function mapScreen() {
     else if(node.type==='castle') tip='Choose battles, shopping, refueling, a matching game, or other rewards.';
     else tip='Find coins, fuel, and gems.';
 
-    nodesHTML+=`<div class="mapnode-wrap ${isBoss?'bossnode':''}" style="left:${(x/totalW*100)}%;top:${y}px">
+    nodesHTML+=`<div class="mapnode-wrap ${isBoss?'bossnode ':''}${c===0?'toprow':c===1?'midrow':'bottomrow'}" style="left:${(x/totalW*100)}%;top:${y}px">
       <button class="mapnode ${cls}" ${isAvail?`data-goto="${r}:${c}"`:''} ${isAvail?'':'disabled'}>${icon}</button>
       <div class="tooltip"><b>${title}</b><br>${tip}</div>
     </div>`;
@@ -828,7 +833,7 @@ function battleScreen() {
       <div class="vsMark">VS</div>
       <div class="duelSide opp"><div class="bigicon">${opp.icon}</div><h3>${opp.name}</h3>
         <div class="bar-wrap"><div class="bar-fill bar-hp" style="width:${hpPct}%"></div></div>
-        <div class="note">${opp.hpNow} / ${opp.hp}${(BATTLE.opponent.poisonStacks||[]).length ? ` &middot; ☣️ ${(BATTLE.opponent.poisonStacks||[]).reduce((a,n)=>a+n,0)} poison` : ''} &middot; Turn ${BATTLE.turn}/${opp.turnLimit}</div>
+        <div class="note">${opp.hpNow} / ${opp.hp}${(BATTLE.opponent.poisonStacks||[]).length ? ` &middot; ☣️ ${(BATTLE.opponent.poisonStacks||[]).reduce((a,n)=>a+n,0)} poison` : ''}</div>
       </div>
     </div>
     <div class="duelBoard">

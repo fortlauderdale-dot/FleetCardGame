@@ -736,49 +736,70 @@ function useAbility(vId) {
   saveRun(); render(battleScreen());
 }
 
-function resolveTurn() {let totalDamage = 0;const usedIdx = new Set();const priorHp = BATTLE.opponent.hpNow;for (const instance of RUN.ownedVehicles) {const v = VEHICLES[instance.vehicleId];for (const attId of instance.attacks) {
-const att = ATTACKS[attId];
-const slotKey = ${instance.instanceId}:${att.id};
-const idxs = BATTLE.slots[slotKey] || [];
-if (!idxs.length) continue;const cards = idxs.map(i => BATTLE.hand[i]);
-let ready = false, label = '', mult = 0;if (att.straightLen) {
-ready = cards.length === att.straightLen && isConsecutive(cards);
-label = ready ? ${att.straightLen}-Card Straight : (cards.length ? 'Not a straight' : '');
-mult = straightMult(att.straightLen);
-} else {
-const evalRes = evaluateHand(cards);
-ready = evalRes.tier >= att.minTier;
-label = evalRes.label;
-mult = evalRes.mult;
-}if (!ready) {
-battleLog(${v.name} (${att.name}) — ${label || 'no valid play'}, requirement unmet. No effect.);
-} else {
-let amount = damageFor(cards, mult || 1);if (att.bonusType === 'admin') {
-  if (cards.length === 2 && evaluateHand(cards).tier === 1) {
-    const pairBonus = 1.5 + (RUN.adminTuneLvl || 0) * 0.5;
-    amount = Math.round(amount * pairBonus);
-  }
-}
+function resolveTurn() {
+  let totalDamage = 0;
+  const usedIdx = new Set();
+  const priorHp = BATTLE.opponent.hpNow;
 
-if (att.kind === 'defense') { 
-  BATTLE.playerArmor += amount; 
-  battleLog(`${v.name} [${att.name}] — ${label}! +${amount} armor.`); 
-} else if (att.kind === 'poison') { 
-  const poisonAmount = Math.round(amount / 2);
-  BATTLE.opponent.poisonStacks = BATTLE.opponent.poisonStacks || [];
-  BATTLE.opponent.poisonStacks.push(poisonAmount);
-  battleLog(`${v.name} [${att.name}] — ${label}! Applied ${poisonAmount} poison.`); 
-} else if (att.kind === 'burn') { 
-  const stages = [amount, Math.round(amount / 2), Math.round(amount / 4)];
-  BATTLE.opponent.burn = { stages, stageIdx: 0 };
-  battleLog(`${v.name} [${att.name}] — ${label}! Burn applied for ${stages.join(' + ')} damage.`); 
-} else { 
-  totalDamage += amount; 
-  battleLog(`${v.name} [${att.name}] — ${label}! ${amount} damage.`); 
-}
-}
-idxs.forEach(i => usedIdx.add(i));
-}}
+  for (const instance of RUN.ownedVehicles) {
+    const v = VEHICLES[instance.vehicleId];
+    for (const attId of instance.attacks) {
+      const att = ATTACKS[attId];
+      // FIX 1: Restored backticks for the template literal string
+      const slotKey = `${instance.instanceId}:${att.id}`;
+      const idxs = BATTLE.slots[slotKey] || [];
+      if (!idxs.length) continue;
+      const cards = idxs.map(i => BATTLE.hand[i]);
+      
+      let ready = false, label = '', mult = 0;
+      if (att.straightLen) {
+        ready = cards.length === att.straightLen && isConsecutive(cards);
+        // FIX 2: Restored backticks here
+        label = ready ? `${att.straightLen}-Card Straight` : (cards.length ? 'Not a straight' : '');
+        mult = straightMult(att.straightLen);
+      } else {
+        const evalRes = evaluateHand(cards);
+        ready = evalRes.tier >= att.minTier;
+        label = evalRes.label;
+        mult = evalRes.mult;
+      }
+
+      if (!ready) {
+        // FIX 3: Restored backticks here
+        battleLog(`${v.name} (${att.name}) — ${label || 'no valid play'}, requirement unmet. No effect.`);
+      } else {
+        let amount = damageFor(cards, mult || 1);
+        if (att.bonusType === 'admin') {
+          if (cards.length === 2 && evaluateHand(cards).tier === 1) {
+            const pairBonus = 1.5 + (RUN.adminTuneLvl || 0) * 0.5;
+            amount = Math.round(amount * pairBonus);
+          }
+        }
+
+        if (att.kind === 'defense') { 
+          BATTLE.playerArmor += amount; 
+          battleLog(`${v.name} [${att.name}] — ${label}! +${amount} armor.`); 
+        } else if (att.kind === 'poison') { 
+          const poisonAmount = Math.round(amount / 2);
+          BATTLE.opponent.poisonStacks = BATTLE.opponent.poisonStacks || [];
+          BATTLE.opponent.poisonStacks.push(poisonAmount);
+          battleLog(`${v.name} [${att.name}] — ${label}! Applied ${poisonAmount} poison.`); 
+        } else if (att.kind === 'burn') { 
+          const stages = [amount, Math.round(amount / 2), Math.round(amount / 4)];
+          BATTLE.opponent.burn = { stages, stageIdx: 0 };
+          battleLog(`${v.name} [${att.name}] — ${label}! Burn applied for ${stages.join(' + ')} damage.`); 
+        } else { 
+          totalDamage += amount; 
+          // FIX 4: Changed 'BATTLE.opponent.hpNow' calculation to correctly deduct 'totalDamage' later, 
+          // or subtract immediately per vehicle attack resolution loop:
+          BATTLE.opponent.hpNow = Math.max(0, BATTLE.opponent.hpNow - amount);
+          battleLog(`${v.name} [${att.name}] — ${label}! ${amount} damage.`); 
+        }
+      }
+      idxs.forEach(i => usedIdx.add(i));
+    }
+  }
+
 
   // Resolve any cards the opponent cursed on a previous turn: played it, curse clears; left it, take the hit.
   BATTLE.hand.forEach((c, i) => {

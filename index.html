@@ -174,7 +174,7 @@ function damageFor(cards, mult) { return Math.round(cards.reduce((a, c) => a + c
 
 /* ========== PLAYER VEHICLE CATALOG ========== */
 const VEHICLES = {
-  sidebyside: { id: 'sidebyside', name: 'Golf Cart', icon: '⛳', slot: 1, minTier: 0, cost: 0, note: 'Any 1 card attack.' },
+  sidebyside: { id: 'sidebyside', name: 'Golf Cart', image: 'vehicles/golf-cart.png', slot: 1, minTier: 0, cost: 0, note: 'Any 1 card attack.' },
   admin:      { id: 'admin',      name: 'Admin Vehicle',  icon: '🚗', slot: 2, minTier: 0, cost: 0,  note: 'Up to 2 cards. Damage +50% if Pair.' },
   interstate: { id: 'interstate', name: 'Interstate Racer', icon: '🏁', slot: 4, minTier: 4, cost: 0, note: 'Needs a Straight.' },
   convoy:     { id: 'convoy',     name: 'Armored Convoy',   icon: '🚛', slot: 4, minTier: 5, cost: 0, note: 'Needs a Flush.' },

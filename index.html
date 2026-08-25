@@ -235,6 +235,13 @@ function fleetLabel() { return META.playerName ? `${META.playerName}'s Fleet` : 
 // Read-only box(es) showing what the opponent can attack with — mirrors the player's vslot UI.
 // Supports a future opp.attacks array (multiple named attacks); falls back to their single generic attack.
 function opponentAttackBoxHTML(opp) {
+  if (opp.locked) {
+    const remaining = Math.max(0, opp.lockThreshold - opp.lockProgress);
+    return `<div class="vslot" style="cursor:default">
+      <div class="vname">${art(opp, 18)} ${opp.name}</div>
+      <div class="vreq"><span class="vart" style="width:12px;height:12px;font-size:12px">${ICON.lock}</span> Locked — ${remaining} more card value clears it, then hits for a flat ${opp.lockAttack}</div>
+    </div>`;
+  }
   const attacks = (opp.attacks && opp.attacks.length) ? opp.attacks : [{ name: opp.name, minTier: opp.minTier, straightLen: opp.straightLen }];
   return attacks.map(a => {
     const reqText = a.straightLen ? `Needs a ${a.straightLen}-card straight` : (a.minTier === 0 ? 'Any 1 card' : `Needs ${TIERS[a.minTier]}+`);
@@ -316,7 +323,7 @@ const UPGRADE_DEFS = [
   { id: 'garage',  label: 'Garage Expansion', desc: '+1 vehicle slot you can own at once.',                             baseCost: 25, inc: 12 },
   { id: 'draw',    label: 'Cards Drawn Per Turn', desc: '+1 card drawn at the start of each turn per level.', baseCost: 20, inc: 15 },
   { id: 'handCap', label: 'Maximum Hand Size', desc: '+2 cards to your maximum hand size per level.', baseCost: 15, inc: 10 },
-  { id: 'adminTune', label: 'Admin Vehicle Pair Bonus', desc: '+50% to the Admin Vehicle Pair bonus per level.', baseCost: 25, inc: 20 },
+  { id: 'adminTune', label: 'Admin Vehicle Pair Bonus', desc: '+50% to the Admin Vehicle Pair bonus per level.', baseCost: 25, inc: 20 }, // kept for reference; no longer shown on the permanent Upgrades page — see RUN.adminTuneLvl
   { id: 'range',   label: 'Scout Range',      desc: 'See one additional route space farther ahead.',                 baseCost: 20, inc: 10 },
   { id: 'gem',     label: 'Gem Efficiency',   desc: '+1 card drawn per gem spent.',                                     baseCost: 20, inc: 12 },
 ];
@@ -425,7 +432,7 @@ function initRunWithStarter(id) {
     health: 100 + L.hp * 15, maxHealth: 100 + L.hp * 15,
     chips: 40 + L.chips * 8, fuel: Math.min(20, 10 + L.fuel * 2), energy: 0,
     ownedVehicles: [id], vehicleCap: 2 + L.garage, handSize: 7 + (L.handCap || 0) * 2, drawPerTurn: 2 + (L.draw || 0), gems: 3, maxGems: 10, maxFuel: 20, maxEnergy: 20,
-    scoreThisRun: 0, lastNotice: null, cardBoosts: [],
+    scoreThisRun: 0, lastNotice: null, cardBoosts: [], adminTuneLvl: 0,
   };
   saveRun();
   render(mapScreen());
@@ -536,7 +543,7 @@ function castleMatchScreen() {
 
 let BLACKSMITH_OPTIONS = null;
 let BLACKSMITH_VISIT = null; // { primary: idx|null, secondary: idx|null } — one paid upgrade, plus one optional paid add-on, per visit
-function tuneCost(bonus, isSecondary) { return (20 + bonus * 5) + (isSecondary ? 25 : 0); }
+function tuneCost(bonus, isSecondary) { const base = 20 * Math.pow(2, bonus / 3); return Math.round(isSecondary ? base * 1.5 : base); }
 function pickBlacksmithOptions() {
   const all = [];
   for (const su of SUITS) for (let r = 2; r <= 14; r++) all.push({ rank: r, suit: su.s, color: su.color });
@@ -733,7 +740,7 @@ function resolveTurn() {
         // Admin Vehicle uses raw card value. A Pair receives its separate Admin bonus.
         amount = damageFor(cards, 1);
         if (cards.length === 2 && evaluateHand(cards).tier === 1) {
-          const pairBonus = 1.5 + (META.levels.adminTune || 0) * 0.5;
+          const pairBonus = 1.5 + (RUN.adminTuneLvl || 0) * 0.5;
           amount = Math.round(amount * pairBonus);
         }
       } else {
@@ -1053,7 +1060,15 @@ function battleScreen() {
       label = evalRes ? evalRes.label : '';
       mult = evalRes ? evalRes.mult : 0;
     }
-    let preview = ready ? damageFor(cards, mult) : null; if (ready && vId === 'admin' && cards.length === 2 && evaluateHand(cards).tier === 1) preview = Math.round(preview * (1.5 + (META.levels.adminTune || 0) * 0.5));
+    let preview = null;
+    if (ready) {
+      if (vId === 'admin') {
+        preview = damageFor(cards, 1);
+        if (cards.length === 2 && evaluateHand(cards).tier === 1) preview = Math.round(preview * (1.5 + (RUN.adminTuneLvl || 0) * 0.5));
+      } else {
+        preview = damageFor(cards, mult);
+      }
+    }
     const effectWord = v.kind === 'defense' ? 'armor' : v.kind === 'poison' ? 'poison' : 'dmg';
     const cardHTML = idxs.map(cardHandIdx => {
       const c = BATTLE.hand[cardHandIdx];
@@ -1218,9 +1233,9 @@ function garageScreen() {
 }
 
 function blacksmithScreen() {
-  const adminLvl = META.levels.adminTune || 0;
-  const adminCost = upgradeCost(UPGRADE_DEFS.find(u=>u.id==='adminTune'), adminLvl);
-  const adminTune = `<div class="shopcard"><div class="hdr"><span>${art(VEHICLES.admin, 16)} Admin Vehicle Pair Bonus (Lv ${adminLvl})</span><span class="price">${adminCost} pts</span></div><div class="note">Current Pair bonus: +${50 + adminLvl*50}%. Each tuning upgrade adds another 50%.</div><button class="wo-btn purple" id="adminTuneBtn" ${META.points<adminCost?'disabled':''}>Tune Admin Vehicle</button></div>`;
+  const adminLvl = RUN.adminTuneLvl || 0;
+  const adminCost = 40 * Math.pow(2, adminLvl);
+  const adminTune = `<div class="shopcard"><div class="hdr"><span>${art(VEHICLES.admin, 16)} Admin Vehicle Pair Bonus (Lv ${adminLvl})</span><span class="price">${adminCost} coins</span></div><div class="note">Current Pair bonus: +${50 + adminLvl*50}%. Each tune doubles in cost. Resets next run.</div><button class="wo-btn purple" id="adminTuneBtn" ${RUN.chips<adminCost?'disabled':''}>Tune Admin Vehicle</button></div>`;
   const rows = BLACKSMITH_OPTIONS.map((c, i) => {
     const b = findBoost(c.rank, c.suit);
     const bonus = b ? b.bonus : 0;
@@ -1244,8 +1259,9 @@ function blacksmithScreen() {
       btnHTML = `<button class="wo-btn gray" disabled style="padding:8px 12px;font-size:13px">Visit's extra upgrade used</button>`;
     }
     return `<div class="shopcard">
-      <div class="hdr"><span>${rankLabel(c.rank)}${c.suit} ${bonus ? `(currently +${bonus})` : ''}</span><span></span></div>
-      <div class="note" style="margin:0 0 6px">Permanently adds +3 damage to this exact card, for the rest of the run.</div>
+      <div class="hdr"><span>Tune this card ${bonus ? `(currently +${bonus})` : ''}</span><span></span></div>
+      <div style="margin:6px 0"><div class="card ${c.color === 'red' ? 'red' : ''}"><div>${rankLabel(c.rank)}</div><div style="font-size:16px">${c.suit}</div></div></div>
+      <div class="note" style="margin:0 0 6px">Permanently adds +3 damage to this exact card, for the rest of the run. Cost doubles each time you tune it.</div>
       ${btnHTML}
     </div>`;
   }).join('');
@@ -1256,7 +1272,7 @@ function blacksmithScreen() {
     <div class="wo">
       <div class="wo-stripe"></div>
       <div class="wo-body">
-        <div class="wo-eyebrow">Tuning Garage</div>
+        <div class="wo-eyebrow">Tuning Garage &middot; Run Upgrade (resets next run)</div>
         <h1>Tune Your <em>Fleet</em></h1>
         <div class="wo-sub">${visitNote}</div>
         ${currencyBar()}
@@ -1322,7 +1338,7 @@ function starterSelectScreen() {
 }
 
 function upgradeScreen(returnTo) {
-  const rows = UPGRADE_DEFS.map(u => {
+  const rows = UPGRADE_DEFS.filter(u => u.id !== 'adminTune').map(u => {
     const lvl = META.levels[u.id];
     const maxed = lvl >= MAX_LEVEL;
     const cost = maxed ? 0 : upgradeCost(u, lvl);
@@ -1476,7 +1492,7 @@ function render(html) {
     else render(castleMatchScreen());
   });
   const leaveShopBtn = document.getElementById('leaveShopBtn'); if (leaveShopBtn) leaveShopBtn.onclick = () => render(RETURN_TO_CASTLE_MENU ? castleMenuScreen() : mapScreen());
-  const adminTuneBtn = document.getElementById('adminTuneBtn'); if (adminTuneBtn) adminTuneBtn.onclick = () => { const u=UPGRADE_DEFS.find(x=>x.id==='adminTune'); const lvl=META.levels.adminTune||0; const cost=upgradeCost(u,lvl); if(META.points<cost)return; META.points-=cost; META.levels.adminTune=lvl+1; saveMeta(); render(blacksmithScreen()); };
+  const adminTuneBtn = document.getElementById('adminTuneBtn'); if (adminTuneBtn) adminTuneBtn.onclick = () => { const lvl=RUN.adminTuneLvl||0; const cost=40*Math.pow(2,lvl); if(RUN.chips<cost)return; RUN.chips-=cost; RUN.adminTuneLvl=lvl+1; saveRun(); render(blacksmithScreen()); };
   const leaveBlacksmithBtn = document.getElementById('leaveBlacksmithBtn'); if (leaveBlacksmithBtn) leaveBlacksmithBtn.onclick = () => { BLACKSMITH_OPTIONS = null; BLACKSMITH_VISIT = null; render(RETURN_TO_CASTLE_MENU ? castleMenuScreen() : mapScreen()); };
   const leaveTreasureBtn = document.getElementById('leaveTreasureBtn'); if (leaveTreasureBtn) leaveTreasureBtn.onclick = () => render(mapScreen());
   app.querySelectorAll('[data-forge]').forEach(el => el.onclick = () => {

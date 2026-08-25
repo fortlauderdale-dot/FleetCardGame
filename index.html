@@ -252,27 +252,43 @@ function opponentAttackBoxHTML(opp) {
   }).join('');
 }
 
-/* ========== PLAYER VEHICLE CATALOG ========== */
+/* ========== ATTACK CATALOG REGISTRY ========== */
+const ATTACKS = {
+  backup_beep:  { id: 'backup_beep',   name: 'Backup Beep',   minTier: 0, slot: 1, note: 'Any 1 card attacks.' },
+  fender_bender:{ id: 'fender_bender', name: 'Fender Bender', minTier: 1, slot: 2, note: 'Needs a Pair. +50% damage if Pair.', bonusType: 'admin' },
+  debris_dump:  { id: 'debris_dump',   name: 'Debris Dump',   minTier: 3, slot: 3, note: 'Needs Three of a Kind.' },
+  street_sweep: { id: 'street_sweep',  name: 'Street Sweep',  minTier: 1, slot: 3, note: 'Play up to 3 cards, but 2 of them must be a Pair (example: 7-7-8).' },
+  vac_suck:     { id: 'vac_suck',      name: 'Vac Suction',   minTier: 5, slot: 4, note: 'Needs a Flush.' },
+  escort_wall:  { id: 'escort_wall',   name: 'Escort Wall',   minTier: 1, slot: 2, note: 'Needs a Pair. Blocks damage instead of dealing it.', kind: 'defense' },
+  toxic_spill:  { id: 'toxic_spill',   name: 'Toxic Spill',   minTier: 3, slot: 3, note: 'Needs Three of a Kind. Poisons instead of hitting directly.', kind: 'poison' },
+  bike_dash:    { id: 'bike_dash',     name: 'Bike Dash',     slot: 2, straightLen: 2, note: 'Needs a 2-card straight (example: 7-8, any suits).' },
+  scooter_run:  { id: 'scooter_run',   name: 'Scooter Run',   slot: 3, straightLen: 3, note: 'Needs a 3-card straight.' },
+  moto_escort:  { id: 'moto_escort',   name: 'Moto Escort',   slot: 4, straightLen: 4, note: 'Needs a 4-card straight.' },
+  convoy_flush: { id: 'convoy_flush',  name: 'Convoy Flush',  minTier: 5, slot: 4, note: 'Needs a Flush.' },
+  torch_burn:   { id: 'torch_burn',    name: 'Torch Burn',    minTier: 1, slot: 2, note: 'Needs a Pair. Burns instead of hitting directly.', kind: 'burn' }
+};
+
+/* ========== VEHICLE CHASSIS REGISTRY ========== */
 const VEHICLES = {
-  sidebyside: { id: 'sidebyside', name: 'Golf Cart', icon: '🛺', image: 'vehicles/golf-cart.png', slot: 1, minTier: 0, cost: 0, note: 'Any 1 card attacks.' },
-  admin:      { id: 'admin',      name: 'Admin Vehicle',  icon: '🚗', image: 'vehicles/admin-vehicle.png', slot: 2, minTier: 0, cost: 0,  note: 'Up to 2 cards. Damage +50% if Pair.' },
-  interstate: { id: 'interstate', name: 'Interstate Racer', icon: '🏁', image: 'vehicles/interstate-racer.png', slot: 4, minTier: 4, cost: 0, note: 'Needs a Straight.' },
-  convoy:     { id: 'convoy',     name: 'Armored Convoy',   icon: '🚛', image: 'vehicles/armored-convoy.png', slot: 4, minTier: 5, cost: 0, note: 'Needs a Flush.' },
-  garbage: { id: 'garbage', name: 'Garbage Truck',   icon: '🗑️', image: 'vehicles/garbage-truck.png', slot: 3, minTier: 3, cost: 45,  note: 'Needs Three of a Kind.' },
-  sweeper: { id: 'sweeper', name: 'Street Sweeper',  icon: '🧹', image: 'vehicles/street-sweeper.png', slot: 3, minTier: 1, cost: 35,  note: 'Play up to 3 cards, but 2 of them must be a Pair (example: 7-7-8).' },
-  bucket:  { id: 'bucket',  name: 'Bucket Truck',    icon: '🪜', image: 'vehicles/bucket-truck.png', slot: 4, minTier: 4, cost: 45,  note: 'Needs a Straight.' },
-  tractor: { id: 'tractor', name: 'Beach Tractor',   icon: '🚜', image: 'vehicles/beach-tractor.png', slot: 3, minTier: 3, cost: 40,  note: 'Needs Three of a Kind.' },
-  pump:    { id: 'pump',    name: 'Vac Truck',       icon: '🚰', image: 'vehicles/vac-truck.png', slot: 4, minTier: 5, cost: 55, note: 'Needs a Flush.' },
-  evvan:   { id: 'evvan',   name: 'Electric Van',    icon: '🔋', image: 'vehicles/electric-van.png', slot: 2, minTier: 1, cost: 50,  note: 'Needs a Pair. Refunds one card to your hand.' },
-  armor:   { id: 'armor',   name: 'Armored Escort',  icon: '🛡️', image: 'vehicles/armored-escort.png', slot: 2, minTier: 1, cost: 45,  note: 'Needs a Pair. Blocks damage instead of dealing it.', kind: 'defense' },
-  hazmat:  { id: 'hazmat',  name: 'Hazmat Truck',    icon: '☣️', image: 'vehicles/hazmat-truck.png', slot: 3, minTier: 3, cost: 55,  note: 'Needs Three of a Kind. Poisons instead of hitting directly.', kind: 'poison' },
-  tow:     { id: 'tow',     name: 'Tow Truck',       icon: '🚨', image: 'vehicles/tow-truck.png', slot: 2, minTier: 1, cost: 60,  note: 'Needs a Pair. Ability: spend 3 Energy to stun them a turn.', ability: { cost: 3, name: 'Stun' } },
-  bike2:   { id: 'bike2',   name: 'Patrol Bike',     icon: '🚲', image: 'vehicles/patrol-bike.png', slot: 2, straightLen: 2, cost: 30,  note: 'Needs a 2-card straight (example: 7-8, any suits).' },
-  vespa3:  { id: 'vespa3',  name: 'Scooter Runner',  icon: '🛵', image: 'vehicles/scooter-runner.png', slot: 3, straightLen: 3, cost: 50,  note: 'Needs a 3-card straight.' },
-  moto4:   { id: 'moto4',   name: 'Motorcycle Escort', icon: '🏍️', image: 'vehicles/motorcycle-escort.png', slot: 4, straightLen: 4, cost: 75,  note: 'Needs a 4-card straight.' },
-  harley5: { id: 'harley5', name: 'Harley Convoy',   icon: '🏍️', image: 'vehicles/harley-convoy.png', slot: 5, straightLen: 5, cost: 105, note: 'Needs a 5-card straight.' },
-  formation6: { id: 'formation6', name: 'Highway Formation', icon: '🏁', image: 'vehicles/highway-formation.png', slot: 6, straightLen: 6, cost: 140, note: 'Needs a 6-card straight.' },
-  torch:   { id: 'torch',   name: 'Torch Truck',    icon: '🔥', image: 'vehicles/torch-truck.png', slot: 2, minTier: 1, cost: 65, note: 'Needs a Pair. Burns instead of hitting directly, over 3 turns (weaker each turn) — or detonate it early for a smaller guaranteed hit.', kind: 'burn' },
+  sidebyside: { id: 'sidebyside', name: 'Golf Cart',     icon: '🛺', image: 'vehicles/golf-cart.png', maxAttacks: 2, starterAttacks: ['backup_beep'], minTier: 0, cost: 0 },
+  admin:      { id: 'admin',      name: 'Admin Vehicle',  icon: '🚗', image: 'vehicles/admin-vehicle.png', maxAttacks: 2, starterAttacks: ['fender_bender'], minTier: 0, cost: 0 },
+  interstate: { id: 'interstate', name: 'Interstate Racer', icon: '🏁', image: 'vehicles/interstate-racer.png', maxAttacks: 2, starterAttacks: ['moto_escort'], minTier: 4, cost: 0 },
+  convoy:     { id: 'convoy',     name: 'Armored Convoy',   icon: '🚛', image: 'vehicles/armored-convoy.png', maxAttacks: 3, starterAttacks: ['convoy_flush'], minTier: 5, cost: 0 },
+  garbage:    { id: 'garbage',    name: 'Garbage Truck',  icon: '🗑️', image: 'vehicles/garbage-truck.png', maxAttacks: 2, starterAttacks: ['debris_dump'], minTier: 3, cost: 45 },
+  sweeper:    { id: 'sweeper',    name: 'Street Sweeper', icon: '🧹', image: 'vehicles/street-sweeper.png', maxAttacks: 2, starterAttacks: ['street_sweep'], minTier: 1, cost: 35 },
+  bucket:     { id: 'bucket',     name: 'Bucket Truck',   icon: '🪜', image: 'vehicles/bucket-truck.png', maxAttacks: 3, starterAttacks: ['scooter_run'], minTier: 4, cost: 45 },
+  tractor:    { id: 'tractor',    name: 'Beach Tractor',   icon: '🚜', image: 'vehicles/beach-tractor.png', maxAttacks: 2, starterAttacks: ['debris_dump'], minTier: 3, cost: 40 },
+  pump:       { id: 'pump',       name: 'Vac Truck',       icon: '  ', image: 'vehicles/vac-truck.png', maxAttacks: 3, starterAttacks: ['vac_suck'], minTier: 5, cost: 55 },
+  evvan:      { id: 'evvan',      name: 'Electric Van',    icon: '🔋', image: 'vehicles/electric-van.png', maxAttacks: 2, starterAttacks: ['fender_bender'], minTier: 1, cost: 50 },
+  armor:      { id: 'armor',      name: 'Armored Escort',  icon: '🛡️', image: 'vehicles/armored-escort.png', maxAttacks: 2, starterAttacks: ['escort_wall'], minTier: 1, cost: 45 },
+  hazmat:     { id: 'hazmat',     name: 'Hazmat Truck',   icon: '☣️', image: 'vehicles/hazmat-truck.png', maxAttacks: 3, starterAttacks: ['toxic_spill'], minTier: 3, cost: 55 },
+  tow:        { id: 'tow',        name: 'Tow Truck',       icon: '🚨', image: 'vehicles/tow-truck.png', maxAttacks: 2, starterAttacks: ['fender_bender'], minTier: 1, cost: 60 },
+  bike2:      { id: 'bike2',      name: 'Patrol Bike',     icon: '🚲', image: 'vehicles/patrol-bike.png', maxAttacks: 2, starterAttacks: ['bike_dash'], cost: 30 },
+  vespa3:     { id: 'vespa3',     name: 'Scooter Runner',  icon: '自由', image: 'vehicles/scooter-runner.png', maxAttacks: 3, starterAttacks: ['scooter_run'], cost: 50 },
+  moto4:      { id: 'moto4',      name: 'Motorcycle Escort', icon: '🏍️', image: 'vehicles/motorcycle-escort.png', maxAttacks: 4, starterAttacks: ['moto_escort'], cost: 75 },
+  harley5:    { id: 'harley5',    name: 'Harley Convoy',   icon: '🏍️', image: 'vehicles/harley-convoy.png', maxAttacks: 4, starterAttacks: ['convoy_flush'], cost: 105 },
+  formation6: { id: 'formation6', name: 'Highway Formation', icon: '🏁', image: 'vehicles/highway-formation.png', maxAttacks: 4, starterAttacks: ['convoy_flush'], cost: 140 },
+  torch:      { id: 'torch',      name: 'Torch Truck',    icon: '🔥', image: 'vehicles/torch-truck.png', maxAttacks: 2, starterAttacks: ['torch_burn'], minTier: 1, cost: 65 }
 };
 const STARTERS = ['sidebyside', 'admin', 'interstate', 'convoy'];
 function isStarterUnlocked(id) {
@@ -315,13 +331,13 @@ function revealFraction(row) { return [1.0, 0.8, 0.6, 0.4, 0.25, 0.1, 0][Math.mi
 
 /* ========== LEVELED UPGRADE TREE (permanent, up to 20 levels each) ========== */
 const UPGRADE_DEFS = [
-  { id: 'reveal',  label: 'Battle Scan',      desc: 'Start every battle with N extra opponent cards already revealed.', baseCost: 0,  inc: 15 },
-  { id: 'chips',   label: 'Starting Coins',   desc: '+5 starting coins per level.',                                     baseCost: 10, inc: 8  },
-  { id: 'fuel',    label: 'Starting Fuel',    desc: '+2 starting fuel per level.',                                      baseCost: 10, inc: 8  },
+  { id: 'reveal',  label: 'Battle Scan',      desc: 'Start every battle with 1 extra opponent cards already revealed.', baseCost: 0,  inc: 15 },
+  { id: 'chips',   label: 'Starting Coins',   desc: '+5 starting coins at New Playthrough.',                                     baseCost: 10, inc: 8  },
+  { id: 'fuel',    label: 'Starting Fuel',    desc: '+2 starting fuel.',                                      baseCost: 10, inc: 8  },
   { id: 'hp',      label: 'Max HP',           desc: '+15 max health per level.',                                       baseCost: 30, inc: 15 },
   { id: 'fuelpen', label: 'Fuel Efficiency',  desc: 'Running out of fuel costs less score when it happens.',            baseCost: 40, inc: 15 },
   { id: 'garage',  label: 'Garage Expansion', desc: '+1 vehicle slot you can own at once.',                             baseCost: 25, inc: 12 },
-  { id: 'draw',    label: 'Cards Drawn Per Turn', desc: '+1 card drawn at the start of each turn per level.', baseCost: 20, inc: 15 },
+  { id: 'draw',    label: 'Cards Drawn Per Turn', desc: '+1 card drawn at the start of each turn.', baseCost: 20, inc: 15 },
   { id: 'handCap', label: 'Maximum Hand Size', desc: '+2 cards to your maximum hand size per level.', baseCost: 15, inc: 10 },
   { id: 'adminTune', label: 'Admin Vehicle Pair Bonus', desc: '+50% to the Admin Vehicle Pair bonus per level.', baseCost: 25, inc: 20 }, // kept for reference; no longer shown on the permanent Upgrades page — see RUN.adminTuneLvl
   { id: 'range',   label: 'Scout Range',      desc: 'See one additional route space farther ahead.',                 baseCost: 20, inc: 10 },
@@ -427,11 +443,18 @@ const BASE_GAS_PENALTY = 15;
 
 function initRunWithStarter(id) {
   const L = META.levels;
+  const baseV = VEHICLES[id];
   RUN = {
     map: generateMap(), currentRow: -1, currentCol: null, path: [],
     health: 100 + L.hp * 15, maxHealth: 100 + L.hp * 15,
     chips: 40 + L.chips * 8, fuel: Math.min(20, 10 + L.fuel * 2), energy: 0,
-    ownedVehicles: [id], vehicleCap: 2 + L.garage, handSize: 7 + (L.handCap || 0) * 2, drawPerTurn: 2 + (L.draw || 0), gems: 3, maxGems: 10, maxFuel: 20, maxEnergy: 20,
+    // CHANGED: Dynamic structure to store tracking arrays
+    ownedVehicles: [{
+      instanceId: 'v_start_' + Math.random().toString(36).substr(2, 4),
+      vehicleId: id,
+      attacks: [...baseV.starterAttacks]
+    }], 
+    vehicleCap: 2 + L.garage, handSize: 7 + (L.handCap || 0) * 2, drawPerTurn: 2 + (L.draw || 0), gems: 3, maxGems: 10, maxFuel: 20, maxEnergy: 20,
     scoreThisRun: 0, lastNotice: null, cardBoosts: [], adminTuneLvl: 0,
   };
   saveRun();
@@ -713,69 +736,49 @@ function useAbility(vId) {
   saveRun(); render(battleScreen());
 }
 
-function resolveTurn() {
-  let totalDamage = 0;
-  const usedIdx = new Set();
-  const priorHp = BATTLE.opponent.hpNow;
-  for (const vId of RUN.ownedVehicles) {
-    const idxs = BATTLE.slots[vId] || [];
-    if (!idxs.length) continue;
-    const cards = idxs.map(i => BATTLE.hand[i]);
-    const v = VEHICLES[vId];
-    let ready, label, mult;
-    if (v.straightLen) {
-      ready = cards.length === v.straightLen && isConsecutive(cards);
-      label = `${v.straightLen}-Card Straight`;
-      mult = straightMult(v.straightLen);
-    } else {
-      const evalRes = evaluateHand(cards);
-      ready = evalRes.tier >= v.minTier;
-      label = evalRes.label;
-      mult = evalRes.mult;
-    }
-    if (!ready) { battleLog(`${v.name} — ${label || 'no valid play'}, not enough for its requirement. No effect.`); }
-    else {
-      let amount;
-      if (vId === 'admin') {
-        // Admin Vehicle uses raw card value. A Pair receives its separate Admin bonus.
-        amount = damageFor(cards, 1);
-        if (cards.length === 2 && evaluateHand(cards).tier === 1) {
-          const pairBonus = 1.5 + (RUN.adminTuneLvl || 0) * 0.5;
-          amount = Math.round(amount * pairBonus);
-        }
-      } else {
-        amount = damageFor(cards, mult);
-      }
-      if (v.kind === 'defense') { BATTLE.playerArmor += amount; battleLog(`${v.name} — ${label}! +${amount} armor.`); }
-      else if (v.kind === 'poison') { const poisonAmount = Math.round(amount / 2);
-        BATTLE.opponent.poisonStacks = BATTLE.opponent.poisonStacks || [];
-        BATTLE.opponent.poisonStacks.push(poisonAmount);
-        battleLog(`${v.name} — ${label}! Applied ${poisonAmount} poison.`); }
-      else if (v.kind === 'burn') { const stages = [amount, Math.round(amount / 2), Math.round(amount / 4)];
-        BATTLE.opponent.burn = { stages, stageIdx: 0 };
-        battleLog(`${v.name} — ${label}! Set ablaze for ${stages.join(' + ')} damage over the next 3 turns (or detonate early for less).`); }
-      else { totalDamage += amount; battleLog(`${v.name} — ${label}! ${amount} damage.`); }
-    }
-    idxs.forEach(i => usedIdx.add(i));
+function resolveTurn() {let totalDamage = 0;const usedIdx = new Set();const priorHp = BATTLE.opponent.hpNow;for (const instance of RUN.ownedVehicles) {const v = VEHICLES[instance.vehicleId];for (const attId of instance.attacks) {
+const att = ATTACKS[attId];
+const slotKey = ${instance.instanceId}:${att.id};
+const idxs = BATTLE.slots[slotKey] || [];
+if (!idxs.length) continue;const cards = idxs.map(i => BATTLE.hand[i]);
+let ready = false, label = '', mult = 0;if (att.straightLen) {
+ready = cards.length === att.straightLen && isConsecutive(cards);
+label = ready ? ${att.straightLen}-Card Straight : (cards.length ? 'Not a straight' : '');
+mult = straightMult(att.straightLen);
+} else {
+const evalRes = evaluateHand(cards);
+ready = evalRes.tier >= att.minTier;
+label = evalRes.label;
+mult = evalRes.mult;
+}if (!ready) {
+battleLog(${v.name} (${att.name}) — ${label || 'no valid play'}, requirement unmet. No effect.);
+} else {
+let amount = damageFor(cards, mult || 1);if (att.bonusType === 'admin') {
+  if (cards.length === 2 && evaluateHand(cards).tier === 1) {
+    const pairBonus = 1.5 + (RUN.adminTuneLvl || 0) * 0.5;
+    amount = Math.round(amount * pairBonus);
   }
-  BATTLE.exactKill = priorHp > 0 && totalDamage === priorHp;
-  BATTLE.opponent.hpNow = Math.max(0, BATTLE.opponent.hpNow - totalDamage);
+}
 
-  if (BATTLE.opponent.poisonStacks?.length) {
-    const pdmg = BATTLE.opponent.poisonStacks.reduce((a,n)=>a+n,0);
-    BATTLE.opponent.hpNow = Math.max(0, BATTLE.opponent.hpNow - pdmg);
-    battleLog(`Poison ticks for ${pdmg}.`);
-    BATTLE.opponent.poisonStacks = BATTLE.opponent.poisonStacks.map(n=>Math.max(0,n-3)).filter(n=>n>0);
-  }
-  if (BATTLE.opponent.burn) {
-    const b = BATTLE.opponent.burn;
-    const bdmg = b.stages[b.stageIdx] || 0;
-    BATTLE.opponent.hpNow = Math.max(0, BATTLE.opponent.hpNow - bdmg);
-    battleLog(`Burn ticks for ${bdmg}.`);
-    b.stageIdx++;
-    if (b.stageIdx >= b.stages.length) BATTLE.opponent.burn = null;
-  }
-  battleLog(`${BATTLE.opponent.name} at ${BATTLE.opponent.hpNow}/${BATTLE.opponent.hp}.`);
+if (att.kind === 'defense') { 
+  BATTLE.playerArmor += amount; 
+  battleLog(`${v.name} [${att.name}] — ${label}! +${amount} armor.`); 
+} else if (att.kind === 'poison') { 
+  const poisonAmount = Math.round(amount / 2);
+  BATTLE.opponent.poisonStacks = BATTLE.opponent.poisonStacks || [];
+  BATTLE.opponent.poisonStacks.push(poisonAmount);
+  battleLog(`${v.name} [${att.name}] — ${label}! Applied ${poisonAmount} poison.`); 
+} else if (att.kind === 'burn') { 
+  const stages = [amount, Math.round(amount / 2), Math.round(amount / 4)];
+  BATTLE.opponent.burn = { stages, stageIdx: 0 };
+  battleLog(`${v.name} [${att.name}] — ${label}! Burn applied for ${stages.join(' + ')} damage.`); 
+} else { 
+  totalDamage += amount; 
+  battleLog(`${v.name} [${att.name}] — ${label}! ${amount} damage.`); 
+}
+}
+idxs.forEach(i => usedIdx.add(i));
+}}
 
   // Resolve any cards the opponent cursed on a previous turn: played it, curse clears; left it, take the hit.
   BATTLE.hand.forEach((c, i) => {
@@ -1045,49 +1048,59 @@ function battleScreen() {
     ? `<div class="card ${c.color === 'red' ? 'red' : ''}"><div>${rankLabel(c.rank)}</div><div style="font-size:16px">${c.suit}</div></div>`
     : `<div class="card back"></div>`).join('') || '<span class="note" style="margin:0">empty</span>';
 
-  const vehicleHTML = RUN.ownedVehicles.map(vId => {
-    const v = VEHICLES[vId];
-    const idxs = BATTLE.slots[vId] || [];
-    const cards = idxs.map(i => BATTLE.hand[i]);
-    let ready, label, mult;
-    if (v.straightLen) {
-      ready = cards.length === v.straightLen && isConsecutive(cards);
-      label = ready ? `${v.straightLen}-Card Straight` : (cards.length ? 'Not a straight' : '');
-      mult = straightMult(v.straightLen);
-    } else {
-      const evalRes = cards.length ? evaluateHand(cards) : null;
-      ready = evalRes && evalRes.tier >= v.minTier;
-      label = evalRes ? evalRes.label : '';
-      mult = evalRes ? evalRes.mult : 0;
-    }
-    let preview = null;
-    if (ready) {
-      if (vId === 'admin') {
-        preview = damageFor(cards, 1);
-        if (cards.length === 2 && evaluateHand(cards).tier === 1) preview = Math.round(preview * (1.5 + (RUN.adminTuneLvl || 0) * 0.5));
+  const vehicleHTML = RUN.ownedVehicles.map(instance => {
+    const v = VEHICLES[instance.vehicleId];
+    
+    // Render each individual attack fitted onto this vehicle hull
+    const attacksHTML = instance.attacks.map(attId => {
+      const att = ATTACKS[attId];
+      // Target state slot compound string key: "instanceId:attackId"
+      const slotKey = `${instance.instanceId}:${att.id}`;
+      const idxs = BATTLE.slots[slotKey] || [];
+      const cards = idxs.map(i => BATTLE.hand[i]);
+      
+      let ready = false, label = '', mult = 0;
+      if (att.straightLen) {
+        ready = cards.length === att.straightLen && isConsecutive(cards);
+        label = ready ? `${att.straightLen}-Card Straight` : (cards.length ? 'Not a straight' : '');
+        mult = straightMult(att.straightLen);
       } else {
-        preview = damageFor(cards, mult);
+        const evalRes = cards.length ? evaluateHand(cards) : null;
+        ready = evalRes && evalRes.tier >= att.minTier;
+        label = evalRes ? evalRes.label : '';
+        mult = evalRes ? evalRes.mult : 0;
       }
-    }
-    const effectWord = v.kind === 'defense' ? 'armor' : v.kind === 'poison' ? 'poison' : 'dmg';
-    const cardHTML = idxs.map(cardHandIdx => {
-      const c = BATTLE.hand[cardHandIdx];
-      return `<div class="card mini ${c.color === 'red' ? 'red' : ''}" data-unassign="${vId}:${cardHandIdx}">${rankLabel(c.rank)}${c.suit}</div>`;
-    }).join('') || `<span class="note" style="margin:0">drag or tap cards here</span>`;
-    const abilityBtn = v.ability ? `<button class="wo-btn purple" style="padding:5px 8px;font-size:11px;margin-top:5px" data-ability="${vId}" ${BATTLE.abilityUsedThisTurn || RUN.energy < v.ability.cost ? 'disabled' : ''}><span class="vart" style="width:11px;height:11px;font-size:11px">${ICON.energy}</span> ${v.ability.name} (${v.ability.cost})</button>` : '';
-    const reqText = v.straightLen ? `Needs a ${v.straightLen}-card straight` : (v.minTier === 0 ? 'Any card attacks' : `Needs ${TIERS[v.minTier]}+`);
-    const attackChip = ready ? `<span class="attackChip" data-attack="${vId}">Attack ▶</span>` : '';
-    return `<div class="vslot ${idxs.length ? 'filled' : ''} ${ready ? 'ready' : ''} ${v.kind || ''}" data-assign="${vId}"
-        ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleCardDrop(event,'${vId}')">
+
+      let preview = 0;
+      if (ready) {
+        preview = damageFor(cards, mult || 1);
+        if (att.bonusType === 'admin') {
+          preview = Math.round(preview * (1.5 + (RUN.adminTuneLvl || 0) * 0.5));
+        }
+      }
+
+      const effectWord = att.kind === 'defense' ? 'armor' : att.kind === 'poison' ? 'poison' : 'dmg';
+      const cardHTML = idxs.map(cardHandIdx => {
+        const c = BATTLE.hand[cardHandIdx];
+        return `<div class="card mini ${c.color === 'red' ? 'red' : ''}" data-unassign="${slotKey}:${cardHandIdx}">${rankLabel(c.rank)}${c.suit}</div>`;
+      }).join('') || `<span class="note" style="margin:0">Tap cards here</span>`;
+
+      return `<div class="shopcard ${ready ? 'ready' : ''}" data-assign="${slotKey}" style="margin-top:6px; border:1px dashed var(--blue)">
+        <div class="hdr" style="font-weight:600; color:var(--blue-dark)">${att.name}</div>
+        <div class="note" style="font-size:11px">${att.note}</div>
+        <div class="vcards">${cardHTML}</div>
+        ${label ? `<div class="note" style="margin:4px 0 0; color:var(--green)">${label}${ready ? ` ✓ ${preview} ${effectWord}` : ' ✗'}</div>` : ''}
+        <div style="margin-top:4px">
+          ${idxs.length ? `<button class="wo-btn gray" style="padding:3px 6px;font-size:10px" data-clear="${slotKey}">Clear</button>` : ''}
+          ${ready ? `<span class="attackChip" data-attack="${slotKey}" style="font-size:10px; padding:3px 6px">Attack ▶</span>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+
+    return `<div class="vslot" style="width:220px; cursor:default">
       <div class="vname">${art(v, 18)} ${v.name}</div>
-      <div class="vreq">${reqText} · ${idxs.length}/${v.slot} cards</div>
-      <div class="vcards">${cardHTML}</div>
-      ${label ? `<div class="note" style="margin:4px 0 0">${label}${ready ? ` ✓ ${preview} ${effectWord}` : ' ✗'}</div>` : ''}
-      <div>
-        ${idxs.length ? `<button class="wo-btn gray" style="padding:5px 8px;font-size:11px;margin-top:5px" data-clear="${vId}">Clear</button>` : ''}
-        ${abilityBtn}
-        ${attackChip}
-      </div>
+      <div class="vreq" style="font-size:11px; color:var(--dim)">Attacks (${instance.attacks.length}/${v.maxAttacks}):</div>
+      ${attacksHTML}
     </div>`;
   }).join('');
 
@@ -1511,11 +1524,25 @@ function render(html) {
     saveRun();
     render(blacksmithScreen());
   });
-  app.querySelectorAll('[data-buy]').forEach(el => el.onclick = () => {
+    app.querySelectorAll('[data-buy]').forEach(el => el.onclick = () => {
     const cost = +el.dataset.cost;
     if (RUN.chips < cost || RUN.ownedVehicles.length >= RUN.vehicleCap) return;
-    RUN.chips -= cost; RUN.ownedVehicles.push(el.dataset.buy); saveRun(); render(shopScreen());
+    
+    RUN.chips -= cost;
+    
+    const vehicleId = el.dataset.buy;
+    const baseV = VEHICLES[vehicleId];
+    
+    RUN.ownedVehicles.push({
+      instanceId: 'v_shop_' + Math.random().toString(36).substr(2, 4),
+      vehicleId: vehicleId,
+      attacks: [...baseV.starterAttacks]
+    });
+
+    saveRun(); 
+    render(shopScreen());
   });
+
 
   const restBtn = document.getElementById('restBtn'); if (restBtn) restBtn.onclick = () => { RUN.health = Math.min(RUN.maxHealth, RUN.health + 30); saveRun(); render(mapScreen()); };
   const backToMetaBtn = document.getElementById('backToMetaBtn'); if (backToMetaBtn) backToMetaBtn.onclick = () => render(metaScreen());

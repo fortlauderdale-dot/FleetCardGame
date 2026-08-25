@@ -1073,7 +1073,8 @@ function battleScreen() {
     const v = VEHICLES[instance.vehicleId];
     
     // Render each individual attack fitted onto this vehicle hull
-    const attacksHTML = (instance.attacks || []).map(attId => {
+    // Change line 1076 to this:
+const attacksHTML = (instance.attacks || instance.starterAttacks || []).map(attId => {
       const att = ATTACKS[attId];
       // Target state slot compound string key: "instanceId:attackId"
       const slotKey = `${instance.instanceId}:${att.id}`;

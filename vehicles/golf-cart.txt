@@ -1,0 +1,5 @@
+Asset: Golf Cart
+Style: Clean 2D illustrated cartoonish fleet-game style
+Angle: 3/4 front angle
+Background: Transparent
+Details: A small white municipal golf cart with a rear utility bed and a flashing amber light on top.

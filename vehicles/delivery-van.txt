@@ -1,0 +1,5 @@
+Asset: Delivery Van
+Style: Clean 2D illustrated cartoonish fleet-game style
+Angle: 3/4 front angle
+Background: Transparent
+Details: A boxy, worn white delivery van with faded panels and sliding side doors.

@@ -1071,13 +1071,13 @@ function battleScreen() {
 
   const vehicleHTML = RUN.ownedVehicles.map(instance => {
     const v = VEHICLES[instance.vehicleId];
-    
+    const instanceId = instance.instanceId;
+    const liveAttacks = instance.attacks || v.starterAttacks || [];
     // Render each individual attack fitted onto this vehicle hull
-    // Change line 1076 to this:
-const attacksHTML = (instance.attacks || instance.starterAttacks || []).map(attId => {
-      const att = ATTACKS[attId];
+const attacksHTML = liveAttacks.map(attId => {
+    const att = ATTACKS[attId];
       // Target state slot compound string key: "instanceId:attackId"
-      const slotKey = `${instance.instanceId}:${att.id}`;
+      const slotKey = `${instanceId}:${attId}`;
       const idxs = BATTLE.slots[slotKey] || [];
       const cards = idxs.map(i => BATTLE.hand[i]);
       

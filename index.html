@@ -174,15 +174,15 @@ const VEHICLES = {
   admin:      { id: 'admin',      name: 'Admin Vehicle',  icon: '🚗', slot: 2, minTier: 0, cost: 0,  note: 'Attack with 1 or 2 cards. A Pair gets the Admin bonus.' },
   interstate: { id: 'interstate', name: 'Interstate Racer', icon: '🏁', slot: 4, minTier: 4, cost: 0, note: 'Needs a Straight.' },
   convoy:     { id: 'convoy',     name: 'Armored Convoy',   icon: '🚛', slot: 4, minTier: 5, cost: 0, note: 'Needs a Flush.' },
-  garbage: { id: 'garbage', name: 'Garbage Truck',   icon: '🗑️', slot: 3, minTier: 3, cost: 60,  note: 'Needs Three of a Kind.' },
-  sweeper: { id: 'sweeper', name: 'Street Sweeper',  icon: '🧹', slot: 3, minTier: 1, cost: 50,  note: 'Needs a Pair, using up to 3 cards.' },
-  bucket:  { id: 'bucket',  name: 'Bucket Truck',    icon: '🪜', slot: 4, minTier: 4, cost: 90,  note: 'Needs a Straight.' },
-  tractor: { id: 'tractor', name: 'Beach Tractor',   icon: '🚜', slot: 3, minTier: 3, cost: 55,  note: 'Needs Three of a Kind.' },
-  pump:    { id: 'pump',    name: 'Vac Truck',       icon: '🚰', slot: 4, minTier: 5, cost: 100, note: 'Needs a Flush.' },
-  evvan:   { id: 'evvan',   name: 'Electric Van',    icon: '🔋', slot: 2, minTier: 1, cost: 70,  note: 'Needs a Pair. Refunds one card to your hand.' },
-  armor:   { id: 'armor',   name: 'Armored Escort',  icon: '🛡️', slot: 2, minTier: 1, cost: 65,  note: 'Needs a Pair. Blocks damage instead of dealing it.', kind: 'defense' },
-  hazmat:  { id: 'hazmat',  name: 'Hazmat Truck',    icon: '☣️', slot: 3, minTier: 3, cost: 75,  note: 'Needs Three of a Kind. Poisons instead of hitting directly.', kind: 'poison' },
-  tow:     { id: 'tow',     name: 'Tow Truck',       icon: '🚨', slot: 2, minTier: 1, cost: 80,  note: 'Needs a Pair. Ability: spend 3 Energy to stun them a turn.', ability: { cost: 3, name: 'Stun' } },
+  garbage: { id: 'garbage', name: 'Garbage Truck',   icon: '🗑️', slot: 3, minTier: 3, cost: 45,  note: 'Needs Three of a Kind.' },
+  sweeper: { id: 'sweeper', name: 'Street Sweeper',  icon: '🧹', slot: 3, minTier: 1, cost: 35,  note: 'Needs a Pair, using up to 3 cards.' },
+  bucket:  { id: 'bucket',  name: 'Bucket Truck',    icon: '🪜', slot: 4, minTier: 4, cost: 45,  note: 'Needs a Straight.' },
+  tractor: { id: 'tractor', name: 'Beach Tractor',   icon: '🚜', slot: 3, minTier: 3, cost: 40,  note: 'Needs Three of a Kind.' },
+  pump:    { id: 'pump',    name: 'Vac Truck',       icon: '🚰', slot: 4, minTier: 5, cost: 55, note: 'Needs a Flush.' },
+  evvan:   { id: 'evvan',   name: 'Electric Van',    icon: '🔋', slot: 2, minTier: 1, cost: 50,  note: 'Needs a Pair. Refunds one card to your hand.' },
+  armor:   { id: 'armor',   name: 'Armored Escort',  icon: '🛡️', slot: 2, minTier: 1, cost: 45,  note: 'Needs a Pair. Blocks damage instead of dealing it.', kind: 'defense' },
+  hazmat:  { id: 'hazmat',  name: 'Hazmat Truck',    icon: '☣️', slot: 3, minTier: 3, cost: 55,  note: 'Needs Three of a Kind. Poisons instead of hitting directly.', kind: 'poison' },
+  tow:     { id: 'tow',     name: 'Tow Truck',       icon: '🚨', slot: 2, minTier: 1, cost: 60,  note: 'Needs a Pair. Ability: spend 3 Energy to stun them a turn.', ability: { cost: 3, name: 'Stun' } },
 };
 const STARTERS = ['sidebyside', 'admin', 'interstate', 'convoy'];
 function isStarterUnlocked(id) {
@@ -220,7 +220,7 @@ const OPPONENT_TIERS = [
     { id: 'limo', name: 'Armored Limo', icon: '🚘', hp: 125, minTier: 2, drawRate: 2, turnLimit: 8 },
     { id: 'vault', name: 'Armored Vault Truck', icon: '🔐', hp: 130, locked: true, lockThreshold: 70, lockAttack: 60, drawRate: 2, turnLimit: 9 } ],
 ];
-const BOSS = { id: 'swat', name: 'SWAT Truck', icon: '🚔', hp: 145, minTier: 3, drawRate: 2, turnLimit: 10, boss: true };
+const BOSS = { id: 'swat', name: 'SWAT Truck', icon: '🚔', hp: 145, minTier: 3, drawRate: 2, turnLimit: 10, boss: true, attackInfo: 'Uses its best poker hand; attacks usually deal about 10-35 damage depending on the hand.' };
 function revealFraction(row) { return [1.0, 0.8, 0.6, 0.4, 0.25, 0.1, 0][Math.min(row, 6)]; }
 
 /* ========== LEVELED UPGRADE TREE (permanent, up to 20 levels each) ========== */
@@ -241,7 +241,7 @@ const MAX_LEVEL = 20;
 function upgradeCost(def, atLevel) { return def.baseCost + atLevel * def.inc; } // cost to go from atLevel -> atLevel+1
 
 /* ========== META (persists forever) ========== */
-const META_KEY = 'fleetduel-meta-v6';
+const META_KEY = 'fleetduel-meta-v7';
 function loadMeta() {
   try { const raw = localStorage.getItem(META_KEY); if (raw) return JSON.parse(raw); } catch (e) {}
   const levels = {}; UPGRADE_DEFS.forEach(u => levels[u.id] = 0);
@@ -252,56 +252,74 @@ function saveMeta() { try { localStorage.setItem(META_KEY, JSON.stringify(META))
 function earnPoints(n) { META.points += n; META.lifetimePoints += n; if (RUN) RUN.scoreThisRun += n; saveMeta(); }
 
 /* ========== RUN SAVE (mid-run continuity, roguelite-style) ========== */
-const RUN_KEY = 'fleetduel-run-v5';
+const RUN_KEY = 'fleetduel-run-v75';
 function saveRun() { try { localStorage.setItem(RUN_KEY, JSON.stringify(RUN)); } catch (e) {} }
 function loadRunSave() { try { const raw = localStorage.getItem(RUN_KEY); if (raw) return JSON.parse(raw); } catch (e) {} return null; }
 function clearRunSave() { try { localStorage.removeItem(RUN_KEY); } catch (e) {} }
 
-/* ========== MAP GENERATION (branching board, 6 rows + boss) ========== */
+/* ========== MAP GENERATION (21-space horizontal route with a central Fleet Castle) ========== */
 const ROWS = 19;
 const WORLD_COUNT = 1;
-function pickNodeType() {
+function pickNodeType(forcedType) {
+  if (forcedType) return forcedType;
   const r = Math.random();
-  if (r < 0.50) return 'battle';
-  if (r < 0.68) return 'shop';
-  if (r < 0.80) return 'rest';
-  if (r < 0.90) return 'blacksmith';
+  if (r < 0.58) return 'battle';
+  if (r < 0.72) return 'rest';
+  if (r < 0.84) return 'blacksmith';
   return 'treasure';
 }
 function generateMap() {
   const nodes = [];
   const edges = [];
   const tierForRow = r => Math.min(OPPONENT_TIERS.length - 1, Math.floor(r / 3));
-  // One starting space, then mostly two choices, with only occasional three-way splits.
+
+  // World 1: 20 regular spaces, then the boss = 21 total spaces.
+  // The first three spaces are always battles. Shops are fixed to one in each half.
+  const shopRows = new Set([5, 15]);
+  const castleRow = 10;
+  const rowCounts = [
+    1,2,2,2,2,2,2,3,2,2,1,2,2,2,2,2,3,2,2,2
+  ];
+
   for (let r = 0; r < ROWS; r++) {
-    let count = r === 0 ? 1 : (Math.random() < 0.78 ? 2 : 3);
-    if (r === ROWS - 1) count = 1;
+    const count = rowCounts[r];
     const row = [];
     const tierPool = shuffle([...(OPPONENT_TIERS[tierForRow(r)])]);
+
     for (let c = 0; c < count; c++) {
-      const type = pickNodeType();
-      row.push(type === 'battle' ? { type, opponent: tierPool[c % tierPool.length] } : { type });
+      let type;
+      if (r <= 2) type = 'battle';
+      else if (r === castleRow) type = 'castle';
+      else if (shopRows.has(r)) type = 'shop';
+      else type = pickNodeType();
+
+      row.push(type === 'battle'
+        ? { type, opponent: tierPool[c % tierPool.length] }
+        : { type });
     }
     nodes.push(row);
   }
+
   nodes.push([{ type: 'battle', opponent: BOSS }]);
 
-  // Connect each row to the next. Prefer a single main continuation; branches split occasionally.
+  // Every node connects forward. Connections are deliberately local and visible,
+  // so the player can understand exactly which choices lead to which next spaces.
   for (let r = 0; r < nodes.length - 1; r++) {
     const cur = nodes[r], next = nodes[r + 1];
     for (let c = 0; c < cur.length; c++) {
-      const candidates = next.length === 1 ? [0] : [...Array(next.length).keys()].sort((a,b)=>Math.abs(a-c)-Math.abs(b-c));
-      const primary = candidates[0];
-      edges.push({ fromRow:r, fromCol:c, toRow:r+1, toCol:primary });
-      if (next.length > 1 && Math.random() < 0.22) {
-        const secondary = candidates.find(x => x !== primary);
-        if (secondary !== undefined) edges.push({ fromRow:r, fromCol:c, toRow:r+1, toCol:secondary });
+      const target = next.length === 1 ? 0 : Math.min(next.length - 1, Math.round(c * (next.length - 1) / Math.max(1, cur.length - 1)));
+      edges.push({ fromRow:r, fromCol:c, toRow:r+1, toCol:target });
+      if (next.length > 1 && cur.length === 1) {
+        for (let nc = 0; nc < next.length; nc++) {
+          if (!edges.some(e => e.fromRow===r && e.fromCol===c && e.toRow===r+1 && e.toCol===nc))
+            edges.push({ fromRow:r, fromCol:c, toRow:r+1, toCol:nc});
+        }
       }
     }
-    // Ensure every node in the next row is reachable.
-    for (let nc=0; nc<next.length; nc++) {
-      if (!edges.some(e=>e.toRow===r+1 && e.toCol===nc)) {
-        const from = Math.min(cur.length-1, nc);
+    // Ensure every next node has a parent.
+    for (let nc = 0; nc < next.length; nc++) {
+      if (!edges.some(e => e.toRow===r+1 && e.toCol===nc)) {
+        const from = Math.min(cur.length-1, Math.round(nc * (cur.length-1) / Math.max(1,next.length-1)));
         edges.push({ fromRow:r, fromCol:from, toRow:r+1, toCol:nc });
       }
     }
@@ -322,7 +340,7 @@ function initRunWithStarter(id) {
   RUN = {
     map: generateMap(), currentRow: -1, currentCol: null, path: [],
     health: 100 + L.hp * 15, maxHealth: 100 + L.hp * 15,
-    chips: 15 + L.chips * 5, fuel: Math.min(20, 10 + L.fuel * 2), energy: 0,
+    chips: 40 + L.chips * 8, fuel: Math.min(20, 10 + L.fuel * 2), energy: 0,
     ownedVehicles: [id], vehicleCap: 2 + L.garage, handSize: 5 + (L.handCap || 0) * 2, drawPerTurn: 2 + (L.draw || 0), gems: 3, maxGems: 10, maxFuel: 20, maxEnergy: 20,
     scoreThisRun: 0, lastNotice: null, cardBoosts: [],
   };
@@ -352,11 +370,58 @@ function selectNode(row, col) {
   const node = RUN.map.nodes[row][col];
   if (node.type === 'battle') { startBattle(node.opponent, row, col); return; }
   commitNode(row, col);
-  if (node.type === 'shop') render(shopScreen());
+  if (node.type === 'castle') render(castleScreen());
+  else if (node.type === 'shop') render(shopScreen());
   else if (node.type === 'rest') render(garageScreen());
   else if (node.type === 'blacksmith') { BLACKSMITH_OPTIONS = pickBlacksmithOptions(); render(blacksmithScreen()); }
   else if (node.type === 'treasure') { const found = rollTreasure(); render(treasureScreen(found)); }
 }
+
+let CASTLE_STATE = null;
+
+const CASTLE_FIRST = { id:'castleGuard', name:'Castle Guard', icon:'🛡️', hp:75, minTier:2, drawRate:1, turnLimit:7 };
+const CASTLE_SECOND = { id:'castleChampion', name:'Castle Champion', icon:'🏰', hp:105, minTier:3, drawRate:2, turnLimit:8 };
+
+function castleScreen(message='') {
+  return `${noticeHTML()}
+  <div class="wo">
+    <div class="wo-stripe"></div><div class="wo-body">
+      <div class="wo-eyebrow">Fleet Castle</div>
+      <h1>Choose Your <em>Reward</em></h1>
+      ${currencyBar()}
+      ${message ? `<div class="panel"><div class="note">${message}</div></div>` : ''}
+      <div class="grid">
+        <div class="shopcard"><h3>Battle Challenge</h3><div class="note">Fight the Castle Guard. Win for a solid reward, then choose whether to risk a second, harder battle for a much larger reward.</div>
+          <button class="wo-btn amber" id="castleBattle1Btn" ${CASTLE_STATE?.firstDone?'disabled':''}>${CASTLE_STATE?.firstDone?'First Battle Won':'Battle 1'}</button>
+        </div>
+        <div class="shopcard"><h3>Castle Shop</h3><div class="note">Buy one vehicle at a discounted price.</div><button class="wo-btn" id="castleShopBtn">Open Shop</button></div>
+        <div class="shopcard"><h3>Cheap Refuel</h3><div class="note">Spend 5 coins to gain 10 fuel.</div><button class="wo-btn" id="castleFuelBtn" ${RUN.fuel>=RUN.maxFuel?'disabled':''}>Refuel +10</button></div>
+        <div class="shopcard"><h3>Card Match</h3><div class="note">Find a matching pair. You get 2 guesses. Match them to win coins, gems, or fuel.</div><button class="wo-btn" id="castleMatchBtn" ${CASTLE_STATE?.matchDone?'disabled':''}>Play Match Game</button></div>
+      </div>
+      ${CASTLE_STATE?.firstDone && !CASTLE_STATE?.secondDone ? `<div class="shopcard"><h3>High-Roller Battle</h3><div class="note">The second fight is harder, but the reward is much larger.</div><button class="wo-btn amber" id="castleBattle2Btn">Battle 2</button></div>` : ''}
+      <button class="wo-btn gray" id="leaveCastleBtn">Leave Castle</button>
+    </div>
+  </div>`;
+}
+
+function castleMatchScreen() {
+  if (!CASTLE_STATE) CASTLE_STATE={};
+  if (!CASTLE_STATE.matchCards) {
+    const suits = shuffle([...SUITS]).slice(0,3).map(s=>s.s);
+    CASTLE_STATE.matchCards = shuffle(suits.flatMap((s,i)=>[{id:i*2,suit:s},{id:i*2+1,suit:s}]).map(c=>({...c,flipped:false})));
+    CASTLE_STATE.matchGuesses = 2;
+    CASTLE_STATE.matchPick = [];
+  }
+  const cards=CASTLE_STATE.matchCards.map((c,i)=>`<button class="card mini ${c.flipped?'':'back'}" data-match="${i}" ${c.flipped?'disabled':''}>${c.flipped?c.suit:'?'}</button>`).join('');
+  return `<div class="wo"><div class="wo-stripe"></div><div class="wo-body">
+    <div class="wo-eyebrow">Card Match</div><h1>Find a <em>Pair</em></h1>
+    <div class="wo-sub">Guesses left: ${CASTLE_STATE.matchGuesses}</div>
+    <div class="grid" style="grid-template-columns:repeat(3,1fr);max-width:360px">${cards}</div>
+    <div class="note" style="margin:10px 0">Match a pair to win a random reward. A wrong guess uses one of your attempts.</div>
+    <button class="wo-btn gray" id="leaveMatchBtn">Back to Castle</button>
+  </div></div>`;
+}
+
 let BLACKSMITH_OPTIONS = null;
 function pickBlacksmithOptions() {
   const all = [];
@@ -393,7 +458,7 @@ function endRun(won) {
 /* ========== BATTLE LOGIC ========== */
 function startBattle(opponentDef, row, col) {
   BATTLE = {
-    opponent: { ...opponentDef, hpNow: opponentDef.hp, poisonStacks: [], lockProgress: 0 }, row, col,
+    opponent: { ...opponentDef, hpNow: opponentDef.hp, poisonStacks: [], lockProgress: 0 }, row, col, castleStage: CASTLE_STATE?.stage || 0,
     deck: shuffle(freshDeck()), discard: [],
     oppDeck: shuffle(freshDeck()), oppDiscard: [],
     hand: [], oppPool: [], scoutedThisTurn: false, abilityUsedThisTurn: false, opponentStunned: false,
@@ -584,8 +649,22 @@ function resolveTurn() {
   render(battleScreen());
 }
 function winBattle(outlast) {
+  if (BATTLE.castleStage || CASTLE_STATE?.stage) {
+    const stage = CASTLE_STATE?.stage || BATTLE.castleStage;
+    const reward = stage === 1
+      ? { coins: 30, gems: 2, fuel: 6 }
+      : { coins: 70, gems: 4, fuel: 10 };
+    RUN.chips += reward.coins;
+    RUN.gems = Math.min(RUN.maxGems, RUN.gems + reward.gems);
+    RUN.fuel = Math.min(RUN.maxFuel, RUN.fuel + reward.fuel);
+    if (stage === 1) CASTLE_STATE.firstDone = true;
+    if (stage === 2) CASTLE_STATE.secondDone = true;
+    saveRun();
+    render(castleScreen(`You won Battle ${stage}. Reward: +${reward.coins} coins, +${reward.gems} gems, +${reward.fuel} fuel.`));
+    return;
+  }
   const scale = outlast ? 0.7 : 1;
-  const chipReward = Math.round((16 + BATTLE.opponent.hp / 8) * scale);
+  const chipReward = Math.round((22 + BATTLE.opponent.hp / 7) * scale);
   const gemReward = 2 + BATTLE.row;
   const fuelReward = 3 + BATTLE.row;
   const pointsReward = Math.round((5 + BATTLE.row * 3) * scale);
@@ -614,42 +693,69 @@ function currencyBar() {
 
 function mapScreen() {
   const rows = RUN.map.nodes;
-  const colW = 112, rowY = [110, 55, 165];
-  const totalW = rows.length * colW + 40;
-  const totalH = 260;
+  const colW = 118, rowY = [118, 55, 181];
+  const totalW = rows.length * colW + 50;
+  const totalH = 245;
   const avail = availableNextNodes();
   const visibleRange = 1 + META.levels.range;
   let svgLines = '';
+
   for (const e of RUN.map.edges) {
-    const x1 = 20 + e.fromRow * colW + colW/2;
-    const x2 = 20 + e.toRow * colW + colW/2;
+    const x1 = 25 + e.fromRow * colW + colW/2;
+    const x2 = 25 + e.toRow * colW + colW/2;
     const y1 = rowY[Math.min(e.fromCol,rowY.length-1)];
     const y2 = rowY[Math.min(e.toCol,rowY.length-1)];
-    const traveled = RUN.path.some(p=>p.row===e.fromRow&&p.col===e.fromCol) && RUN.path.some(p=>p.row===e.toRow&&p.col===e.toCol);
-    svgLines += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${traveled?'#ff9f1c':'#b9c5b0'}" stroke-width="${traveled?4:2}" stroke-linecap="round"/>`;
+    const traveled = RUN.path.some(p=>p.row===e.fromRow&&p.col===e.fromCol) &&
+                     RUN.path.some(p=>p.row===e.toRow&&p.col===e.toCol);
+    svgLines += `<path d="M ${x1} ${y1} C ${x1+28} ${y1}, ${x2-28} ${y2}, ${x2} ${y2}"
+      fill="none" stroke="${traveled?'#ff9f1c':'#7f9180'}" stroke-width="${traveled?5:3}" stroke-linecap="round"/>`;
   }
+
   let nodesHTML='';
-  const NODE_ICON={shop:'🛒',rest:'🔧',blacksmith:'🛠️',treasure:'🎁'};
-  const NODE_TITLE={shop:'Shop',rest:'Pit Stop',blacksmith:'Tuning Garage',treasure:'Supply Cache'};
+  const NODE_ICON={shop:'🛒',rest:'🔧',blacksmith:'🛠️',treasure:'🎁',castle:'🏰'};
+  const NODE_TITLE={shop:'Shop',rest:'Pit Stop',blacksmith:'Tuning Garage',treasure:'Supply Cache',castle:'Fleet Castle'};
   for(let r=0;r<rows.length;r++) for(let c=0;c<rows[r].length;c++){
-    const node=rows[r][c], x=20+r*colW+colW/2, y=rowY[Math.min(c,rowY.length-1)];
-    const isDone=RUN.path.some(p=>p.row===r&&p.col===c), isAvail=avail.some(n=>n.row===r&&n.col===c);
-    const isBoss=r===rows.length-1, withinSight=r<=RUN.currentRow+visibleRange;
+    const node=rows[r][c], x=25+r*colW+colW/2, y=rowY[Math.min(c,rowY.length-1)];
+    const isDone=RUN.path.some(p=>p.row===r&&p.col===c);
+    const isAvail=avail.some(n=>n.row===r&&n.col===c);
+    const isBoss=r===rows.length-1;
+    const withinSight=r<=RUN.currentRow+visibleRange;
     const showReal=isBoss||isDone||isAvail||withinSight;
     const cls=isDone?'done':isAvail?'avail':withinSight?'future':'farfuture';
     const icon=!showReal?'❔':(node.type==='battle'?node.opponent.icon:NODE_ICON[node.type]);
     const title=!showReal?'Unscouted':(node.type==='battle'?node.opponent.name:NODE_TITLE[node.type]);
     let tip;
     if(!showReal) tip='Move closer to scout this stop.';
-    else if(node.type==='battle'){const o=node.opponent; tip=`${o.name}<br>HP: ${o.hp}<br>Needs ${TIERS[o.minTier]}+<br>Draws ${o.drawRate}/turn`+(o.boss?'<br><b>World Boss</b>':'');}
-    else if(node.type==='shop') tip='Buy vehicles with coins.';
+    else if(node.type==='battle'){
+      const o=node.opponent;
+      tip=`${o.name}<br>HP: ${o.hp}<br>Needs ${TIERS[o.minTier]}+<br>Draws ${o.drawRate}/turn${o.attackInfo?`<br>${o.attackInfo}`:''}${o.boss?'<br><b>World Boss</b>':''}`;
+    } else if(node.type==='shop') tip='Buy vehicles with coins. World 1 has only two shops.';
     else if(node.type==='rest') tip='Restore 30 health.';
     else if(node.type==='blacksmith') tip='Upgrade a card or tune your Admin Vehicle.';
+    else if(node.type==='castle') tip='Choose battles, shopping, refueling, a matching game, or other rewards.';
     else tip='Find coins, fuel, and gems.';
-    nodesHTML+=`<div class="mapnode-wrap ${isBoss?'bossnode':''}" style="left:${(x/totalW*100)}%;top:${y}px"><button class="mapnode ${cls}" ${isAvail?`data-goto="${r}:${c}"`:''} ${isAvail?'':'disabled'}>${icon}</button><div class="tooltip"><b>${title}</b><br>${tip}</div></div>`;
+
+    nodesHTML+=`<div class="mapnode-wrap ${isBoss?'bossnode':''}" style="left:${(x/totalW*100)}%;top:${y}px">
+      <button class="mapnode ${cls}" ${isAvail?`data-goto="${r}:${c}"`:''} ${isAvail?'':'disabled'}>${icon}</button>
+      <div class="tooltip"><b>${title}</b><br>${tip}</div>
+    </div>`;
   }
-  const boss=BOSS;
-  return `${noticeHTML()}<div class="panel"><div class="hdr"><span>Health: ${RUN.health}/${RUN.maxHealth}</span><span>Vehicles: ${RUN.ownedVehicles.length}/${RUN.vehicleCap}</span></div>${currencyBar()}<div class="hdr" style="margin-top:8px"><span>World 1 - City Fleet (20 spaces)</span><span>Select your next stop.</span></div><div class="mapwrap" style="width:100%;height:${totalH}px"><svg width="${totalW}" height="${totalH}" viewBox="0 0 ${totalW} ${totalH}" style="position:absolute;left:0;top:0">${svgLines}</svg>${nodesHTML}</div></div><div class="panel bossPreview"><div class="hdr"><span>World Boss - Always Visible</span><span>Final Stop</span></div><div style="display:flex;gap:12px;align-items:center"><div class="bigicon">${boss.icon}</div><div><h3 style="margin:0">${boss.name}</h3><div class="note">${boss.hp} HP · Needs ${TIERS[boss.minTier]}+ · Draws ${boss.drawRate}/turn · ${boss.turnLimit}-turn limit</div><div class="note">Build your fleet toward this fight as you travel.</div></div></div></div>`;
+
+  return `${noticeHTML()}
+  <div class="panel">
+    <div class="hdr"><span>Health: ${RUN.health}/${RUN.maxHealth}</span><span>Vehicles: ${RUN.ownedVehicles.length}/${RUN.vehicleCap}</span></div>
+    ${currencyBar()}
+    <div class="hdr" style="margin-top:8px"><span>World 1 - City Fleet (21 spaces)</span><span>Select your next stop.</span></div>
+    <div class="mapwrap" style="width:100%;height:${totalH}px;overflow-x:auto;overflow-y:hidden">
+      <div style="position:relative;width:${totalW}px;height:${totalH}px">
+        <svg width="${totalW}" height="${totalH}" viewBox="0 0 ${totalW} ${totalH}" style="position:absolute;left:0;top:0;pointer-events:none">${svgLines}</svg>
+        ${nodesHTML}
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;margin-top:10px">
+      <button class="wo-btn amber" id="mapUpgradeBtn">View Upgrades</button>
+    </div>
+  </div>`;
 }
 
 function battleScreen() {
@@ -757,7 +863,7 @@ function nodeResultScreen(won, rewards) {
   `;
 }
 
-function shopScreen() {
+function shopScreen(fromCastle=false) {
   const owned = new Set(RUN.ownedVehicles);
   const atCap = RUN.ownedVehicles.length >= RUN.vehicleCap;
   const options = Object.values(VEHICLES).filter(v => !owned.has(v.id) && v.cost > 0);
@@ -777,7 +883,7 @@ function shopScreen() {
         ${currencyBar()}
         <div class="hdr" style="margin-top:10px"><span>Vehicles (${RUN.ownedVehicles.length}/${RUN.vehicleCap} garage slots)</span><span></span></div>
         <div style="margin:6px 0 12px">${vehicleRows}</div>
-        <button class="wo-btn" id="leaveShopBtn">Back on the Road</button>
+        <button class="wo-btn" id="leaveShopBtn">${fromCastle ? "Back to Castle" : "Back on the Road"}</button>
       </div>
     </div>
   `;
@@ -969,7 +1075,32 @@ function render(html) {
     render(upgradeScreen(ret));
   });
 
-  const leaveShopBtn = document.getElementById('leaveShopBtn'); if (leaveShopBtn) leaveShopBtn.onclick = () => render(mapScreen());
+  const mapUpgradeBtn = document.getElementById('mapUpgradeBtn'); if (mapUpgradeBtn) mapUpgradeBtn.onclick = () => render(upgradeScreen('map'));
+  const castleBattle1Btn = document.getElementById('castleBattle1Btn'); if (castleBattle1Btn) castleBattle1Btn.onclick = () => { CASTLE_STATE = CASTLE_STATE || {}; CASTLE_STATE.stage=1; startBattle(CASTLE_FIRST, 10, 0); };
+  const castleBattle2Btn = document.getElementById('castleBattle2Btn'); if (castleBattle2Btn) castleBattle2Btn.onclick = () => { CASTLE_STATE = CASTLE_STATE || {}; CASTLE_STATE.stage=2; startBattle(CASTLE_SECOND, 10, 0); };
+  const castleShopBtn = document.getElementById('castleShopBtn'); if (castleShopBtn) castleShopBtn.onclick = () => render(shopScreen(true));
+  const castleFuelBtn = document.getElementById('castleFuelBtn'); if (castleFuelBtn) castleFuelBtn.onclick = () => { if (RUN.chips>=5) { RUN.chips-=5; RUN.fuel=Math.min(RUN.maxFuel,RUN.fuel+10); saveRun(); render(castleScreen('You refueled for 5 coins.')); } };
+  const castleMatchBtn = document.getElementById('castleMatchBtn'); if (castleMatchBtn) castleMatchBtn.onclick = () => { CASTLE_STATE = CASTLE_STATE || {}; CASTLE_STATE.matchCards=null; render(castleMatchScreen()); };
+  const leaveCastleBtn = document.getElementById('leaveCastleBtn'); if (leaveCastleBtn) leaveCastleBtn.onclick = () => render(mapScreen());
+  const leaveMatchBtn = document.getElementById('leaveMatchBtn'); if (leaveMatchBtn) leaveMatchBtn.onclick = () => render(castleScreen());
+  app.querySelectorAll('[data-match]').forEach(el => el.onclick = () => {
+    const i=+el.dataset.match, st=CASTLE_STATE;
+    if (!st || st.matchGuesses<=0 || st.matchPick.includes(i) || st.matchCards[i].flipped) return;
+    st.matchPick.push(i); st.matchCards[i].flipped=true;
+    if (st.matchPick.length===2) {
+      const [a,b]=st.matchPick;
+      if (st.matchCards[a].suit===st.matchCards[b].suit) {
+        const reward=Math.random()<0.5 ? {coins:20+Math.floor(Math.random()*21),gems:1} : {coins:15,fuel:8};
+        RUN.chips+=reward.coins||0; RUN.gems=Math.min(RUN.maxGems,RUN.gems+(reward.gems||0)); RUN.fuel=Math.min(RUN.maxFuel,RUN.fuel+(reward.fuel||0));
+        st.matchDone=true; saveRun(); render(castleScreen(`Match! You won ${reward.coins||0} coins${reward.gems?`, ${reward.gems} gem`:''}${reward.fuel?`, ${reward.fuel} fuel`:''}.`));
+      } else {
+        st.matchGuesses--;
+        setTimeout(()=>{ st.matchPick.forEach(x=>st.matchCards[x].flipped=false); st.matchPick=[]; render(st.matchGuesses>0?castleMatchScreen():castleScreen('No match. The game is over for this visit.')); },350);
+      }
+    }
+    else render(castleMatchScreen());
+  });
+  const leaveShopBtn = document.getElementById('leaveShopBtn'); if (leaveShopBtn) leaveShopBtn.onclick = () => render(document.querySelector('.wo-eyebrow')?.textContent==='Shop' && CASTLE_STATE?.stage===0 && RUN.currentRow===10 ? castleScreen() : mapScreen());
   const adminTuneBtn = document.getElementById('adminTuneBtn'); if (adminTuneBtn) adminTuneBtn.onclick = () => { const u=UPGRADE_DEFS.find(x=>x.id==='adminTune'); const lvl=META.levels.adminTune||0; const cost=upgradeCost(u,lvl); if(META.points<cost)return; META.points-=cost; META.levels.adminTune=lvl+1; saveMeta(); render(blacksmithScreen()); };
   const leaveBlacksmithBtn = document.getElementById('leaveBlacksmithBtn'); if (leaveBlacksmithBtn) leaveBlacksmithBtn.onclick = () => { BLACKSMITH_OPTIONS = null; render(mapScreen()); };
   const leaveTreasureBtn = document.getElementById('leaveTreasureBtn'); if (leaveTreasureBtn) leaveTreasureBtn.onclick = () => render(mapScreen());

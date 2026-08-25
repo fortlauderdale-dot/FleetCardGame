@@ -743,10 +743,9 @@ function resolveTurn() {
 
   for (const instance of RUN.ownedVehicles) {
     const v = VEHICLES[instance.vehicleId];
-    for (const attId of instance.attacks) {
+        instance.attacks.forEach((attId, index) => {
       const att = ATTACKS[attId];
-      // FIX 1: Restored backticks for the template literal string
-      const slotKey = `${instance.instanceId}:${att.id}`;
+      const slotKey = `${instance.instanceId}:${attId}_${index}`;
       const idxs = BATTLE.slots[slotKey] || [];
       if (!idxs.length) continue;
       const cards = idxs.map(i => BATTLE.hand[i]);
@@ -796,10 +795,9 @@ function resolveTurn() {
           battleLog(`${v.name} [${att.name}] — ${label}! ${amount} damage.`); 
         }
       }
-      idxs.forEach(i => usedIdx.add(i));
-    }
+            idxs.forEach(i => usedIdx.add(i));
+    });
   }
-
 
   // Resolve any cards the opponent cursed on a previous turn: played it, curse clears; left it, take the hit.
   BATTLE.hand.forEach((c, i) => {
@@ -1074,8 +1072,13 @@ function battleScreen() {
     const instanceId = instance.instanceId;
     const liveAttacks = instance.attacks || v.starterAttacks || [];
     // Render each individual attack fitted onto this vehicle hull
-const attacksHTML = liveAttacks.map(attId => {
-    const att = ATTACKS[attId];
+    const attacksHTML = liveAttacks.map((attId, index) => {
+      const att = ATTACKS[attId];
+      if (!att) return `<div class="attack-slot error">Missing Attack Data: ${attId}</div>`;
+        
+      // Dynamic unique compound key allowing multiple copies of the same attack type
+      const slotKey = `${instanceId}:${attId}_${index}`;
+
       // Target state slot compound string key: "instanceId:attackId"
       const slotKey = `${instanceId}:${attId}`;
       const idxs = BATTLE.slots[slotKey] || [];
@@ -1107,7 +1110,7 @@ const attacksHTML = liveAttacks.map(attId => {
         return `<div class="card mini ${c.color === 'red' ? 'red' : ''}" data-unassign="${slotKey}:${cardHandIdx}">${rankLabel(c.rank)}${c.suit}</div>`;
       }).join('') || `<span class="note" style="margin:0">Tap cards here</span>`;
 
-      return `<div class="shopcard ${ready ? 'ready' : ''}" data-assign="${slotKey}" style="margin-top:6px; border:1px dashed var(--blue)">
+            return `<div class="shopcard ${ready ? 'ready' : ''}" data-assign="${slotKey}" style="margin-top:6px; border:1px dashed var(--blue)">
         <div class="hdr" style="font-weight:600; color:var(--blue-dark)">${att.name}</div>
         <div class="note" style="font-size:11px">${att.note}</div>
         <div class="vcards">${cardHTML}</div>

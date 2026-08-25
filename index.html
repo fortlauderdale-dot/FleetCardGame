@@ -16,10 +16,10 @@
     --mono:'IBM Plex Mono',ui-monospace,monospace;
   }
   *{box-sizing:border-box}
-  html,body{margin:0;min-height:3200px;background:var(--bg);color:var(--ink);font-family:var(--disp);font-size:16px}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--disp);font-size:16px}
   button{font-family:var(--disp);cursor:pointer}
-  #app{max-width:1180px;margin:0 auto;padding:14px 18px 100px;min-height:3600px}
-  .game-stage{min-height:3000px}
+  #app{max-width:1180px;margin:0 auto;padding:14px 18px 100px}
+  .game-stage{}
   .treasure-modal{position:fixed;inset:0;background:#12163acc;display:flex;align-items:center;justify-content:center;z-index:100;padding:20px}
   .treasure-modal .wo{max-width:560px;width:100%;margin:0}
   .treasure-prize{font-size:28px;font-weight:800;color:var(--blue-dark);text-align:center;margin:16px 0}
@@ -60,8 +60,9 @@
   .bigicon{font-size:30px;line-height:1}
 
   .duelBoard{display:grid;grid-template-columns:1fr 66px 1fr;gap:8px;align-items:start}
-  @media (max-width:700px){ .duelBoard{grid-template-columns:1fr} .deckStack{display:none} .duelHead{grid-template-columns:1fr 1fr} .vsMark{display:none} }
+  @media (max-width:700px){ .duelBoard{grid-template-columns:1fr} .duelHead{grid-template-columns:1fr 1fr} .vsMark{display:none} }
   .deckStack{text-align:center;padding-top:36px}.deckStack .card.back{cursor:default;pointer-events:none}
+  .deckStack .card.back::after{content:none}
 
   .vslot{border:2px dashed var(--blue-light);border-radius:8px;padding:10px;width:160px;background:var(--bg);cursor:pointer}
   .vslot.filled{border-style:solid;border-color:var(--amber)}
@@ -231,6 +232,18 @@ function art(entity, px) {
 }
 const PLAYER_ART = { name: 'Your Fleet', icon: '🚚', image: 'vehicles/work-truck.png' };
 function fleetLabel() { return META.playerName ? `${META.playerName}'s Fleet` : 'Your Fleet'; }
+// Read-only box(es) showing what the opponent can attack with — mirrors the player's vslot UI.
+// Supports a future opp.attacks array (multiple named attacks); falls back to their single generic attack.
+function opponentAttackBoxHTML(opp) {
+  const attacks = (opp.attacks && opp.attacks.length) ? opp.attacks : [{ name: opp.name, minTier: opp.minTier, straightLen: opp.straightLen }];
+  return attacks.map(a => {
+    const reqText = a.straightLen ? `Needs a ${a.straightLen}-card straight` : (a.minTier === 0 ? 'Any 1 card' : `Needs ${TIERS[a.minTier]}+`);
+    return `<div class="vslot" style="cursor:default">
+      <div class="vname">${art(opp, 18)} ${a.name}</div>
+      <div class="vreq">${reqText}</div>
+    </div>`;
+  }).join('');
+}
 
 /* ========== PLAYER VEHICLE CATALOG ========== */
 const VEHICLES = {
@@ -269,28 +282,28 @@ function starterLockNote(id) {
 
 /* ========== OPPONENT ROSTER (ranked bad -> good, 3 per tier, plus boss) ========== */
 const OPPONENT_TIERS = [
-  [ { id: 'vespa', name: 'Rusty Vespa', icon: '🛵', image: 'vehicles/rusty-vespa.png', hp: 35, minTier: 0, drawRate: 1, turnLimit: 6 },
-    { id: 'cart', name: 'Beat-Up Golf Cart', icon: '⛳', image: 'vehicles/golf-cart.png', hp: 40, minTier: 0, drawRate: 1, turnLimit: 6 },
-    { id: 'bike', name: 'Wobbly Bicycle', icon: '🚲', image: 'vehicles/wobbly-bicycle.png', hp: 45, minTier: 0, drawRate: 1, turnLimit: 6 } ],
-  [ { id: 'smart', name: 'Smart Car', icon: '🚗', image: 'vehicles/smart-car.png', hp: 50, minTier: 1, drawRate: 1, turnLimit: 6 },
-    { id: 'hatch', name: 'Beater Hatchback', icon: '🚙', image: 'vehicles/beater-hatchback.png', hp: 55, minTier: 1, drawRate: 1, turnLimit: 6 },
-    { id: 'prius', name: 'Rideshare Prius', icon: '🔋', image: 'vehicles/rideshare-prius.png', hp: 60, minTier: 0, drawRate: 1, turnLimit: 6 } ],
-  [ { id: 'sedan', name: 'Sedan', icon: '🚘', image: 'vehicles/sedan.png', hp: 65, minTier: 1, drawRate: 1, turnLimit: 7 },
-    { id: 'minivan', name: 'Minivan', icon: '🚐', image: 'vehicles/minivan.png', hp: 70, minTier: 1, drawRate: 2, turnLimit: 7 },
-    { id: 'delivery', name: 'Delivery Van', icon: '📦', image: 'vehicles/delivery-van.png', hp: 75, minTier: 2, drawRate: 1, turnLimit: 7 } ],
-  [ { id: 'pickup', name: 'Pickup Truck', icon: '🛻', image: 'vehicles/pickup-truck.png', hp: 80, minTier: 2, drawRate: 1, turnLimit: 7 },
-    { id: 'muscle', name: 'Muscle Car', icon: '🔥', image: 'vehicles/muscle-car.png', hp: 85, minTier: 3, drawRate: 1, turnLimit: 7 },
-    { id: 'jeep', name: 'Off-Road Jeep', icon: '🌲', image: 'vehicles/off-road-jeep.png', hp: 90, minTier: 1, drawRate: 2, turnLimit: 7 },
-    { id: 'bombsquad', name: 'Bomb Squad Truck', icon: '💣', image: 'vehicles/bomb-squad-truck.png', hp: 95, locked: true, lockThreshold: 45, lockAttack: 39, drawRate: 2, turnLimit: 8 } ],
-  [ { id: 'sportscar', name: 'Sports Car', icon: '🏎️', image: 'vehicles/sports-car.png', hp: 100, minTier: 3, drawRate: 2, turnLimit: 8 },
-    { id: 'moto', name: 'Motorcycle Gang', icon: '🏍️', image: 'vehicles/motorcycle-gang.png', hp: 105, minTier: 2, drawRate: 2, turnLimit: 8 },
-    { id: 'armoredvan', name: 'Armored Van', icon: '🚐', image: 'vehicles/armored-van.png', hp: 110, minTier: 1, drawRate: 1, turnLimit: 8 } ],
-  [ { id: 'suv', name: 'Luxury SUV', icon: '🚙', image: 'vehicles/luxury-suv.png', hp: 115, minTier: 3, drawRate: 2, turnLimit: 8 },
-    { id: 'exotic', name: 'Exotic Supercar', icon: '🏁', image: 'vehicles/exotic-supercar.png', hp: 120, minTier: 4, drawRate: 2, turnLimit: 8 },
-    { id: 'limo', name: 'Armored Limo', icon: '🚘', image: 'vehicles/armored-limo.png', hp: 125, minTier: 2, drawRate: 2, turnLimit: 8 },
-    { id: 'vault', name: 'Armored Vault Truck', icon: '🔐', image: 'vehicles/armored-vault-truck.png', hp: 130, locked: true, lockThreshold: 70, lockAttack: 60, drawRate: 2, turnLimit: 9 } ],
+  [ { id: 'vespa', name: 'Rusty Vespa', icon: '🛵', image: 'vehicles/rusty-vespa.png', hp: 35, minTier: 0, drawRate: 2, turnLimit: 6 },
+    { id: 'cart', name: 'Beat-Up Golf Cart', icon: '⛳', image: 'vehicles/golf-cart.png', hp: 40, minTier: 0, drawRate: 2, turnLimit: 6 },
+    { id: 'bike', name: 'Wobbly Bicycle', icon: '🚲', image: 'vehicles/wobbly-bicycle.png', hp: 45, minTier: 0, drawRate: 2, turnLimit: 6 } ],
+  [ { id: 'smart', name: 'Smart Car', icon: '🚗', image: 'vehicles/smart-car.png', hp: 50, minTier: 1, drawRate: 2, turnLimit: 6 },
+    { id: 'hatch', name: 'Beater Hatchback', icon: '🚙', image: 'vehicles/beater-hatchback.png', hp: 55, minTier: 1, drawRate: 2, turnLimit: 6 },
+    { id: 'prius', name: 'Rideshare Prius', icon: '🔋', image: 'vehicles/rideshare-prius.png', hp: 60, minTier: 0, drawRate: 2, turnLimit: 6 } ],
+  [ { id: 'sedan', name: 'Sedan', icon: '🚘', image: 'vehicles/sedan.png', hp: 65, minTier: 1, drawRate: 3, turnLimit: 7 },
+    { id: 'minivan', name: 'Minivan', icon: '🚐', image: 'vehicles/minivan.png', hp: 70, minTier: 1, drawRate: 3, turnLimit: 7 },
+    { id: 'delivery', name: 'Delivery Van', icon: '📦', image: 'vehicles/delivery-van.png', hp: 75, minTier: 2, drawRate: 3, turnLimit: 7, special: { type: 'redSteal', redThreshold: 3, fuelSteal: 1, extraDraw: 1 } } ],
+  [ { id: 'pickup', name: 'Pickup Truck', icon: '🛻', image: 'vehicles/pickup-truck.png', hp: 80, minTier: 2, drawRate: 3, turnLimit: 7 },
+    { id: 'muscle', name: 'Muscle Car', icon: '🔥', image: 'vehicles/muscle-car.png', hp: 85, minTier: 3, drawRate: 3, turnLimit: 7, special: { type: 'lifesteal', pct: 0.5 } },
+    { id: 'jeep', name: 'Off-Road Jeep', icon: '🌲', image: 'vehicles/off-road-jeep.png', hp: 90, minTier: 1, drawRate: 3, turnLimit: 7 },
+    { id: 'bombsquad', name: 'Bomb Squad Truck', icon: '💣', image: 'vehicles/bomb-squad-truck.png', hp: 95, locked: true, lockThreshold: 45, lockAttack: 39, drawRate: 3, turnLimit: 8 } ],
+  [ { id: 'sportscar', name: 'Sports Car', icon: '🏎️', image: 'vehicles/sports-car.png', hp: 100, minTier: 3, drawRate: 4, turnLimit: 8 },
+    { id: 'moto', name: 'Motorcycle Gang', icon: '🏍️', image: 'vehicles/motorcycle-gang.png', hp: 105, minTier: 2, drawRate: 4, turnLimit: 8 },
+    { id: 'armoredvan', name: 'Armored Van', icon: '🚐', image: 'vehicles/armored-van.png', hp: 110, minTier: 1, drawRate: 3, turnLimit: 8 } ],
+  [ { id: 'suv', name: 'Luxury SUV', icon: '🚙', image: 'vehicles/luxury-suv.png', hp: 115, minTier: 3, drawRate: 4, turnLimit: 8 },
+    { id: 'exotic', name: 'Exotic Supercar', icon: '🏁', image: 'vehicles/exotic-supercar.png', hp: 120, minTier: 4, drawRate: 4, turnLimit: 8 },
+    { id: 'limo', name: 'Armored Limo', icon: '🚘', image: 'vehicles/armored-limo.png', hp: 125, minTier: 2, drawRate: 4, turnLimit: 8 },
+    { id: 'vault', name: 'Armored Vault Truck', icon: '🔐', image: 'vehicles/armored-vault-truck.png', hp: 130, locked: true, lockThreshold: 70, lockAttack: 60, drawRate: 4, turnLimit: 9 } ],
 ];
-const BOSS = { id: 'swat', name: 'SWAT Truck', icon: '🚔', image: 'vehicles/swat-truck.png', hp: 145, minTier: 3, drawRate: 2, turnLimit: 10, boss: true, curse: { count: 2, amount: 10, chance: 0.5 }, attackInfo: 'Attack: uses its best poker hand for about 10-35 damage, depending on the hand. Can also curse cards in your hand — play a cursed card before turn end or take its curse damage.' };
+const BOSS = { id: 'swat', name: 'SWAT Truck', icon: '🚔', image: 'vehicles/swat-truck.png', hp: 145, minTier: 3, drawRate: 4, turnLimit: 10, boss: true, curse: { count: 2, amount: 10, chance: 0.5 }, attackInfo: 'Attack: uses its best poker hand for about 10-35 damage, depending on the hand. Can also curse cards in your hand — play a cursed card before turn end or take its curse damage.' };
 function revealFraction(row) { return [1.0, 0.8, 0.6, 0.4, 0.25, 0.1, 0][Math.min(row, 6)]; }
 
 /* ========== LEVELED UPGRADE TREE (permanent, up to 20 levels each) ========== */
@@ -450,8 +463,8 @@ function selectNode(row, col) {
 let CASTLE_STATE = null;
 let RETURN_TO_CASTLE_MENU = false;
 
-const CASTLE_FIRST = { id:'castleGuard', name:'Castle Guard', icon:'🛡️', image: 'vehicles/castle-guard.png', hp:75, minTier:2, drawRate:1, turnLimit:7 };
-const CASTLE_SECOND = { id:'castleChampion', name:'Castle Champion', icon:'🏰', image: 'vehicles/castle-champion.png', hp:105, minTier:3, drawRate:2, turnLimit:8 };
+const CASTLE_FIRST = { id:'castleGuard', name:'Castle Guard', icon:'🛡️', image: 'vehicles/castle-guard.png', hp:75, minTier:2, drawRate: 3, turnLimit:7 };
+const CASTLE_SECOND = { id:'castleChampion', name:'Castle Champion', icon:'🏰', image: 'vehicles/castle-champion.png', hp:105, minTier:3, drawRate: 4, turnLimit:8 };
 
 function castleMenuScreen(message='') {
   return `${noticeHTML()}
@@ -576,9 +589,9 @@ function startBattle(opponentDef, row, col) {
     playerArmor: 0, turn: 1, slots: {}, turnDiscard: [], logLines: [],
   };
   BATTLE.deck.forEach(c => { const b = RUN.cardBoosts.find(x => x.rank === c.rank && x.suit === c.suit); if (b) c.bonus = b.bonus; });
-  drawCards(Math.min(7, RUN.handSize));
+  drawCards(Math.min(5, RUN.handSize));
   drawOpponentCards();
-  for (let i = 0; i < META.levels.reveal; i++) {
+  for (let i = 0; i < 1 + META.levels.reveal; i++) {
     const hidden = BATTLE.oppPool.filter(c => !c.revealed);
     if (!hidden.length) break;
     hidden[(Math.random() * hidden.length) | 0].revealed = true;
@@ -813,7 +826,27 @@ function resolveTurn() {
       }
       RUN.health = Math.max(0, RUN.health - oppDmg);
       const usedText = best.cards.map(c => `${rankLabel(c.rank)}${c.suit}`).join(' ');
-      battleLog(`${BATTLE.opponent.name} played ${best.label} (${usedText}) — ${oppDmg} damage. Your health: ${RUN.health}/${RUN.maxHealth}.`);
+      let specialLog = '';
+      const spec = BATTLE.opponent.special;
+      if (spec?.type === 'lifesteal') {
+        const healAmt = Math.round(oppDmg * (spec.pct ?? 0.5));
+        if (healAmt > 0) {
+          BATTLE.opponent.hpNow = Math.min(BATTLE.opponent.hp, BATTLE.opponent.hpNow + healAmt);
+          specialLog = ` It heals ${healAmt}.`;
+        }
+      } else if (spec?.type === 'redSteal') {
+        const redCount = best.cards.filter(c => c.color === 'red').length;
+        if (redCount >= (spec.redThreshold ?? 3)) {
+          const fuelStolen = Math.min(RUN.fuel, spec.fuelSteal ?? 1);
+          RUN.fuel -= fuelStolen;
+          for (let i = 0; i < (spec.extraDraw ?? 1); i++) {
+            if (!BATTLE.oppDeck.length) { if (!BATTLE.oppDiscard.length) break; BATTLE.oppDeck = shuffle(BATTLE.oppDiscard); BATTLE.oppDiscard = []; }
+            const c = BATTLE.oppDeck.pop(); c.revealed = Math.random() < revealFraction(BATTLE.row); BATTLE.oppPool.push(c);
+          }
+          specialLog = ` It steals ${fuelStolen} fuel and draws an extra card!`;
+        }
+      }
+      battleLog(`${BATTLE.opponent.name} played ${best.label} (${usedText}) — ${oppDmg} damage.${specialLog} Your health: ${RUN.health}/${RUN.maxHealth}.`);
       BATTLE.oppPool = BATTLE.oppPool.filter(c => !best.cards.includes(c));
     } else { battleLog(`${BATTLE.opponent.name} didn't have enough to attack this turn.`); }
     tryApplyCurse();
@@ -866,9 +899,9 @@ function noticeHTML() {
 function currencyBar() {
   return `<div class="currencies">
     <div class="cur chip" title="Coins are used to buy vehicles and pay for certain services.">${ICON.coin} ${RUN.chips} coins</div>
-    <div class="cur gem" title="Gems let you draw extra cards during a battle. Maximum: 10.">${ICON.gem} ${RUN.gems}/${RUN.maxGems} gems</div>
-    <div class="cur fuel" title="Fuel is spent when you travel to another stop. Maximum: 20.">${ICON.fuel} ${RUN.fuel}/${RUN.maxFuel} fuel</div>
-    <div class="cur energy" title="Energy powers vehicle abilities. Maximum: 20.">${ICON.energy} ${RUN.energy}/${RUN.maxEnergy} energy</div>
+    <div class="cur gem" title="Gems let you draw extra cards during a battle.">${ICON.gem} ${RUN.gems}/${RUN.maxGems} gems</div>
+    <div class="cur fuel" title="Fuel is spent when you travel to another stop.">${ICON.fuel} ${RUN.fuel}/${RUN.maxFuel} fuel</div>
+    <div class="cur energy" title="Energy powers vehicle abilities.">${ICON.energy} ${RUN.energy}/${RUN.maxEnergy} energy</div>
     <div class="cur pts" title="Points are your long-term currency for permanent upgrades.">${ICON.star} ${META.points} points</div>
   </div>`;
 }
@@ -1002,8 +1035,8 @@ function battleScreen() {
   const healthPct = Math.max(0, (RUN.health / RUN.maxHealth) * 100);
 
   const poolHTML = BATTLE.oppPool.map(c => c.revealed
-    ? `<div class="card mini ${c.color === 'red' ? 'red' : ''}">${rankLabel(c.rank)}${c.suit}</div>`
-    : `<div class="card mini back"></div>`).join('') || '<span class="note" style="margin:0">empty</span>';
+    ? `<div class="card ${c.color === 'red' ? 'red' : ''}"><div>${rankLabel(c.rank)}</div><div style="font-size:16px">${c.suit}</div></div>`
+    : `<div class="card back"></div>`).join('') || '<span class="note" style="margin:0">empty</span>';
 
   const vehicleHTML = RUN.ownedVehicles.map(vId => {
     const v = VEHICLES[vId];
@@ -1087,7 +1120,7 @@ function battleScreen() {
         <div class="hdr"><span>${opp.name}'s Cards</span><span></span></div>
         <div class="hand">${poolHTML}</div>
         <div class="note">${opp.locked ? `<span class="vart" style="width:12px;height:12px;font-size:12px">${ICON.lock}</span> Locked: ${opp.lockProgress}/${opp.lockThreshold} — clears the lock and hits for a flat ${opp.lockAttack}, no cards needed that turn` : `Needs ${TIERS[opp.minTier]}+ to attack`}</div>
-        <button class="wo-btn amber" id="scoutBtn" style="padding:8px 12px;font-size:12px" ${BATTLE.scoutedThisTurn || RUN.chips < 10 ? 'disabled' : ''}>Scout (-10 coins)</button>
+        <button class="wo-btn amber" id="scoutBtn" style="padding:8px 12px;font-size:12px" ${BATTLE.scoutedThisTurn || RUN.chips < 10 ? 'disabled' : ''}>Reveal a Card (-10 coins)</button>
       </div>
     </div>
     <div class="panel">
@@ -1095,9 +1128,13 @@ function battleScreen() {
       <div class="grid">${vehicleHTML}</div>
     </div>
     <div class="panel">
+      <div class="hdr"><span>${opp.name}'s Fleet</span><span>What they'll attack with</span></div>
+      <div class="grid">${opponentAttackBoxHTML(opp)}</div>
+    </div>
+    <div class="panel">
       <div class="hdr"><span>Resources</span><span></span></div>
       <div class="resourceRow">
-        <button class="wo-btn amber" id="gemDrawBtn" style="padding:8px 12px;font-size:12px" title="Spend 1 gem to immediately draw ${1 + META.levels.gem} extra card${1 + META.levels.gem > 1 ? 's' : ''}." ${RUN.gems < 1 ? 'disabled' : ''}><span class="vart" style="width:12px;height:12px;font-size:12px">${ICON.gem}</span> Draw with Gem (-1)</button>
+        <button class="wo-btn amber" id="gemDrawBtn" style="padding:8px 12px;font-size:12px" ${RUN.gems < 1 ? 'disabled' : ''}><span class="vart" style="width:12px;height:12px;font-size:12px">${ICON.gem}</span> Draw ${1 + META.levels.gem} Card${1 + META.levels.gem > 1 ? 's' : ''} with Gem (-1)</button>
       </div>
     </div>
     <div class="panel">
@@ -1289,11 +1326,18 @@ function upgradeScreen(returnTo) {
     const lvl = META.levels[u.id];
     const maxed = lvl >= MAX_LEVEL;
     const cost = maxed ? 0 : upgradeCost(u, lvl);
+    const refund = lvl > 0 ? upgradeCost(u, lvl - 1) : 0;
+    const desc = u.id === 'reveal'
+      ? `Start every battle with ${1 + lvl} opponent card${1 + lvl > 1 ? 's' : ''} already revealed.`
+      : u.desc;
     return `<div class="shopcard">
       <div class="hdr"><span>${u.label} (Lv ${lvl}/${MAX_LEVEL})</span><span class="price">${maxed ? 'MAX' : cost + ' pts'}</span></div>
-      <div class="note" style="margin:0 0 4px">${u.desc}</div>
+      <div class="note" style="margin:0 0 4px">${desc}</div>
       <div class="levelbar"><i style="width:${(lvl / MAX_LEVEL) * 100}%"></i></div>
-      ${maxed ? '' : `<button class="wo-btn amber" data-levelup="${u.id}" style="padding:8px 12px;font-size:13px" ${META.points < cost ? 'disabled' : ''}>Level Up</button>`}
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${maxed ? '' : `<button class="wo-btn amber" data-levelup="${u.id}" style="padding:8px 12px;font-size:13px" ${META.points < cost ? 'disabled' : ''}>Level Up</button>`}
+        ${lvl > 0 ? `<button class="wo-btn gray" data-leveldown="${u.id}" style="padding:8px 12px;font-size:13px">Refund 1 Level (+${refund} pts)</button>` : ''}
+      </div>
     </div>`;
   }).join('');
   return `
@@ -1303,8 +1347,9 @@ function upgradeScreen(returnTo) {
         <div class="wo-eyebrow">Upgrades</div>
         <h1>Spend Your <em>Points</em></h1>
         <div class="wo-sub">Points: ${META.points} &middot; Lifetime: ${META.lifetimePoints} &middot; High score: ${META.highScore}</div>
+        <button class="wo-btn" id="upgradeContinueBtn" data-return="${returnTo}" style="width:100%;margin-bottom:10px">${returnTo === 'map' ? 'Continue Route' : 'Back'}</button>
         <div style="margin:12px 0">${rows}</div>
-        <button class="wo-btn" id="upgradeContinueBtn" data-return="${returnTo}">${returnTo === 'map' ? 'Continue Route' : 'Back'}</button>
+        <button class="wo-btn" id="upgradeContinueBtn2" data-return="${returnTo}" style="width:100%">${returnTo === 'map' ? 'Continue Route' : 'Back'}</button>
       </div>
     </div>
   `;
@@ -1367,11 +1412,14 @@ function render(html) {
   const upgradeBtn = document.getElementById('upgradeBtn');
   if (upgradeBtn) upgradeBtn.onclick = () => { commitNode(BATTLE.row, BATTLE.col); render(upgradeScreen('map')); };
   const upgradeContinueBtn = document.getElementById('upgradeContinueBtn');
-  if (upgradeContinueBtn) upgradeContinueBtn.onclick = () => {
-    const ret = upgradeContinueBtn.dataset.return;
+  const upgradeContinueBtn2 = document.getElementById('upgradeContinueBtn2');
+  const upgradeContinueHandler = (btn) => () => {
+    const ret = btn.dataset.return;
     if (ret === 'map') { if (RUN.currentRow === ROWS) endRun(true); else render(mapScreen()); }
     else render(metaScreen());
   };
+  if (upgradeContinueBtn) upgradeContinueBtn.onclick = upgradeContinueHandler(upgradeContinueBtn);
+  if (upgradeContinueBtn2) upgradeContinueBtn2.onclick = upgradeContinueHandler(upgradeContinueBtn2);
   const playerNameInput = document.getElementById('playerNameInput');
   if (playerNameInput) playerNameInput.onchange = () => { META.playerName = playerNameInput.value.trim().slice(0, 18); saveMeta(); };
   const viewUpgradesBtn = document.getElementById('viewUpgradesBtn'); if (viewUpgradesBtn) viewUpgradesBtn.onclick = () => render(upgradeScreen('home'));
@@ -1382,6 +1430,16 @@ function render(html) {
     const cost = upgradeCost(u, lvl);
     if (META.points < cost) return;
     META.points -= cost; META.levels[u.id]++;
+    saveMeta();
+    const ret = document.getElementById('upgradeContinueBtn')?.dataset.return || 'home';
+    render(upgradeScreen(ret));
+  });
+  app.querySelectorAll('[data-leveldown]').forEach(el => el.onclick = () => {
+    const u = UPGRADE_DEFS.find(x => x.id === el.dataset.leveldown);
+    const lvl = META.levels[u.id];
+    if (lvl <= 0) return;
+    const refund = upgradeCost(u, lvl - 1);
+    META.levels[u.id]--; META.points += refund;
     saveMeta();
     const ret = document.getElementById('upgradeContinueBtn')?.dataset.return || 'home';
     render(upgradeScreen(ret));

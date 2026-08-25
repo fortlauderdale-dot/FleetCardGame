@@ -747,7 +747,7 @@ function resolveTurn() {
       const att = ATTACKS[attId];
       const slotKey = `${instance.instanceId}:${attId}_${index}`;
       const idxs = BATTLE.slots[slotKey] || [];
-      if (!idxs.length) continue;
+      if (!idxs.length) return;
       const cards = idxs.map(i => BATTLE.hand[i]);
       
       let ready = false, label = '', mult = 0;

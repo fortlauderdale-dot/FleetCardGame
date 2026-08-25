@@ -18,7 +18,11 @@
   *{box-sizing:border-box}
   html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:var(--disp);font-size:16px}
   button{font-family:var(--disp);cursor:pointer}
-  #app{max-width:920px;margin:0 auto;padding:14px 14px 60px}
+  #app{max-width:920px;margin:0 auto;padding:14px 14px 60px;min-height:1800px}
+  .game-stage{min-height:1500px}
+  .treasure-modal{position:fixed;inset:0;background:#12163acc;display:flex;align-items:center;justify-content:center;z-index:100;padding:20px}
+  .treasure-modal .wo{max-width:560px;width:100%;margin:0}
+  .treasure-prize{font-size:28px;font-weight:800;color:var(--blue-dark);text-align:center;margin:16px 0}
 
   .wo{background:var(--white);color:var(--ink);border:3px solid var(--blue);border-radius:12px;box-shadow:6px 6px 0 var(--blue-dark);padding:0;margin:16px 0;overflow:hidden}
   .wo-stripe{height:10px;background:repeating-linear-gradient(-45deg,var(--amber) 0 16px,var(--blue) 16px 32px)}
@@ -234,7 +238,7 @@ const UPGRADE_DEFS = [
   { id: 'draw',    label: 'Cards Drawn Per Turn', desc: '+1 card drawn at the start of each turn per level.', baseCost: 20, inc: 15 },
   { id: 'handCap', label: 'Maximum Hand Size', desc: '+2 cards to your maximum hand size per level.', baseCost: 15, inc: 10 },
   { id: 'adminTune', label: 'Admin Vehicle Pair Bonus', desc: '+50% to the Admin Vehicle Pair bonus per level.', baseCost: 25, inc: 20 },
-  { id: 'range',   label: 'Scout Range',      desc: 'See one more row of the route map clearly ahead.',                 baseCost: 20, inc: 10 },
+  { id: 'range',   label: 'Scout Range',      desc: 'See one additional route space farther ahead.',                 baseCost: 20, inc: 10 },
   { id: 'gem',     label: 'Gem Efficiency',   desc: '+1 card drawn per gem spent.',                                     baseCost: 20, inc: 12 },
 ];
 const MAX_LEVEL = 20;
@@ -437,12 +441,22 @@ function boostCard(rank, suit) {
   saveRun();
 }
 function rollTreasure() {
-  const coins = 10 + Math.floor(Math.random() * 20);
-  const fuel = 3 + Math.floor(Math.random() * 6);
-  const gems = 1 + Math.floor(Math.random() * 3);
-  RUN.chips += coins; RUN.fuel = Math.min(RUN.maxFuel, RUN.fuel + fuel); RUN.gems = Math.min(RUN.maxGems, RUN.gems + gems);
+  const choices = [
+    { kind:'coins', label:'Coins', amount:20 + Math.floor(Math.random()*31), icon:'🪙' },
+    { kind:'fuel', label:'Fuel', amount:6 + Math.floor(Math.random()*7), icon:'⛽' },
+    { kind:'gems', label:'Gems', amount:1 + Math.floor(Math.random()*2), icon:'💎' },
+    { kind:'energy', label:'Energy', amount:5 + Math.floor(Math.random()*6), icon:'⚡' },
+    { kind:'points', label:'Points', amount:10 + Math.floor(Math.random()*16), icon:'⭐' }
+  ];
+  const prize = choices[Math.floor(Math.random()*choices.length)];
+  let actual = prize.amount;
+  if (prize.kind === 'coins') { const before=RUN.chips; RUN.chips=Math.min(999, RUN.chips+prize.amount); actual=RUN.chips-before; }
+  if (prize.kind === 'fuel') { const before=RUN.fuel; RUN.fuel=Math.min(RUN.maxFuel, RUN.fuel+prize.amount); actual=RUN.fuel-before; }
+  if (prize.kind === 'gems') { const before=RUN.gems; RUN.gems=Math.min(RUN.maxGems, RUN.gems+prize.amount); actual=RUN.gems-before; }
+  if (prize.kind === 'energy') { const before=RUN.energy; RUN.energy=Math.min(RUN.maxEnergy, RUN.energy+prize.amount); actual=RUN.energy-before; }
+  if (prize.kind === 'points') { earnPoints(prize.amount); }
   saveRun();
-  return { coins, fuel, gems };
+  return { ...prize, amount: actual };
 }
 function endRun(won) {
   const bonus = Math.round(RUN.path.length * (won ? 5 : 2) + (won ? 40 : 0));
@@ -695,9 +709,9 @@ function mapScreen() {
   const rows = RUN.map.nodes;
   const colW = 118, rowY = [118, 55, 181];
   const totalW = rows.length * colW + 50;
-  const totalH = 245;
+  const totalH = 330;
   const avail = availableNextNodes();
-  const visibleRange = 1 + META.levels.range;
+  const visibleRange = 3 + META.levels.range;
   let svgLines = '';
 
   for (const e of RUN.map.edges) {
@@ -931,14 +945,18 @@ function blacksmithScreen() {
   `;
 }
 function treasureScreen(found) {
+  const text = found.amount > 0 ? `You found ${found.amount} ${found.label.toLowerCase()}!` : `Your ${found.label.toLowerCase()} was already full.`;
   return `
-    <div class="wo">
-      <div class="wo-stripe"></div>
-      <div class="wo-body">
-        <div class="wo-eyebrow">Treasure Chest</div>
-        <h1>Nice <em>Find</em></h1>
-        <div class="wo-sub">+${found.coins} coins, +${found.fuel} fuel, +${found.gems} gems.</div>
-        <button class="wo-btn" id="leaveTreasureBtn">Back on the Road</button>
+    <div class="treasure-modal">
+      <div class="wo">
+        <div class="wo-stripe"></div>
+        <div class="wo-body">
+          <div class="wo-eyebrow">Supply Cache</div>
+          <h1>Treasure <em>Found</em></h1>
+          <div class="treasure-prize">${found.icon} ${text}</div>
+          <div class="wo-sub" style="text-align:center">The cache contained one random reward.</div>
+          <div style="text-align:center"><button class="wo-btn amber" id="leaveTreasureBtn">Continue Route</button></div>
+        </div>
       </div>
     </div>
   `;
@@ -950,7 +968,7 @@ function runEndScreen(won, bonus) {
       <div class="wo-body">
         <div class="wo-eyebrow">${won ? 'Route Complete' : 'Run Ended'}</div>
         <h1>${won ? 'Route <em>Cleared</em>' : 'Back to <em>Base</em>'}</h1>
-        <div class="wo-sub">Reached stop ${RUN.path.length} of 20. This run's score: ${RUN.scoreThisRun} (+${bonus} completion bonus). High score: ${META.highScore}.</div>
+        <div class="wo-sub">Reached stop ${RUN.path.length} of 21. This run's score: ${RUN.scoreThisRun} (+${bonus} completion bonus). High score: ${META.highScore}.</div>
         <button class="wo-btn" id="backToMetaBtn">Back to Home Base</button>
       </div>
     </div>
@@ -1015,7 +1033,7 @@ function metaScreen() {
       <div class="wo-body">
         <div class="wo-eyebrow">Home Base</div>
         <h1>Fleet <em>Duel</em></h1>
-        <div class="wo-sub">Points: ${META.points} &middot; Best route: ${META.bestRun}/20 &middot; High score: ${META.highScore} &middot; Runs played: ${META.runsPlayed}</div>
+        <div class="wo-sub">Points: ${META.points} &middot; Best route: ${META.bestRun}/21 &middot; High score: ${META.highScore} &middot; Runs played: ${META.runsPlayed}</div>
         <button class="wo-btn amber" id="viewUpgradesBtn" style="width:100%;margin-bottom:10px">View Upgrades</button>
         ${hasSave ? `<button class="wo-btn" id="continueRunBtn" style="margin-bottom:10px;width:100%">Continue Run</button>` : ''}
         <button class="wo-btn ${hasSave ? 'gray' : ''}" id="startRunBtn" style="width:100%">${hasSave ? 'Start New Run (overwrites save)' : 'Start Run'}</button>
@@ -1027,7 +1045,7 @@ function metaScreen() {
 /* ========== RENDER + EVENTS ========== */
 function render(html) {
   const app = document.getElementById('app');
-  app.innerHTML = html;
+  app.innerHTML = `<div class="game-stage">${html}</div>`;
 
   app.querySelectorAll('[data-card]').forEach(el => el.onclick = () => toggleCardSelect(+el.dataset.card));
   app.querySelectorAll('[data-assign]').forEach(el => el.onclick = (e) => {

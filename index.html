@@ -1078,9 +1078,6 @@ function battleScreen() {
         
       // Dynamic unique compound key allowing multiple copies of the same attack type
       const slotKey = `${instanceId}:${attId}_${index}`;
-
-      // Target state slot compound string key: "instanceId:attackId"
-      const slotKey = `${instanceId}:${attId}`;
       const idxs = BATTLE.slots[slotKey] || [];
       const cards = idxs.map(i => BATTLE.hand[i]);
       

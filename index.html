@@ -338,15 +338,25 @@ function checkCondition(cond, cards) {
 // threshold-style poison: "any hand summing to X+ does exactly Y", not a multiplier).
 function computeItemAmount(item, cards, level, condResult) {
   if (item.flatAmount != null) {
-    return Math.round(item.flatAmount + (item.flatAmountPerLevel || 0) * level);
+    return { amount: Math.round(item.flatAmount + (item.flatAmountPerLevel || 0) * level), breakdown: `flat ${item.flatAmount}${item.flatAmountPerLevel ? ` +${item.flatAmountPerLevel}/lv` : ''}` };
   }
   let mult = item.baseMult ?? (condResult.mult ?? 1);
+  let bonusApplied = false;
   if (item.bonus) {
-    const lvl = Math.min(level, item.bonus.maxLevel ?? level);
-    mult += item.bonus.base + item.bonus.perLevel * lvl;
+    // A bonus can require its own sub-condition (e.g. the item fires on Any Card, but the
+    // bonus only kicks in on an actual Pair). No bonus.condition means it always applies.
+    const bonusMet = !item.bonus.condition || checkCondition(item.bonus.condition, cards).met;
+    if (bonusMet) {
+      const lvl = Math.min(level, item.bonus.maxLevel ?? level);
+      mult += item.bonus.base + item.bonus.perLevel * lvl;
+      bonusApplied = true;
+    }
   }
   if (item.perCardBonus && cards.length > 1) mult += item.perCardBonus * (cards.length - 1);
-  return damageFor(cards, mult);
+  const rawSum = cards.reduce((a, c) => a + cardValue(c.rank) + (c.bonus || 0), 0);
+  const amount = Math.round(rawSum * mult);
+  const breakdown = `${rawSum} × ${mult.toFixed(2).replace(/\.?0+$/, '')}${bonusApplied ? ' (bonus applied)' : ''} = ${amount}`;
+  return { amount, breakdown };
 }
 function itemLevel(itemId) { return (RUN.itemLevels && RUN.itemLevels[itemId]) || 0; }
 function itemUsesCap(item, level) { return item.usesPerTurn + (item.usesPerTurnPerLevel || 0) * level; }
@@ -359,7 +369,7 @@ function itemUsesCap(item, level) { return item.usesPerTurn + (item.usesPerTurnP
 const ITEMS = {
   fender_bender: { id: 'fender_bender', name: 'Fender Bender', cost: 0, maxCards: 2, usesPerTurn: 1,
     condition: { type: 'pokerTier', tier: 0 }, baseMult: 1,
-    bonus: { base: 0.5, perLevel: 0.25, maxLevel: 2 }, // +50% on a Pair, up to +100% tuned
+    bonus: { condition: { type: 'pokerTier', tier: 1 }, base: 0.5, perLevel: 0.25, maxLevel: 2 }, // +50% ONLY if the 2 cards are a Pair, up to +100% tuned
     note: 'Up to 2 cards. A Pair adds a bonus that grows the more you tune it.' },
   triple_threat: { id: 'triple_threat', name: 'Triple Threat', cost: 45, maxCards: 3, usesPerTurn: 1,
     condition: { type: 'pokerTier', tier: 3 }, baseMult: 1,
@@ -400,6 +410,21 @@ const ITEMS = {
   spade_bag: { id: 'spade_bag', name: 'Spade Bag', cost: 30, maxCards: 10, kind: 'storage', maxStore: 4,
     acceptFilter: { suit: '♠' },
     note: 'Holds up to 4 Spades only. Click a stored card to take it back.' },
+  heart_bag: { id: 'heart_bag', name: 'Heart Bag', cost: 30, maxCards: 10, kind: 'storage', maxStore: 4,
+    acceptFilter: { suit: '♥' },
+    note: 'Holds up to 4 Hearts only. Click a stored card to take it back.' },
+  diamond_bag: { id: 'diamond_bag', name: 'Diamond Bag', cost: 30, maxCards: 10, kind: 'storage', maxStore: 4,
+    acceptFilter: { suit: '♦' },
+    note: 'Holds up to 4 Diamonds only. Click a stored card to take it back.' },
+  club_bag: { id: 'club_bag', name: 'Club Bag', cost: 30, maxCards: 10, kind: 'storage', maxStore: 4,
+    acceptFilter: { suit: '♣' },
+    note: 'Holds up to 4 Clubs only. Click a stored card to take it back.' },
+  red_bag: { id: 'red_bag', name: 'Red Bag', cost: 40, maxCards: 10, kind: 'storage', maxStore: 5,
+    acceptFilter: { color: 'red' },
+    note: 'Holds up to 5 red cards (Hearts or Diamonds) only. Click a stored card to take it back.' },
+  black_bag: { id: 'black_bag', name: 'Black Bag', cost: 40, maxCards: 10, kind: 'storage', maxStore: 5,
+    acceptFilter: { color: 'blk' },
+    note: 'Holds up to 5 black cards (Spades or Clubs) only. Click a stored card to take it back.' },
 };
 
 /* ========== HERO ROSTER (4 total — pick one to play as for the run) ========== */
@@ -417,7 +442,7 @@ function isStarterUnlocked(id) {
   return false;
 }
 function starterLockNote(id) {
-  if (id === 'interstate') return `Unlocks at 150 lifetime points (${Math.min(META.lifetimePoints, 150)}/150)`;
+  if (id === 'interstate') return `Unlocks at 150 lifetime Career Points (${Math.min(META.lifetimePoints, 150)}/150)`;
   if (id === 'convoy') return `Unlocks after clearing a full route`;
   return '';
 }
@@ -597,7 +622,7 @@ function payTravelCost() {
     META.points = Math.max(0, META.points - loss);
     RUN.scoreThisRun = Math.max(0, RUN.scoreThisRun - loss);
     saveMeta();
-    RUN.lastNotice = `Ran out of fuel — lost ${loss} points getting towed to the next stop.`;
+    RUN.lastNotice = `Ran out of fuel — lost ${loss} Career Points getting towed to the next stop.`;
   }
 }
 function commitNode(row, col) { RUN.currentRow = row; RUN.currentCol = col; RUN.path.push({ row, col }); saveRun(); }
@@ -690,16 +715,24 @@ function castleMatchScreen() {
 
 let BLACKSMITH_OPTIONS = null;
 let BLACKSMITH_VISIT = null; // { primary: idx|null, secondary: idx|null } — one paid upgrade, plus one optional paid add-on, per visit
-function tuneCost(bonus, isSecondary) { const base = 20 * Math.pow(2, bonus / 3); return Math.round(isSecondary ? base * 1.5 : base); }
+function scopeCostMult(scope) { return scope === 'card' ? 1 : scope === 'rank' ? 3 : 4; } // rank hits 4 cards, suit hits 13 — priced for how many cards benefit
+function tuneCost(bonus, isSecondary, scope) { const base = 20 * Math.pow(2, bonus / 3) * scopeCostMult(scope); return Math.round(isSecondary ? base * 1.5 : base); }
 function pickBlacksmithOptions() {
-  const all = [];
-  for (const su of SUITS) for (let r = 2; r <= 14; r++) all.push({ rank: r, suit: su.s, color: su.color });
-  return shuffle(all).slice(0, 3);
+  // One of each kind every visit: a specific card, every card of a rank, every card of a suit.
+  const su1 = SUITS[Math.floor(Math.random() * SUITS.length)];
+  const r1 = 2 + Math.floor(Math.random() * 13);
+  const r2 = 2 + Math.floor(Math.random() * 13);
+  const su3 = SUITS[Math.floor(Math.random() * SUITS.length)];
+  return shuffle([
+    { scope: 'card', rank: r1, suit: su1.s, label: `${rankLabel(r1)}${su1.s}`, desc: `Just this one card.` },
+    { scope: 'rank', rank: r2, label: `Every ${rankLabel(r2)}`, desc: `Any ${rankLabel(r2)} you draw, any suit.` },
+    { scope: 'suit', suit: su3.s, label: `Every ${su3.s}`, desc: `Any card of that suit you draw.` },
+  ]);
 }
-function findBoost(rank, suit) { return RUN.cardBoosts.find(b => b.rank === rank && b.suit === suit); }
-function boostCard(rank, suit) {
-  let b = findBoost(rank, suit);
-  if (!b) { b = { rank, suit, bonus: 0 }; RUN.cardBoosts.push(b); }
+function findBoost(opt) { return RUN.cardBoosts.find(b => b.scope === opt.scope && b.rank === opt.rank && b.suit === opt.suit); }
+function boostCard(opt) {
+  let b = findBoost(opt);
+  if (!b) { b = { scope: opt.scope, rank: opt.rank, suit: opt.suit, bonus: 0 }; RUN.cardBoosts.push(b); }
   if (b.bonus >= 9) return;
   b.bonus += 3;
   saveRun();
@@ -710,7 +743,7 @@ function rollTreasure() {
     { kind:'fuel', label:'Fuel', amount:6 + Math.floor(Math.random()*7), icon: ICON.fuel },
     { kind:'gems', label:'Gems', amount:1 + Math.floor(Math.random()*2), icon: ICON.gem },
     { kind:'energy', label:'Energy', amount:5 + Math.floor(Math.random()*6), icon: ICON.energy },
-    { kind:'points', label:'Points', amount:10 + Math.floor(Math.random()*16), icon: ICON.star }
+    { kind:'points', label:'Career Points', amount:10 + Math.floor(Math.random()*16), icon: ICON.star }
   ];
   const prize = choices[Math.floor(Math.random()*choices.length)];
   let actual = prize.amount;
@@ -742,7 +775,15 @@ function startBattle(opponentDef, row, col) {
     hand: [], oppPool: [], usedThisTurn: new Set(), scoutedThisTurn: false, abilityUsedThisTurn: false, opponentStunned: false,
     playerArmor: 0, turn: 1, slots: {}, turnDiscard: [], logLines: [],
   };
-  BATTLE.deck.forEach(c => { const b = RUN.cardBoosts.find(x => x.rank === c.rank && x.suit === c.suit); if (b) c.bonus = b.bonus; });
+  BATTLE.deck.forEach(c => {
+    let total = 0;
+    RUN.cardBoosts.forEach(b => {
+      if (b.scope === 'card' && b.rank === c.rank && b.suit === c.suit) total += b.bonus;
+      else if (b.scope === 'rank' && b.rank === c.rank) total += b.bonus;
+      else if (b.scope === 'suit' && b.suit === c.suit) total += b.bonus;
+    });
+    if (total) c.bonus = total;
+  });
   drawCards(Math.min(5, RUN.handSize));
   drawOpponentCards();
   for (let i = 0; i < 1 + META.levels.reveal; i++) {
@@ -821,6 +862,7 @@ function assignSelectedTo(slotKey) {
     candidates = candidates.filter(i => {
       const c = BATTLE.hand[i];
       if (item.acceptFilter.suit && c.suit !== item.acceptFilter.suit) return false;
+      if (item.acceptFilter.color && c.color !== item.acceptFilter.color) return false;
       if (item.acceptFilter.parity) { const isEven = c.rank % 2 === 0; if ((item.acceptFilter.parity === 'even') !== isEven) return false; }
       return true;
     });
@@ -911,12 +953,12 @@ function executePlayerAttack(itemId, index) {
     return;
   }
 
-  const amount = computeItemAmount(item, cards, level, condResult);
+  const { amount, breakdown } = computeItemAmount(item, cards, level, condResult);
 
   // Resolve the Item's effect.
   if (item.kind === 'defense') {
     BATTLE.playerArmor += amount;
-    battleLog(`${item.name} — ${condResult.label}! +${amount} armor.`);
+    battleLog(`${item.name} — ${condResult.label}! +${amount} armor (${breakdown}).`);
 
   } else if (item.kind === 'poison') {
     BATTLE.opponent.poisonStacks = BATTLE.opponent.poisonStacks || [];
@@ -931,7 +973,7 @@ function executePlayerAttack(itemId, index) {
 
   } else {
     BATTLE.opponent.hpNow = Math.max(0, BATTLE.opponent.hpNow - amount);
-    battleLog(`${item.name} — ${condResult.label}! ${amount} damage.`);
+    battleLog(`${item.name} — ${condResult.label}! ${amount} damage (${breakdown}).`);
   }
 
   // This Item fired — clears any curse on it, and counts against its uses-per-turn cap.
@@ -1103,8 +1145,8 @@ function winBattle(outlast) {
   RUN.chips += chipReward; RUN.gems = Math.min(RUN.maxGems, RUN.gems + gemReward); RUN.fuel = Math.min(RUN.maxFuel, RUN.fuel + fuelReward);
   earnPoints(pointsReward);
   battleLog(outlast ? `You outlasted the ${BATTLE.opponent.name}!` : `${BATTLE.opponent.name} is done for!`);
-  if (exactKillBonus) battleLog(`Perfect elimination — exact kill bonus: +25 coins, +15 points!`);
-  battleLog(`+${chipReward} coins, +${gemReward} gems, +${fuelReward} fuel, +${pointsReward} points.`);
+  if (exactKillBonus) battleLog(`Perfect elimination — exact kill bonus: +25 coins, +15 Career Points!`);
+  battleLog(`+${chipReward} coins, +${gemReward} gems, +${fuelReward} fuel, +${pointsReward} Career Points.`);
   render(nodeResultScreen(true, { chipReward, gemReward, fuelReward, pointsReward, exactKillBonus }));
 }
 
@@ -1121,7 +1163,7 @@ function currencyBar() {
     <div class="cur gem" title="Gems let you draw extra cards during a battle.">${ICON.gem} ${RUN.gems}/${RUN.maxGems} gems</div>
     <div class="cur fuel" title="Fuel is spent when you travel to another stop.">${ICON.fuel} ${RUN.fuel}/${RUN.maxFuel} fuel</div>
     <div class="cur energy" title="Energy powers vehicle abilities.">${ICON.energy} ${RUN.energy}/${RUN.maxEnergy} energy</div>
-    <div class="cur pts" title="Points are your long-term currency for permanent upgrades.">${ICON.star} ${META.points} points</div>
+    <div class="cur pts" title="Career Points carry over between playthroughs and only buy Permanent Upgrades.">${ICON.star} ${META.points} Career Points</div>
   </div>`;
 }
 
@@ -1146,8 +1188,8 @@ function nodePopupContent(r, c) {
   }
   if (node.type === 'shop') return { title: 'Dealership', art: glyph(ICON.cart), rows: [], extra: '<div class="note">Buy a vehicle with coins.</div>', actionLabel: 'Go Here' };
   if (node.type === 'rest') return { title: 'Pit Stop', art: glyph(ICON.wrench), rows: [], extra: '<div class="note">Restore 30 health.</div>', actionLabel: 'Go Here' };
-  if (node.type === 'blacksmith') return { title: 'Tuning Garage', art: glyph(ICON.hammer), rows: [], extra: '<div class="note">Pay to permanently upgrade a card, or tune your Admin Vehicle.</div>', actionLabel: 'Go Here' };
-  if (node.type === 'treasure') return { title: 'Supply Cache', art: glyph(ICON.gift), rows: [], extra: '<div class="note">One random reward: coins, fuel, gems, energy, or points.</div>', actionLabel: 'Go Here' };
+  if (node.type === 'blacksmith') return { title: 'Tuning Garage', art: glyph(ICON.hammer), rows: [], extra: '<div class="note">Spend coins to permanently boost a card (or a whole rank/suit), or tune one of your equipped Items\' bonus.</div>', actionLabel: 'Go Here' };
+  if (node.type === 'treasure') return { title: 'Supply Cache', art: glyph(ICON.gift), rows: [], extra: '<div class="note">One random reward: coins, fuel, gems, energy, or Career Points.</div>', actionLabel: 'Go Here' };
   return { title: 'Fleet Castle', art: glyph(ICON.castle), rows: [], extra: '<div class="note">Battles, the Dealership, refueling, a card match game, and more.</div>', actionLabel: 'Go Here' };
 }
 function nodePopupScreen(r, c) {
@@ -1159,9 +1201,9 @@ function nodePopupScreen(r, c) {
       <div class="cur chip">${ICON.coin} ${info.rewards.chipReward} coins</div>
       <div class="cur gem">${ICON.gem} ${info.rewards.gemReward} gems</div>
       <div class="cur fuel">${ICON.fuel} ${info.rewards.fuelReward} fuel</div>
-      <div class="cur pts">${ICON.star} ${info.rewards.pointsReward} points</div>
+      <div class="cur pts">${ICON.star} ${info.rewards.pointsReward} Career Points</div>
     </div>
-    <div class="note" style="margin-top:6px">Exact kill bonus: +25 coins, +15 points for a perfectly lethal hit.</div>` : '';
+    <div class="note" style="margin-top:6px">Exact kill bonus: +25 coins, +15 Career Points for a perfectly lethal hit.</div>` : '';
   return `<div class="treasure-modal">
     <div class="wo" style="max-width:420px;width:100%">
       <div class="wo-stripe"></div>
@@ -1284,7 +1326,7 @@ function battleScreen() {
 
     const condResult = cards.length ? checkCondition(item.condition, cards) : { met: false, label: '' };
     const ready = condResult.met;
-    const preview = ready ? computeItemAmount(item, cards, level, condResult) : 0;
+    const previewCalc = ready && item.kind !== 'defense' ? computeItemAmount(item, cards, level, condResult) : (ready ? computeItemAmount(item, cards, level, condResult) : null);
     const effectWord = item.kind === 'defense' ? 'armor' : item.kind === 'poison' ? 'poison' : item.kind === 'burn' ? 'burn' : 'dmg';
     const cap = itemUsesCap(item, level);
     const usesLeft = cap - ((BATTLE.itemUses && BATTLE.itemUses[slotKey]) || 0);
@@ -1298,7 +1340,7 @@ function battleScreen() {
       <div class="hdr" style="font-weight:600; color:var(--blue-dark)">${item.name}${cursedAmt ? ` <span class="vart" style="width:12px;height:12px;font-size:12px;color:var(--purple)">${ICON.curse}</span> cursed` : ''}</div>
       <div class="note" style="font-size:11px">${item.note}${level ? ` (Lv ${level})` : ''}</div>
       <div class="vcards">${cardHTML}</div>
-      ${cards.length ? `<div class="note" style="margin:4px 0 0; color:var(--green)">${condResult.label}${ready ? ` ✓ ${preview} ${effectWord}` : ' ✗'}</div>` : ''}
+      ${cards.length ? `<div class="note" style="margin:4px 0 0; color:var(--green)">${condResult.label}${ready ? ` ✓ ${previewCalc.breakdown} ${effectWord}` : ' ✗'}</div>` : ''}
       <div class="note" style="margin:2px 0 0">${usesLeft > 0 ? `${usesLeft}/${cap} use${cap > 1 ? 's' : ''} left this turn` : 'No uses left this turn'}</div>
       <div style="margin-top:4px">
         ${idxs.length ? `<button class="wo-btn gray" style="padding:3px 6px;font-size:10px" data-clear="${slotKey}">Clear</button>` : ''}
@@ -1388,6 +1430,7 @@ function battleScreen() {
       <div class="hdr"><span>Resources</span><span></span></div>
       <div class="resourceRow">
         <button class="wo-btn amber" id="gemDrawBtn" style="padding:8px 12px;font-size:12px" ${RUN.gems < 1 ? 'disabled' : ''}><span class="vart" style="width:12px;height:12px;font-size:12px">${ICON.gem}</span> Draw ${1 + META.levels.gem} Card${1 + META.levels.gem > 1 ? 's' : ''} with Gem (-1)</button>
+        <button class="wo-btn amber" id="fuelHealBtn" style="padding:8px 12px;font-size:12px" title="Fuel also gets you across the map — spending it here means less for travel." ${RUN.fuel < 1 || RUN.health >= RUN.maxHealth ? 'disabled' : ''}><span class="vart" style="width:12px;height:12px;font-size:12px">${ICON.fuel}</span> Burn 1 Fuel for +10 Health</button>
         <button class="wo-btn gray" id="viewUpgradesBattleBtn" style="padding:8px 12px;font-size:12px">View Upgrades</button>
       </div>
     </div>
@@ -1402,6 +1445,14 @@ function handleCardDrop(e, slotKey, maxSlot) {
   const idx = +e.dataTransfer.getData('text/plain');
   if (Number.isNaN(idx)) return;
   if (BATTLE.usedThisTurn.has(idx) || BATTLE.turnDiscard.includes(idx)) return;
+  const itemId = slotKey.replace(/_\d+$/, '');
+  const item = ITEMS[itemId];
+  if (item && item.kind === 'storage' && item.acceptFilter) {
+    const c = BATTLE.hand[idx];
+    if (item.acceptFilter.suit && c.suit !== item.acceptFilter.suit) return;
+    if (item.acceptFilter.color && c.color !== item.acceptFilter.color) return;
+    if (item.acceptFilter.parity) { const isEven = c.rank % 2 === 0; if ((item.acceptFilter.parity === 'even') !== isEven) return; }
+  }
   if (!BATTLE.slots[slotKey]) BATTLE.slots[slotKey] = [];
   if (BATTLE.slots[slotKey].includes(idx)) return;
   if (BATTLE.slots[slotKey].length >= maxSlot) return;
@@ -1415,7 +1466,7 @@ function tryDispatch() {
 }
 
 function nodeResultScreen(won, rewards) {
-  const rewardLine = won ? `+${rewards.chipReward} coins, +${rewards.gemReward} gems, +${rewards.fuelReward} fuel, +${rewards.pointsReward} points.` : `Your health ran out. Run ends here.`;
+  const rewardLine = won ? `+${rewards.chipReward} coins, +${rewards.gemReward} gems, +${rewards.fuelReward} fuel, +${rewards.pointsReward} Career Points.` : `Your health ran out. Run ends here.`;
   return `
     <div class="wo">
       <div class="wo-stripe"></div>
@@ -1482,8 +1533,8 @@ function blacksmithScreen() {
       const curPct = Math.round((item.bonus.base + item.bonus.perLevel * lvl) * 100);
       return `<div class="shopcard"><div class="hdr"><span>${item.name} Bonus (Lv ${lvl}/${item.bonus.maxLevel})</span><span class="price">${maxed ? 'MAX' : cost + ' coins'}</span></div><div class="note">Current bonus: +${curPct}%. Each tune doubles in cost. Resets next run.</div>${maxed ? '' : `<button class="wo-btn purple" data-itemtune="${item.id}" data-itemtunecost="${cost}" ${RUN.chips < cost ? 'disabled' : ''}>Tune ${item.name}</button>`}</div>`;
     }).join('') || `<div class="note">None of your equipped Items have a tunable bonus yet.</div>`;
-  const rows = BLACKSMITH_OPTIONS.map((c, i) => {
-    const b = findBoost(c.rank, c.suit);
+  const rows = BLACKSMITH_OPTIONS.map((opt, i) => {
+    const b = findBoost(opt);
     const bonus = b ? b.bonus : 0;
     const maxed = bonus >= 9;
     const isPrimary = BLACKSMITH_VISIT.primary === i;
@@ -1496,18 +1547,21 @@ function blacksmithScreen() {
     } else if (maxed) {
       btnHTML = `<button class="wo-btn gray" disabled style="padding:8px 12px;font-size:13px">Maxed out</button>`;
     } else if (!primaryTaken) {
-      const cost = tuneCost(bonus, false);
+      const cost = tuneCost(bonus, false, opt.scope);
       btnHTML = `<button class="wo-btn amber" data-forge="${i}" style="padding:8px 12px;font-size:13px" ${RUN.chips < cost ? 'disabled' : ''}>Upgrade (+3, ${cost} coins)</button>`;
     } else if (!secondaryTaken) {
-      const cost = tuneCost(bonus, true);
+      const cost = tuneCost(bonus, true, opt.scope);
       btnHTML = `<button class="wo-btn purple" data-forge="${i}" style="padding:8px 12px;font-size:13px" ${RUN.chips < cost ? 'disabled' : ''}>Also upgrade (+3, ${cost} coins)</button>`;
     } else {
       btnHTML = `<button class="wo-btn gray" disabled style="padding:8px 12px;font-size:13px">Visit's extra upgrade used</button>`;
     }
+    const visual = opt.scope === 'card'
+      ? `<div class="card ${SUITS.find(s=>s.s===opt.suit)?.color === 'red' ? 'red' : ''}"><div>${rankLabel(opt.rank)}</div><div style="font-size:16px">${opt.suit}</div></div>`
+      : `<span class="vart" style="width:38px;height:52px;font-size:22px;border:2px solid var(--blue);border-radius:5px;background:var(--white)">${opt.scope === 'rank' ? rankLabel(opt.rank) : opt.suit}</span>`;
     return `<div class="shopcard">
-      <div class="hdr"><span>Tune this card ${bonus ? `(currently +${bonus})` : ''}</span><span></span></div>
-      <div style="margin:6px 0"><div class="card ${c.color === 'red' ? 'red' : ''}"><div>${rankLabel(c.rank)}</div><div style="font-size:16px">${c.suit}</div></div></div>
-      <div class="note" style="margin:0 0 6px">Permanently adds +3 damage to this exact card, for the rest of the run. Cost doubles each time you tune it.</div>
+      <div class="hdr"><span>Tune: ${opt.label} ${bonus ? `(currently +${bonus})` : ''}</span><span></span></div>
+      <div style="margin:6px 0">${visual}</div>
+      <div class="note" style="margin:0 0 6px">${opt.desc} Permanently adds +3 damage${opt.scope === 'card' ? ' to this exact card' : ''}, for the rest of the run. Broader tunes cost more since more cards benefit, and cost doubles each time you tune the same target.</div>
       ${btnHTML}
     </div>`;
   }).join('');
@@ -1609,8 +1663,8 @@ function upgradeScreen(returnTo) {
       <div class="wo-stripe"></div>
       <div class="wo-body">
         <div class="wo-eyebrow">Permanent Upgrades &middot; kept across every playthrough</div>
-        <h1>Spend Your <em>Points</em></h1>
-        <div class="wo-sub">Points: ${META.points} &middot; Lifetime: ${META.lifetimePoints} &middot; High score: ${META.highScore}</div>
+        <h1>Spend Your <em>Career Points</em></h1>
+        <div class="wo-sub">Career Points: ${META.points} &middot; Lifetime: ${META.lifetimePoints} &middot; High score: ${META.highScore}</div><div class="note" style="margin:-4px 0 6px">These carry over between playthroughs. In-run upgrades (Tuning Garage) use coins instead and reset every run.</div>
         <button class="wo-btn" id="upgradeContinueBtn" data-return="${returnTo}" style="width:100%;margin-bottom:10px">${returnLabel}</button>
         <div style="margin:12px 0">${rows}</div>
         <button class="wo-btn" id="upgradeContinueBtn2" data-return="${returnTo}" style="width:100%">${returnLabel}</button>
@@ -1627,7 +1681,7 @@ function metaScreen() {
       <div class="wo-body">
         <div class="wo-eyebrow">Home Base</div>
         <h1>Fleet <em>Duel</em></h1>
-        <div class="wo-sub">Points: ${META.points} &middot; Best route: ${META.bestRun}/21 &middot; High score: ${META.highScore} &middot; Runs played: ${META.runsPlayed}</div>
+        <div class="wo-sub">Career Points: ${META.points} &middot; Best route: ${META.bestRun}/21 &middot; High score: ${META.highScore} &middot; Runs played: ${META.runsPlayed}</div>
         <div class="panel" style="margin-bottom:10px">
           <div class="hdr"><span>Fleet Name</span><span></span></div>
           <input id="playerNameInput" type="text" maxlength="18" placeholder="Your name" value="${(META.playerName||'').replace(/"/g,'&quot;')}" style="width:100%;padding:9px 10px;border:2px solid var(--blue-light);border-radius:6px;font-family:var(--disp);font-size:15px;color:var(--ink)">
@@ -1670,6 +1724,12 @@ function render(html) {
   const sortValueBtn = document.getElementById('sortValueBtn'); if (sortValueBtn) sortValueBtn.onclick = () => sortHand('value');
   const scoutBtn = document.getElementById('scoutBtn'); if (scoutBtn) scoutBtn.onclick = scoutOpponent;
   const gemDrawBtn = document.getElementById('gemDrawBtn'); if (gemDrawBtn) gemDrawBtn.onclick = drawWithGem;
+  const fuelHealBtn = document.getElementById('fuelHealBtn'); if (fuelHealBtn) fuelHealBtn.onclick = () => {
+    if (RUN.fuel < 1 || RUN.health >= RUN.maxHealth) return;
+    RUN.fuel -= 1; RUN.health = Math.min(RUN.maxHealth, RUN.health + 10);
+    battleLog(`Burned 1 fuel for +10 health. Health: ${RUN.health}/${RUN.maxHealth}, Fuel: ${RUN.fuel}/${RUN.maxFuel}.`);
+    saveRun(); render(battleScreen());
+  };
   const discardSelectedBtn = document.getElementById('discardSelectedBtn'); if (discardSelectedBtn) discardSelectedBtn.onclick = markSelectedForDiscard;
   app.querySelectorAll('[data-undiscard]').forEach(el => el.onclick = () => unmarkDiscard(+el.dataset.undiscard));
 
@@ -1765,16 +1825,16 @@ function render(html) {
   const leaveTreasureBtn = document.getElementById('leaveTreasureBtn'); if (leaveTreasureBtn) leaveTreasureBtn.onclick = () => render(mapScreen());
   app.querySelectorAll('[data-forge]').forEach(el => el.onclick = () => {
     const i = +el.dataset.forge;
-    const c = BLACKSMITH_OPTIONS[i];
-    const b = findBoost(c.rank, c.suit);
+    const opt = BLACKSMITH_OPTIONS[i];
+    const b = findBoost(opt);
     const bonus = b ? b.bonus : 0;
     if (bonus >= 9) return;
     const isSecondary = BLACKSMITH_VISIT.primary !== null;
     if (isSecondary && BLACKSMITH_VISIT.secondary !== null) return;
-    const cost = tuneCost(bonus, isSecondary);
+    const cost = tuneCost(bonus, isSecondary, opt.scope);
     if (RUN.chips < cost) return;
     RUN.chips -= cost;
-    boostCard(c.rank, c.suit);
+    boostCard(opt);
     if (!isSecondary) BLACKSMITH_VISIT.primary = i; else BLACKSMITH_VISIT.secondary = i;
     saveRun();
     render(blacksmithScreen());

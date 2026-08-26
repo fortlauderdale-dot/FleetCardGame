@@ -716,15 +716,34 @@ function detonateBurn() {
 }
 
 function toggleCardSelect(i) { const pos = selectedIdx.indexOf(i); if (pos === -1) selectedIdx.push(i); else selectedIdx.splice(pos, 1); render(battleScreen()); }
-function assignSelectedTo(vId) {
+function assignSelectedTo(slotKey) {
   if (!selectedIdx.length) return;
-  const v = VEHICLES[vId];
-  if (!BATTLE.slots[vId]) BATTLE.slots[vId] = [];
-  const room = v.slot - BATTLE.slots[vId].length;
+
+  const parts = slotKey.split(':');
+  const instanceId = parts[0];
+  const attackPart = parts.slice(1).join(':');
+  const match = attackPart.match(/^(.+)_(\d+)$/);
+
+  if (!match) return;
+
+  const attId = match[1];
+  const att = ATTACKS[attId];
+
+  if (!att) return;
+
+  if (!BATTLE.slots[slotKey]) BATTLE.slots[slotKey] = [];
+
+  const room = att.slot - BATTLE.slots[slotKey].length;
   if (room <= 0) return;
-  const take = selectedIdx.filter(i => !BATTLE.slots[vId].includes(i)).slice(0, room);
-  BATTLE.slots[vId].push(...take);
+
+  const take = selectedIdx
+    .filter(i => !BATTLE.usedThisTurn.has(i))
+    .filter(i => !BATTLE.slots[slotKey].includes(i))
+    .slice(0, room);
+
+  BATTLE.slots[slotKey].push(...take);
   selectedIdx = [];
+
   render(battleScreen());
 }
 function removeCardFromSlot(vId, idx) { if (!BATTLE.slots[vId]) return; BATTLE.slots[vId] = BATTLE.slots[vId].filter(i => i !== idx); render(battleScreen()); }

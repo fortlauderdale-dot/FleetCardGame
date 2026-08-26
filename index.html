@@ -64,6 +64,26 @@
   .deckStack{text-align:center;padding-top:36px}.deckStack .card.back{cursor:default;pointer-events:none}
   .deckStack .card.back::after{content:none}
 
+  .duelMatchup {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+}
+.matchupSide {
+  min-width: 0;
+}
+.playerSide {
+  border-left: 4px solid var(--blue);
+}
+.opponentSide {
+  border-right: 4px solid var(--red);
+}
+@media (max-width: 800px) {
+  .duelMatchup {
+    grid-template-columns: 1fr;
+  }
+}
   .vslot{border:2px dashed var(--blue-light);border-radius:8px;padding:10px;width:160px;background:var(--bg);cursor:pointer}
   .vslot.filled{border-style:solid;border-color:var(--amber)}
   .vslot.ready{border-color:var(--green)}
@@ -239,15 +259,37 @@ function opponentAttackBoxHTML(opp) {
     const remaining = Math.max(0, opp.lockThreshold - opp.lockProgress);
     return `<div class="vslot" style="cursor:default">
       <div class="vname">${art(opp, 18)} ${opp.name}</div>
-      <div class="vreq"><span class="vart" style="width:12px;height:12px;font-size:12px">${ICON.lock}</span> Locked — ${remaining} more card value clears it, then hits for a flat ${opp.lockAttack}</div>
+      <div class="vreq">
+        <span class="vart" style="width:12px;height:12px;font-size:12px">${ICON.lock}</span>
+        Locked - ${remaining} more card value clears it
+      </div>
+      <div class="note" style="margin-top:4px">Then hits for ${opp.lockAttack} damage</div>
     </div>`;
   }
-  const attacks = (opp.attacks && opp.attacks.length) ? opp.attacks : [{ name: opp.name, minTier: opp.minTier, straightLen: opp.straightLen }];
+
+  const attacks = (opp.attacks && opp.attacks.length)
+    ? opp.attacks
+    : [{ name: opp.name, minTier: opp.minTier, straightLen: opp.straightLen }];
+
   return attacks.map(a => {
-    const reqText = a.straightLen ? `Needs a ${a.straightLen}-card straight` : (a.minTier === 0 ? 'Any 1 card' : `Needs ${TIERS[a.minTier]}+`);
+    let reqText = '';
+    let damageText = '';
+
+    if (a.straightLen) {
+      reqText = `Any ${a.straightLen} cards in a row`;
+      damageText = `Damage: Straight value`;
+    } else if (a.minTier === 0) {
+      reqText = 'Any 1 card';
+      damageText = 'Damage: Card value';
+    } else {
+      reqText = `${TIERS[a.minTier]} or better`;
+      damageText = `Damage: Hand value`;
+    }
+
     return `<div class="vslot" style="cursor:default">
       <div class="vname">${art(opp, 18)} ${a.name}</div>
       <div class="vreq">${reqText}</div>
+      <div class="note" style="margin-top:4px">${damageText}</div>
     </div>`;
   }).join('');
 }
@@ -764,7 +806,6 @@ function resolveTurn() {
       }
 
       if (!ready) {
-        // FIX 3: Restored backticks here
         battleLog(`${v.name} (${att.name}) — ${label || 'no valid play'}, requirement unmet. No effect.`);
       } else {
         let amount = damageFor(cards, mult || 1);
@@ -1169,17 +1210,33 @@ function battleScreen() {
       <div class="panel">
         <div class="hdr"><span>${opp.name}'s Cards</span><span></span></div>
         <div class="hand">${poolHTML}</div>
-        <div class="note">${opp.locked ? `<span class="vart" style="width:12px;height:12px;font-size:12px">${ICON.lock}</span> Locked: ${opp.lockProgress}/${opp.lockThreshold} — clears the lock and hits for a flat ${opp.lockAttack}, no cards needed that turn` : `Needs ${TIERS[opp.minTier]}+ to attack`}</div>
         <button class="wo-btn amber" id="scoutBtn" style="padding:8px 12px;font-size:12px" ${BATTLE.scoutedThisTurn || RUN.chips < 10 ? 'disabled' : ''}>Reveal a Card (-10 coins)</button>
       </div>
     </div>
-    <div class="panel">
-      <div class="hdr"><span>${fleetLabel()}</span><span>Drag cards, or tap to select then tap a vehicle</span></div>
-      <div class="grid">${vehicleHTML}</div>
-    </div>
-    <div class="panel">
-      <div class="hdr"><span>${opp.name}'s Fleet</span><span>What they'll attack with</span></div>
-      <div class="grid">${opponentAttackBoxHTML(opp)}</div>
+        <div class="duelMatchup">
+      <div class="matchupSide playerSide">
+        <div class="panel">
+          <div class="hdr">
+            <span>${fleetLabel()}</span>
+            <span>Drag cards or tap to select</span>
+          </div>
+          <div class="grid" style="grid-template-columns:repeat(2,minmax(0,1fr));">
+            ${vehicleHTML}
+          </div>
+        </div>
+      </div>
+
+      <div class="matchupSide opponentSide">
+        <div class="panel">
+          <div class="hdr">
+            <span>${opp.name}'s Attacks</span>
+            <span>What they'll attack with</span>
+          </div>
+          <div class="grid" style="grid-template-columns:repeat(2,minmax(0,1fr));">
+            ${opponentAttackBoxHTML(opp)}
+          </div>
+        </div>
+      </div>
     </div>
     <div class="panel">
       <div class="hdr"><span>Resources</span><span></span></div>
@@ -1386,9 +1443,11 @@ function upgradeScreen(returnTo) {
       <div class="note" style="margin:0 0 4px">${desc}</div>
       <div class="levelbar"><i style="width:${(lvl / MAX_LEVEL) * 100}%"></i></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
-        ${maxed ? '' : `<button class="wo-btn amber" data-levelup="${u.id}" style="padding:8px 12px;font-size:13px" ${META.points < cost ? 'disabled' : ''}>Level Up</button>`}
-        ${lvl > 0 ? `<button class="wo-btn gray" data-leveldown="${u.id}" style="padding:8px 12px;font-size:13px">Refund 1 Level (+${refund} pts)</button>` : ''}
-      </div>
+  <button class="wo-btn gray" id="sortSuitBtn" style="padding:8px 12px;font-size:12px">Sort: Suit</button>
+  <button class="wo-btn gray" id="sortValueBtn" style="padding:8px 12px;font-size:12px">Sort: Value</button>
+  <button class="wo-btn gray" id="discardSelectedBtn" style="padding:8px 12px;font-size:12px" title="Fold selected cards face-down instead of playing them." ${!selectedIdx.length ? 'disabled' : ''}>Discard Selected</button>
+  <button class="wo-btn" id="endTurnBtn" style="padding:8px 16px;font-size:12px;font-weight:700">END TURN</button>
+</div>
     </div>`;
   }).join('');
   return `

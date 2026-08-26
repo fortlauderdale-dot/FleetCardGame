@@ -742,10 +742,6 @@ function sortHand(mode) {
   BATTLE.hand.sort((a,b)=> mode==='suit' ? ((suitOrder[a.suit]-suitOrder[b.suit]) || (a.rank-b.rank)) : ((a.rank-b.rank) || (suitOrder[a.suit]-suitOrder[b.suit])));
   selectedIdx=[]; render(battleScreen());
 }
-function passTurn() {
-  selectedIdx=[]; BATTLE.slots={}; BATTLE.turnDiscard=[];
-  resolveTurn();
-}
 
 function scoutOpponent() {
   const cost = 10;
@@ -777,85 +773,115 @@ function useAbility(vId) {
   battleLog(`${v.name} used ${v.ability.name}! They won't counter-attack this turn.`);
   saveRun(); render(battleScreen());
 }
+function executePlayerAttack(instance, attId, index) {
+  const v = VEHICLES[instance.vehicleId];
+  const att = ATTACKS[attId];
+  const slotKey = `${instance.instanceId}:${attId}_${index}`;
+  const idxs = BATTLE.slots[slotKey] || [];
 
-function resolveTurn() {
-  let totalDamage = 0;
-  const usedIdx = new Set();
-  const priorHp = BATTLE.opponent.hpNow;
-
-  for (const instance of RUN.ownedVehicles) {
-    const v = VEHICLES[instance.vehicleId];
-        instance.attacks.forEach((attId, index) => {
-      const att = ATTACKS[attId];
-      const slotKey = `${instance.instanceId}:${attId}_${index}`;
-      const idxs = BATTLE.slots[slotKey] || [];
-      if (!idxs.length) return;
-      const cards = idxs.map(i => BATTLE.hand[i]);
-      
-      let ready = false, label = '', mult = 0;
-      if (att.straightLen) {
-        ready = cards.length === att.straightLen && isConsecutive(cards);
-        // FIX 2: Restored backticks here
-        label = ready ? `${att.straightLen}-Card Straight` : (cards.length ? 'Not a straight' : '');
-        mult = straightMult(att.straightLen);
-      } else {
-        const evalRes = evaluateHand(cards);
-        ready = evalRes.tier >= att.minTier;
-        label = evalRes.label;
-        mult = evalRes.mult;
-      }
-
-      if (!ready) {
-        battleLog(`${v.name} (${att.name}) — ${label || 'no valid play'}, requirement unmet. No effect.`);
-      } else {
-        let amount = damageFor(cards, mult || 1);
-        if (att.bonusType === 'admin') {
-          if (cards.length === 2 && evaluateHand(cards).tier === 1) {
-            const pairBonus = 1.5 + (RUN.adminTuneLvl || 0) * 0.5;
-            amount = Math.round(amount * pairBonus);
-          }
-        }
-
-        if (att.kind === 'defense') { 
-          BATTLE.playerArmor += amount; 
-          battleLog(`${v.name} [${att.name}] — ${label}! +${amount} armor.`); 
-        } else if (att.kind === 'poison') { 
-          const poisonAmount = Math.round(amount / 2);
-          BATTLE.opponent.poisonStacks = BATTLE.opponent.poisonStacks || [];
-          BATTLE.opponent.poisonStacks.push(poisonAmount);
-          battleLog(`${v.name} [${att.name}] — ${label}! Applied ${poisonAmount} poison.`); 
-        } else if (att.kind === 'burn') { 
-          const stages = [amount, Math.round(amount / 2), Math.round(amount / 4)];
-          BATTLE.opponent.burn = { stages, stageIdx: 0 };
-          battleLog(`${v.name} [${att.name}] — ${label}! Burn applied for ${stages.join(' + ')} damage.`); 
-        } else { 
-          totalDamage += amount; 
-          // FIX 4: Changed 'BATTLE.opponent.hpNow' calculation to correctly deduct 'totalDamage' later, 
-          // or subtract immediately per vehicle attack resolution loop:
-          BATTLE.opponent.hpNow = Math.max(0, BATTLE.opponent.hpNow - amount);
-          battleLog(`${v.name} [${att.name}] — ${label}! ${amount} damage.`); 
-        }
-      }
-            idxs.forEach(i => usedIdx.add(i));
-    });
+  if (!idxs.length) {
+    battleLog(`${v.name} [${att.name}] has no cards assigned.`);
+    render(battleScreen());
+    return;
   }
 
+  // Prevent cards already used this turn from being used again.
+  if (idxs.some(i => BATTLE.usedThisTurn.has(i))) {
+    battleLog(`One or more cards in ${att.name} were already used this turn.`);
+    render(battleScreen());
+    return;
+  }
+
+  const cards = idxs.map(i => BATTLE.hand[i]);
+
+  let ready = false;
+  let label = '';
+  let mult = 0;
+
+  if (att.straightLen) {
+    ready = cards.length === att.straightLen && isConsecutive(cards);
+    label = ready
+      ? `${att.straightLen}-Card Straight`
+      : 'Not a straight';
+    mult = straightMult(att.straightLen);
+  } else {
+    const evalRes = evaluateHand(cards);
+    ready = evalRes.tier >= att.minTier;
+    label = evalRes.label;
+    mult = evalRes.mult;
+  }
+
+  if (!ready) {
+    battleLog(`${v.name} [${att.name}] — ${label || 'invalid play'}. Requirement unmet.`);
+    render(battleScreen());
+    return;
+  }
+
+  let amount = damageFor(cards, mult || 1);
+
+  // Admin Vehicle Pair Bonus
+  if (att.bonusType === 'admin') {
+    if (cards.length === 2 && evaluateHand(cards).tier === 1) {
+      const pairBonus = 1.5 + (RUN.adminTuneLvl || 0) * 0.5;
+      amount = Math.round(amount * pairBonus);
+    }
+  }
+
+  // Resolve the attack's effect.
+  if (att.kind === 'defense') {
+    BATTLE.playerArmor += amount;
+    battleLog(`${v.name} [${att.name}] — ${label}! +${amount} armor.`);
+
+  } else if (att.kind === 'poison') {
+    const poisonAmount = Math.round(amount / 2);
+    BATTLE.opponent.poisonStacks = BATTLE.opponent.poisonStacks || [];
+    BATTLE.opponent.poisonStacks.push(poisonAmount);
+    battleLog(`${v.name} [${att.name}] — ${label}! Applied ${poisonAmount} poison.`);
+
+  } else if (att.kind === 'burn') {
+    const stages = [amount, Math.round(amount / 2), Math.round(amount / 4)];
+    BATTLE.opponent.burn = { stages, stageIdx: 0 };
+    battleLog(`${v.name} [${att.name}] — ${label}! Burn applied for ${stages.join(' + ')} damage.`);
+
+  } else {
+    BATTLE.opponent.hpNow = Math.max(0, BATTLE.opponent.hpNow - amount);
+    battleLog(`${v.name} [${att.name}] — ${label}! ${amount} damage.`);
+  }
+
+  // These cards have now been used this turn.
+  idxs.forEach(i => BATTLE.usedThisTurn.add(i));
+
+  // Remove the cards from this attack slot.
+  BATTLE.slots[slotKey] = [];
+
+  saveRun();
+
+  // If the attack killed the opponent, finish the battle immediately.
+  if (BATTLE.opponent.hpNow <= 0) {
+    winBattle();
+    return;
+  }
+
+  // Otherwise, the turn continues.
+  render(battleScreen());
+}
+function endTurn() {
   // Resolve any cards the opponent cursed on a previous turn: played it, curse clears; left it, take the hit.
   BATTLE.hand.forEach((c, i) => {
-    if (c.curse) {
-      if (usedIdx.has(i)) {
-        battleLog(`Cursed ${rankLabel(c.rank)}${c.suit} played — curse cleared.`);
-      } else {
-        RUN.health = Math.max(0, RUN.health - c.curse);
-        battleLog(`Cursed ${rankLabel(c.rank)}${c.suit} left unplayed — you take ${c.curse} damage! Health: ${RUN.health}/${RUN.maxHealth}.`);
-      }
-      delete c.curse;
+  if (c.curse) {
+    if (BATTLE.usedThisTurn.has(i)) {
+      battleLog(`Cursed ${rankLabel(c.rank)}${c.suit} played — curse cleared.`);
+    } else {
+      RUN.health = Math.max(0, RUN.health - c.curse);
+      battleLog(`Cursed ${rankLabel(c.rank)}${c.suit} left unplayed — you take ${c.curse} damage! Health: ${RUN.health}/${RUN.maxHealth}.`);
     }
-  });
+    delete c.curse;
+  }
+});
 
   if (BATTLE.turnDiscard.length) battleLog(`Discarded ${BATTLE.turnDiscard.length} card${BATTLE.turnDiscard.length > 1 ? 's' : ''}.`);
   const evvanUsed = (BATTLE.slots.evvan || []).length > 0 && evaluateHand((BATTLE.slots.evvan || []).map(i => BATTLE.hand[i])).tier >= VEHICLES.evvan.minTier;
-  const allRemove = new Set([...usedIdx, ...BATTLE.turnDiscard]);
+  const allRemove = new Set([...BATTLE.usedThisTurn, ...BATTLE.turnDiscard]);
   const sorted = [...allRemove].sort((a, b) => b - a);
   let refunded = false;
   for (const i of sorted) {
@@ -863,7 +889,10 @@ function resolveTurn() {
     BATTLE.discard.push(BATTLE.hand[i]);
     BATTLE.hand.splice(i, 1);
   }
-  BATTLE.slots = {}; BATTLE.turnDiscard = []; selectedIdx = [];
+  BATTLE.slots = {};
+BATTLE.turnDiscard = [];
+BATTLE.usedThisTurn = new Set();
+selectedIdx = [];
 
   if (BATTLE.opponent.hpNow <= 0) { winBattle(); return; }
 
@@ -1266,7 +1295,7 @@ function handleCardDrop(e, vId) {
   render(battleScreen());
 }
 function tryDispatch() {
-  resolveTurn();
+  endTurn();
 }
 
 function nodeResultScreen(won, rewards) {
@@ -1501,9 +1530,30 @@ function render(html) {
   app.querySelectorAll('[data-unassign]').forEach(el => el.onclick = (e) => { e.stopPropagation(); const [vId, idx] = el.dataset.unassign.split(':'); removeCardFromSlot(vId, +idx); });
   app.querySelectorAll('[data-clear]').forEach(el => el.onclick = (e) => { e.stopPropagation(); clearSlot(el.dataset.clear); });
   app.querySelectorAll('[data-ability]').forEach(el => el.onclick = (e) => { e.stopPropagation(); useAbility(el.dataset.ability); });
-  app.querySelectorAll('[data-attack]').forEach(el => el.onclick = (e) => { e.stopPropagation(); tryDispatch(); });
+  app.querySelectorAll('[data-attack]').forEach(el => {
+  el.onclick = (e) => {
+    e.stopPropagation();
+
+    const parts = el.dataset.attack.split(':');
+    const instanceId = parts[0];
+    const attackPart = parts.slice(1).join(':');
+    const match = attackPart.match(/^(.+)_(\d+)$/);
+
+    if (!match) return;
+
+    const attId = match[1];
+    const index = Number(match[2]);
+
+    const instance = RUN.ownedVehicles.find(v => v.instanceId === instanceId);
+    if (!instance) return;
+
+    executePlayerAttack(instance, attId, index);
+  };
+});
+  app.querySelector('#endTurnBtn').onclick = () => {
+  endTurn();
+};
   app.querySelectorAll('[data-detonate]').forEach(el => el.onclick = (e) => { e.stopPropagation(); detonateBurn(); });
-  const passTurnBtn = document.getElementById('passTurnBtn'); if (passTurnBtn) passTurnBtn.onclick = passTurn;
   const sortSuitBtn = document.getElementById('sortSuitBtn'); if (sortSuitBtn) sortSuitBtn.onclick = () => sortHand('suit');
   const sortValueBtn = document.getElementById('sortValueBtn'); if (sortValueBtn) sortValueBtn.onclick = () => sortHand('value');
   const scoutBtn = document.getElementById('scoutBtn'); if (scoutBtn) scoutBtn.onclick = scoutOpponent;

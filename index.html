@@ -296,42 +296,118 @@ function opponentAttackBoxHTML(opp) {
 }
 
 /* ========== ATTACK CATALOG REGISTRY ========== */
-const ATTACKS = {
-  backup_beep:  { id: 'backup_beep',   name: 'Backup Beep',   minTier: 0, slot: 1, note: 'Any 1 card attacks.' },
-  fender_bender:{ id: 'fender_bender', name: 'Fender Bender', minTier: 1, slot: 2, note: 'Needs a Pair. +50% damage if Pair.', bonusType: 'admin' },
-  debris_dump:  { id: 'debris_dump',   name: 'Debris Dump',   minTier: 3, slot: 3, note: 'Needs Three of a Kind.' },
-  street_sweep: { id: 'street_sweep',  name: 'Street Sweep',  minTier: 1, slot: 3, note: 'Play up to 3 cards, but 2 of them must be a Pair (example: 7-7-8).' },
-  vac_suck:     { id: 'vac_suck',      name: 'Vac Suction',   minTier: 5, slot: 4, note: 'Needs a Flush.' },
-  escort_wall:  { id: 'escort_wall',   name: 'Escort Wall',   minTier: 1, slot: 2, note: 'Needs a Pair. Blocks damage instead of dealing it.', kind: 'defense' },
-  toxic_spill:  { id: 'toxic_spill',   name: 'Toxic Spill',   minTier: 3, slot: 3, note: 'Needs Three of a Kind. Poisons instead of hitting directly.', kind: 'poison' },
-  bike_dash:    { id: 'bike_dash',     name: 'Bike Dash',     slot: 2, straightLen: 2, note: 'Needs a 2-card straight (example: 7-8, any suits).' },
-  scooter_run:  { id: 'scooter_run',   name: 'Scooter Run',   slot: 3, straightLen: 3, note: 'Needs a 3-card straight.' },
-  moto_escort:  { id: 'moto_escort',   name: 'Moto Escort',   slot: 4, straightLen: 4, note: 'Needs a 4-card straight.' },
-  convoy_flush: { id: 'convoy_flush',  name: 'Convoy Flush',  minTier: 5, slot: 4, note: 'Needs a Flush.' },
-  torch_burn:   { id: 'torch_burn',    name: 'Torch Burn',    minTier: 1, slot: 2, note: 'Needs a Pair. Burns instead of hitting directly.', kind: 'burn' }
+/* ========== CONDITION ENGINE ==========
+   Every Item's `condition` is checked through this ONE function. Add a new condition
+   type here once and every Item (present or future) can use it — nothing else needs
+   to change. `cards` is whatever was actually played into that Item's slot.
+   Returns { met, label, sum, count } — sum/count feed items that scale with them. */
+function checkCondition(cond, cards) {
+  if (!cond || cond.type === 'any') return { met: cards.length > 0, label: 'Any Cards' };
+  if (cond.type === 'pokerTier') {
+    const ev = evaluateHand(cards);
+    return { met: ev.tier >= cond.tier, label: ev.label, mult: ev.mult };
+  }
+  if (cond.type === 'straightLen') {
+    const ok = cards.length === cond.len && isConsecutive(cards);
+    return { met: ok, label: `${cond.len}-Card Straight` };
+  }
+  if (cond.type === 'suitCount') {
+    const n = cards.filter(c => c.suit === cond.suit).length;
+    return { met: n >= cond.count, label: `${n} of ${cond.suit}`, count: n };
+  }
+  if (cond.type === 'parity') {
+    const isEven = c => c.rank % 2 === 0;
+    const matchFn = cond.parity === 'even' ? isEven : (c => !isEven(c));
+    const n = cards.filter(matchFn).length;
+    if (cond.mode === 'all') return { met: cards.length > 0 && n === cards.length, label: `All ${cond.parity}`, count: n };
+    return { met: n >= cond.count, label: `${n} ${cond.parity}`, count: n };
+  }
+  if (cond.type === 'exactRank') {
+    const n = cards.filter(c => c.rank === cond.rank).length;
+    if (cond.requireAll) return { met: cards.length > 0 && n === cards.length, label: `All ${rankLabel(cond.rank)}s`, count: n };
+    return { met: n > 0, label: `Has a ${rankLabel(cond.rank)}`, count: n };
+  }
+  if (cond.type === 'sumThreshold') {
+    const sum = cards.reduce((a, c) => a + cardValue(c.rank) + (c.bonus || 0), 0);
+    return { met: cards.length > 0 && sum >= cond.min, label: `Sum ${sum}`, sum };
+  }
+  return { met: false, label: '' };
+}
+// One shared formula for every Item's output. `level` is that Item's own upgrade level
+// (see RUN.itemLevels). Items with `flatAmount` ignore card value entirely (used for
+// threshold-style poison: "any hand summing to X+ does exactly Y", not a multiplier).
+function computeItemAmount(item, cards, level, condResult) {
+  if (item.flatAmount != null) {
+    return Math.round(item.flatAmount + (item.flatAmountPerLevel || 0) * level);
+  }
+  let mult = item.baseMult ?? (condResult.mult ?? 1);
+  if (item.bonus) {
+    const lvl = Math.min(level, item.bonus.maxLevel ?? level);
+    mult += item.bonus.base + item.bonus.perLevel * lvl;
+  }
+  if (item.perCardBonus && cards.length > 1) mult += item.perCardBonus * (cards.length - 1);
+  return damageFor(cards, mult);
+}
+function itemLevel(itemId) { return (RUN.itemLevels && RUN.itemLevels[itemId]) || 0; }
+function itemUsesCap(item, level) { return item.usesPerTurn + (item.usesPerTurnPerLevel || 0) * level; }
+
+/* ========== ITEM CATALOG ==========
+   maxCards is fully flexible (1-10+). usesPerTurn defaults to 1 and can be raised by
+   upgrading that item's level (same level also drives its `bonus` curve). kind decides
+   what the computed amount does: damage / defense (armor) / poison / burn / curse-immune
+   storage (never fires, just holds cards until you click one to release it). */
+const ITEMS = {
+  fender_bender: { id: 'fender_bender', name: 'Fender Bender', cost: 0, maxCards: 2, usesPerTurn: 1,
+    condition: { type: 'pokerTier', tier: 0 }, baseMult: 1,
+    bonus: { base: 0.5, perLevel: 0.25, maxLevel: 2 }, // +50% on a Pair, up to +100% tuned
+    note: 'Up to 2 cards. A Pair adds a bonus that grows the more you tune it.' },
+  triple_threat: { id: 'triple_threat', name: 'Triple Threat', cost: 45, maxCards: 3, usesPerTurn: 1,
+    condition: { type: 'pokerTier', tier: 3 }, baseMult: 1,
+    bonus: { base: 1.0, perLevel: 1.0, maxLevel: 3 }, // Three of a Kind: +100% up to +400% tuned
+    note: 'Needs Three of a Kind. Hits much harder than a Pair item, and tunes further too.' },
+  bike_dash: { id: 'bike_dash', name: 'Bike Dash', cost: 30, maxCards: 2, usesPerTurn: 1,
+    condition: { type: 'straightLen', len: 2 }, baseMult: straightMult(2),
+    note: 'Needs a 2-card straight (example: 7-8, any suits).' },
+  moto_escort: { id: 'moto_escort', name: 'Moto Escort', cost: 75, maxCards: 4, usesPerTurn: 1,
+    condition: { type: 'straightLen', len: 4 }, baseMult: straightMult(4),
+    note: 'Needs a 4-card straight.' },
+  diamond_run: { id: 'diamond_run', name: 'Diamond Run', cost: 50, maxCards: 4, usesPerTurn: 1,
+    condition: { type: 'suitCount', suit: '♦', count: 3 }, baseMult: 1.3,
+    bonus: { base: 0, perLevel: 0.2, maxLevel: 3 },
+    note: 'Needs at least 3 Diamonds among your played cards.' },
+  odd_job: { id: 'odd_job', name: 'Odd Job', cost: 40, maxCards: 5, usesPerTurn: 1,
+    condition: { type: 'parity', parity: 'odd', mode: 'count', count: 3 }, baseMult: 1.2,
+    bonus: { base: 0, perLevel: 0.25, maxLevel: 3 },
+    note: 'Needs at least 3 odd cards among your played cards.' },
+  lucky_seven: { id: 'lucky_seven', name: 'Lucky Seven', cost: 60, maxCards: 3, usesPerTurn: 1,
+    condition: { type: 'exactRank', rank: 7 }, baseMult: 2.2,
+    bonus: { base: 0, perLevel: 0.4, maxLevel: 3 },
+    note: 'Needs a 7 among your played cards. Rare to have one ready, so it hits hard when you do.' },
+  escort_wall: { id: 'escort_wall', name: 'Escort Wall', cost: 45, maxCards: 2, usesPerTurn: 1,
+    condition: { type: 'pokerTier', tier: 1 }, baseMult: 1, kind: 'defense',
+    note: 'Needs a Pair. Blocks damage instead of dealing it.' },
+  toxic_spill: { id: 'toxic_spill', name: 'Toxic Spill', cost: 40, maxCards: 3, usesPerTurn: 1,
+    condition: { type: 'sumThreshold', min: 5 }, flatAmount: 9, flatAmountPerLevel: 4, kind: 'poison',
+    note: 'Any card(s) summing to 5+ applies poison. Only usable once a turn unless tuned.' },
+  toxic_flood: { id: 'toxic_flood', name: 'Toxic Flood', cost: 65, maxCards: 4, usesPerTurn: 1,
+    condition: { type: 'sumThreshold', min: 15 }, flatAmount: 20, flatAmountPerLevel: 6, kind: 'poison',
+    note: 'Any card(s) summing to 15+ applies a much bigger poison hit.' },
+  torch_burn: { id: 'torch_burn', name: 'Torch Burn', cost: 65, maxCards: 2, usesPerTurn: 1,
+    condition: { type: 'pokerTier', tier: 1 }, baseMult: 1, kind: 'burn',
+    note: 'Needs a Pair. Burns over 3 turns (weaker each turn) instead of hitting directly — burns stack.' },
+  supply_bag: { id: 'supply_bag', name: 'Supply Bag', cost: 35, maxCards: 10, kind: 'storage', maxStore: 6,
+    note: 'Holds up to 6 cards turn to turn. Never attacks, never gets cursed. Click a stored card to take it back.' },
+  spade_bag: { id: 'spade_bag', name: 'Spade Bag', cost: 30, maxCards: 10, kind: 'storage', maxStore: 4,
+    acceptFilter: { suit: '♠' },
+    note: 'Holds up to 4 Spades only. Click a stored card to take it back.' },
 };
- 
-/* ========== VEHICLE CHASSIS REGISTRY ========== */
-const VEHICLES = {
-  sidebyside: { id: 'sidebyside', name: 'Golf Cart',     icon: '🛺', image: 'vehicles/golf-cart.png', maxAttacks: 2, starterAttacks: ['backup_beep'], minTier: 0, cost: 0 },
-  admin:      { id: 'admin',      name: 'Admin Vehicle',  icon: '🚗', image: 'vehicles/admin-vehicle.png', maxAttacks: 2, starterAttacks: ['fender_bender'], minTier: 0, cost: 0 },
-  interstate: { id: 'interstate', name: 'Interstate Racer', icon: '🏁', image: 'vehicles/interstate-racer.png', maxAttacks: 2, starterAttacks: ['moto_escort'], minTier: 4, cost: 0 },
-  convoy:     { id: 'convoy',     name: 'Armored Convoy',   icon: '🚛', image: 'vehicles/armored-convoy.png', maxAttacks: 3, starterAttacks: ['convoy_flush'], minTier: 5, cost: 0 },
-  garbage:    { id: 'garbage',    name: 'Garbage Truck',  icon: '🗑️', image: 'vehicles/garbage-truck.png', maxAttacks: 2, starterAttacks: ['debris_dump'], minTier: 3, cost: 45 },
-  sweeper:    { id: 'sweeper',    name: 'Street Sweeper', icon: '🧹', image: 'vehicles/street-sweeper.png', maxAttacks: 2, starterAttacks: ['street_sweep'], minTier: 1, cost: 35 },
-  bucket:     { id: 'bucket',     name: 'Bucket Truck',   icon: '🪜', image: 'vehicles/bucket-truck.png', maxAttacks: 3, starterAttacks: ['scooter_run'], minTier: 4, cost: 45 },
-  tractor:    { id: 'tractor',    name: 'Beach Tractor',   icon: '🚜', image: 'vehicles/beach-tractor.png', maxAttacks: 2, starterAttacks: ['debris_dump'], minTier: 3, cost: 40 },
-  pump:       { id: 'pump',       name: 'Vac Truck',       icon: '  ', image: 'vehicles/vac-truck.png', maxAttacks: 3, starterAttacks: ['vac_suck'], minTier: 5, cost: 55 },
-  evvan:      { id: 'evvan',      name: 'Electric Van',    icon: '🔋', image: 'vehicles/electric-van.png', maxAttacks: 2, starterAttacks: ['fender_bender'], minTier: 1, cost: 50 },
-  armor:      { id: 'armor',      name: 'Armored Escort',  icon: '🛡️', image: 'vehicles/armored-escort.png', maxAttacks: 2, starterAttacks: ['escort_wall'], minTier: 1, cost: 45 },
-  hazmat:     { id: 'hazmat',     name: 'Hazmat Truck',   icon: '☣️', image: 'vehicles/hazmat-truck.png', maxAttacks: 3, starterAttacks: ['toxic_spill'], minTier: 3, cost: 55 },
-  tow:        { id: 'tow',        name: 'Tow Truck',       icon: '🚨', image: 'vehicles/tow-truck.png', maxAttacks: 2, starterAttacks: ['fender_bender'], minTier: 1, cost: 60 },
-  bike2:      { id: 'bike2',      name: 'Patrol Bike',     icon: '🚲', image: 'vehicles/patrol-bike.png', maxAttacks: 2, starterAttacks: ['bike_dash'], cost: 30 },
-  vespa3:     { id: 'vespa3',     name: 'Scooter Runner',  icon: '自由', image: 'vehicles/scooter-runner.png', maxAttacks: 3, starterAttacks: ['scooter_run'], cost: 50 },
-  moto4:      { id: 'moto4',      name: 'Motorcycle Escort', icon: '🏍️', image: 'vehicles/motorcycle-escort.png', maxAttacks: 4, starterAttacks: ['moto_escort'], cost: 75 },
-  harley5:    { id: 'harley5',    name: 'Harley Convoy',   icon: '🏍️', image: 'vehicles/harley-convoy.png', maxAttacks: 4, starterAttacks: ['convoy_flush'], cost: 105 },
-  formation6: { id: 'formation6', name: 'Highway Formation', icon: '🏁', image: 'vehicles/highway-formation.png', maxAttacks: 4, starterAttacks: ['convoy_flush'], cost: 140 },
-  torch:      { id: 'torch',      name: 'Torch Truck',    icon: '🔥', image: 'vehicles/torch-truck.png', maxAttacks: 2, starterAttacks: ['torch_burn'], minTier: 1, cost: 65 }
+
+/* ========== HERO ROSTER (4 total — pick one to play as for the run) ========== */
+const HEROES = {
+  sidebyside: { id: 'sidebyside', name: 'Golf Cart',      icon: '🛺', image: 'vehicles/golf-cart.png', starterItems: ['fender_bender'] },
+  admin:      { id: 'admin',      name: 'Admin Vehicle',   icon: '🚗', image: 'vehicles/admin-vehicle.png', starterItems: ['fender_bender'] },
+  interstate: { id: 'interstate', name: 'Interstate Racer', icon: '🏁', image: 'vehicles/interstate-racer.png', starterItems: ['moto_escort'] },
+  convoy:     { id: 'convoy',     name: 'Armored Convoy',  icon: '🚛', image: 'vehicles/armored-convoy.png', starterItems: ['triple_threat'] },
 };
 const STARTERS = ['sidebyside', 'admin', 'interstate', 'convoy'];
 function isStarterUnlocked(id) {
@@ -346,30 +422,39 @@ function starterLockNote(id) {
   return '';
 }
 
-/* ========== OPPONENT ROSTER (ranked bad -> good, 3 per tier, plus boss) ========== */
+/* ========== OPPONENT ROSTER — CITY HAZARD EVENTS (World 1) ==========
+   Ranked bad -> good, 3 per tier, plus a boss. Fire escalates by severity (and gets a
+   burn signature at the top of the tier); Evil Mechanic is a recurring curse-flavored
+   nuisance; Gas Leak uses the same lock/countdown mechanic bomb squad trucks used to. */
 const OPPONENT_TIERS = [
-  [ { id: 'vespa', name: 'Rusty Vespa', icon: '🛵', image: 'vehicles/rusty-vespa.png', hp: 35, minTier: 0, drawRate: 2, turnLimit: 6 },
-    { id: 'cart', name: 'Beat-Up Golf Cart', icon: '⛳', image: 'vehicles/golf-cart.png', hp: 40, minTier: 0, drawRate: 2, turnLimit: 6 },
-    { id: 'bike', name: 'Wobbly Bicycle', icon: '🚲', image: 'vehicles/wobbly-bicycle.png', hp: 45, minTier: 0, drawRate: 2, turnLimit: 6 } ],
-  [ { id: 'smart', name: 'Smart Car', icon: '🚗', image: 'vehicles/smart-car.png', hp: 50, minTier: 1, drawRate: 2, turnLimit: 6 },
-    { id: 'hatch', name: 'Beater Hatchback', icon: '🚙', image: 'vehicles/beater-hatchback.png', hp: 55, minTier: 1, drawRate: 2, turnLimit: 6 },
-    { id: 'prius', name: 'Rideshare Prius', icon: '🔋', image: 'vehicles/rideshare-prius.png', hp: 60, minTier: 0, drawRate: 2, turnLimit: 6 } ],
-  [ { id: 'sedan', name: 'Sedan', icon: '🚘', image: 'vehicles/sedan.png', hp: 65, minTier: 1, drawRate: 3, turnLimit: 7 },
-    { id: 'minivan', name: 'Minivan', icon: '🚐', image: 'vehicles/minivan.png', hp: 70, minTier: 1, drawRate: 3, turnLimit: 7 },
-    { id: 'delivery', name: 'Delivery Van', icon: '📦', image: 'vehicles/delivery-van.png', hp: 75, minTier: 2, drawRate: 3, turnLimit: 7, special: { type: 'redSteal', redThreshold: 3, fuelSteal: 1, extraDraw: 1 } } ],
-  [ { id: 'pickup', name: 'Pickup Truck', icon: '🛻', image: 'vehicles/pickup-truck.png', hp: 80, minTier: 2, drawRate: 3, turnLimit: 7 },
-    { id: 'muscle', name: 'Muscle Car', icon: '🔥', image: 'vehicles/muscle-car.png', hp: 85, minTier: 3, drawRate: 3, turnLimit: 7, special: { type: 'lifesteal', pct: 0.5 } },
-    { id: 'jeep', name: 'Off-Road Jeep', icon: '🌲', image: 'vehicles/off-road-jeep.png', hp: 90, minTier: 1, drawRate: 3, turnLimit: 7 },
-    { id: 'bombsquad', name: 'Bomb Squad Truck', icon: '💣', image: 'vehicles/bomb-squad-truck.png', hp: 95, locked: true, lockThreshold: 45, lockAttack: 39, drawRate: 3, turnLimit: 8 } ],
-  [ { id: 'sportscar', name: 'Sports Car', icon: '🏎️', image: 'vehicles/sports-car.png', hp: 100, minTier: 3, drawRate: 4, turnLimit: 8 },
-    { id: 'moto', name: 'Motorcycle Gang', icon: '🏍️', image: 'vehicles/motorcycle-gang.png', hp: 105, minTier: 2, drawRate: 4, turnLimit: 8 },
-    { id: 'armoredvan', name: 'Armored Van', icon: '🚐', image: 'vehicles/armored-van.png', hp: 110, minTier: 1, drawRate: 3, turnLimit: 8 } ],
-  [ { id: 'suv', name: 'Luxury SUV', icon: '🚙', image: 'vehicles/luxury-suv.png', hp: 115, minTier: 3, drawRate: 4, turnLimit: 8 },
-    { id: 'exotic', name: 'Exotic Supercar', icon: '🏁', image: 'vehicles/exotic-supercar.png', hp: 120, minTier: 4, drawRate: 4, turnLimit: 8 },
-    { id: 'limo', name: 'Armored Limo', icon: '🚘', image: 'vehicles/armored-limo.png', hp: 125, minTier: 2, drawRate: 4, turnLimit: 8 },
-    { id: 'vault', name: 'Armored Vault Truck', icon: '🔐', image: 'vehicles/armored-vault-truck.png', hp: 130, locked: true, lockThreshold: 70, lockAttack: 60, drawRate: 4, turnLimit: 9 } ],
+  [ { id: 'trashfire', name: 'Trash Can Fire', icon: '🔥', image: 'hazards/trash-fire.png', hp: 35, minTier: 0, drawRate: 2, turnLimit: 6 },
+    { id: 'pothole', name: 'Nasty Pothole', icon: '🕳️', image: 'hazards/pothole.png', hp: 40, minTier: 0, drawRate: 2, turnLimit: 6 },
+    { id: 'looseDog', name: 'Loose Dog', icon: '🐕', image: 'hazards/loose-dog.png', hp: 45, minTier: 0, drawRate: 2, turnLimit: 6 } ],
+  [ { id: 'jaywalker', name: 'Jaywalker', icon: '🚶', image: 'hazards/jaywalker.png', hp: 50, minTier: 1, drawRate: 2, turnLimit: 6 },
+    { id: 'grumpyMeter', name: 'Broken Meter', icon: '🅿️', image: 'hazards/broken-meter.png', hp: 55, minTier: 1, drawRate: 2, turnLimit: 6 },
+    { id: 'looseWire', name: 'Downed Power Line', icon: '⚡', image: 'hazards/downed-line.png', hp: 60, minTier: 0, drawRate: 2, turnLimit: 6 } ],
+  [ { id: 'angryCitizen', name: 'Angry Citizen', icon: '😠', image: 'hazards/angry-citizen.png', hp: 65, minTier: 1, drawRate: 3, turnLimit: 7 },
+    { id: 'hydrant', name: 'Burst Hydrant', icon: '💦', image: 'hazards/burst-hydrant.png', hp: 70, minTier: 1, drawRate: 3, turnLimit: 7 },
+    { id: 'dumpsterFire', name: 'Dumpster Fire', icon: '🔥', image: 'hazards/dumpster-fire.png', hp: 75, minTier: 2, drawRate: 3, turnLimit: 7,
+      special: { type: 'redSteal', redThreshold: 3, fuelSteal: 1, extraDraw: 1 } } ],
+  [ { id: 'evilMechanic1', name: 'Evil Mechanic', icon: '🔧', image: 'hazards/evil-mechanic.png', hp: 80, minTier: 2, drawRate: 3, turnLimit: 7,
+      curse: { count: 1, amount: 8, chance: 0.5 } },
+    { id: 'streetFire', name: 'Street Fire', icon: '🔥', image: 'hazards/street-fire.png', hp: 85, minTier: 3, drawRate: 3, turnLimit: 7,
+      special: { type: 'lifesteal', pct: 0.5 } },
+    { id: 'sinkhole', name: 'Sinkhole', icon: '🕳️', image: 'hazards/sinkhole.png', hp: 90, minTier: 1, drawRate: 3, turnLimit: 7 },
+    { id: 'gasLeak1', name: 'Gas Leak', icon: '⛽', image: 'hazards/gas-leak.png', hp: 95, locked: true, lockThreshold: 45, lockAttack: 39, drawRate: 3, turnLimit: 8 } ],
+  [ { id: 'flashFlood', name: 'Flash Flood', icon: '🌊', image: 'hazards/flash-flood.png', hp: 100, minTier: 3, drawRate: 4, turnLimit: 8 },
+    { id: 'riot', name: 'Angry Mob', icon: '📢', image: 'hazards/angry-mob.png', hp: 105, minTier: 2, drawRate: 4, turnLimit: 8 },
+    { id: 'blackout', name: 'Blackout', icon: '🌑', image: 'hazards/blackout.png', hp: 110, minTier: 1, drawRate: 3, turnLimit: 8 } ],
+  [ { id: 'stormSurge', name: 'Storm Surge', icon: '🌊', image: 'hazards/storm-surge.png', hp: 115, minTier: 3, drawRate: 4, turnLimit: 8 },
+    { id: 'buildingFire', name: 'Building Fire', icon: '🔥', image: 'hazards/building-fire.png', hp: 120, minTier: 4, drawRate: 4, turnLimit: 8 },
+    { id: 'evilMechanic2', name: 'Evil Mechanic (Repeat Offender)', icon: '🔧', image: 'hazards/evil-mechanic-2.png', hp: 125, minTier: 2, drawRate: 4, turnLimit: 8,
+      curse: { count: 2, amount: 10, chance: 0.55 } },
+    { id: 'gasLeak2', name: 'Major Gas Leak', icon: '⛽', image: 'hazards/gas-leak-2.png', hp: 130, locked: true, lockThreshold: 70, lockAttack: 60, drawRate: 4, turnLimit: 9 } ],
 ];
-const BOSS = { id: 'swat', name: 'SWAT Truck', icon: '🚔', image: 'vehicles/swat-truck.png', hp: 145, minTier: 3, drawRate: 4, turnLimit: 10, boss: true, curse: { count: 2, amount: 10, chance: 0.5 }, attackInfo: 'Attack: uses its best poker hand for about 10-35 damage, depending on the hand. Can also curse cards in your hand — play a cursed card before turn end or take its curse damage.' };
+const BOSS = { id: 'wildfire', name: 'Wildfire', icon: '🔥', image: 'hazards/wildfire.png', hp: 145, minTier: 3, drawRate: 4, turnLimit: 10, boss: true,
+  curse: { count: 2, amount: 10, chance: 0.5 },
+  attackInfo: 'Attack: uses its best poker hand for about 10-35 damage, depending on the hand. Can also curse your equipped Items — an Item that doesn\'t fire before turn end takes its curse damage.' };
 function revealFraction(row) { return [1.0, 0.8, 0.6, 0.4, 0.25, 0.1, 0][Math.min(row, 6)]; }
 
 /* ========== LEVELED UPGRADE TREE (permanent, up to 20 levels each) ========== */
@@ -401,7 +486,7 @@ function saveMeta() { try { localStorage.setItem(META_KEY, JSON.stringify(META))
 function earnPoints(n) { META.points += n; META.lifetimePoints += n; if (RUN) RUN.scoreThisRun += n; saveMeta(); }
 
 /* ========== RUN SAVE (mid-run continuity, roguelite-style) ========== */
-const RUN_KEY = 'fleetduel-run-v76';
+const RUN_KEY = 'fleetduel-run-v80-heroitem';
 function saveRun() { try { localStorage.setItem(RUN_KEY, JSON.stringify(RUN)); } catch (e) {} }
 function loadRunSave() { try { const raw = localStorage.getItem(RUN_KEY); if (raw) return JSON.parse(raw); } catch (e) {} return null; }
 function clearRunSave() { try { localStorage.removeItem(RUN_KEY); } catch (e) {} }
@@ -486,19 +571,14 @@ const BASE_GAS_PENALTY = 15;
 
 function initRunWithStarter(id) {
   const L = META.levels;
-  const baseV = VEHICLES[id];
+  const baseHero = HEROES[id];
   RUN = {
     map: generateMap(), currentRow: -1, currentCol: null, path: [],
     health: 100 + L.hp * 15, maxHealth: 100 + L.hp * 15,
     chips: 40 + L.chips * 8, fuel: Math.min(20, 10 + L.fuel * 2), energy: 0,
-    // CHANGED: Dynamic structure to store tracking arrays
-    ownedVehicles: [{
-      instanceId: 'v_start_' + Math.random().toString(36).substr(2, 4),
-      vehicleId: id,
-      attacks: [...baseV.starterAttacks]
-    }], 
-    vehicleCap: 2 + L.garage, handSize: 7 + (L.handCap || 0) * 2, drawPerTurn: 2 + (L.draw || 0), gems: 3, maxGems: 10, maxFuel: 20, maxEnergy: 20,
-    scoreThisRun: 0, lastNotice: null, cardBoosts: [], adminTuneLvl: 0,
+    hero: { heroId: id, items: [...baseHero.starterItems] },
+    itemCap: 2 + L.garage, handSize: 7 + (L.handCap || 0) * 2, drawPerTurn: 2 + (L.draw || 0), gems: 3, maxGems: 10, maxFuel: 20, maxEnergy: 20,
+    scoreThisRun: 0, lastNotice: null, cardBoosts: [], adminTuneLvl: 0, itemLevels: {},
   };
   saveRun();
   render(mapScreen());
@@ -696,12 +776,18 @@ function tryApplyCurse() {
   const spec = BATTLE.opponent.curse;
   if (!spec) return;
   if (Math.random() > (spec.chance ?? 1)) return;
-  const eligible = BATTLE.hand.filter(c => !c.curse);
+  // Curse targets equipped Items (never storage — cursing something that can't attack would be an unwinnable trap).
+  const eligible = RUN.hero.items.map((id, i) => `${id}_${i}`).filter(key => {
+    const item = ITEMS[key.replace(/_\d+$/, '')];
+    return item && item.kind !== 'storage' && !(BATTLE.itemCurses && BATTLE.itemCurses[key]);
+  });
   if (!eligible.length) return;
   const count = spec.count === 'random' ? 1 + Math.floor(Math.random() * Math.min(3, eligible.length)) : Math.min(spec.count, eligible.length);
   const chosen = shuffle([...eligible]).slice(0, count);
-  chosen.forEach(c => { c.curse = spec.amount; });
-  battleLog(`${BATTLE.opponent.name} curses ${count} card${count > 1 ? 's' : ''} in your hand — play ${count > 1 ? 'them' : 'it'} next turn or take ${spec.amount} damage each.`);
+  BATTLE.itemCurses = BATTLE.itemCurses || {};
+  chosen.forEach(key => { BATTLE.itemCurses[key] = spec.amount; });
+  const names = chosen.map(key => ITEMS[key.replace(/_\d+$/, '')].name).join(', ');
+  battleLog(`${BATTLE.opponent.name} curses your ${names} — fire it this turn or take ${spec.amount} damage.`);
 }
 // Burn: a decaying 3-turn damage-over-time effect. The player can detonate it early for whatever
 // the current stage is worth, forfeiting the smaller remaining ticks.
@@ -719,28 +805,27 @@ function detonateBurn() {
 function toggleCardSelect(i) { const pos = selectedIdx.indexOf(i); if (pos === -1) selectedIdx.push(i); else selectedIdx.splice(pos, 1); render(battleScreen()); }
 function assignSelectedTo(slotKey) {
   if (!selectedIdx.length) return;
-
-  const parts = slotKey.split(':');
-  const instanceId = parts[0];
-  const attackPart = parts.slice(1).join(':');
-  const match = attackPart.match(/^(.+)_(\d+)$/);
-
+  const match = slotKey.match(/^(.+)_(\d+)$/);
   if (!match) return;
-
-  const attId = match[1];
-  const att = ATTACKS[attId];
-
-  if (!att) return;
+  const itemId = match[1];
+  const item = ITEMS[itemId];
+  if (!item) return;
 
   if (!BATTLE.slots[slotKey]) BATTLE.slots[slotKey] = [];
-
-  const room = att.slot - BATTLE.slots[slotKey].length;
+  const cap = item.kind === 'storage' ? item.maxStore : item.maxCards;
+  const room = cap - BATTLE.slots[slotKey].length;
   if (room <= 0) return;
 
-  const take = selectedIdx
-    .filter(i => !BATTLE.usedThisTurn.has(i))
-    .filter(i => !BATTLE.slots[slotKey].includes(i))
-    .slice(0, room);
+  let candidates = selectedIdx.filter(i => !BATTLE.usedThisTurn.has(i)).filter(i => !BATTLE.slots[slotKey].includes(i));
+  if (item.kind === 'storage' && item.acceptFilter) {
+    candidates = candidates.filter(i => {
+      const c = BATTLE.hand[i];
+      if (item.acceptFilter.suit && c.suit !== item.acceptFilter.suit) return false;
+      if (item.acceptFilter.parity) { const isEven = c.rank % 2 === 0; if ((item.acceptFilter.parity === 'even') !== isEven) return false; }
+      return true;
+    });
+  }
+  const take = candidates.slice(0, room);
 
   BATTLE.slots[slotKey].push(...take);
   selectedIdx = [];
@@ -784,95 +869,79 @@ function drawWithGem() {
   battleLog(`Spent a gem, drew ${n} card${n > 1 ? 's' : ''}.`);
   saveRun(); render(battleScreen());
 }
-function useAbility(vId) {
-  const v = VEHICLES[vId];
-  if (!v.ability || BATTLE.abilityUsedThisTurn || RUN.energy < v.ability.cost) return;
-  RUN.energy -= v.ability.cost;
-  BATTLE.abilityUsedThisTurn = true;
-  BATTLE.opponentStunned = true;
-  battleLog(`${v.name} used ${v.ability.name}! They won't counter-attack this turn.`);
-  saveRun(); render(battleScreen());
-}
-function executePlayerAttack(instance, attId, index) {
-  const v = VEHICLES[instance.vehicleId];
-  const att = ATTACKS[attId];
-  const slotKey = `${instance.instanceId}:${attId}_${index}`;
+// NOTE: no Item currently defines a Stun-style ability. If you want one, give an Item
+// an `ability: {cost, name}` field and wire a handler the same shape as useAbility used to be.
+
+function executePlayerAttack(itemId, index) {
+  const item = ITEMS[itemId];
+  const slotKey = `${itemId}_${index}`;
   const idxs = BATTLE.slots[slotKey] || [];
 
+  if (item.kind === 'storage') { render(battleScreen()); return; } // storage never attacks
+
   if (!idxs.length) {
-    battleLog(`${v.name} [${att.name}] has no cards assigned.`);
+    battleLog(`${item.name} has no cards assigned.`);
+    render(battleScreen());
+    return;
+  }
+
+  // Enforce this Item's uses-per-turn cap (default 1, raised by tuning its level).
+  BATTLE.itemUses = BATTLE.itemUses || {};
+  const level = itemLevel(itemId);
+  const cap = itemUsesCap(item, level);
+  if ((BATTLE.itemUses[slotKey] || 0) >= cap) {
+    battleLog(`${item.name} has already fired ${cap} time${cap > 1 ? 's' : ''} this turn.`);
     render(battleScreen());
     return;
   }
 
   // Prevent cards already used this turn from being used again.
   if (idxs.some(i => BATTLE.usedThisTurn.has(i))) {
-    battleLog(`One or more cards in ${att.name} were already used this turn.`);
+    battleLog(`One or more cards in ${item.name} were already used this turn.`);
     render(battleScreen());
     return;
   }
 
   const cards = idxs.map(i => BATTLE.hand[i]);
+  const condResult = checkCondition(item.condition, cards);
 
-  let ready = false;
-  let label = '';
-  let mult = 0;
-
-  if (att.straightLen) {
-    ready = cards.length === att.straightLen && isConsecutive(cards);
-    label = ready
-      ? `${att.straightLen}-Card Straight`
-      : 'Not a straight';
-    mult = straightMult(att.straightLen);
-  } else {
-    const evalRes = evaluateHand(cards);
-    ready = evalRes.tier >= att.minTier;
-    label = evalRes.label;
-    mult = evalRes.mult;
-  }
-
-  if (!ready) {
-    battleLog(`${v.name} [${att.name}] — ${label || 'invalid play'}. Requirement unmet.`);
+  if (!condResult.met) {
+    battleLog(`${item.name} — ${condResult.label || 'requirement unmet'}.`);
     render(battleScreen());
     return;
   }
 
-  let amount = damageFor(cards, mult || 1);
+  const amount = computeItemAmount(item, cards, level, condResult);
 
-  // Admin Vehicle Pair Bonus
-  if (att.bonusType === 'admin') {
-    if (cards.length === 2 && evaluateHand(cards).tier === 1) {
-      const pairBonus = 1.5 + (RUN.adminTuneLvl || 0) * 0.5;
-      amount = Math.round(amount * pairBonus);
-    }
-  }
-
-  // Resolve the attack's effect.
-  if (att.kind === 'defense') {
+  // Resolve the Item's effect.
+  if (item.kind === 'defense') {
     BATTLE.playerArmor += amount;
-    battleLog(`${v.name} [${att.name}] — ${label}! +${amount} armor.`);
+    battleLog(`${item.name} — ${condResult.label}! +${amount} armor.`);
 
-  } else if (att.kind === 'poison') {
-    const poisonAmount = Math.round(amount / 2);
+  } else if (item.kind === 'poison') {
     BATTLE.opponent.poisonStacks = BATTLE.opponent.poisonStacks || [];
-    BATTLE.opponent.poisonStacks.push(poisonAmount);
-    battleLog(`${v.name} [${att.name}] — ${label}! Applied ${poisonAmount} poison.`);
+    BATTLE.opponent.poisonStacks.push(amount);
+    battleLog(`${item.name} — ${condResult.label}! Applied ${amount} poison.`);
 
-  } else if (att.kind === 'burn') {
+  } else if (item.kind === 'burn') {
     const stages = [amount, Math.round(amount / 2), Math.round(amount / 4)];
     BATTLE.opponent.burns = BATTLE.opponent.burns || [];
     BATTLE.opponent.burns.push({ stages, stageIdx: 0 });
-    battleLog(`${v.name} [${att.name}] — ${label}! Burn applied for ${stages.join(' + ')} damage (stacks with any existing burn).`);
+    battleLog(`${item.name} — ${condResult.label}! Burn applied for ${stages.join(' + ')} damage (stacks with any existing burn).`);
 
   } else {
     BATTLE.opponent.hpNow = Math.max(0, BATTLE.opponent.hpNow - amount);
-    battleLog(`${v.name} [${att.name}] — ${label}! ${amount} damage.`);
+    battleLog(`${item.name} — ${condResult.label}! ${amount} damage.`);
   }
+
+  // This Item fired — clears any curse on it, and counts against its uses-per-turn cap.
+  if (BATTLE.itemCurses && BATTLE.itemCurses[slotKey]) { delete BATTLE.itemCurses[slotKey]; battleLog(`${item.name}'s curse cleared.`); }
+  BATTLE.itemUses[slotKey] = (BATTLE.itemUses[slotKey] || 0) + 1;
 
   // These cards have now been used this turn.
   idxs.forEach(i => BATTLE.usedThisTurn.add(i));
 
-  // Remove the cards from this attack slot.
+  // Remove the cards from this Item's slot.
   BATTLE.slots[slotKey] = [];
 
   saveRun();
@@ -887,33 +956,44 @@ function executePlayerAttack(instance, attId, index) {
   render(battleScreen());
 }
 function endTurn() {
-  // Resolve any cards the opponent cursed on a previous turn: played it, curse clears; left it, take the hit.
-  BATTLE.hand.forEach((c, i) => {
-  if (c.curse) {
-    if (BATTLE.usedThisTurn.has(i)) {
-      battleLog(`Cursed ${rankLabel(c.rank)}${c.suit} played — curse cleared.`);
-    } else {
-      RUN.health = Math.max(0, RUN.health - c.curse);
-      battleLog(`Cursed ${rankLabel(c.rank)}${c.suit} left unplayed — you take ${c.curse} damage! Health: ${RUN.health}/${RUN.maxHealth}.`);
-    }
-    delete c.curse;
+  // Resolve any Items the opponent cursed last turn: fired this turn, curse already cleared
+  // in executePlayerAttack; never fired, it deals its damage now.
+  if (BATTLE.itemCurses) {
+    Object.entries(BATTLE.itemCurses).forEach(([slotKey, amount]) => {
+      const itemId = slotKey.replace(/_\d+$/, '');
+      const item = ITEMS[itemId];
+      RUN.health = Math.max(0, RUN.health - amount);
+      battleLog(`${item ? item.name : 'Cursed item'} never fired — you take ${amount} damage! Health: ${RUN.health}/${RUN.maxHealth}.`);
+    });
+    BATTLE.itemCurses = {};
   }
-});
 
   if (BATTLE.turnDiscard.length) battleLog(`Discarded ${BATTLE.turnDiscard.length} card${BATTLE.turnDiscard.length > 1 ? 's' : ''}.`);
-  const evvanUsed = (BATTLE.slots.evvan || []).length > 0 && evaluateHand((BATTLE.slots.evvan || []).map(i => BATTLE.hand[i])).tier >= VEHICLES.evvan.minTier;
+
+  // Storage Items keep their cards turn to turn — remember them by object identity so we
+  // can relink them to their new array positions after the hand gets spliced below.
+  const preservedStorage = {};
+  Object.entries(BATTLE.slots).forEach(([key, idxs]) => {
+    const itemId = key.replace(/_\d+$/, '');
+    const item = ITEMS[itemId];
+    if (item && item.kind === 'storage' && idxs.length) preservedStorage[key] = idxs.map(i => BATTLE.hand[i]);
+  });
+
   const allRemove = new Set([...BATTLE.usedThisTurn, ...BATTLE.turnDiscard]);
   const sorted = [...allRemove].sort((a, b) => b - a);
-  let refunded = false;
   for (const i of sorted) {
-    if (evvanUsed && !refunded && BATTLE.usedThisTurn.has(i)) { refunded = true; continue; }
     BATTLE.discard.push(BATTLE.hand[i]);
     BATTLE.hand.splice(i, 1);
   }
+
   BATTLE.slots = {};
-BATTLE.turnDiscard = [];
-BATTLE.usedThisTurn = new Set();
-selectedIdx = [];
+  Object.entries(preservedStorage).forEach(([key, cards]) => {
+    BATTLE.slots[key] = cards.map(c => BATTLE.hand.indexOf(c)).filter(i => i !== -1);
+  });
+  BATTLE.turnDiscard = [];
+  BATTLE.usedThisTurn = new Set();
+  BATTLE.itemUses = {};
+  selectedIdx = [];
 
   if (BATTLE.opponent.hpNow <= 0) { winBattle(); return; }
 
@@ -1152,7 +1232,7 @@ function mapScreen() {
 
   return `${noticeHTML()}
   <div class="panel">
-    <div class="hdr"><span>Health: ${RUN.health}/${RUN.maxHealth}</span><span>Vehicles: ${RUN.ownedVehicles.length}/${RUN.vehicleCap}</span></div>
+    <div class="hdr"><span>Health: ${RUN.health}/${RUN.maxHealth}</span><span>Items: ${RUN.hero.items.length}/${RUN.itemCap}</span></div>
     ${currencyBar()}
     <div class="hdr" style="margin-top:8px"><span>World 1 - City Fleet (21 spaces)</span><span>Tap a stop to see details.</span></div>
     <div class="mapwrap" style="width:100%;height:${totalH}px;overflow-x:auto;overflow-y:hidden">
@@ -1177,73 +1257,67 @@ function battleScreen() {
     ? `<div class="card ${c.color === 'red' ? 'red' : ''}"><div>${rankLabel(c.rank)}</div><div style="font-size:16px">${c.suit}</div></div>`
     : `<div class="card back"></div>`).join('') || '<span class="note" style="margin:0">empty</span>';
 
-  const vehicleHTML = RUN.ownedVehicles.map(instance => {
-    const v = VEHICLES[instance.vehicleId];
-    const instanceId = instance.instanceId;
-    const liveAttacks = instance.attacks || v.starterAttacks || [];
-    // Render each individual attack fitted onto this vehicle hull
-    const attacksHTML = liveAttacks.map((attId, index) => {
-      const att = ATTACKS[attId];
-      if (!att) return `<div class="attack-slot error">Missing Attack Data: ${attId}</div>`;
-        
-      // Dynamic unique compound key allowing multiple copies of the same attack type
-      const slotKey = `${instanceId}:${attId}_${index}`;
-      const idxs = BATTLE.slots[slotKey] || [];
-      const cards = idxs.map(i => BATTLE.hand[i]);
-      
-      let ready = false, label = '', mult = 0;
-      if (att.straightLen) {
-        ready = cards.length === att.straightLen && isConsecutive(cards);
-        label = ready ? `${att.straightLen}-Card Straight` : (cards.length ? 'Not a straight' : '');
-        mult = straightMult(att.straightLen);
-      } else {
-        const evalRes = cards.length ? evaluateHand(cards) : null;
-        ready = evalRes && evalRes.tier >= att.minTier;
-        label = evalRes ? evalRes.label : '';
-        mult = evalRes ? evalRes.mult : 0;
-      }
+  const hero = HEROES[RUN.hero.heroId];
+  const itemsHTML = RUN.hero.items.map((itemId, index) => {
+    const item = ITEMS[itemId];
+    if (!item) return `<div class="shopcard error">Missing Item Data: ${itemId}</div>`;
 
-      let preview = 0;
-      if (ready) {
-        preview = damageFor(cards, mult || 1);
-        if (att.bonusType === 'admin') {
-          preview = Math.round(preview * (1.5 + (RUN.adminTuneLvl || 0) * 0.5));
-        }
-      }
+    const slotKey = `${itemId}_${index}`;
+    const idxs = BATTLE.slots[slotKey] || [];
+    const cards = idxs.map(i => BATTLE.hand[i]);
+    const level = itemLevel(itemId);
+    const cursedAmt = BATTLE.itemCurses && BATTLE.itemCurses[slotKey];
 
-      const effectWord = att.kind === 'defense' ? 'armor' : att.kind === 'poison' ? 'poison' : 'dmg';
+    if (item.kind === 'storage') {
       const cardHTML = idxs.map(cardHandIdx => {
         const c = BATTLE.hand[cardHandIdx];
-        return `<div class="card mini ${c.color === 'red' ? 'red' : ''}" data-unassign="${slotKey}|${cardHandIdx}">${rankLabel(c.rank)}${c.suit}</div>`;
-      }).join('') || `<span class="note" style="margin:0">Tap cards here</span>`;
-
-            return `<div class="shopcard ${ready ? 'ready' : ''}" data-assign="${slotKey}" style="margin-top:6px; border:1px dashed var(--blue)"
-        ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleCardDrop(event,'${slotKey}',${att.slot})">
-        <div class="hdr" style="font-weight:600; color:var(--blue-dark)">${att.name}</div>
-        <div class="note" style="font-size:11px">${att.note}</div>
+        return `<div class="card mini ${c.color === 'red' ? 'red' : ''}" data-unassign="${slotKey}|${cardHandIdx}" title="Click to take this card back">${rankLabel(c.rank)}${c.suit}</div>`;
+      }).join('') || `<span class="note" style="margin:0">Drag or tap cards to store them</span>`;
+      return `<div class="shopcard" data-assign="${slotKey}" style="margin-top:6px;border:1px dashed var(--purple)"
+          ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleCardDrop(event,'${slotKey}',${item.maxStore})">
+        <div class="hdr" style="font-weight:600;color:var(--purple)">${item.name} (storage)</div>
+        <div class="note" style="font-size:11px">${item.note}</div>
         <div class="vcards">${cardHTML}</div>
-        ${label ? `<div class="note" style="margin:4px 0 0; color:var(--green)">${label}${ready ? ` ✓ ${preview} ${effectWord}` : ' ✗'}</div>` : ''}
-        <div style="margin-top:4px">
-          ${idxs.length ? `<button class="wo-btn gray" style="padding:3px 6px;font-size:10px" data-clear="${slotKey}">Clear</button>` : ''}
-          ${ready ? `<span class="attackChip" data-attack="${slotKey}" style="font-size:10px; padding:3px 6px">Attack ▶</span>` : ''}
-        </div>
+        <div class="note" style="margin:4px 0 0">Holding ${idxs.length}/${item.maxStore}</div>
       </div>`;
-    }).join('');
+    }
 
-    return `<div class="vslot" style="width:220px; cursor:default">
-      <div class="vname">${art(v, 18)} ${v.name}</div>
-      <div class="vreq" style="font-size:11px; color:var(--dim)">Attacks (${instance.attacks.length}/${v.maxAttacks}):</div>
-      ${attacksHTML}
+    const condResult = cards.length ? checkCondition(item.condition, cards) : { met: false, label: '' };
+    const ready = condResult.met;
+    const preview = ready ? computeItemAmount(item, cards, level, condResult) : 0;
+    const effectWord = item.kind === 'defense' ? 'armor' : item.kind === 'poison' ? 'poison' : item.kind === 'burn' ? 'burn' : 'dmg';
+    const cap = itemUsesCap(item, level);
+    const usesLeft = cap - ((BATTLE.itemUses && BATTLE.itemUses[slotKey]) || 0);
+    const cardHTML = idxs.map(cardHandIdx => {
+      const c = BATTLE.hand[cardHandIdx];
+      return `<div class="card mini ${c.color === 'red' ? 'red' : ''}" data-unassign="${slotKey}|${cardHandIdx}">${rankLabel(c.rank)}${c.suit}</div>`;
+    }).join('') || `<span class="note" style="margin:0">Tap cards here</span>`;
+
+    return `<div class="shopcard ${ready ? 'ready' : ''}" data-assign="${slotKey}" style="margin-top:6px; border:1px dashed ${cursedAmt ? 'var(--purple)' : 'var(--blue)'}"
+        ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleCardDrop(event,'${slotKey}',${item.maxCards})">
+      <div class="hdr" style="font-weight:600; color:var(--blue-dark)">${item.name}${cursedAmt ? ` <span class="vart" style="width:12px;height:12px;font-size:12px;color:var(--purple)">${ICON.curse}</span> cursed` : ''}</div>
+      <div class="note" style="font-size:11px">${item.note}${level ? ` (Lv ${level})` : ''}</div>
+      <div class="vcards">${cardHTML}</div>
+      ${cards.length ? `<div class="note" style="margin:4px 0 0; color:var(--green)">${condResult.label}${ready ? ` ✓ ${preview} ${effectWord}` : ' ✗'}</div>` : ''}
+      <div class="note" style="margin:2px 0 0">${usesLeft > 0 ? `${usesLeft}/${cap} use${cap > 1 ? 's' : ''} left this turn` : 'No uses left this turn'}</div>
+      <div style="margin-top:4px">
+        ${idxs.length ? `<button class="wo-btn gray" style="padding:3px 6px;font-size:10px" data-clear="${slotKey}">Clear</button>` : ''}
+        ${ready && usesLeft > 0 ? `<span class="attackChip" data-attack="${slotKey}" style="font-size:10px; padding:3px 6px">Attack ▶</span>` : ''}
+      </div>
     </div>`;
   }).join('');
+  const heroHTML = `<div class="vslot" style="width:220px; cursor:default">
+    <div class="vname">${art(hero, 18)} ${hero.name}</div>
+    <div class="vreq" style="font-size:11px; color:var(--dim)">Items (${RUN.hero.items.length}/${RUN.itemCap}):</div>
+    ${itemsHTML}
+  </div>`;
 
   const assignedIdx = new Set(Object.values(BATTLE.slots).flat());
   const handHTML = BATTLE.hand.map((c, i) => {
     if (assignedIdx.has(i) || BATTLE.turnDiscard.includes(i) || BATTLE.usedThisTurn.has(i)) return '';
-    return `<div class="card ${c.color === 'red' ? 'red' : ''} ${selectedIdx.includes(i) ? 'selected' : ''} ${c.curse ? 'cursed' : ''}" data-card="${i}" draggable="true"
-      ondragstart="event.dataTransfer.setData('text/plain','${i}');this.classList.add('dragging')" ondragend="this.classList.remove('dragging')" style="position:relative" ${c.curse ? `title="Cursed! Play this card or take ${c.curse} damage at end of turn."` : ''}>
+    return `<div class="card ${c.color === 'red' ? 'red' : ''} ${selectedIdx.includes(i) ? 'selected' : ''}" data-card="${i}" draggable="true"
+      ondragstart="event.dataTransfer.setData('text/plain','${i}');this.classList.add('dragging')" ondragend="this.classList.remove('dragging')" style="position:relative">
     ${c.bonus ? `<div style="position:absolute;bottom:1px;right:2px;font-size:8px;color:var(--green)">+${c.bonus}</div>` : ''}
-    ${c.curse ? `<div style="position:absolute;top:-6px;right:-6px;width:14px;height:14px;color:var(--purple)">${ICON.curse}</div>` : ''}
     <div>${rankLabel(c.rank)}</div><div style="font-size:16px">${c.suit}</div>
   </div>`;
   }).join('');
@@ -1293,7 +1367,7 @@ function battleScreen() {
             <span>Drag cards or tap to select</span>
           </div>
           <div class="grid" style="grid-template-columns:repeat(2,minmax(0,1fr));">
-            ${vehicleHTML}
+            ${heroHTML}
           </div>
         </div>
       </div>
@@ -1358,28 +1432,25 @@ function nodeResultScreen(won, rewards) {
 }
 
 function shopScreen(fromCastle=false) {
-  const owned = new Set(RUN.ownedVehicles.map(inst => inst.vehicleId));
-  const atCap = RUN.ownedVehicles.length >= RUN.vehicleCap;
-  const options = Object.values(VEHICLES).filter(v => !owned.has(v.id) && v.cost > 0);
+  const owned = new Set(RUN.hero.items);
+  const atCap = RUN.hero.items.length >= RUN.itemCap;
+  const options = Object.values(ITEMS).filter(it => !owned.has(it.id) && it.cost > 0);
   const shown = shuffle([...options]).slice(0, 3);
-  const vehicleRows = shown.map(v => {
-    const noteText = (v.starterAttacks || []).map(aid => ATTACKS[aid]?.note).filter(Boolean).join(' ');
-    return `<div class="shopcard">
-      <div class="hdr"><span>${art(v, 18)} ${v.name}</span><span class="price">${v.cost} coins</span></div>
-      <div class="note" style="margin:0 0 6px">${noteText}</div>
-      <button class="wo-btn amber" data-buy="${v.id}" data-cost="${v.cost}" ${RUN.chips < v.cost || atCap ? 'disabled' : ''} style="padding:8px 12px;font-size:13px">${atCap ? 'Garage full' : 'Purchase'}</button>
-    </div>`;
-  }).join('') || '<div class="note">No new vehicles in stock right now.</div>';
+  const itemRows = shown.map(it => `<div class="shopcard">
+      <div class="hdr"><span>${it.name}</span><span class="price">${it.cost} coins</span></div>
+      <div class="note" style="margin:0 0 6px">${it.note}</div>
+      <button class="wo-btn amber" data-buy="${it.id}" data-cost="${it.cost}" ${RUN.chips < it.cost || atCap ? 'disabled' : ''} style="padding:8px 12px;font-size:13px">${atCap ? 'No open item slot' : 'Purchase'}</button>
+    </div>`).join('') || '<div class="note">No new Items in stock right now.</div>';
 
   return `${noticeHTML()}
     <div class="wo">
       <div class="wo-stripe"></div>
       <div class="wo-body">
         <div class="wo-eyebrow">Dealership</div>
-        <h1>Purchase a <em>New Vehicle</em></h1>
+        <h1>Purchase a <em>New Item</em></h1>
         ${currencyBar()}
-        <div class="hdr" style="margin-top:10px"><span>Vehicles (${RUN.ownedVehicles.length}/${RUN.vehicleCap} garage slots)</span><span></span></div>
-        <div style="margin:6px 0 12px">${vehicleRows}</div>
+        <div class="hdr" style="margin-top:10px"><span>Items (${RUN.hero.items.length}/${RUN.itemCap} item slots)</span><span></span></div>
+        <div style="margin:6px 0 12px">${itemRows}</div>
         <button class="wo-btn" id="leaveShopBtn">${fromCastle ? "Back to Castle" : "Back on the Road"}</button>
       </div>
     </div>
@@ -1401,9 +1472,16 @@ function garageScreen() {
 }
 
 function blacksmithScreen() {
-  const adminLvl = RUN.adminTuneLvl || 0;
-  const adminCost = 40 * Math.pow(2, adminLvl);
-  const adminTune = `<div class="shopcard"><div class="hdr"><span>${art(VEHICLES.admin, 16)} Admin Vehicle Pair Bonus (Lv ${adminLvl})</span><span class="price">${adminCost} coins</span></div><div class="note">Current Pair bonus: +${50 + adminLvl*50}%. Each tune doubles in cost. Resets next run.</div><button class="wo-btn purple" id="adminTuneBtn" ${RUN.chips<adminCost?'disabled':''}>Tune Admin Vehicle</button></div>`;
+  const itemTuneRows = RUN.hero.items.filter((id, i, arr) => arr.indexOf(id) === i) // unique equipped item ids
+    .map(itemId => ITEMS[itemId])
+    .filter(item => item && item.bonus)
+    .map(item => {
+      const lvl = itemLevel(item.id);
+      const maxed = lvl >= item.bonus.maxLevel;
+      const cost = maxed ? 0 : 40 * Math.pow(2, lvl);
+      const curPct = Math.round((item.bonus.base + item.bonus.perLevel * lvl) * 100);
+      return `<div class="shopcard"><div class="hdr"><span>${item.name} Bonus (Lv ${lvl}/${item.bonus.maxLevel})</span><span class="price">${maxed ? 'MAX' : cost + ' coins'}</span></div><div class="note">Current bonus: +${curPct}%. Each tune doubles in cost. Resets next run.</div>${maxed ? '' : `<button class="wo-btn purple" data-itemtune="${item.id}" data-itemtunecost="${cost}" ${RUN.chips < cost ? 'disabled' : ''}>Tune ${item.name}</button>`}</div>`;
+    }).join('') || `<div class="note">None of your equipped Items have a tunable bonus yet.</div>`;
   const rows = BLACKSMITH_OPTIONS.map((c, i) => {
     const b = findBoost(c.rank, c.suit);
     const bonus = b ? b.bonus : 0;
@@ -1444,7 +1522,7 @@ function blacksmithScreen() {
         <h1>Tune Your <em>Fleet</em></h1>
         <div class="wo-sub">${visitNote}</div>
         ${currencyBar()}
-        <div style="margin:12px 0">${adminTune}${rows}</div>
+        <div style="margin:12px 0">${itemTuneRows}${rows}</div>
         <button class="wo-btn" id="leaveBlacksmithBtn">Back on the Road</button>
       </div>
     </div>
@@ -1483,13 +1561,14 @@ function runEndScreen(won, bonus) {
 
 function starterSelectScreen() {
   const cards = STARTERS.map(id => {
-    const v = VEHICLES[id];
+    const hero = HEROES[id];
     const unlocked = isStarterUnlocked(id);
+    const startItemNote = (hero.starterItems || []).map(iid => ITEMS[iid]?.note).filter(Boolean).join(' ');
     return `<div class="pickcard ${unlocked ? '' : 'locked'}">
-      <div class="picon">${unlocked ? art(v, 46) : `<span class="vart" style="width:46px;height:46px;font-size:46px">${ICON.lock}</span>`}</div>
-      <div class="pname">${v.name}</div>
-      <div class="ptag">${unlocked ? v.note : starterLockNote(id)}</div>
-      ${unlocked ? `<button class="wo-btn amber" data-pick="${v.id}" style="padding:8px 12px;font-size:13px;width:100%">Choose</button>` : ''}
+      <div class="picon">${unlocked ? art(hero, 46) : `<span class="vart" style="width:46px;height:46px;font-size:46px">${ICON.lock}</span>`}</div>
+      <div class="pname">${hero.name}</div>
+      <div class="ptag">${unlocked ? startItemNote : starterLockNote(id)}</div>
+      ${unlocked ? `<button class="wo-btn amber" data-pick="${hero.id}" style="padding:8px 12px;font-size:13px;width:100%">Choose</button>` : ''}
     </div>`;
   }).join('');
   return `
@@ -1497,8 +1576,8 @@ function starterSelectScreen() {
       <div class="wo-stripe"></div>
       <div class="wo-body">
         <div class="wo-eyebrow">Before You Roll Out</div>
-        <h1>Pick Your <em>Starter</em></h1>
-        <div class="wo-sub">Each vehicle fights one way. More unlock permanently as you play.</div>
+        <h1>Pick Your <em>Hero</em></h1>
+        <div class="wo-sub">Each Hero starts with one Item. Buy more Items and item slots as you play.</div>
         <div class="grid" style="margin:12px 0">${cards}</div>
       </div>
     </div>
@@ -1580,21 +1659,9 @@ function render(html) {
   app.querySelectorAll('[data-attack]').forEach(el => {
   el.onclick = (e) => {
     e.stopPropagation();
-
-    const parts = el.dataset.attack.split(':');
-    const instanceId = parts[0];
-    const attackPart = parts.slice(1).join(':');
-    const match = attackPart.match(/^(.+)_(\d+)$/);
-
+    const match = el.dataset.attack.match(/^(.+)_(\d+)$/);
     if (!match) return;
-
-    const attId = match[1];
-    const index = Number(match[2]);
-
-    const instance = RUN.ownedVehicles.find(v => v.instanceId === instanceId);
-    if (!instance) return;
-
-    executePlayerAttack(instance, attId, index);
+    executePlayerAttack(match[1], Number(match[2]));
   };
 });
   const endTurnBtn = document.getElementById('endTurnBtn'); if (endTurnBtn) endTurnBtn.onclick = () => { endTurn(); };
@@ -1687,7 +1754,13 @@ function render(html) {
     else render(castleMatchScreen());
   });
   const leaveShopBtn = document.getElementById('leaveShopBtn'); if (leaveShopBtn) leaveShopBtn.onclick = () => render(RETURN_TO_CASTLE_MENU ? castleMenuScreen() : mapScreen());
-  const adminTuneBtn = document.getElementById('adminTuneBtn'); if (adminTuneBtn) adminTuneBtn.onclick = () => { const lvl=RUN.adminTuneLvl||0; const cost=40*Math.pow(2,lvl); if(RUN.chips<cost)return; RUN.chips-=cost; RUN.adminTuneLvl=lvl+1; saveRun(); render(blacksmithScreen()); };
+  app.querySelectorAll('[data-itemtune]').forEach(el => el.onclick = () => {
+    const itemId = el.dataset.itemtune; const cost = +el.dataset.itemtunecost;
+    if (RUN.chips < cost) return;
+    RUN.chips -= cost;
+    RUN.itemLevels[itemId] = (RUN.itemLevels[itemId] || 0) + 1;
+    saveRun(); render(blacksmithScreen());
+  });
   const leaveBlacksmithBtn = document.getElementById('leaveBlacksmithBtn'); if (leaveBlacksmithBtn) leaveBlacksmithBtn.onclick = () => { BLACKSMITH_OPTIONS = null; BLACKSMITH_VISIT = null; render(RETURN_TO_CASTLE_MENU ? castleMenuScreen() : mapScreen()); };
   const leaveTreasureBtn = document.getElementById('leaveTreasureBtn'); if (leaveTreasureBtn) leaveTreasureBtn.onclick = () => render(mapScreen());
   app.querySelectorAll('[data-forge]').forEach(el => el.onclick = () => {
@@ -1708,20 +1781,10 @@ function render(html) {
   });
     app.querySelectorAll('[data-buy]').forEach(el => el.onclick = () => {
     const cost = +el.dataset.cost;
-    if (RUN.chips < cost || RUN.ownedVehicles.length >= RUN.vehicleCap) return;
-    
+    if (RUN.chips < cost || RUN.hero.items.length >= RUN.itemCap) return;
     RUN.chips -= cost;
-    
-    const vehicleId = el.dataset.buy;
-    const baseV = VEHICLES[vehicleId];
-    
-    RUN.ownedVehicles.push({
-      instanceId: 'v_shop_' + Math.random().toString(36).substr(2, 4),
-      vehicleId: vehicleId,
-      attacks: [...baseV.starterAttacks]
-    });
-
-    saveRun(); 
+    RUN.hero.items.push(el.dataset.buy);
+    saveRun();
     render(shopScreen());
   });
 
@@ -1729,7 +1792,7 @@ function render(html) {
   const restBtn = document.getElementById('restBtn'); if (restBtn) restBtn.onclick = () => { RUN.health = Math.min(RUN.maxHealth, RUN.health + 30); saveRun(); render(mapScreen()); };
   const backToMetaBtn = document.getElementById('backToMetaBtn'); if (backToMetaBtn) backToMetaBtn.onclick = () => render(metaScreen());
   const startRunBtn = document.getElementById('startRunBtn'); if (startRunBtn) startRunBtn.onclick = () => { clearRunSave(); render(starterSelectScreen()); };
-  const continueRunBtn = document.getElementById('continueRunBtn'); if (continueRunBtn) continueRunBtn.onclick = () => { RUN = loadRunSave(); RUN.maxGems=10; RUN.maxFuel=20; RUN.maxEnergy=20; RUN.handSize=7+(META.levels.handCap||0)*2; RUN.drawPerTurn=2+(META.levels.draw||0); RUN.gems=Math.min(RUN.maxGems,RUN.gems||0); RUN.fuel=Math.min(RUN.maxFuel,RUN.fuel||0); RUN.energy=Math.min(RUN.maxEnergy,RUN.energy||0); RUN.adminTuneLvl=RUN.adminTuneLvl||0; saveRun(); render(mapScreen()); };
+  const continueRunBtn = document.getElementById('continueRunBtn'); if (continueRunBtn) continueRunBtn.onclick = () => { RUN = loadRunSave(); RUN.maxGems=10; RUN.maxFuel=20; RUN.maxEnergy=20; RUN.handSize=7+(META.levels.handCap||0)*2; RUN.drawPerTurn=2+(META.levels.draw||0); RUN.gems=Math.min(RUN.maxGems,RUN.gems||0); RUN.fuel=Math.min(RUN.maxFuel,RUN.fuel||0); RUN.energy=Math.min(RUN.maxEnergy,RUN.energy||0); RUN.itemLevels=RUN.itemLevels||{}; saveRun(); render(mapScreen()); };
   app.querySelectorAll('[data-pick]').forEach(el => el.onclick = () => initRunWithStarter(el.dataset.pick));
 }
 

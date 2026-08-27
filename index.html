@@ -112,7 +112,7 @@
   .card.cursed{outline:2px solid var(--purple)}
   .card.mini{width:30px;height:42px;font-size:11px;cursor:pointer}
   .card.mini div:last-child{font-size:13px !important}
-  .card.back{background:var(--blue);color:transparent;position:relative;margin:0 auto}
+  .card.back{background:var(--blue);color:transparent;position:relative}
   .card.back::after{content:'?';color:var(--white);position:absolute;font-size:16px}
   .card.back.mini::after{font-size:12px}
 
@@ -1251,7 +1251,7 @@ function winBattle(outlast) {
   RUN.chips += chipReward; RUN.gems = Math.min(RUN.maxGems, RUN.gems + gemReward); RUN.fuel = Math.min(RUN.maxFuel, RUN.fuel + fuelReward);
   earnPoints(pointsReward);
   battleLog(outlast ? `You outlasted the ${BATTLE.opponent.name}!` : `${BATTLE.opponent.name} is done for!`);
-  if (exactKillBonus) battleLog(`Perfect elimination — exact kill bonus: +25 coins, +15 Career Points!`);
+  if (exactKillBonus) battleLog(`Perfect elimination bonus: +25 coins, +15 Career Points!`);
   battleLog(`+${chipReward} coins, +${gemReward} gems, +${fuelReward} fuel, +${pointsReward} Career Points.`);
   render(nodeResultScreen(true, { chipReward, gemReward, fuelReward, pointsReward, exactKillBonus }));
 }
@@ -1310,7 +1310,12 @@ function nodePopupScreen(r, c) {
       <div class="cur fuel">${ICON.fuel} ${info.rewards.fuelReward} fuel</div>
       <div class="cur pts">${ICON.star} ${info.rewards.pointsReward} Career Points</div>
     </div>
-    <div class="note" style="margin-top:6px">Exact kill bonus: +25 coins, +15 Career Points for a perfectly lethal hit.</div>` : '';
+    <div class="hdr" style="margin-top:8px"><span>Perfect Elimination Bonus:</span><span></span></div>
+    <div class="currencies">
+      <div class="cur chip">${ICON.coin} +25 coins</div>
+      <div class="cur pts">${ICON.star} +15 Career Points</div>
+    </div>
+    <div class="note" style="margin-top:4px">Awarded when your final hit exactly matches their remaining HP.</div>` : '';
   return `<div class="treasure-modal">
     <div class="wo" style="max-width:420px;width:100%">
       <div class="wo-stripe"></div>
@@ -1568,16 +1573,30 @@ function tryDispatch() {
 }
 
 function nodeResultScreen(won, rewards) {
-  const rewardLine = won ? `+${rewards.chipReward} coins, +${rewards.gemReward} gems, +${rewards.fuelReward} fuel, +${rewards.pointsReward} Career Points.` : `Your health ran out. Run ends here.`;
+  const rewardsHTML = won ? `
+    <div class="hdr" style="margin-top:10px"><span>Rewards</span><span></span></div>
+    <div class="currencies">
+      <div class="cur chip">${ICON.coin} ${rewards.chipReward} coins</div>
+      <div class="cur gem">${ICON.gem} ${rewards.gemReward} gems</div>
+      <div class="cur fuel">${ICON.fuel} ${rewards.fuelReward} fuel</div>
+      <div class="cur pts">${ICON.star} ${rewards.pointsReward} Career Points</div>
+    </div>
+    ${rewards.exactKillBonus ? `
+    <div class="hdr" style="margin-top:8px"><span>Perfect Elimination Bonus</span><span></span></div>
+    <div class="currencies">
+      <div class="cur chip">${ICON.coin} +25 coins</div>
+      <div class="cur pts">${ICON.star} +15 Career Points</div>
+    </div>
+    <div class="note" style="margin-top:4px">Your final hit exactly matched their remaining HP.</div>` : ''}
+  ` : `<div class="wo-sub">Your health ran out. Run ends here.</div>`;
   return `
     <div class="wo">
       <div class="wo-stripe"></div>
       <div class="wo-body">
         <div class="wo-eyebrow">${won ? 'Battle Won' : 'Battle Lost'}</div>
         <h1>${won ? 'Nice <em>Work</em>' : 'Fleet <em>Beaten</em>'}</h1>
-        ${rewards.exactKillBonus ? `<div class="note" style="color:var(--green);font-weight:700">Perfect elimination! Exact kill bonus included.</div>` : ''}
-        <div class="wo-sub">${rewardLine}</div>
-        ${won ? `<button class="wo-btn" id="continueBtn" style="width:100%">Continue</button>`
+        ${rewardsHTML}
+        ${won ? `<button class="wo-btn" id="continueBtn" style="width:100%;margin-top:12px">Continue</button>`
               : `<button class="wo-btn" id="continueBtn" style="width:100%">See Run Summary</button>`}
       </div>
     </div>

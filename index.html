@@ -613,10 +613,10 @@ const WORLD_COUNT = 1;
 function pickNodeType(forcedType) {
   if (forcedType) return forcedType;
   const r = Math.random();
-  if (r < 0.55) return 'battle';
-  if (r < 0.68) return 'rest';
-  if (r < 0.80) return 'blacksmith';
-  if (r < 0.90) return 'chopshop';
+  if (r < 0.70) return 'battle';
+  if (r < 0.80) return 'rest';
+  if (r < 0.88) return 'blacksmith';
+  if (r < 0.94) return 'chopshop';
   return 'treasure';
 }
 function generateMap() {
@@ -757,10 +757,10 @@ function castleDungeonScreen(message='') {
       <h1>Battle <em>Challenge</em></h1>
       ${currencyBar()}
       ${message ? `<div class="panel"><div class="note">${message}</div></div>` : ''}
-      <div class="shopcard"><h3>Battle Challenge</h3><div class="note">Fight the Castle Guard. Win for a solid reward, then choose whether to risk a second, harder battle for a much larger reward.</div>
-        <button class="wo-btn amber" id="castleBattle1Btn" ${CASTLE_STATE?.firstDone?'disabled':''}>${CASTLE_STATE?.firstDone?'First Battle Won':'Battle 1'}</button>
+      <div class="shopcard"><h3>Battle Challenge</h3><div class="note">Win the first battle to earn the listed reward, then choose whether to risk a second, harder battle for a larger reward.</div>
+        <div class="currencies"><div class="cur chip">${ICON.coin} 30 coins</div><div class="cur gem">${ICON.gem} 2 gems</div><div class="cur fuel">${ICON.fuel} 6 fuel</div></div><button class="wo-btn amber" id="castleBattle1Btn" ${CASTLE_STATE?.firstDone?'disabled':''}>${CASTLE_STATE?.firstDone?'First Battle Won':'Battle 1'}</button>
       </div>
-      ${CASTLE_STATE?.firstDone && !CASTLE_STATE?.secondDone ? `<div class="shopcard"><h3>High-Roller Battle</h3><div class="note">The second fight is harder, but the reward is much larger.</div><button class="wo-btn amber" id="castleBattle2Btn">Battle 2</button></div>` : ''}
+      ${CASTLE_STATE?.firstDone && !CASTLE_STATE?.secondDone ? `<div class="shopcard"><h3>High-Roller Battle</h3><div class="note">The second fight is harder and awards a random Item Card.</div><div class="currencies"><div class="cur chip">${ICON.coin} 70 coins</div><div class="cur gem">${ICON.gem} 4 gems</div><div class="cur fuel">${ICON.fuel} 10 fuel</div><div class="cur pts">Random Item Card</div></div><button class="wo-btn amber" id="castleBattle2Btn">Battle 2</button></div>` : ''}
       <button class="wo-btn gray" id="backToCastleMenuBtn">Back to Castle Menu</button>
     </div>
   </div>`;
@@ -1005,7 +1005,8 @@ function drawWithGem() {
     if (!BATTLE.deck.length) { if (!BATTLE.discard.length) break; BATTLE.deck = shuffle(BATTLE.discard); BATTLE.discard = []; }
     BATTLE.hand.push(BATTLE.deck.pop());
   }
-  battleLog(`Spent a gem, drew ${n} card${n > 1 ? 's' : ''}.`);
+  const drawn = BATTLE.hand.slice(-n).map(c => `${rankLabel(c.rank)}${c.suit}`).join(' ');
+  battleLog(`Spent a gem: Drew ${drawn || 'no cards'}.`);
   resortHandAndRelink(RUN.handSortMode);
   saveRun(); render(battleScreen());
 }
@@ -1472,7 +1473,7 @@ function battleScreen() {
 
     return `<div class="itemCard ${ready ? 'ready' : ''}" data-assign="${slotKey}" style="border:2px dashed ${cursedAmt ? 'var(--purple)' : 'var(--blue)'}"
         ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleCardDrop(event,'${slotKey}',${effectiveMaxCards(item)})">
-      <div class="hdr" style="font-weight:600; color:var(--blue-dark)">${item.name}${cursedAmt ? ` <span class="vart" style="width:12px;height:12px;font-size:12px;color:var(--purple)">${ICON.curse}</span> cursed` : ''}</div>
+      <div class="hdr" style="font-weight:600; color:${eKind==='poison'?'#4d8f45':eKind==='burn'?'#c4472d':eKind==='curse'?'#7a4aa8':'var(--blue-dark)'}">${item.name}${cursedAmt ? ` <span class="vart" style="width:12px;height:12px;font-size:12px;color:var(--purple)">${ICON.curse}</span> cursed` : ''}</div>
       <div class="itemReqLine">${itemRequirementText(item)}</div>
       ${bonusLine}
       <div class="vcards">${cardHTML}</div>
@@ -1813,7 +1814,7 @@ function chopShopScreen(returnTo) {
     const current=RUN.itemKindOverride[itemId];
     const buttons=current ? `<span class="note">Already modified to <b>${current}</b>. No further modification this run.</span>` :
       ['poison','burn','curse'].map(k=>`<button class="wo-btn ${k==='poison'?'':'purple'}" data-kindconvert="${itemId}" data-item-index="${index}" data-kindto="${k}" style="padding:7px 10px;font-size:12px" ${RUN.chips<itemKindConvertCost()?'disabled':''}>Convert to ${k[0].toUpperCase()+k.slice(1)} (${itemKindConvertCost()} coins)</button>`).join('');
-    return `<div class="shopcard"><div class="hdr"><span>${item.name}</span><span>Item ${index+1}</span></div><div class="note">Add one special effect to this Item. This modification cannot be refunded or changed during the run.</div><div style="display:flex;gap:8px;flex-wrap:wrap">${buttons}</div></div>`;
+    return `<div class="shopcard"><div class="hdr"><span>${item.name}</span><span>Item ${index+1}</span></div><div class="note">Add one special effect to this Item only. This cannot be refunded or changed during the run.</div><div style="display:flex;gap:8px;flex-wrap:wrap">${buttons}</div></div>`;
   }).join('');
   return `${noticeHTML()}<div class="wo"><div class="wo-stripe"></div><div class="wo-body">
     <button class="wo-btn gray" id="leaveChopShopBtn" style="width:100%;margin-bottom:10px">${RETURN_TO_CASTLE_MENU?'Back to Castle':'Back to Road'}</button>
@@ -1984,6 +1985,14 @@ function render(html) {
     render(chopShopScreen());
   });
 
+  app.querySelectorAll('[data-leveldown]').forEach(el => el.onclick = () => {
+    const u = UPGRADE_DEFS.find(x => x.id === el.dataset.leveldown);
+    const lvl = META.levels[u.id];
+    if (lvl <= 0) return;
+    const refund = upgradeCost(u, lvl - 1);
+    META.levels[u.id]--; META.points += refund;
+    saveMeta(); render(upgradeScreen());
+  });
   app.querySelectorAll('[data-levelup]').forEach(el => el.onclick = () => {
     const u = UPGRADE_DEFS.find(x => x.id === el.dataset.levelup);
     const lvl = META.levels[u.id];

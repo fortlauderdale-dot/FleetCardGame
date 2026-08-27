@@ -342,49 +342,98 @@ function opponentAttackBoxHTML(opp) {
    to change. `cards` is whatever was actually played into that Item's slot.
    Returns { met, label, sum, count } — sum/count feed items that scale with them. */
 function checkCondition(cond, cards) {
-  if (!cond || cond.type === 'any') return { met: cards.length > 0, label: '' };
-  if (cond.type === 'pokerTier') {
+  let result;
+  if (!cond || cond.type === 'any') result = { met: cards.length > 0, label: '' };
+  else if (cond.type === 'exactCount') result = { met: cards.length === cond.count, label: `Exactly ${cond.count} card${cond.count === 1 ? '' : 's'}` };
+  else if (cond.type === 'pokerTier') {
     const ev = evaluateHand(cards);
-    return { met: ev.tier >= cond.tier, label: ev.label, mult: ev.mult };
+    result = { met: ev.tier >= cond.tier, label: ev.label, mult: ev.mult };
   }
-  if (cond.type === 'straightLen') {
+  else if (cond.type === 'straightLen') {
     const ok = cards.length === cond.len && isConsecutive(cards);
-    return { met: ok, label: `${cond.len}-Card Straight` };
+    result = { met: ok, label: `${cond.len}-Card Straight` };
   }
-  if (cond.type === 'suitCount') {
+  else if (cond.type === 'suitCount') {
     const n = cards.filter(c => c.suit === cond.suit).length;
-    return { met: n >= cond.count, label: `${n} of ${cond.suit}`, count: n };
+    result = { met: n >= cond.count, label: `${n} of ${cond.suit}`, count: n };
   }
-  if (cond.type === 'parity') {
+  else if (cond.type === 'colorCount') {
+    const n = cards.filter(c => c.color === cond.color).length;
+    result = { met: n >= cond.count, label: `${n} ${cond.color === 'red' ? 'Red' : 'Black'}`, count: n };
+  }
+  else if (cond.type === 'allSuits') {
+    const suits = new Set(cards.map(c => c.suit));
+    result = { met: suits.size === 4, label: 'One of Each Suit' };
+  }
+  else if (cond.type === 'cardIn') {
+    const hit = cards.find(c => cond.cards.some(cc => cc.rank === c.rank && cc.suit === c.suit));
+    result = { met: !!hit, label: hit ? `${rankLabel(hit.rank)}${hit.suit}` : '' };
+  }
+  else if (cond.type === 'parity') {
     const isEven = c => c.rank % 2 === 0;
     const matchFn = cond.parity === 'even' ? isEven : (c => !isEven(c));
     const n = cards.filter(matchFn).length;
-    if (cond.mode === 'all') return { met: cards.length > 0 && n === cards.length, label: `All ${cond.parity}`, count: n };
-    return { met: n >= cond.count, label: `${n} ${cond.parity}`, count: n };
+    if (cond.mode === 'all') result = { met: cards.length > 0 && n === cards.length, label: `All ${cond.parity}`, count: n };
+    else result = { met: n >= cond.count, label: `${n} ${cond.parity}`, count: n };
   }
-  if (cond.type === 'exactRank') {
+  else if (cond.type === 'exactRank') {
     const n = cards.filter(c => c.rank === cond.rank).length;
-    if (cond.requireAll) return { met: cards.length > 0 && n === cards.length, label: `All ${rankLabel(cond.rank)}s`, count: n };
-    return { met: n > 0, label: `Has a ${rankLabel(cond.rank)}`, count: n };
+    if (cond.requireAll) result = { met: cards.length > 0 && n === cards.length, label: `All ${rankLabel(cond.rank)}s`, count: n };
+    else result = { met: n > 0, label: `Has a ${rankLabel(cond.rank)}`, count: n };
   }
-  if (cond.type === 'sumThreshold') {
+  else if (cond.type === 'sumThreshold') {
     const sum = cards.reduce((a, c) => a + cardValue(c.rank) + (c.bonus || 0), 0);
-    return { met: cards.length > 0 && sum >= cond.min, label: `Σ${sum}`, sum };
+    result = { met: cards.length > 0 && sum >= cond.min, label: `Σ${sum}`, sum };
   }
-  return { met: false, label: '' };
+  else if (cond.type === 'sumExact') {
+    const sum = cards.reduce((a, c) => a + cardValue(c.rank) + (c.bonus || 0), 0);
+    result = { met: cards.length > 0 && sum === cond.value, label: `Σ${sum}`, sum };
+  }
+  else result = { met: false, label: '' };
+  // exactCount can ride along on ANY condition type above (e.g. "flush AND exactly 5 cards") —
+  // set it on the condition object alongside its normal fields to AND it into the result.
+  if (cond && cond.exactCount != null) result.met = result.met && cards.length === cond.exactCount;
+  return result;
 }
 // One shared formula for every Item's output. `level` is that Item's own upgrade level
 // (see META.itemLevels — permanent, tuned via the Upgrades screen). Items with `flatAmount` ignore card value entirely (used for
 // threshold-style poison: "any hand summing to X+ does exactly Y", not a multiplier).
 function describeCondition(cond) {
   if (!cond || cond.type === 'any') return 'Any cards';
+  if (cond.type === 'exactCount') return `exactly ${cond.count} cards`;
   if (cond.type === 'pokerTier') return cond.tier === 0 ? 'Any card' : TIERS[cond.tier];
   if (cond.type === 'straightLen') return `a ${cond.len}-card straight`;
   if (cond.type === 'suitCount') return `${cond.count}+ ${cond.suit}`;
+  if (cond.type === 'colorCount') return `${cond.count}+ ${cond.color === 'red' ? 'Red' : 'Black'} cards`;
+  if (cond.type === 'allSuits') return 'one of each suit';
+  if (cond.type === 'cardIn') return cond.cards.map(c => `${rankLabel(c.rank)}${c.suit}`).join(' or ');
   if (cond.type === 'parity') return cond.mode === 'all' ? `all ${cond.parity}` : `${cond.count}+ ${cond.parity} cards`;
   if (cond.type === 'exactRank') return cond.requireAll ? `all ${rankLabel(cond.rank)}s` : `a ${rankLabel(cond.rank)}`;
   if (cond.type === 'sumThreshold') return `Σ${cond.min}+`;
+  if (cond.type === 'sumExact') return `Σ = ${cond.value} exactly`;
   return '';
+}
+/* ========== GLOSSARY (hoverable keywords) ==========
+   kw(displayText, glossaryKey) wraps a word in the same bold+hoverTip style already used for
+   Poison/Burn/Curse, so item text stays scannable and self-explaining. Add a new keyword by
+   adding one line to GLOSSARY and calling kw('Word') (glossaryKey defaults to the lowercased
+   word) anywhere in an item's note/label text. */
+const GLOSSARY = {
+  attack: 'Deals damage straight to the opponent.',
+  defense: 'Blocks incoming damage instead of dealing damage (adds Armor).',
+  suit: 'The 4 suits are Diamonds (♦), Clubs (♣), Hearts (♥), and Spades (♠).',
+  red: 'Red cards are Diamonds (♦) and Hearts (♥).',
+  black: 'Black cards are Clubs (♣) and Spades (♠).',
+  diamond: 'Diamond (♦) suited cards.',
+  club: 'Club (♣) suited cards.',
+  heart: 'Heart (♥) suited cards.',
+  spade: 'Spade (♠) suited cards.',
+  flush: 'A flush is 3 or more cards that are all the same suit.',
+  straight: 'A straight is 3 or more cards with consecutive ranks, any suits (example: 6, 7, 8).',
+};
+function kw(text, key) {
+  const g = GLOSSARY[(key || text).toLowerCase()];
+  return g ? `<b class="hoverTip" title="${g}">${text}</b>` : `<b>${text}</b>`;
 }
 function itemRequirementText(item) {
   const max = effectiveMaxCards(item);
@@ -392,13 +441,19 @@ function itemRequirementText(item) {
   const cond = item.condition;
   let specific = '';
   if (cond?.type === 'suitCount') specific = `${cond.count === 1 ? '1' : `Up to ${max}`} ${cond.suit}`;
+  else if (cond?.type === 'colorCount') specific = `${cond.count}+ ${kw(cond.color === 'red' ? 'Red' : 'Black')} cards`;
+  else if (cond?.type === 'allSuits') specific = `one of each ${kw('Suit')}`;
+  else if (cond?.type === 'cardIn') specific = describeCondition(cond);
   else if (cond?.type === 'parity') specific = `Up to ${max} ${cond.parity} cards`;
   else if (cond?.type === 'exactRank') specific = cond.requireAll ? `all ${rankLabel(cond.rank)}s` : `a ${rankLabel(cond.rank)}`;
-  else if (cond?.type === 'straightLen') specific = `a ${cond.len}-card straight`;
+  else if (cond?.type === 'straightLen') specific = `a ${cond.len}-card ${kw('Straight')}`;
   else if (cond?.type === 'sumThreshold') specific = `Σ${cond.min}+`;
-  else if (cond?.type === 'pokerTier' && cond.tier > 0) specific = TIERS[cond.tier];
+  else if (cond?.type === 'sumExact') specific = `Σ = ${cond.value} exactly`;
+  else if (cond?.type === 'exactCount') specific = `exactly ${cond.count} cards`;
+  else if (cond?.type === 'pokerTier' && cond.tier > 0) specific = cond.tier === 5 ? kw('Flush') : cond.tier === 4 ? kw('Straight') : TIERS[cond.tier];
+  if (cond?.exactCount != null && cond?.type !== 'exactCount') specific = `${specific} (exactly ${cond.exactCount} cards)`;
   const base = max === 1 ? '1 card' : `Up to ${numHTML} cards`;
-  return specific ? `${specific} to attack` : `${base} to attack`;
+  return specific ? `${specific} to ${kw('Attack')}` : `${base} to ${kw('Attack')}`;
 }
 function computeItemAmount(item, cards, level, condResult) {
   if (item.flatAmount != null) {
@@ -419,8 +474,11 @@ function computeItemAmount(item, cards, level, condResult) {
   }
   if (item.perCardBonus && cards.length > 1) mult += item.perCardBonus * (cards.length - 1);
   const rawSum = cards.reduce((a, c) => a + cardValue(c.rank) + (c.bonus || 0), 0);
-  const amount = Math.round(rawSum * mult);
-  const breakdown = `${rawSum} × ${mult.toFixed(2).replace(/^0/, '').replace(/\.?0+$/, '')}${bonusApplied ? ' (bonus)' : ''} = ${amount}`;
+  // flatBonus adds a flat amount on top of sum*mult — for "sum + N" items like Jinxed Duo
+  // (sum + 16 poison), as opposed to flatAmount above which replaces the sum entirely.
+  const flatBonus = (item.flatBonus || 0) + (item.flatBonusPerLevel || 0) * level;
+  const amount = Math.round(rawSum * mult) + flatBonus;
+  const breakdown = `${rawSum} × ${mult.toFixed(2).replace(/^0/, '').replace(/\.?0+$/, '')}${flatBonus ? ` +${flatBonus}` : ''}${bonusApplied ? ' (bonus)' : ''} = ${amount}`;
   return { amount, breakdown };
 }
 // All Item modification (bonus tuning, uses-per-turn, max cards, kind conversion) lives on
@@ -469,7 +527,63 @@ const ITEMS = {
   diamond_draw: { id: 'diamond_draw', name: 'Diamond Dash', cost: 45, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'suitCount', suit: '♦', count: 1 }, baseMult: 1,
     drawAmount: 1, drawPerLevel: 0,
-    note: 'Needs at least 1 Diamond. Deals damage and draws 1 card immediately.' },
+    note: `Needs at least 1 ${kw('Diamond')}. Deals damage and draws 1 card immediately.` },
+
+  /* -- New attack family (renamed from your originals) -- */
+  all_points: { id: 'all_points', name: 'All-Points Bulletin', cost: 70, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+    condition: { type: 'allSuits' }, flatAmount: 40, flatAmountPerLevel: 5,
+    note: `Needs one of each ${kw('Suit')} (4 cards). Flat ${kw('Attack')} for 40 damage.` },
+  repo_notice: { id: 'repo_notice', name: 'Repo Notice', cost: 55, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+    condition: { type: 'colorCount', color: 'blk', count: 2 }, baseMult: 1, kind: 'curse',
+    note: `Needs 2+ ${kw('Black')} cards. Curses the opponent for the sum of the cards played.` },
+  safety_inspection: { id: 'safety_inspection', name: 'Safety Inspection', cost: 55, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+    condition: { type: 'colorCount', color: 'red', count: 2 }, baseMult: 1, kind: 'defense',
+    note: `Needs 2+ ${kw('Red')} cards. Blocks damage equal to the sum of the cards played.` },
+  jinxed_duo: { id: 'jinxed_duo', name: 'Jinxed Duo', cost: 60, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+    condition: { type: 'cardIn', cards: [{ rank: 3, suit: '♣' }, { rank: 4, suit: '♣' }] }, baseMult: 1,
+    flatBonus: 16, flatBonusPerLevel: 0, kind: 'poison',
+    drawAmount: 1, drawPerLevel: 0,
+    note: `Needs the 3${kw('Club',"club")} or 4${kw('Club',"club")}. Poison damage for the sum of cards played + 16, then draw 1 card immediately.` },
+
+  /* -- Suit-flavored "exactly 4 cards" burn items -- */
+  heart_inferno: { id: 'heart_inferno', name: 'Heart Inferno', cost: 65, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+    condition: { type: 'exactCount', count: 4 }, baseMult: 1, kind: 'burn',
+    bonus: { condition: { type: 'suitCount', suit: '♥', count: 4 }, base: 1.0, perLevel: 0, maxLevel: 0 },
+    note: `Needs exactly 4 cards. Flame damage for the sum, +100% if all 4 are ${kw('Heart',"heart")}.` },
+  diamond_inferno: { id: 'diamond_inferno', name: 'Diamond Inferno', cost: 65, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+    condition: { type: 'exactCount', count: 4 }, baseMult: 1, kind: 'burn',
+    bonus: { condition: { type: 'suitCount', suit: '♦', count: 4 }, base: 1.0, perLevel: 0, maxLevel: 0 },
+    note: `Needs exactly 4 cards. Flame damage for the sum, +100% if all 4 are ${kw('Diamond')}.` },
+  club_inferno: { id: 'club_inferno', name: 'Club Inferno', cost: 65, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+    condition: { type: 'exactCount', count: 4 }, baseMult: 1, kind: 'burn',
+    bonus: { condition: { type: 'suitCount', suit: '♣', count: 4 }, base: 1.0, perLevel: 0, maxLevel: 0 },
+    note: `Needs exactly 4 cards. Flame damage for the sum, +100% if all 4 are ${kw('Club',"club")}.` },
+  spade_inferno: { id: 'spade_inferno', name: 'Spade Inferno', cost: 65, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+    condition: { type: 'exactCount', count: 4 }, baseMult: 1, kind: 'burn',
+    bonus: { condition: { type: 'suitCount', suit: '♠', count: 4 }, base: 1.0, perLevel: 0, maxLevel: 0 },
+    note: `Needs exactly 4 cards. Flame damage for the sum, +100% if all 4 are ${kw('Spade')}.` },
+
+  five_alarm_flush: { id: 'five_alarm_flush', name: 'Five-Alarm Flush', cost: 90, maxCards: 5, usesPerTurn: 2, usesPerTurnPerLevel: 1,
+    condition: { type: 'pokerTier', tier: 5, exactCount: 5 }, baseMult: 1.5,
+    note: `Needs exactly 5 cards making a ${kw('Flush')}. Sum +50% damage. 2 uses per turn.` },
+
+  exact_change: { id: 'exact_change', name: 'Exact Change', cost: 35, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+    condition: { type: 'sumExact', value: 4 }, baseMult: 0,
+    drawAmount: 0, drawUsesCardCount: true, drawBonusFlat: 2, drawPerLevel: 0,
+    note: `Cards played must add up to exactly 4 (example: 2+2, or a single 4). Draws a card for each card played, +2. Draws immediately.` },
+
+  chain_starter: { id: 'chain_starter', name: 'Chain Starter', cost: 50, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+    condition: { type: 'straightLen', len: 3 }, baseMult: 2.5,
+    note: `Needs a 3-card ${kw('Straight')} (example: 6, 7, 8). Sum +150% damage.` },
+
+  drawstone: { id: 'drawstone', name: 'Drawstone', cost: 40, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+    condition: { type: 'sumThreshold', min: 7 }, baseMult: 0,
+    drawAmount: 2, drawPerLevel: 0,
+    note: `Cards played must add up to 7+. Draws 2 cards immediately.` },
+
+  impound_release: { id: 'impound_release', name: 'Impound Release', cost: 85, maxCards: 12, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+    condition: { type: 'any' }, baseMult: 1, kind: 'unlock', unlockThreshold: 45,
+    note: `Play any number of cards. Deals damage as normal the whole time. Once you've dealt 45+ total damage through this item over the run, the next time you play it also draws 4 cards, one time only — after that it just keeps attacking normally, turn after turn, with no re-locking.` },
   fender_bender: { id: 'fender_bender', name: 'One-Two Punch', cost: 0, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'pokerTier', tier: 0 }, baseMult: 1,
     bonus: { condition: { type: 'pokerTier', tier: 1 }, base: 0.5, perLevel: 0.25, maxLevel: 2 }, // +50% ONLY if the 2 cards are a Pair, up to +100% tuned
@@ -573,7 +687,7 @@ const OPPONENT_TIERS = [
     { id: 'pothole', name: 'Nasty Pothole', icon: '🕳️', image: 'hazards/pothole.png', hp: 40, minTier: 0, drawRate: 2, turnLimit: 6, attacks: [{ name: 'Axle Buster', maxCards: 2, minTier: 0 }] },
     { id: 'looseDog', name: 'Loose Dog', icon: '🐕', image: 'hazards/loose-dog.png', hp: 45, minTier: 0, drawRate: 2, turnLimit: 6, attacks: [{ name: 'Snap Bite', maxCards: 1, minTier: 0 }] } ],
   [ { id: 'jaywalker', name: 'Jaywalker', icon: '🚶', image: 'hazards/jaywalker.png', hp: 50, minTier: 1, drawRate: 2, turnLimit: 6, attacks: [{ name: 'Sudden Dash', maxCards: 2, minTier: 1 }, { name: 'Quick Step', maxCards: 1, minTier: 0, effect: 'draw' }] },
-    { id: 'grumpyMeter', name: 'Broken Meter', icon: '🅿️', image: 'hazards/broken-meter.png', hp: 55, minTier: 1, drawRate: 2, turnLimit: 6, attacks: [{ name: 'Coin Jam', maxCards: 2, minTier: 1, effect: 'stealFuel' }] },
+    { id: 'grumpyMeter', name: 'Broken Meter', icon: '🅿️', image: 'hazards/broken-meter.png', hp: 55, minTier: 1, drawRate: 2, turnLimit: 6, attacks: [{ name: 'Coin Jam', maxCards: 2, minTier: 1, effect: 'stealFuel' }, { name: 'Repo Notice', maxCards: 2, minTier: 1, effect: 'curse' }] },
     { id: 'looseWire', name: 'Downed Power Line', icon: '⚡', image: 'hazards/downed-line.png', hp: 60, minTier: 0, drawRate: 2, turnLimit: 6, attacks: [{ name: 'Live Wire Shock', maxCards: 2, minTier: 0, effect: 'stun' }] } ],
   [ { id: 'angryCitizen', name: 'Angry Citizen', icon: '😠', image: 'hazards/angry-citizen.png', hp: 65, minTier: 1, drawRate: 3, turnLimit: 7, attacks: [{ name: 'Shouting Match', maxCards: 3, minTier: 1 }, { name: 'Harassment', maxCards: 2, minTier: 1, effect: 'curse' }] },
     { id: 'hydrant', name: 'Burst Hydrant', icon: '💦', image: 'hazards/burst-hydrant.png', hp: 70, minTier: 1, drawRate: 3, turnLimit: 7, attacks: [{ name: 'Pressure Blast', maxCards: 3, minTier: 1, effect: 'burn' }] },
@@ -583,7 +697,7 @@ const OPPONENT_TIERS = [
       curse: { count: 1, amount: 8, chance: 0.5 }, attacks: [{ name: 'Sabotage', maxCards: 3, minTier: 2, effect: 'curse' }] },
     { id: 'streetFire', name: 'Street Fire', icon: '🔥', image: 'hazards/street-fire.png', hp: 85, minTier: 3, drawRate: 3, turnLimit: 7,
       special: { type: 'lifesteal', pct: 0.5 }, attacks: [{ name: 'Scorching Wave', maxCards: 3, minTier: 3, effect: 'burn' }] },
-    { id: 'sinkhole', name: 'Sinkhole', icon: '🕳️', image: 'hazards/sinkhole.png', hp: 90, minTier: 1, drawRate: 3, turnLimit: 7, attacks: [{ name: 'Ground Collapse', maxCards: 3, minTier: 1 }, { name: 'Aftershock', maxCards: 2, minTier: 1, effect: 'poison' }] },
+    { id: 'sinkhole', name: 'Sinkhole', icon: '🕳️', image: 'hazards/sinkhole.png', hp: 90, minTier: 1, drawRate: 3, turnLimit: 7, attacks: [{ name: 'Ground Collapse', maxCards: 3, minTier: 1 }, { name: 'Aftershock', maxCards: 2, minTier: 1, effect: 'poison' }, { name: 'All-Points Bulletin', maxCards: 4, minTier: 2 }] },
     { id: 'gasLeak1', name: 'Gas Leak', icon: '⛽', image: 'hazards/gas-leak.png', hp: 95, locked: true, lockThreshold: 45, lockAttack: 39, drawRate: 3, turnLimit: 8, releaseAttackName: 'Ignition Blast' } ],
   [ { id: 'flashFlood', name: 'Flash Flood', icon: '🌊', image: 'hazards/flash-flood.png', hp: 100, minTier: 3, drawRate: 4, turnLimit: 8, attacks: [{ name: 'Flash Deluge', maxCards: 4, minTier: 3 }, { name: 'Toxic Spray', maxCards: 3, minTier: 2, effect: 'poison' }] },
     { id: 'riot', name: 'Angry Mob', icon: '📢', image: 'hazards/angry-mob.png', hp: 105, minTier: 2, drawRate: 4, turnLimit: 8, attacks: [{ name: 'Crowd Surge', maxCards: 4, minTier: 2 }, { name: 'Crowd Pressure', maxCards: 3, minTier: 2, effect: 'curse' }] },
@@ -670,7 +784,12 @@ function generateMap() {
   shuffle(eligible);
   const needBattles=29-3; // start + two row-1 battles already set
   eligible.slice(0,needBattles).forEach(({r,c})=>nodes[r][c]={type:'battle',opponent:OPPONENT_TIERS[tierForRow(r)][Math.floor(Math.random()*OPPONENT_TIERS[tierForRow(r)].length)]});
-  eligible.slice(needBattles).forEach(({r,c})=>nodes[r][c]={type:pickNodeType()});
+  eligible.slice(needBattles).forEach(({r,c})=>{
+    const t=pickNodeType();
+    nodes[r][c]= t==='battle'
+      ? {type:'battle', opponent:OPPONENT_TIERS[tierForRow(r)][Math.floor(Math.random()*OPPONENT_TIERS[tierForRow(r)].length)]}
+      : {type:t};
+  });
   nodes.push([{type:'battle',opponent:BOSS}]);
 
   // Dense, cross-lane connections. Every node has a route forward and every next node has a parent.
@@ -714,6 +833,7 @@ function initRunWithStarter(id) {
     hero: { heroId: id, items: [...baseHero.starterItems] },
     itemCap: 2 + L.garage, handSize: 7 + (L.handCap || 0) * 2, drawPerTurn: 2 + (L.draw || 0), gems: 3, maxGems: 10, maxFuel: 20, maxEnergy: 20,
     scoreThisRun: 0, lastNotice: null, cardBoosts: [], adminTuneLvl: 0, itemLevels: {}, itemUsesLevels: {}, itemKindOverride: {}, itemMaxCardsLevels: {}, handSortMode: 'value', innSleeps: 0,
+    runUpgrades: { itemSlots: 0, drawPerTurn: 0, sightRange: 0, gemDraw: 0, health: 0 },
   };
   saveRun();
   render(mapScreen());
@@ -1029,7 +1149,7 @@ function scoutOpponent() {
 function drawWithGem() {
   if (RUN.gems < 1) return;
   RUN.gems -= 1;
-  const n = 1 + META.levels.gem;
+  const n = 1 + META.levels.gem + (RUN.runUpgrades?.gemDraw || 0);
   for (let i = 0; i < n; i++) {
     if (!BATTLE.deck.length) { if (!BATTLE.discard.length) break; BATTLE.deck = shuffle(BATTLE.discard); BATTLE.discard = []; }
     BATTLE.hand.push(BATTLE.deck.pop());
@@ -1109,14 +1229,41 @@ function executePlayerAttack(itemId, index) {
     }
   }
 
-  if (item.drawAmount) {
-    const drawN = item.drawAmount + (item.drawPerLevel || 0) * level;
+  if (item.drawAmount || item.drawUsesCardCount) {
+    const drawN = item.drawUsesCardCount
+      ? cards.length + (item.drawBonusFlat || 0) + (item.drawPerLevel || 0) * level
+      : item.drawAmount + (item.drawPerLevel || 0) * level;
     const drawn=[];
     for(let i=0;i<drawN;i++){
       if(!BATTLE.deck.length){ if(!BATTLE.discard.length) break; BATTLE.deck=shuffle(BATTLE.discard); BATTLE.discard=[]; }
       if(BATTLE.deck.length){ const c=BATTLE.deck.pop(); BATTLE.hand.push(c); drawn.push(c); }
     }
     battleLog(`${item.name} — Drew ${drawn.map(c=>rankLabel(c.rank)+c.suit).join(' ') || 'no cards'}.`);
+  }
+
+  // Impound Release-style "unlock" items: progress accumulates from damage dealt (persists for
+  // the whole run via RUN, not just this battle). Crossing unlockThreshold flags a one-time
+  // bonus draw of 4 for the item's NEXT use, after which it just attacks normally forever.
+  if (item.unlockThreshold != null) {
+    RUN.itemUnlockProgress = RUN.itemUnlockProgress || {};
+    RUN.itemUnlocked = RUN.itemUnlocked || {};
+    RUN.itemUnlockPending = RUN.itemUnlockPending || {};
+    if (RUN.itemUnlockPending[slotKey]) {
+      delete RUN.itemUnlockPending[slotKey];
+      const bonusDrawn=[];
+      for(let i=0;i<4;i++){
+        if(!BATTLE.deck.length){ if(!BATTLE.discard.length) break; BATTLE.deck=shuffle(BATTLE.discard); BATTLE.discard=[]; }
+        if(BATTLE.deck.length){ const c=BATTLE.deck.pop(); BATTLE.hand.push(c); bonusDrawn.push(c); }
+      }
+      battleLog(`${item.name} — Unlock bonus! Drew ${bonusDrawn.map(c=>rankLabel(c.rank)+c.suit).join(' ') || 'no cards'}.`);
+    } else if (!RUN.itemUnlocked[slotKey]) {
+      RUN.itemUnlockProgress[slotKey] = (RUN.itemUnlockProgress[slotKey] || 0) + amount;
+      if (RUN.itemUnlockProgress[slotKey] >= item.unlockThreshold) {
+        RUN.itemUnlocked[slotKey] = true;
+        RUN.itemUnlockPending[slotKey] = true;
+        battleLog(`${item.name} is unlocked! Its next use will also draw 4 cards.`);
+      }
+    }
   }
 
   // Resolve the Item's effect.
@@ -1431,7 +1578,7 @@ function mapScreen() {
   const totalW = rows.length * colW + 50;
   const totalH = 420;
   const avail = availableNextNodes();
-  const visibleRange = 3 + META.levels.range;
+  const visibleRange = 3 + META.levels.range + (RUN.runUpgrades?.sightRange || 0);
   let svgLines = '';
 
   for (const e of RUN.map.edges) {
@@ -1482,6 +1629,7 @@ function mapScreen() {
   <div class="panel">
     <div class="hdr"><span>Health: ${RUN.health}/${RUN.maxHealth}</span><span>Items: ${RUN.hero.items.length}/${RUN.itemCap}</span></div>
     ${currencyBar()}
+    <button class="wo-btn amber" id="openRunUpgradeFromMapBtn" style="width:100%;margin:8px 0">Field Upgrades (this run)</button>
     <div class="hdr" style="margin-top:8px"><span>World 1 - City Fleet (21 spaces)</span><span>Choose your next stop.</span></div>
     <div class="mapwrap" style="width:100%;height:${totalH}px;overflow-x:auto;overflow-y:hidden">
       <div style="position:relative;width:${totalW}px;height:${totalH}px">
@@ -1491,6 +1639,42 @@ function mapScreen() {
     </div>
   </div>
   ${MAP_POPUP ? nodePopupScreen(MAP_POPUP.row, MAP_POPUP.col) : ''}`;
+}
+
+/* ========== RUN-SCOPED UPGRADES (paid with coins, last only for this run) ==========
+   Separate from the permanent Upgrades screen (Career Points, forever). Add a 5th kind here
+   the same way health was added — the screen and buy handler are generic over this table. */
+const RUN_UPGRADE_DEFS = {
+  itemSlots:   { label: 'Item Slot',        desc: '+1 Item slot, this run only.', baseCost: 100, mult: 2, cap: 4 },
+  drawPerTurn: { label: 'Cards Drawn/Turn', desc: '+1 card drawn at the start of each turn, this run only.', baseCost: 60, mult: 2, cap: 5 },
+  sightRange:  { label: 'Map Sight Range',  desc: '+1 route space visible ahead on the map, this run only.', baseCost: 40, mult: 1.8, cap: 5 },
+  gemDraw:     { label: 'Gem Draw',         desc: '+1 card drawn per gem spent, this run only.', baseCost: 50, mult: 2, cap: 4 },
+  health:      { label: 'Heal Up',          desc: 'Instantly heal 25 health. Price rises each time you buy it this run.', baseCost: 25, add: 20, cap: 99, isHeal: true },
+};
+function runUpgradeCost(kind) {
+  const def = RUN_UPGRADE_DEFS[kind], n = RUN.runUpgrades[kind] || 0;
+  return def.mult ? Math.round(def.baseCost * Math.pow(def.mult, n)) : def.baseCost + def.add * n;
+}
+let RUN_UPGRADE_RETURN = 'map';
+function runUpgradeScreen() {
+  const rows = Object.entries(RUN_UPGRADE_DEFS).map(([kind, def]) => {
+    const n = RUN.runUpgrades[kind] || 0;
+    const maxed = n >= def.cap;
+    const full = kind === 'health' && RUN.health >= RUN.maxHealth;
+    const cost = runUpgradeCost(kind);
+    const canAfford = RUN.chips >= cost && !maxed && !full;
+    return `<div class="shopcard"><div class="hdr"><span>${def.label}</span><span class="price">${maxed ? 'MAXED' : cost + ' coins'}</span></div>
+      <div class="note" style="margin:0 0 6px">${def.desc}</div>
+      <div class="note" style="margin:0 0 6px">Current: ${def.isHeal ? `${RUN.health}/${RUN.maxHealth} HP` : `+${n}`}</div>
+      <button class="wo-btn amber" data-runupgrade="${kind}" ${canAfford ? '' : 'disabled'} style="padding:8px 12px;font-size:13px">${maxed ? 'Maxed for this run' : full ? 'Full health' : 'Buy'}</button>
+    </div>`;
+  }).join('');
+  return `${noticeHTML()}<div class="wo"><div class="wo-stripe"></div><div class="wo-body">
+    <button class="wo-btn gray" id="leaveRunUpgradeBtn" style="width:100%;margin-bottom:10px">Back</button>
+    <div class="wo-eyebrow">Field Upgrades</div><h1>Run <em>Upgrades</em></h1>${currencyBar()}
+    <div class="note" style="margin:8px 0 12px">Paid for with coins. These bonuses last only for this run and reset when the run ends.</div>
+    <div style="margin:6px 0">${rows}</div>
+  </div></div>`;
 }
 
 function battleScreen() {
@@ -1549,18 +1733,20 @@ function battleScreen() {
       <div class="vcards">${cardHTML}</div>
       ${(() => {
         const hasKindAmount = item.flatAmount != null || (item.baseMult ?? 1) > 0;
-        const drawText = item.drawAmount ? `<b>Draw</b> ${item.drawAmount + (item.drawPerLevel||0)*level} card${(item.drawAmount + (item.drawPerLevel||0)*level)===1?'':'s'}` : '';
+        const drawN = item.drawUsesCardCount ? (cards.length + (item.drawBonusFlat||0) + (item.drawPerLevel||0)*level) : (item.drawAmount ? item.drawAmount + (item.drawPerLevel||0)*level : 0);
+        const drawText = (item.drawAmount || item.drawUsesCardCount) ? `<span class="hoverTip" title="Draws ${drawN} card${drawN===1?'':'s'} immediately after this item is used."><b>Draw</b> ${drawN} card${drawN===1?'':'s'}</span>` : '';
         const kindTag = eKind==='poison'?`<span class="effectTip poisonText" data-tip="Poison deals damage at the end of the opponent's turn. Each poison stack is reduced by 3 after it ticks."><b>Poison</b></span>`
           :eKind==='burn'?`<span class="effectTip burnText" data-tip="Burn deals damage at the end of the opponent's turn. Each burn application weakens on later turns."><b>Burn</b></span>`
           :eKind==='curse'?`<span class="effectTip curseText" data-tip="Curse deals its damage if the opponent fails to attack on the next turn."><b>Curse</b></span>`
           :'';
+        const unlockText = item.unlockThreshold != null ? (RUN.itemUnlocked && RUN.itemUnlocked[slotKey] ? '<span class="hoverTip" title="This item is permanently unlocked for the rest of the run."><b>Unlocked</b></span>' : `<span class="hoverTip" title="Deal ${item.unlockThreshold} total damage through this item (across any turns) to unlock a one-time bonus draw of 4.">${(RUN.itemUnlockProgress && RUN.itemUnlockProgress[slotKey]) || 0}/${item.unlockThreshold} to unlock</span>`) : '';
         if (cards.length && ready) {
           const kindText = hasKindAmount ? `${previewCalc.breakdown} ${kindTag||effectWord}` : '';
-          return `<div class="note" style="margin:4px 0 0">${[kindText, drawText].filter(Boolean).join(' + ') || 'Requirement not met'}</div>`;
+          return `<div class="note" style="margin:4px 0 0">${[kindText, drawText].filter(Boolean).join(' + ') || 'Requirement not met'}</div>${unlockText?`<div class="note" style="margin:2px 0 0">${unlockText}</div>`:''}`;
         }
         if (cards.length && !ready) return `<div class="note" style="margin:4px 0 0">Requirement not met</div>`;
-        const staticKindText = hasKindAmount ? `${kindTag ? kindTag+' attack' : 'Attack'} · Damage: × ${item.baseMult ?? 1}` : '';
-        return `<div class="note" style="margin:4px 0 0">${[staticKindText, drawText].filter(Boolean).join(' + ')}</div>`;
+        const staticKindText = kindTag ? `${kindTag} attack · Damage: × ${item.baseMult ?? 1}` : '';
+        return `<div class="note" style="margin:4px 0 0">${[staticKindText, drawText].filter(Boolean).join(' + ')}</div>${unlockText?`<div class="note" style="margin:2px 0 0">${unlockText}</div>`:''}`;
       })()}
       <div style="margin-top:auto">
         <div class="note" style="margin:2px 0 0">${usesLeft > 0 ? `${usesLeft}/${cap} use${cap > 1 ? 's' : ''} left this turn` : 'No uses left this turn'}</div>
@@ -1644,9 +1830,10 @@ function battleScreen() {
     <div class="panel">
       <div class="hdr"><span>Resources</span><span></span></div>
       <div class="resourceRow">
-        <button class="wo-btn amber resourceAction gemAction" id="gemDrawBtn" ${RUN.gems < 1 ? 'disabled' : ''}><span class="resourceCount">${ICON.gem} ${RUN.gems}/${RUN.maxGems} GEMS</span><span>Draw ${1 + META.levels.gem} Cards</span><span class="note" style="margin:0">Cost: <b>${GEM_DRAW_COST}</b> gem</span></button>
+        <button class="wo-btn amber resourceAction gemAction" id="gemDrawBtn" ${RUN.gems < 1 ? 'disabled' : ''}><span class="resourceCount">${ICON.gem} ${RUN.gems}/${RUN.maxGems} GEMS</span><span>Draw ${1 + META.levels.gem + (RUN.runUpgrades?.gemDraw||0)} Cards</span><span class="note" style="margin:0">Cost: <b>${GEM_DRAW_COST}</b> gem</span></button>
         <button class="wo-btn amber resourceAction fuelAction" id="fuelHealBtn" title="Fuel also gets you across the map — spending it here means less for travel." ${RUN.fuel < FUEL_HESTORE_COST || RUN.health >= RUN.maxHealth ? 'disabled' : ''}><span class="resourceCount">${ICON.fuel} ${RUN.fuel}/${RUN.maxFuel} FUEL</span><span>Use ${FUEL_HESTORE_COST} Fuel → +${FUEL_HEAL_AMOUNT} Health</span></button>
       </div>
+      <button class="wo-btn" id="openRunUpgradeFromBattleBtn" style="width:100%;margin-top:8px">Field Upgrades (this run)</button>
     </div>
     <div class="panel">
       <div class="log">${BATTLE.logLines.map(l => `<div>${l}</div>`).join('')}</div>
@@ -1712,7 +1899,7 @@ function nodeResultScreen(won, rewards) {
 
 function shopScreen(fromCastle=false) {
   const options = Object.values(ITEMS).filter(it => it.kind !== 'storage' && it.cost > 0);
-  const itemRows = options.slice(0,9).map(it => `<div class="shopcard">
+  const itemRows = options.map(it => `<div class="shopcard">
     <div class="hdr"><span>${it.name}</span><span class="price">${it.cost} coins</span></div>
     <div class="itemReqLine">${itemRequirementText(it)}</div>
     <div class="note" style="margin:0 0 6px">Damage: ${it.baseMult != null ? ` × ${it.baseMult}` : 'special effect'}</div>
@@ -1730,7 +1917,7 @@ function shopScreen(fromCastle=false) {
       <div class="wo-stripe"></div><div class="wo-body">
         <div style="position:sticky;top:0;z-index:10;background:var(--white);padding-bottom:10px"><button class="wo-btn gray" id="leaveShopBtn" style="width:100%">${fromCastle ? "Back to Compound" : "Back to Road"}</button></div>
         <div class="wo-eyebrow">Dealership</div><h1>Vehicle <em>Department</em></h1>${currencyBar()}
-        <div class="hdr" style="margin-top:10px"><span>Available Items (9)</span><span>Items: ${RUN.hero.items.length}/${RUN.itemCap}</span></div>
+        <div class="hdr" style="margin-top:10px"><span>Available Items (${options.length})</span><span>Items: ${RUN.hero.items.length}/${RUN.itemCap}</span></div>
         <div style="margin:6px 0 12px">${itemRows}</div>
         ${ownedRows ? `<div class="hdr" style="margin-top:14px"><span>Your Items</span><span>Sell to make room</span></div>${ownedRows}` : ''}
       </div>
@@ -2073,14 +2260,25 @@ function render(html) {
     render(chopShopScreen());
   });
 
-  app.querySelectorAll('[data-leveldown]').forEach(el => el.onclick = () => {
-    const u = UPGRADE_DEFS.find(x => x.id === el.dataset.leveldown);
-    const lvl = META.levels[u.id];
-    if (lvl <= 0) return;
-    const refund = upgradeCost(u, lvl - 1);
-    META.levels[u.id]--; META.points += refund;
-    saveMeta(); render(upgradeScreen());
+  app.querySelectorAll('[data-runupgrade]').forEach(el => el.onclick = () => {
+    const kind = el.dataset.runupgrade;
+    const def = RUN_UPGRADE_DEFS[kind];
+    const n = RUN.runUpgrades[kind] || 0;
+    if (n >= def.cap) return;
+    if (kind === 'health' && RUN.health >= RUN.maxHealth) return;
+    const cost = runUpgradeCost(kind);
+    if (RUN.chips < cost) return;
+    RUN.chips -= cost;
+    RUN.runUpgrades[kind] = n + 1;
+    if (kind === 'itemSlots') RUN.itemCap += 1;
+    else if (kind === 'drawPerTurn') RUN.drawPerTurn += 1;
+    else if (kind === 'health') RUN.health = Math.min(RUN.maxHealth, RUN.health + 25);
+    saveRun();
+    render(runUpgradeScreen());
   });
+  const leaveRunUpgradeBtn = document.getElementById('leaveRunUpgradeBtn'); if (leaveRunUpgradeBtn) leaveRunUpgradeBtn.onclick = () => render(RUN_UPGRADE_RETURN === 'battle' ? battleScreen() : mapScreen());
+  const openRunUpgradeFromMapBtn = document.getElementById('openRunUpgradeFromMapBtn'); if (openRunUpgradeFromMapBtn) openRunUpgradeFromMapBtn.onclick = () => { RUN_UPGRADE_RETURN = 'map'; render(runUpgradeScreen()); };
+  const openRunUpgradeFromBattleBtn = document.getElementById('openRunUpgradeFromBattleBtn'); if (openRunUpgradeFromBattleBtn) openRunUpgradeFromBattleBtn.onclick = () => { RUN_UPGRADE_RETURN = 'battle'; render(runUpgradeScreen()); };
   app.querySelectorAll('[data-levelup]').forEach(el => el.onclick = () => {
     const u = UPGRADE_DEFS.find(x => x.id === el.dataset.levelup);
     const lvl = META.levels[u.id];
@@ -2163,7 +2361,7 @@ function render(html) {
   const restBtn = document.getElementById('restBtn'); if (restBtn) restBtn.onclick = () => { RUN.health = Math.min(RUN.maxHealth, RUN.health + 30); saveRun(); render(mapScreen()); };
   const backToMetaBtn = document.getElementById('backToMetaBtn'); if (backToMetaBtn) backToMetaBtn.onclick = () => render(metaScreen());
   const startRunBtn = document.getElementById('startRunBtn'); if (startRunBtn) startRunBtn.onclick = () => { clearRunSave(); render(starterSelectScreen()); };
-  const continueRunBtn = document.getElementById('continueRunBtn'); if (continueRunBtn) continueRunBtn.onclick = () => { RUN = loadRunSave(); RUN.maxGems=10; RUN.maxFuel=20; RUN.maxEnergy=20; RUN.handSize=7+(META.levels.handCap||0)*2; RUN.drawPerTurn=2+(META.levels.draw||0); RUN.gems=Math.min(RUN.maxGems,RUN.gems||0); RUN.fuel=Math.min(RUN.maxFuel,RUN.fuel||0); RUN.energy=Math.min(RUN.maxEnergy,RUN.energy||0); RUN.itemLevels=RUN.itemLevels||{}; RUN.itemUsesLevels=RUN.itemUsesLevels||{}; RUN.itemKindOverride=RUN.itemKindOverride||{}; Object.keys(RUN.itemKindOverride).filter(k=>!k.includes('_')).forEach(k=>{ if(RUN.hero?.items?.includes(k) && !RUN.itemKindOverride[`${k}_0`]) RUN.itemKindOverride[`${k}_0`]=RUN.itemKindOverride[k]; }); RUN.itemMaxCardsLevels=RUN.itemMaxCardsLevels||{}; saveRun(); render(mapScreen()); };
+  const continueRunBtn = document.getElementById('continueRunBtn'); if (continueRunBtn) continueRunBtn.onclick = () => { RUN = loadRunSave(); RUN.maxGems=10; RUN.maxFuel=20; RUN.maxEnergy=20; RUN.handSize=7+(META.levels.handCap||0)*2; RUN.runUpgrades=RUN.runUpgrades||{itemSlots:0,drawPerTurn:0,sightRange:0,gemDraw:0,health:0}; RUN.drawPerTurn=2+(META.levels.draw||0)+RUN.runUpgrades.drawPerTurn; RUN.gems=Math.min(RUN.maxGems,RUN.gems||0); RUN.fuel=Math.min(RUN.maxFuel,RUN.fuel||0); RUN.energy=Math.min(RUN.maxEnergy,RUN.energy||0); RUN.itemLevels=RUN.itemLevels||{}; RUN.itemUsesLevels=RUN.itemUsesLevels||{}; RUN.itemKindOverride=RUN.itemKindOverride||{}; Object.keys(RUN.itemKindOverride).filter(k=>!k.includes('_')).forEach(k=>{ if(RUN.hero?.items?.includes(k) && !RUN.itemKindOverride[`${k}_0`]) RUN.itemKindOverride[`${k}_0`]=RUN.itemKindOverride[k]; }); RUN.itemMaxCardsLevels=RUN.itemMaxCardsLevels||{}; RUN.itemUnlockProgress=RUN.itemUnlockProgress||{}; RUN.itemUnlocked=RUN.itemUnlocked||{}; RUN.itemUnlockPending=RUN.itemUnlockPending||{}; saveRun(); render(mapScreen()); };
   app.querySelectorAll('[data-pick]').forEach(el => el.onclick = () => initRunWithStarter(el.dataset.pick));
 }
 

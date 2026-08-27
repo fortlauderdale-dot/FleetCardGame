@@ -387,27 +387,27 @@ function computeItemAmount(item, cards, level, condResult) {
   const breakdown = `${rawSum} × ${mult.toFixed(2).replace(/\.?0+$/, '')}${bonusApplied ? ' (bonus applied)' : ''} = ${amount}`;
   return { amount, breakdown };
 }
-function itemLevel(itemId) { return (META.itemLevels && META.itemLevels[itemId]) || 0; }
-function itemTuneCost(item, lvl) { return 30 + lvl * 25; } // Career Points cost, linear like other permanent upgrades
-// Uses-per-turn is a fully separate track from power tuning — spending points on one never
-// improves the other. Bought at the Chop Shop, not the main Upgrades screen.
-function itemUsesLevel(itemId) { return (META.itemUsesLevels && META.itemUsesLevels[itemId]) || 0; }
-function itemUsesTuneCost(lvl) { return 50 + lvl * 50; }
+// All Item modification (bonus tuning, uses-per-turn, max cards, kind conversion) lives on
+// RUN, not META — these are Chop Shop purchases paid with coins, and wipe with the rest of
+// the run's coins and tuning when the run ends. Career Points and the permanent Upgrades
+// screen never touch any of this.
+function itemLevel(itemId) { return (RUN.itemLevels && RUN.itemLevels[itemId]) || 0; }
+function itemTuneCost(item, lvl) { return 40 * Math.pow(2, lvl); } // coins, doubles each level like card tuning
+function itemUsesLevel(itemId) { return (RUN.itemUsesLevels && RUN.itemUsesLevels[itemId]) || 0; }
+function itemUsesTuneCost(lvl) { return 50 + lvl * 50; } // coins
 const ITEM_MAX_USES_LEVEL = 2; // level 0/1/2 -> 1/2/3 uses per turn
-// Max cards an Item accepts can also be permanently raised at the Chop Shop, separate from
-// both power tuning and uses-per-turn — a third independent track.
-function itemMaxCardsLevel(itemId) { return (META.itemMaxCardsLevels && META.itemMaxCardsLevels[itemId]) || 0; }
-function itemMaxCardsTuneCost(lvl) { return 60 + lvl * 60; }
+function itemMaxCardsLevel(itemId) { return (RUN.itemMaxCardsLevels && RUN.itemMaxCardsLevels[itemId]) || 0; }
+function itemMaxCardsTuneCost(lvl) { return 60 + lvl * 60; } // coins
 const ITEM_MAX_CARDS_BONUS_CAP = 2; // up to +2 cards beyond the Item's base maxCards
 function effectiveMaxCards(item) { return item.maxCards + itemMaxCardsLevel(item.id); }
-// An item can be permanently converted from a plain damage attack into a status effect
-// (poison/burn/curse) at the Chop Shop. Only items with no fixed `kind` (i.e. "regular attack")
-// are eligible — defense and already-status items keep their identity.
+// An item can be converted for the rest of this run from a plain damage attack into a status
+// effect (poison/burn/curse) at the Chop Shop. Only items with no fixed `kind` (i.e. "regular
+// attack") are eligible — defense and already-status items keep their identity.
 function effectiveKind(item) {
-  const override = META.itemKindOverride && META.itemKindOverride[item.id];
+  const override = RUN.itemKindOverride && RUN.itemKindOverride[item.id];
   return override || item.kind || 'damage';
 }
-function itemKindConvertCost() { return 80; }
+function itemKindConvertCost() { return 100; } // coins
 function itemUsesCap(item, usesLevel) { return item.usesPerTurn + (item.usesPerTurnPerLevel || 0) * usesLevel; }
 
 /* ========== ITEM CATALOG ==========
@@ -563,9 +563,9 @@ function upgradeCost(def, atLevel) { return def.baseCost + atLevel * def.inc; } 
 /* ========== META (persists forever) ========== */
 const META_KEY = 'fleetduel-meta-v7';
 function loadMeta() {
-  try { const raw = localStorage.getItem(META_KEY); if (raw) { const m = JSON.parse(raw); m.itemLevels = m.itemLevels || {}; m.itemUsesLevels = m.itemUsesLevels || {}; m.itemKindOverride = m.itemKindOverride || {}; m.itemMaxCardsLevels = m.itemMaxCardsLevels || {}; return m; } } catch (e) {}
+  try { const raw = localStorage.getItem(META_KEY); if (raw) return JSON.parse(raw); } catch (e) {}
   const levels = {}; UPGRADE_DEFS.forEach(u => levels[u.id] = 0);
-  return { points: 0, lifetimePoints: 0, highScore: 0, bestRun: 0, runsPlayed: 0, levels, itemLevels: {}, itemUsesLevels: {}, itemKindOverride: {}, itemMaxCardsLevels: {} };
+  return { points: 0, lifetimePoints: 0, highScore: 0, bestRun: 0, runsPlayed: 0, levels };
 }
 let META = loadMeta();
 function saveMeta() { try { localStorage.setItem(META_KEY, JSON.stringify(META)); } catch (e) {} }
@@ -583,9 +583,10 @@ const WORLD_COUNT = 1;
 function pickNodeType(forcedType) {
   if (forcedType) return forcedType;
   const r = Math.random();
-  if (r < 0.58) return 'battle';
-  if (r < 0.72) return 'rest';
-  if (r < 0.84) return 'blacksmith';
+  if (r < 0.55) return 'battle';
+  if (r < 0.68) return 'rest';
+  if (r < 0.80) return 'blacksmith';
+  if (r < 0.90) return 'chopshop';
   return 'treasure';
 }
 function generateMap() {
@@ -664,7 +665,7 @@ function initRunWithStarter(id) {
     chips: 40 + L.chips * 8, fuel: Math.min(20, 10 + L.fuel * 2), energy: 0,
     hero: { heroId: id, items: [...baseHero.starterItems] },
     itemCap: 2 + L.garage, handSize: 7 + (L.handCap || 0) * 2, drawPerTurn: 2 + (L.draw || 0), gems: 3, maxGems: 10, maxFuel: 20, maxEnergy: 20,
-    scoreThisRun: 0, lastNotice: null, cardBoosts: [], adminTuneLvl: 0, itemLevels: {}, handSortMode: null,
+    scoreThisRun: 0, lastNotice: null, cardBoosts: [], adminTuneLvl: 0, itemLevels: {}, itemUsesLevels: {}, itemKindOverride: {}, itemMaxCardsLevels: {}, handSortMode: null,
   };
   saveRun();
   render(mapScreen());
@@ -696,6 +697,7 @@ function selectNode(row, col) {
   else if (node.type === 'shop') { RETURN_TO_CASTLE_MENU = false; render(shopScreen()); }
   else if (node.type === 'rest') render(garageScreen());
   else if (node.type === 'blacksmith') { RETURN_TO_CASTLE_MENU = false; BLACKSMITH_OPTIONS = pickBlacksmithOptions(); BLACKSMITH_VISIT = { primary: null, secondary: null }; render(blacksmithScreen()); }
+  else if (node.type === 'chopshop') { RETURN_TO_CASTLE_MENU = false; render(chopShopScreen('map')); }
   else if (node.type === 'treasure') { const found = rollTreasure(); render(treasureScreen(found)); }
 }
 
@@ -717,10 +719,9 @@ function castleMenuScreen(message='') {
         <button class="castleBtn" id="castleDungeonNavBtn">Visit the castle Dungeon.</button>
         <button class="castleBtn" id="castleWizardNavBtn">Visit the castle Wizard's Tower.</button>
         <button class="castleBtn" id="castleBlacksmithNavBtn">Visit the castle Blacksmith.</button>
+        <button class="castleBtn" id="castleChopShopNavBtn">Visit the castle Chop Shop.</button>
         <button class="castleBtn" id="castleShopNavBtn">Visit the castle Shop.</button>
         <button class="castleBtn" id="castleInnNavBtn">Visit the castle Inn.</button>
-        <button class="castleBtn" id="viewUpgradesCastleBtn">View Upgrades.</button>
-        <button class="castleBtn" id="viewChopShopCastleBtn">Chop Shop.</button>
         <button class="castleBtn" id="leaveCastleBtn">Leave this area.</button>
       </div>
     </div>
@@ -1293,7 +1294,8 @@ function nodePopupContent(r, c) {
   }
   if (node.type === 'shop') return { title: 'Dealership', art: glyph(ICON.cart), rows: [], extra: '<div class="note">Buy a vehicle with coins.</div>', actionLabel: 'Go Here' };
   if (node.type === 'rest') return { title: 'Pit Stop', art: glyph(ICON.wrench), rows: [], extra: '<div class="note">Restore 30 health.</div>', actionLabel: 'Go Here' };
-  if (node.type === 'blacksmith') return { title: 'Tuning Garage', art: glyph(ICON.hammer), rows: [], extra: '<div class="note">Spend coins to permanently boost a card (or a whole rank/suit), or tune one of your equipped Items\' bonus.</div>', actionLabel: 'Go Here' };
+  if (node.type === 'blacksmith') return { title: 'Tuning Garage', art: glyph(ICON.hammer), rows: [], extra: '<div class="note">Spend coins to permanently boost a card (or a whole rank/suit), for this run only.</div>', actionLabel: 'Go Here' };
+  if (node.type === 'chopshop') return { title: 'Chop Shop', art: glyph(ICON.curse), rows: [], extra: '<div class="note">Spend coins to modify your equipped Items for this run: raise a bonus %, add uses per turn, add card slots, or convert a regular attack into poison, burn, or curse.</div>', actionLabel: 'Go Here' };
   if (node.type === 'treasure') return { title: 'Supply Cache', art: glyph(ICON.gift), rows: [], extra: '<div class="note">One random reward: coins, fuel, gems, energy, or Career Points.</div>', actionLabel: 'Go Here' };
   return { title: 'Fleet Castle', art: glyph(ICON.castle), rows: [], extra: '<div class="note">Battles, the Dealership, refueling, a card match game, and more.</div>', actionLabel: 'Go Here' };
 }
@@ -1348,8 +1350,8 @@ function mapScreen() {
   }
 
   let nodesHTML='';
-  const NODE_ICON={shop:ICON.cart,rest:ICON.wrench,blacksmith:ICON.hammer,treasure:ICON.gift,castle:ICON.castle};
-  const NODE_TITLE={shop:'Dealership',rest:'Pit Stop',blacksmith:'Tuning Garage',treasure:'Supply Cache',castle:'Fleet Castle'};
+  const NODE_ICON={shop:ICON.cart,rest:ICON.wrench,blacksmith:ICON.hammer,chopshop:ICON.curse,treasure:ICON.gift,castle:ICON.castle};
+  const NODE_TITLE={shop:'Dealership',rest:'Pit Stop',blacksmith:'Tuning Garage',chopshop:'Chop Shop',treasure:'Supply Cache',castle:'Fleet Castle'};
   for(let r=0;r<rows.length;r++) for(let c=0;c<rows[r].length;c++){
     const node=rows[r][c], x=25+r*colW+colW/2, y=rowY[Math.min(c,rowY.length-1)];
     const isDone=RUN.path.some(p=>p.row===r&&p.col===c);
@@ -1367,7 +1369,8 @@ function mapScreen() {
       tip=`${o.name}<br>HP: ${o.hp}<br>Needs ${TIERS[o.minTier]}+<br>Draws ${o.drawRate}/turn${o.attackInfo?`<br>${o.attackInfo}`:''}${o.boss?'<br><b>World Boss</b>':''}`;
     } else if(node.type==='shop') tip='Buy vehicles with coins. World 1 has only two shops.';
     else if(node.type==='rest') tip='Restore 30 health.';
-    else if(node.type==='blacksmith') tip='Upgrade a card or tune your Admin Vehicle.';
+    else if(node.type==='blacksmith') tip='Spend coins to permanently boost a card, rank, or suit for this run.';
+    else if(node.type==='chopshop') tip='Spend coins to modify your Items for this run: bonus %, uses per turn, max cards, or convert to poison/burn/curse.';
     else if(node.type==='castle') tip='Choose battles, shopping, refueling, a matching game, or other rewards.';
     else tip='Find coins, fuel, and gems.';
 
@@ -1387,9 +1390,6 @@ function mapScreen() {
         <svg width="${totalW}" height="${totalH}" viewBox="0 0 ${totalW} ${totalH}" style="position:absolute;left:0;top:0;pointer-events:none">${svgLines}</svg>
         ${nodesHTML}
       </div>
-    </div>
-    <div style="display:flex;justify-content:flex-end;margin-top:10px">
-      <button class="wo-btn amber" id="mapUpgradeBtn">View Upgrades</button>
     </div>
   </div>
   ${MAP_POPUP ? nodePopupScreen(MAP_POPUP.row, MAP_POPUP.col) : ''}`;
@@ -1534,8 +1534,6 @@ function battleScreen() {
       <div class="resourceRow">
         <button class="wo-btn amber" id="gemDrawBtn" style="padding:8px 12px;font-size:12px" ${RUN.gems < 1 ? 'disabled' : ''}><span class="vart" style="width:12px;height:12px;font-size:12px">${ICON.gem}</span> Draw ${1 + META.levels.gem} Card${1 + META.levels.gem > 1 ? 's' : ''} with Gem (-1)</button>
         <button class="wo-btn amber" id="fuelHealBtn" style="padding:8px 12px;font-size:12px" title="Fuel also gets you across the map — spending it here means less for travel." ${RUN.fuel < 1 || RUN.health >= RUN.maxHealth ? 'disabled' : ''}><span class="vart" style="width:12px;height:12px;font-size:12px">${ICON.fuel}</span> Burn 1 Fuel for +10 Health</button>
-        <button class="wo-btn gray" id="viewUpgradesBattleBtn" style="padding:8px 12px;font-size:12px">View Upgrades</button>
-        <button class="wo-btn gray" id="viewChopShopBattleBtn" style="padding:8px 12px;font-size:12px">Chop Shop</button>
       </div>
     </div>
     <div class="panel">
@@ -1579,7 +1577,7 @@ function nodeResultScreen(won, rewards) {
         <h1>${won ? 'Nice <em>Work</em>' : 'Fleet <em>Beaten</em>'}</h1>
         ${rewards.exactKillBonus ? `<div class="note" style="color:var(--green);font-weight:700">Perfect elimination! Exact kill bonus included.</div>` : ''}
         <div class="wo-sub">${rewardLine}</div>
-        ${won ? `<button class="wo-btn half" id="continueBtn">Continue</button><button class="wo-btn half amber" id="upgradeBtn" style="float:right">Upgrade</button>`
+        ${won ? `<button class="wo-btn" id="continueBtn" style="width:100%">Continue</button>`
               : `<button class="wo-btn" id="continueBtn" style="width:100%">See Run Summary</button>`}
       </div>
     </div>
@@ -1732,7 +1730,7 @@ function starterSelectScreen() {
   `;
 }
 
-function upgradeScreen(returnTo) {
+function upgradeScreen() {
   const rows = UPGRADE_DEFS.filter(u => u.id !== 'adminTune').map(u => {
     const lvl = META.levels[u.id];
     const maxed = lvl >= MAX_LEVEL;
@@ -1743,51 +1741,40 @@ function upgradeScreen(returnTo) {
       : u.desc;
     return `<div class="shopcard">
       <div class="hdr"><span>${u.label} (Lv ${lvl}/${MAX_LEVEL})</span><span class="price">${maxed ? 'MAX' : cost + ' pts'}</span></div>
-      <div class="note" style="margin:0 0 4px">${desc}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+        <div class="note" style="margin:0 0 4px;flex:1">${desc}</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;flex-shrink:0">
+          ${maxed ? '' : `<button class="wo-btn amber" data-levelup="${u.id}" style="padding:6px 10px;font-size:12px" ${META.points < cost ? 'disabled' : ''}>Level Up</button>`}
+          ${lvl > 0 ? `<button class="wo-btn gray" data-leveldown="${u.id}" style="padding:6px 10px;font-size:12px">Refund (+${refund})</button>` : ''}
+        </div>
+      </div>
       <div class="levelbar"><i style="width:${(lvl / MAX_LEVEL) * 100}%"></i></div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        ${maxed ? '' : `<button class="wo-btn amber" data-levelup="${u.id}" style="padding:8px 12px;font-size:13px" ${META.points < cost ? 'disabled' : ''}>Level Up</button>`}
-        ${lvl > 0 ? `<button class="wo-btn gray" data-leveldown="${u.id}" style="padding:8px 12px;font-size:13px">Refund 1 Level (+${refund} pts)</button>` : ''}
-      </div>
     </div>`;
   }).join('');
-  const itemRows = Object.values(ITEMS).filter(item => item.bonus).map(item => {
-    const lvl = itemLevel(item.id);
-    const maxed = lvl >= item.bonus.maxLevel;
-    const cost = maxed ? 0 : itemTuneCost(item, lvl);
-    const refund = lvl > 0 ? itemTuneCost(item, lvl - 1) : 0;
-    const curPct = Math.round((item.bonus.base + item.bonus.perLevel * lvl) * 100);
-    const nextPct = maxed ? curPct : Math.round((item.bonus.base + item.bonus.perLevel * (lvl + 1)) * 100);
-    return `<div class="shopcard">
-      <div class="hdr"><span>${item.name} Mastery (Lv ${lvl}/${item.bonus.maxLevel})</span><span class="price">${maxed ? 'MAX' : cost + ' pts'}</span></div>
-      <div class="note" style="margin:0 0 4px">Current bonus: +${curPct}%.${maxed ? '' : ` Next level: +${nextPct}%.`} This is permanent — it applies to ${item.name} in every future run.</div>
-      <div class="levelbar"><i style="width:${(lvl / item.bonus.maxLevel) * 100}%"></i></div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        ${maxed ? '' : `<button class="wo-btn amber" data-itemlevelup="${item.id}" style="padding:8px 12px;font-size:13px" ${META.points < cost ? 'disabled' : ''}>Level Up</button>`}
-        ${lvl > 0 ? `<button class="wo-btn gray" data-itemleveldown="${item.id}" style="padding:8px 12px;font-size:13px">Refund 1 Level (+${refund} pts)</button>` : ''}
-      </div>
-    </div>`;
-  }).join('');
-  const returnLabel = returnTo === 'map' ? 'Continue Route' : returnTo === 'battle' ? 'Back to Battle' : returnTo === 'castle' ? 'Back to Castle' : 'Back';
   return `
     <div class="wo">
       <div class="wo-stripe"></div>
       <div class="wo-body">
-        <div class="wo-eyebrow">Permanent Upgrades &middot; kept across every playthrough</div>
         <h1>Spend Your <em>Career Points</em></h1>
-        <div class="wo-sub">Career Points: ${META.points} &middot; Lifetime: ${META.lifetimePoints} &middot; High score: ${META.highScore}</div><div class="note" style="margin:-4px 0 6px">These carry over between playthroughs. In-run upgrades (Tuning Garage) use coins instead and reset every run.</div>
-        <button class="wo-btn" id="upgradeContinueBtn" data-return="${returnTo}" style="width:100%;margin-bottom:10px">${returnLabel}</button>
+        <div class="wo-sub">Career Points: ${META.points} &middot; Lifetime: ${META.lifetimePoints} &middot; High score: ${META.highScore}</div>
+        <div class="note" style="margin:-4px 0 6px">These carry over between playthroughs and can only be spent before a run begins. Item modifications (bonus, uses per turn, card limit, converting to poison/burn/curse) are done in-run at the Chop Shop using coins, and reset every run.</div>
+        <button class="wo-btn" id="upgradeContinueBtn" style="width:100%;margin-bottom:10px">Back</button>
         <div style="margin:12px 0">${rows}</div>
-        <div class="hdr" style="margin-top:4px"><span>Item Mastery</span><span>Permanent — applies whenever you equip that Item</span></div>
-        <div style="margin:6px 0 12px">${itemRows}</div>
-        <button class="wo-btn" id="upgradeContinueBtn2" data-return="${returnTo}" style="width:100%">${returnLabel}</button>
+        <button class="wo-btn" id="upgradeContinueBtn2" style="width:100%">Back</button>
       </div>
     </div>
   `;
 }
 
 function chopShopScreen(returnTo) {
-  const usesRows = Object.values(ITEMS).filter(item => item.kind !== 'storage').map(item => {
+  const itemRows = Object.values(ITEMS).filter(item => item.kind !== 'storage').map(item => {
+    // Bonus (power) tuning — only for Items that have a bonus curve at all.
+    const bonusLvl = itemLevel(item.id);
+    const bonusMaxed = !item.bonus || bonusLvl >= item.bonus.maxLevel;
+    const bonusCost = (item.bonus && !bonusMaxed) ? itemTuneCost(item, bonusLvl) : 0;
+    const bonusRefund = bonusLvl > 0 ? itemTuneCost(item, bonusLvl - 1) : 0;
+    const curPct = item.bonus ? Math.round((item.bonus.base + item.bonus.perLevel * bonusLvl) * 100) : 0;
+
     const lvl = itemUsesLevel(item.id);
     const maxed = lvl >= ITEM_MAX_USES_LEVEL;
     const cost = maxed ? 0 : itemUsesTuneCost(lvl);
@@ -1798,41 +1785,43 @@ function chopShopScreen(returnTo) {
     const cardsCost = cardsMaxed ? 0 : itemMaxCardsTuneCost(cardsLvl);
     const cardsRefund = cardsLvl > 0 ? itemMaxCardsTuneCost(cardsLvl - 1) : 0;
     const curMaxCards = effectiveMaxCards(item);
-    const kindOverride = META.itemKindOverride[item.id];
+    const kindOverride = RUN.itemKindOverride[item.id];
     const eligible = !item.kind; // only plain "regular attack" items can be converted
     const kindButtons = eligible ? ['poison', 'burn', 'curse'].map(k => {
-      if (kindOverride === k) return `<button class="wo-btn gray" data-kindrevert="${item.id}" style="padding:6px 10px;font-size:12px">Revert to Regular Attack (+${itemKindConvertCost()} pts back)</button>`;
+      if (kindOverride === k) return `<button class="wo-btn gray" data-kindrevert="${item.id}" style="padding:6px 10px;font-size:12px">Revert to Regular Attack (+${itemKindConvertCost()} coins back)</button>`;
       return null;
     }).filter(Boolean).join('') : '';
     const kindPicker = eligible && !kindOverride ? ['poison', 'burn', 'curse'].map(k =>
-      `<button class="wo-btn purple" data-kindconvert="${item.id}" data-kindto="${k}" style="padding:6px 10px;font-size:12px;margin-right:6px" ${META.points < itemKindConvertCost() ? 'disabled' : ''}>Convert to ${k[0].toUpperCase()+k.slice(1)} (${itemKindConvertCost()} pts)</button>`
+      `<button class="wo-btn purple" data-kindconvert="${item.id}" data-kindto="${k}" style="padding:6px 10px;font-size:12px;margin-right:6px" ${RUN.chips < itemKindConvertCost() ? 'disabled' : ''}>Convert to ${k[0].toUpperCase()+k.slice(1)} (${itemKindConvertCost()} coins)</button>`
     ).join('') : '';
     return `<div class="shopcard">
       <div class="hdr"><span>${item.name}</span><span></span></div>
-      <div class="note" style="margin:0 0 4px">Uses per turn: ${curUses} (Lv ${lvl}/${ITEM_MAX_USES_LEVEL}) &middot; Card limit: ${curMaxCards} (Lv ${cardsLvl}/${ITEM_MAX_CARDS_BONUS_CAP}).${eligible ? (kindOverride ? ` Currently converted to ${kindOverride}.` : ' Regular attack — can be converted below.') : ''}</div>
+      <div class="note" style="margin:0 0 4px">${item.bonus ? `Bonus: +${curPct}% (Lv ${bonusLvl}/${item.bonus.maxLevel}) &middot; ` : ''}Uses per turn: ${curUses} (Lv ${lvl}/${ITEM_MAX_USES_LEVEL}) &middot; Card limit: ${curMaxCards} (Lv ${cardsLvl}/${ITEM_MAX_CARDS_BONUS_CAP}).${eligible ? (kindOverride ? ` Currently converted to ${kindOverride}.` : ' Regular attack — can be converted below.') : ''}</div>
+      ${item.bonus ? `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px">
+        ${bonusMaxed ? '<span class="note" style="margin:0">Max bonus reached</span>' : `<button class="wo-btn amber" data-bonusup="${item.id}" style="padding:6px 10px;font-size:12px" ${RUN.chips < bonusCost ? 'disabled' : ''}>+Bonus Level (${bonusCost} coins)</button>`}
+        ${bonusLvl > 0 ? `<button class="wo-btn gray" data-bonusdown="${item.id}" style="padding:6px 10px;font-size:12px">Refund 1 Level (+${bonusRefund} coins)</button>` : ''}
+      </div>` : ''}
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px">
-        ${maxed ? '<span class="note" style="margin:0">Max uses reached</span>' : `<button class="wo-btn amber" data-usesup="${item.id}" style="padding:6px 10px;font-size:12px" ${META.points < cost ? 'disabled' : ''}>+1 Use/Turn (${cost} pts)</button>`}
-        ${lvl > 0 ? `<button class="wo-btn gray" data-usesdown="${item.id}" style="padding:6px 10px;font-size:12px">Refund 1 Level (+${refund} pts)</button>` : ''}
+        ${maxed ? '<span class="note" style="margin:0">Max uses reached</span>' : `<button class="wo-btn amber" data-usesup="${item.id}" style="padding:6px 10px;font-size:12px" ${RUN.chips < cost ? 'disabled' : ''}>+1 Use/Turn (${cost} coins)</button>`}
+        ${lvl > 0 ? `<button class="wo-btn gray" data-usesdown="${item.id}" style="padding:6px 10px;font-size:12px">Refund 1 Level (+${refund} coins)</button>` : ''}
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px">
-        ${cardsMaxed ? '<span class="note" style="margin:0">Max card limit reached</span>' : `<button class="wo-btn amber" data-cardsup="${item.id}" style="padding:6px 10px;font-size:12px" ${META.points < cardsCost ? 'disabled' : ''}>+1 Max Card (${cardsCost} pts)</button>`}
-        ${cardsLvl > 0 ? `<button class="wo-btn gray" data-cardsdown="${item.id}" style="padding:6px 10px;font-size:12px">Refund 1 Level (+${cardsRefund} pts)</button>` : ''}
+        ${cardsMaxed ? '<span class="note" style="margin:0">Max card limit reached</span>' : `<button class="wo-btn amber" data-cardsup="${item.id}" style="padding:6px 10px;font-size:12px" ${RUN.chips < cardsCost ? 'disabled' : ''}>+1 Max Card (${cardsCost} coins)</button>`}
+        ${cardsLvl > 0 ? `<button class="wo-btn gray" data-cardsdown="${item.id}" style="padding:6px 10px;font-size:12px">Refund 1 Level (+${cardsRefund} coins)</button>` : ''}
       </div>
       ${kindPicker}${kindButtons}
     </div>`;
   }).join('');
-  const returnLabel = returnTo === 'map' ? 'Continue Route' : returnTo === 'battle' ? 'Back to Battle' : returnTo === 'castle' ? 'Back to Castle' : 'Back';
-  return `
+  return `${noticeHTML()}
     <div class="wo">
       <div class="wo-stripe"></div>
       <div class="wo-body">
-        <div class="wo-eyebrow">Chop Shop &middot; Permanent, separate from power tuning</div>
+        <div class="wo-eyebrow">Chop Shop &middot; Run Upgrade (resets next run)</div>
         <h1>Modify Your <em>Items</em></h1>
-        <div class="wo-sub">Career Points: ${META.points} &middot; Lifetime: ${META.lifetimePoints}</div>
-        <div class="note" style="margin:-4px 0 10px">Raising an Item's damage bonus (Item Mastery, on the Upgrades screen) never affects its uses-per-turn, and vice versa — they're completely separate here. Converting an Item's damage type is powerful and permanent until you revert it.</div>
-        <button class="wo-btn" id="chopShopContinueBtn" data-return="${returnTo}" style="width:100%;margin-bottom:10px">${returnLabel}</button>
-        <div style="margin:12px 0">${usesRows}</div>
-        <button class="wo-btn" id="chopShopContinueBtn2" data-return="${returnTo}" style="width:100%">${returnLabel}</button>
+        ${currencyBar()}
+        <div class="note" style="margin:10px 0">Everything here is paid in coins and wipes when this run ends. Career Points and the permanent Upgrades screen are only spent before a run starts.</div>
+        <div style="margin:12px 0">${itemRows}</div>
+        <button class="wo-btn" id="leaveChopShopBtn">${RETURN_TO_CASTLE_MENU ? 'Back to Castle' : 'Back on the Road'}</button>
       </div>
     </div>
   `;
@@ -1852,7 +1841,6 @@ function metaScreen() {
           <input id="playerNameInput" type="text" maxlength="18" placeholder="Your name" value="${(META.playerName||'').replace(/"/g,'&quot;')}" style="width:100%;padding:9px 10px;border:2px solid var(--blue-light);border-radius:6px;font-family:var(--disp);font-size:15px;color:var(--ink)">
         </div>
         <button class="wo-btn amber" id="viewUpgradesBtn" style="width:100%;margin-bottom:10px">View Upgrades</button>
-        <button class="wo-btn purple" id="viewChopShopBtn" style="width:100%;margin-bottom:10px">Chop Shop (Modify Items)</button>
         ${hasSave ? `<button class="wo-btn" id="continueRunBtn" style="margin-bottom:10px;width:100%">Continue Run</button>` : ''}
         <button class="wo-btn ${hasSave ? 'gray' : ''}" id="startRunBtn" style="width:100%">${hasSave ? 'Start New Run (overwrites save)' : 'Start Run'}</button>
       </div>
@@ -1909,97 +1897,96 @@ function render(html) {
     if (won) { commitNode(BATTLE.row, BATTLE.col); if (BATTLE.row === ROWS) endRun(true); else render(mapScreen()); }
     else endRun(false);
   };
-  const upgradeBtn = document.getElementById('upgradeBtn');
-  if (upgradeBtn) upgradeBtn.onclick = () => { commitNode(BATTLE.row, BATTLE.col); render(upgradeScreen('map')); };
   const upgradeContinueBtn = document.getElementById('upgradeContinueBtn');
   const upgradeContinueBtn2 = document.getElementById('upgradeContinueBtn2');
-  const upgradeContinueHandler = (btn) => () => {
-    const ret = btn.dataset.return;
-    if (ret === 'map') { if (RUN.currentRow === ROWS) endRun(true); else render(mapScreen()); }
-    else if (ret === 'battle') render(battleScreen());
-    else if (ret === 'castle') render(castleMenuScreen());
-    else render(metaScreen());
-  };
-  if (upgradeContinueBtn) upgradeContinueBtn.onclick = upgradeContinueHandler(upgradeContinueBtn);
-  if (upgradeContinueBtn2) upgradeContinueBtn2.onclick = upgradeContinueHandler(upgradeContinueBtn2);
+  if (upgradeContinueBtn) upgradeContinueBtn.onclick = () => render(metaScreen());
+  if (upgradeContinueBtn2) upgradeContinueBtn2.onclick = () => render(metaScreen());
   const playerNameInput = document.getElementById('playerNameInput');
   if (playerNameInput) playerNameInput.onchange = () => { META.playerName = playerNameInput.value.trim().slice(0, 18); saveMeta(); };
-  const viewUpgradesBtn = document.getElementById('viewUpgradesBtn'); if (viewUpgradesBtn) viewUpgradesBtn.onclick = () => render(upgradeScreen('home'));
-  const viewChopShopBtn = document.getElementById('viewChopShopBtn'); if (viewChopShopBtn) viewChopShopBtn.onclick = () => render(chopShopScreen('home'));
-  const chopShopContinueBtn = document.getElementById('chopShopContinueBtn');
-  const chopShopContinueBtn2 = document.getElementById('chopShopContinueBtn2');
-  const chopShopContinueHandler = (btn) => () => {
-    const ret = btn.dataset.return;
-    if (ret === 'map') { if (RUN.currentRow === ROWS) endRun(true); else render(mapScreen()); }
-    else if (ret === 'battle') render(battleScreen());
-    else if (ret === 'castle') render(castleMenuScreen());
-    else render(metaScreen());
-  };
-  if (chopShopContinueBtn) chopShopContinueBtn.onclick = chopShopContinueHandler(chopShopContinueBtn);
-  if (chopShopContinueBtn2) chopShopContinueBtn2.onclick = chopShopContinueHandler(chopShopContinueBtn2);
+  const viewUpgradesBtn = document.getElementById('viewUpgradesBtn'); if (viewUpgradesBtn) viewUpgradesBtn.onclick = () => render(upgradeScreen());
+  const leaveChopShopBtn = document.getElementById('leaveChopShopBtn'); if (leaveChopShopBtn) leaveChopShopBtn.onclick = () => render(RETURN_TO_CASTLE_MENU ? castleMenuScreen() : mapScreen());
+  app.querySelectorAll('[data-bonusup]').forEach(el => el.onclick = () => {
+    const item = ITEMS[el.dataset.bonusup];
+    if (!item.bonus) return;
+    const lvl = itemLevel(item.id);
+    if (lvl >= item.bonus.maxLevel) return;
+    const cost = itemTuneCost(item, lvl);
+    if (RUN.chips < cost) return;
+    RUN.chips -= cost;
+    RUN.itemLevels[item.id] = lvl + 1;
+    saveRun();
+    render(chopShopScreen());
+  });
+  app.querySelectorAll('[data-bonusdown]').forEach(el => el.onclick = () => {
+    const item = ITEMS[el.dataset.bonusdown];
+    const lvl = itemLevel(item.id);
+    if (lvl <= 0) return;
+    const refund = itemTuneCost(item, lvl - 1);
+    RUN.itemLevels[item.id] = lvl - 1;
+    RUN.chips += refund;
+    saveRun();
+    render(chopShopScreen());
+  });
   app.querySelectorAll('[data-usesup]').forEach(el => el.onclick = () => {
     const item = ITEMS[el.dataset.usesup];
     const lvl = itemUsesLevel(item.id);
     if (lvl >= ITEM_MAX_USES_LEVEL) return;
     const cost = itemUsesTuneCost(lvl);
-    if (META.points < cost) return;
-    META.points -= cost;
-    META.itemUsesLevels[item.id] = lvl + 1;
-    saveMeta();
-    render(chopShopScreen(document.getElementById('chopShopContinueBtn')?.dataset.return || 'home'));
+    if (RUN.chips < cost) return;
+    RUN.chips -= cost;
+    RUN.itemUsesLevels[item.id] = lvl + 1;
+    saveRun();
+    render(chopShopScreen());
   });
   app.querySelectorAll('[data-usesdown]').forEach(el => el.onclick = () => {
     const item = ITEMS[el.dataset.usesdown];
     const lvl = itemUsesLevel(item.id);
     if (lvl <= 0) return;
     const refund = itemUsesTuneCost(lvl - 1);
-    META.itemUsesLevels[item.id] = lvl - 1;
-    META.points += refund;
-    saveMeta();
-    render(chopShopScreen(document.getElementById('chopShopContinueBtn')?.dataset.return || 'home'));
+    RUN.itemUsesLevels[item.id] = lvl - 1;
+    RUN.chips += refund;
+    saveRun();
+    render(chopShopScreen());
   });
   app.querySelectorAll('[data-cardsup]').forEach(el => el.onclick = () => {
     const item = ITEMS[el.dataset.cardsup];
     const lvl = itemMaxCardsLevel(item.id);
     if (lvl >= ITEM_MAX_CARDS_BONUS_CAP) return;
     const cost = itemMaxCardsTuneCost(lvl);
-    if (META.points < cost) return;
-    META.points -= cost;
-    META.itemMaxCardsLevels[item.id] = lvl + 1;
-    saveMeta();
-    render(chopShopScreen(document.getElementById('chopShopContinueBtn')?.dataset.return || 'home'));
+    if (RUN.chips < cost) return;
+    RUN.chips -= cost;
+    RUN.itemMaxCardsLevels[item.id] = lvl + 1;
+    saveRun();
+    render(chopShopScreen());
   });
   app.querySelectorAll('[data-cardsdown]').forEach(el => el.onclick = () => {
     const item = ITEMS[el.dataset.cardsdown];
     const lvl = itemMaxCardsLevel(item.id);
     if (lvl <= 0) return;
     const refund = itemMaxCardsTuneCost(lvl - 1);
-    META.itemMaxCardsLevels[item.id] = lvl - 1;
-    META.points += refund;
-    saveMeta();
-    render(chopShopScreen(document.getElementById('chopShopContinueBtn')?.dataset.return || 'home'));
+    RUN.itemMaxCardsLevels[item.id] = lvl - 1;
+    RUN.chips += refund;
+    saveRun();
+    render(chopShopScreen());
   });
   app.querySelectorAll('[data-kindconvert]').forEach(el => el.onclick = () => {
     const itemId = el.dataset.kindconvert; const to = el.dataset.kindto;
     const cost = itemKindConvertCost();
-    if (META.points < cost) return;
-    META.points -= cost;
-    META.itemKindOverride[itemId] = to;
-    saveMeta();
-    render(chopShopScreen(document.getElementById('chopShopContinueBtn')?.dataset.return || 'home'));
+    if (RUN.chips < cost) return;
+    RUN.chips -= cost;
+    RUN.itemKindOverride[itemId] = to;
+    saveRun();
+    render(chopShopScreen());
   });
   app.querySelectorAll('[data-kindrevert]').forEach(el => el.onclick = () => {
     const itemId = el.dataset.kindrevert;
-    if (!META.itemKindOverride[itemId]) return;
-    delete META.itemKindOverride[itemId];
-    META.points += itemKindConvertCost();
-    saveMeta();
-    render(chopShopScreen(document.getElementById('chopShopContinueBtn')?.dataset.return || 'home'));
+    if (!RUN.itemKindOverride[itemId]) return;
+    delete RUN.itemKindOverride[itemId];
+    RUN.chips += itemKindConvertCost();
+    saveRun();
+    render(chopShopScreen());
   });
-  const viewUpgradesBattleBtn = document.getElementById('viewUpgradesBattleBtn'); if (viewUpgradesBattleBtn) viewUpgradesBattleBtn.onclick = () => render(upgradeScreen('battle'));
-  const viewUpgradesCastleBtn = document.getElementById('viewUpgradesCastleBtn'); if (viewUpgradesCastleBtn) viewUpgradesCastleBtn.onclick = () => render(upgradeScreen('castle'));
-  const viewChopShopBattleBtn = document.getElementById('viewChopShopBattleBtn'); if (viewChopShopBattleBtn) viewChopShopBattleBtn.onclick = () => render(chopShopScreen('battle'));
-  const viewChopShopCastleBtn = document.getElementById('viewChopShopCastleBtn'); if (viewChopShopCastleBtn) viewChopShopCastleBtn.onclick = () => render(chopShopScreen('castle'));
+
   app.querySelectorAll('[data-levelup]').forEach(el => el.onclick = () => {
     const u = UPGRADE_DEFS.find(x => x.id === el.dataset.levelup);
     const lvl = META.levels[u.id];
@@ -2008,8 +1995,7 @@ function render(html) {
     if (META.points < cost) return;
     META.points -= cost; META.levels[u.id]++;
     saveMeta();
-    const ret = document.getElementById('upgradeContinueBtn')?.dataset.return || 'home';
-    render(upgradeScreen(ret));
+    render(upgradeScreen());
   });
   app.querySelectorAll('[data-leveldown]').forEach(el => el.onclick = () => {
     const u = UPGRADE_DEFS.find(x => x.id === el.dataset.leveldown);
@@ -2018,37 +2004,13 @@ function render(html) {
     const refund = upgradeCost(u, lvl - 1);
     META.levels[u.id]--; META.points += refund;
     saveMeta();
-    const ret = document.getElementById('upgradeContinueBtn')?.dataset.return || 'home';
-    render(upgradeScreen(ret));
-  });
-  app.querySelectorAll('[data-itemlevelup]').forEach(el => el.onclick = () => {
-    const item = ITEMS[el.dataset.itemlevelup];
-    const lvl = itemLevel(item.id);
-    if (lvl >= item.bonus.maxLevel) return;
-    const cost = itemTuneCost(item, lvl);
-    if (META.points < cost) return;
-    META.points -= cost;
-    META.itemLevels[item.id] = lvl + 1;
-    saveMeta();
-    const ret = document.getElementById('upgradeContinueBtn')?.dataset.return || 'home';
-    render(upgradeScreen(ret));
-  });
-  app.querySelectorAll('[data-itemleveldown]').forEach(el => el.onclick = () => {
-    const item = ITEMS[el.dataset.itemleveldown];
-    const lvl = itemLevel(item.id);
-    if (lvl <= 0) return;
-    const refund = itemTuneCost(item, lvl - 1);
-    META.itemLevels[item.id] = lvl - 1;
-    META.points += refund;
-    saveMeta();
-    const ret = document.getElementById('upgradeContinueBtn')?.dataset.return || 'home';
-    render(upgradeScreen(ret));
+    render(upgradeScreen());
   });
 
-  const mapUpgradeBtn = document.getElementById('mapUpgradeBtn'); if (mapUpgradeBtn) mapUpgradeBtn.onclick = () => render(upgradeScreen('map'));
   const castleDungeonNavBtn = document.getElementById('castleDungeonNavBtn'); if (castleDungeonNavBtn) castleDungeonNavBtn.onclick = () => render(castleDungeonScreen());
   const castleWizardNavBtn = document.getElementById('castleWizardNavBtn'); if (castleWizardNavBtn) castleWizardNavBtn.onclick = () => { CASTLE_STATE = CASTLE_STATE || {}; CASTLE_STATE.matchCards = null; render(castleMatchScreen()); };
   const castleBlacksmithNavBtn = document.getElementById('castleBlacksmithNavBtn'); if (castleBlacksmithNavBtn) castleBlacksmithNavBtn.onclick = () => { RETURN_TO_CASTLE_MENU = true; BLACKSMITH_OPTIONS = pickBlacksmithOptions(); BLACKSMITH_VISIT = { primary: null, secondary: null }; render(blacksmithScreen()); };
+  const castleChopShopNavBtn = document.getElementById('castleChopShopNavBtn'); if (castleChopShopNavBtn) castleChopShopNavBtn.onclick = () => { RETURN_TO_CASTLE_MENU = true; render(chopShopScreen()); };
   const castleShopNavBtn = document.getElementById('castleShopNavBtn'); if (castleShopNavBtn) castleShopNavBtn.onclick = () => { RETURN_TO_CASTLE_MENU = true; render(shopScreen(true)); };
   const castleInnNavBtn = document.getElementById('castleInnNavBtn'); if (castleInnNavBtn) castleInnNavBtn.onclick = () => render(castleInnScreen());
   const backToCastleMenuBtn = document.getElementById('backToCastleMenuBtn'); if (backToCastleMenuBtn) backToCastleMenuBtn.onclick = () => render(castleMenuScreen());
@@ -2107,7 +2069,7 @@ function render(html) {
   const restBtn = document.getElementById('restBtn'); if (restBtn) restBtn.onclick = () => { RUN.health = Math.min(RUN.maxHealth, RUN.health + 30); saveRun(); render(mapScreen()); };
   const backToMetaBtn = document.getElementById('backToMetaBtn'); if (backToMetaBtn) backToMetaBtn.onclick = () => render(metaScreen());
   const startRunBtn = document.getElementById('startRunBtn'); if (startRunBtn) startRunBtn.onclick = () => { clearRunSave(); render(starterSelectScreen()); };
-  const continueRunBtn = document.getElementById('continueRunBtn'); if (continueRunBtn) continueRunBtn.onclick = () => { RUN = loadRunSave(); RUN.maxGems=10; RUN.maxFuel=20; RUN.maxEnergy=20; RUN.handSize=7+(META.levels.handCap||0)*2; RUN.drawPerTurn=2+(META.levels.draw||0); RUN.gems=Math.min(RUN.maxGems,RUN.gems||0); RUN.fuel=Math.min(RUN.maxFuel,RUN.fuel||0); RUN.energy=Math.min(RUN.maxEnergy,RUN.energy||0); RUN.itemLevels=RUN.itemLevels||{}; saveRun(); render(mapScreen()); };
+  const continueRunBtn = document.getElementById('continueRunBtn'); if (continueRunBtn) continueRunBtn.onclick = () => { RUN = loadRunSave(); RUN.maxGems=10; RUN.maxFuel=20; RUN.maxEnergy=20; RUN.handSize=7+(META.levels.handCap||0)*2; RUN.drawPerTurn=2+(META.levels.draw||0); RUN.gems=Math.min(RUN.maxGems,RUN.gems||0); RUN.fuel=Math.min(RUN.maxFuel,RUN.fuel||0); RUN.energy=Math.min(RUN.maxEnergy,RUN.energy||0); RUN.itemLevels=RUN.itemLevels||{}; RUN.itemUsesLevels=RUN.itemUsesLevels||{}; RUN.itemKindOverride=RUN.itemKindOverride||{}; RUN.itemMaxCardsLevels=RUN.itemMaxCardsLevels||{}; saveRun(); render(mapScreen()); };
   app.querySelectorAll('[data-pick]').forEach(el => el.onclick = () => initRunWithStarter(el.dataset.pick));
 }
 

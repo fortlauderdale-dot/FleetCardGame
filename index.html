@@ -1404,12 +1404,13 @@ function endTurn() {
     const attackTimes = BATTLE.opponent.usesPerTurn ?? OPPONENT_USES_PER_TURN_DEFAULT;
     const maxCards = opponentMaxCards(BATTLE.opponent);
     let anyAttack = false;
+    let attackDef = null;
     for (let swing = 0; swing < attackTimes; swing++) {
       const choices=(BATTLE.opponent.attacks&&BATTLE.opponent.attacks.length?BATTLE.opponent.attacks:[{}]);
       const viable=choices.map(a=>({a,best:bestHandFromPool(BATTLE.oppPool,a.maxCards??maxCards)})).filter(x=>x.best.tier >= (x.a.minTier??BATTLE.opponent.minTier));
       if(!viable.length) break;
       viable.sort((x,y)=>(y.best.tier-x.best.tier)||((y.a.minTier??0)-(x.a.minTier??0)));
-      const pick=viable[0]; const attackDef=pick.a; const best=pick.best;
+      const pick=viable[0]; attackDef=pick.a; const best=pick.best;
       anyAttack = true;
       let oppDmg = damageFor(best.cards, best.mult);
       if (BATTLE.playerArmor > 0) {

@@ -93,6 +93,11 @@
   .vslot .vreq{font-family:var(--mono);font-size:10.5px;color:var(--dim);margin:3px 0}
   .vslot .vcards{display:flex;gap:3px;flex-wrap:wrap;min-height:30px;margin-top:6px}
 
+  .itemGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .itemCard{border-radius:8px;padding:8px;background:var(--bg);min-height:150px;display:flex;flex-direction:column;box-sizing:border-box}
+  .itemCard.ready{border-color:var(--green) !important}
+  .itemCard .vcards{display:flex;gap:3px;flex-wrap:wrap;min-height:26px;margin-top:4px}
+
   .card{width:38px;height:52px;border-radius:5px;background:var(--white);color:var(--ink);display:flex;
     flex-direction:column;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700;
     font-size:14px;border:2px solid var(--blue);cursor:pointer;user-select:none;flex-shrink:0}
@@ -200,17 +205,21 @@ function combinations(arr, k) {
   function helper(start, combo) { if (combo.length === k) { results.push(combo.slice()); return; } for (let i = start; i < arr.length; i++) { combo.push(arr[i]); helper(i + 1, combo); combo.pop(); } }
   helper(0, []); return results;
 }
-function bestFiveFromPool(pool) {
+const OPPONENT_USES_PER_TURN_DEFAULT = 1; // how many times an opponent attacks per turn, unless opp.usesPerTurn overrides it
+function opponentMaxCards(opp) { return opp.maxCards ?? (opp.minTier === 0 ? 1 : 5); } // "Any 1 card" opponents are capped at exactly 1 unless given a wider maxCards
+function bestHandFromPool(pool, maxCards) {
   if (!pool.length) return { cards: [], tier: -1, label: 'Nothing', mult: 0 };
-  if (pool.length <= 5) { const ev = evaluateHand(pool); return { cards: pool, ...ev }; }
+  const cap = Math.min(maxCards, pool.length);
+  if (pool.length <= cap) { const ev = evaluateHand(pool); return { cards: pool, ...ev }; }
   let best = null;
-  for (const combo of combinations(pool, 5)) {
+  for (const combo of combinations(pool, cap)) {
     const ev = evaluateHand(combo);
     const rankSum = combo.reduce((a, c) => a + c.rank, 0);
     if (!best || ev.tier > best.tier || (ev.tier === best.tier && rankSum > best.rankSum)) best = { cards: combo, ...ev, rankSum };
   }
   return best;
 }
+function bestFiveFromPool(pool) { return bestHandFromPool(pool, 5); } // kept for anything still calling the old name
 function damageFor(cards, mult) { return Math.round(cards.reduce((a, c) => a + cardValue(c.rank) + (c.bonus || 0), 0) * mult); }
 function isConsecutive(cards) {
   if (cards.length < 2) return false;
@@ -258,11 +267,11 @@ function fleetLabel() { return META.playerName ? `${META.playerName}'s Fleet` : 
 function opponentAttackBoxHTML(opp) {
   if (opp.locked) {
     const remaining = Math.max(0, opp.lockThreshold - opp.lockProgress);
-    return `<div class="vslot" style="cursor:default">
-      <div class="vname">${art(opp, 18)} ${opp.name}</div>
-      <div class="vreq">
+    return `<div class="itemCard" style="cursor:default">
+      <div class="hdr" style="font-weight:600; color:var(--blue-dark)">${art(opp, 18)} ${opp.name}</div>
+      <div class="note" style="font-size:11px">
         <span class="vart" style="width:12px;height:12px;font-size:12px">${ICON.lock}</span>
-        Locked - ${remaining} more card value clears it
+        Locked — ${remaining} more card value clears it
       </div>
       <div class="note" style="margin-top:4px">Then hits for ${opp.lockAttack} damage</div>
     </div>`;
@@ -270,27 +279,18 @@ function opponentAttackBoxHTML(opp) {
 
   const attacks = (opp.attacks && opp.attacks.length)
     ? opp.attacks
-    : [{ name: opp.name, minTier: opp.minTier, straightLen: opp.straightLen }];
+    : [{ name: opp.name, minTier: opp.minTier, straightLen: opp.straightLen, maxCards: opponentMaxCards(opp) }];
+  const swings = opp.usesPerTurn ?? OPPONENT_USES_PER_TURN_DEFAULT;
 
   return attacks.map(a => {
-    let reqText = '';
-    let damageText = '';
-
-    if (a.straightLen) {
-      reqText = `Any ${a.straightLen} cards in a row`;
-      damageText = `Damage: Straight value`;
-    } else if (a.minTier === 0) {
-      reqText = 'Any 1 card';
-      damageText = 'Damage: Card value';
-    } else {
-      reqText = `${TIERS[a.minTier]} or better`;
-      damageText = `Damage: Hand value`;
-    }
-
-    return `<div class="vslot" style="cursor:default">
-      <div class="vname">${art(opp, 18)} ${a.name}</div>
-      <div class="vreq">${reqText}</div>
+    const cap = a.maxCards ?? 5;
+    const reqText = a.straightLen ? `Any ${a.straightLen} cards in a row` : (cap === 1 ? 'Any 1 card' : `Up to ${cap} cards, ${TIERS[a.minTier]} or better`);
+    const damageText = a.straightLen ? 'Damage: straight value' : (cap === 1 ? 'Damage: card value' : 'Damage: hand value');
+    return `<div class="itemCard" style="cursor:default">
+      <div class="hdr" style="font-weight:600; color:var(--blue-dark)">${art(opp, 18)} ${a.name}</div>
+      <div class="note" style="font-size:11px">${reqText}</div>
       <div class="note" style="margin-top:4px">${damageText}</div>
+      <div class="note" style="margin-top:2px">Attacks ${swings}x per turn</div>
     </div>`;
   }).join('');
 }
@@ -334,8 +334,23 @@ function checkCondition(cond, cards) {
   return { met: false, label: '' };
 }
 // One shared formula for every Item's output. `level` is that Item's own upgrade level
-// (see RUN.itemLevels). Items with `flatAmount` ignore card value entirely (used for
+// (see META.itemLevels — permanent, tuned via the Upgrades screen). Items with `flatAmount` ignore card value entirely (used for
 // threshold-style poison: "any hand summing to X+ does exactly Y", not a multiplier).
+function describeCondition(cond) {
+  if (!cond || cond.type === 'any') return 'Any cards';
+  if (cond.type === 'pokerTier') return cond.tier === 0 ? 'Any card' : TIERS[cond.tier];
+  if (cond.type === 'straightLen') return `a ${cond.len}-card straight`;
+  if (cond.type === 'suitCount') return `${cond.count}+ ${cond.suit}`;
+  if (cond.type === 'parity') return cond.mode === 'all' ? `all ${cond.parity}` : `${cond.count}+ ${cond.parity} cards`;
+  if (cond.type === 'exactRank') return cond.requireAll ? `all ${rankLabel(cond.rank)}s` : `a ${rankLabel(cond.rank)}`;
+  if (cond.type === 'sumThreshold') return `cards summing to ${cond.min}+`;
+  return '';
+}
+function itemRequirementText(item) {
+  const max = item.maxCards;
+  const base = max === 1 ? 'Any 1 card' : `Up to ${max} card${max > 1 ? 's' : ''}`;
+  return `${base} (${describeCondition(item.condition)})`;
+}
 function computeItemAmount(item, cards, level, condResult) {
   if (item.flatAmount != null) {
     return { amount: Math.round(item.flatAmount + (item.flatAmountPerLevel || 0) * level), breakdown: `flat ${item.flatAmount}${item.flatAmountPerLevel ? ` +${item.flatAmountPerLevel}/lv` : ''}` };
@@ -358,7 +373,8 @@ function computeItemAmount(item, cards, level, condResult) {
   const breakdown = `${rawSum} × ${mult.toFixed(2).replace(/\.?0+$/, '')}${bonusApplied ? ' (bonus applied)' : ''} = ${amount}`;
   return { amount, breakdown };
 }
-function itemLevel(itemId) { return (RUN.itemLevels && RUN.itemLevels[itemId]) || 0; }
+function itemLevel(itemId) { return (META.itemLevels && META.itemLevels[itemId]) || 0; }
+function itemTuneCost(item, lvl) { return 30 + lvl * 25; } // Career Points cost, linear like other permanent upgrades
 function itemUsesCap(item, level) { return item.usesPerTurn + (item.usesPerTurnPerLevel || 0) * level; }
 
 /* ========== ITEM CATALOG ==========
@@ -502,9 +518,9 @@ function upgradeCost(def, atLevel) { return def.baseCost + atLevel * def.inc; } 
 /* ========== META (persists forever) ========== */
 const META_KEY = 'fleetduel-meta-v7';
 function loadMeta() {
-  try { const raw = localStorage.getItem(META_KEY); if (raw) return JSON.parse(raw); } catch (e) {}
+  try { const raw = localStorage.getItem(META_KEY); if (raw) { const m = JSON.parse(raw); m.itemLevels = m.itemLevels || {}; return m; } } catch (e) {}
   const levels = {}; UPGRADE_DEFS.forEach(u => levels[u.id] = 0);
-  return { points: 0, lifetimePoints: 0, highScore: 0, bestRun: 0, runsPlayed: 0, levels };
+  return { points: 0, lifetimePoints: 0, highScore: 0, bestRun: 0, runsPlayed: 0, levels, itemLevels: {} };
 }
 let META = loadMeta();
 function saveMeta() { try { localStorage.setItem(META_KEY, JSON.stringify(META)); } catch (e) {} }
@@ -603,7 +619,7 @@ function initRunWithStarter(id) {
     chips: 40 + L.chips * 8, fuel: Math.min(20, 10 + L.fuel * 2), energy: 0,
     hero: { heroId: id, items: [...baseHero.starterItems] },
     itemCap: 2 + L.garage, handSize: 7 + (L.handCap || 0) * 2, drawPerTurn: 2 + (L.draw || 0), gems: 3, maxGems: 10, maxFuel: 20, maxEnergy: 20,
-    scoreThisRun: 0, lastNotice: null, cardBoosts: [], adminTuneLvl: 0, itemLevels: {},
+    scoreThisRun: 0, lastNotice: null, cardBoosts: [], adminTuneLvl: 0, itemLevels: {}, handSortMode: null,
   };
   saveRun();
   render(mapScreen());
@@ -785,6 +801,7 @@ function startBattle(opponentDef, row, col) {
     if (total) c.bonus = total;
   });
   drawCards(Math.min(5, RUN.handSize));
+  resortHandAndRelink(RUN.handSortMode);
   drawOpponentCards();
   for (let i = 0; i < 1 + META.levels.reveal; i++) {
     const hidden = BATTLE.oppPool.filter(c => !c.revealed);
@@ -884,9 +901,20 @@ function markSelectedForDiscard() {
 }
 function unmarkDiscard(i) { BATTLE.turnDiscard = BATTLE.turnDiscard.filter(x => x !== i); render(battleScreen()); }
 
-function sortHand(mode) {
+// Sorting BATTLE.hand reorders the array, which would silently corrupt any indices
+// sitting in item slots (especially storage, which survives across turns) unless we
+// relink them afterward by card object identity — same fix as the end-of-turn splice.
+function resortHandAndRelink(mode) {
+  if (!mode) return;
+  const preserved = {};
+  Object.entries(BATTLE.slots).forEach(([key, idxs]) => { if (idxs.length) preserved[key] = idxs.map(i => BATTLE.hand[i]); });
   const suitOrder = {'♠':0,'♥':1,'♦':2,'♣':3};
   BATTLE.hand.sort((a,b)=> mode==='suit' ? ((suitOrder[a.suit]-suitOrder[b.suit]) || (a.rank-b.rank)) : ((a.rank-b.rank) || (suitOrder[a.suit]-suitOrder[b.suit])));
+  Object.entries(preserved).forEach(([key, cards]) => { BATTLE.slots[key] = cards.map(c => BATTLE.hand.indexOf(c)).filter(i => i !== -1); });
+}
+function sortHand(mode) {
+  RUN.handSortMode = mode; saveRun();
+  resortHandAndRelink(mode);
   selectedIdx=[]; render(battleScreen());
 }
 
@@ -909,6 +937,7 @@ function drawWithGem() {
     BATTLE.hand.push(BATTLE.deck.pop());
   }
   battleLog(`Spent a gem, drew ${n} card${n > 1 ? 's' : ''}.`);
+  resortHandAndRelink(RUN.handSortMode);
   saveRun(); render(battleScreen());
 }
 // NOTE: no Item currently defines a Stun-style ability. If you want one, give an Item
@@ -1076,8 +1105,13 @@ function endTurn() {
       battleLog(`${BATTLE.opponent.name} is still locked (${BATTLE.opponent.lockProgress}/${BATTLE.opponent.lockThreshold}). No attack yet.`);
     }
   } else {
-    const best = bestFiveFromPool(BATTLE.oppPool);
-    if (best.tier >= BATTLE.opponent.minTier) {
+    const attackTimes = BATTLE.opponent.usesPerTurn ?? OPPONENT_USES_PER_TURN_DEFAULT;
+    const maxCards = opponentMaxCards(BATTLE.opponent);
+    let anyAttack = false;
+    for (let swing = 0; swing < attackTimes; swing++) {
+      const best = bestHandFromPool(BATTLE.oppPool, maxCards);
+      if (best.tier < BATTLE.opponent.minTier) break; // out of a qualifying hand — stop swinging early
+      anyAttack = true;
       let oppDmg = damageFor(best.cards, best.mult);
       if (BATTLE.playerArmor > 0) {
         const blocked = Math.min(BATTLE.playerArmor, oppDmg);
@@ -1108,7 +1142,9 @@ function endTurn() {
       }
       battleLog(`${BATTLE.opponent.name} played ${best.label} (${usedText}) — ${oppDmg} damage.${specialLog} Your health: ${RUN.health}/${RUN.maxHealth}.`);
       BATTLE.oppPool = BATTLE.oppPool.filter(c => !best.cards.includes(c));
-    } else { battleLog(`${BATTLE.opponent.name} didn't have enough to attack this turn.`); }
+      if (RUN.health <= 0) break;
+    }
+    if (!anyAttack) battleLog(`${BATTLE.opponent.name} didn't have enough to attack this turn.`);
     tryApplyCurse();
   }
 
@@ -1116,6 +1152,7 @@ function endTurn() {
 
   BATTLE.turn++;
   drawCards(RUN.drawPerTurn);
+  resortHandAndRelink(RUN.handSortMode);
   drawOpponentCards();
   battleLog(`— Turn ${BATTLE.turn} —`);
   render(battleScreen());
@@ -1315,7 +1352,7 @@ function battleScreen() {
         const c = BATTLE.hand[cardHandIdx];
         return `<div class="card mini ${c.color === 'red' ? 'red' : ''}" data-unassign="${slotKey}|${cardHandIdx}" title="Click to take this card back">${rankLabel(c.rank)}${c.suit}</div>`;
       }).join('') || `<span class="note" style="margin:0">Drag or tap cards to store them</span>`;
-      return `<div class="shopcard" data-assign="${slotKey}" style="margin-top:6px;border:1px dashed var(--purple)"
+      return `<div class="itemCard" data-assign="${slotKey}" style="border:2px dashed var(--purple)"
           ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleCardDrop(event,'${slotKey}',${item.maxStore})">
         <div class="hdr" style="font-weight:600;color:var(--purple)">${item.name} (storage)</div>
         <div class="note" style="font-size:11px">${item.note}</div>
@@ -1326,7 +1363,7 @@ function battleScreen() {
 
     const condResult = cards.length ? checkCondition(item.condition, cards) : { met: false, label: '' };
     const ready = condResult.met;
-    const previewCalc = ready && item.kind !== 'defense' ? computeItemAmount(item, cards, level, condResult) : (ready ? computeItemAmount(item, cards, level, condResult) : null);
+    const previewCalc = ready ? computeItemAmount(item, cards, level, condResult) : null;
     const effectWord = item.kind === 'defense' ? 'armor' : item.kind === 'poison' ? 'poison' : item.kind === 'burn' ? 'burn' : 'dmg';
     const cap = itemUsesCap(item, level);
     const usesLeft = cap - ((BATTLE.itemUses && BATTLE.itemUses[slotKey]) || 0);
@@ -1334,13 +1371,16 @@ function battleScreen() {
       const c = BATTLE.hand[cardHandIdx];
       return `<div class="card mini ${c.color === 'red' ? 'red' : ''}" data-unassign="${slotKey}|${cardHandIdx}">${rankLabel(c.rank)}${c.suit}</div>`;
     }).join('') || `<span class="note" style="margin:0">Tap cards here</span>`;
+    const bonusPct = item.bonus ? Math.round((item.bonus.base + item.bonus.perLevel * level) * 100) : 0;
+    const bonusLine = item.bonus ? `<div class="note" style="margin:2px 0 0;color:var(--purple)">Bonus: +${bonusPct}% if ${describeCondition(item.bonus.condition || item.condition)}</div>` : '';
 
-    return `<div class="shopcard ${ready ? 'ready' : ''}" data-assign="${slotKey}" style="margin-top:6px; border:1px dashed ${cursedAmt ? 'var(--purple)' : 'var(--blue)'}"
+    return `<div class="itemCard ${ready ? 'ready' : ''}" data-assign="${slotKey}" style="border:2px dashed ${cursedAmt ? 'var(--purple)' : 'var(--blue)'}"
         ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleCardDrop(event,'${slotKey}',${item.maxCards})">
       <div class="hdr" style="font-weight:600; color:var(--blue-dark)">${item.name}${cursedAmt ? ` <span class="vart" style="width:12px;height:12px;font-size:12px;color:var(--purple)">${ICON.curse}</span> cursed` : ''}</div>
-      <div class="note" style="font-size:11px">${item.note}${level ? ` (Lv ${level})` : ''}</div>
+      <div class="note" style="font-size:11px">${itemRequirementText(item)}</div>
+      ${bonusLine}
       <div class="vcards">${cardHTML}</div>
-      ${cards.length ? `<div class="note" style="margin:4px 0 0; color:var(--green)">${condResult.label}${ready ? ` ✓ ${previewCalc.breakdown} ${effectWord}` : ' ✗'}</div>` : ''}
+      ${cards.length ? `<div class="note" style="margin:4px 0 0; color:var(--green)">${condResult.label}${ready ? ` ✓ Projected: ${previewCalc.breakdown} ${effectWord}` : ' ✗ requirement not met'}</div>` : ''}
       <div class="note" style="margin:2px 0 0">${usesLeft > 0 ? `${usesLeft}/${cap} use${cap > 1 ? 's' : ''} left this turn` : 'No uses left this turn'}</div>
       <div style="margin-top:4px">
         ${idxs.length ? `<button class="wo-btn gray" style="padding:3px 6px;font-size:10px" data-clear="${slotKey}">Clear</button>` : ''}
@@ -1348,12 +1388,6 @@ function battleScreen() {
       </div>
     </div>`;
   }).join('');
-  const heroHTML = `<div class="vslot" style="width:220px; cursor:default">
-    <div class="vname">${art(hero, 18)} ${hero.name}</div>
-    <div class="vreq" style="font-size:11px; color:var(--dim)">Items (${RUN.hero.items.length}/${RUN.itemCap}):</div>
-    ${itemsHTML}
-  </div>`;
-
   const assignedIdx = new Set(Object.values(BATTLE.slots).flat());
   const handHTML = BATTLE.hand.map((c, i) => {
     if (assignedIdx.has(i) || BATTLE.turnDiscard.includes(i) || BATTLE.usedThisTurn.has(i)) return '';
@@ -1404,12 +1438,10 @@ function battleScreen() {
         <div class="duelMatchup">
       <div class="matchupSide playerSide">
         <div class="panel">
-          <div class="hdr">
-            <span>${fleetLabel()}</span>
-            <span>Drag cards or tap to select</span>
-          </div>
-          <div class="grid" style="grid-template-columns:repeat(2,minmax(0,1fr));">
-            ${heroHTML}
+          <div class="note" style="margin:0 0 8px">Drag cards or tap to select &middot; Items: ${RUN.hero.items.length}/${RUN.itemCap}</div>
+          <div class="itemGrid">
+            ${itemsHTML}
+            ${RUN.hero.items.length < RUN.itemCap ? `<div class="itemCard" style="display:flex;align-items:center;justify-content:center;text-align:center;border:2px dashed var(--blue-light);color:var(--dim);font-size:11px">Open item slot<br>(buy at the Dealership)</div>` : ''}
           </div>
         </div>
       </div>
@@ -1420,7 +1452,7 @@ function battleScreen() {
             <span>${opp.name}'s Attacks</span>
             <span>What they'll attack with</span>
           </div>
-          <div class="grid" style="grid-template-columns:repeat(2,minmax(0,1fr));">
+          <div class="itemGrid">
             ${opponentAttackBoxHTML(opp)}
           </div>
         </div>
@@ -1523,16 +1555,6 @@ function garageScreen() {
 }
 
 function blacksmithScreen() {
-  const itemTuneRows = RUN.hero.items.filter((id, i, arr) => arr.indexOf(id) === i) // unique equipped item ids
-    .map(itemId => ITEMS[itemId])
-    .filter(item => item && item.bonus)
-    .map(item => {
-      const lvl = itemLevel(item.id);
-      const maxed = lvl >= item.bonus.maxLevel;
-      const cost = maxed ? 0 : 40 * Math.pow(2, lvl);
-      const curPct = Math.round((item.bonus.base + item.bonus.perLevel * lvl) * 100);
-      return `<div class="shopcard"><div class="hdr"><span>${item.name} Bonus (Lv ${lvl}/${item.bonus.maxLevel})</span><span class="price">${maxed ? 'MAX' : cost + ' coins'}</span></div><div class="note">Current bonus: +${curPct}%. Each tune doubles in cost. Resets next run.</div>${maxed ? '' : `<button class="wo-btn purple" data-itemtune="${item.id}" data-itemtunecost="${cost}" ${RUN.chips < cost ? 'disabled' : ''}>Tune ${item.name}</button>`}</div>`;
-    }).join('') || `<div class="note">None of your equipped Items have a tunable bonus yet.</div>`;
   const rows = BLACKSMITH_OPTIONS.map((opt, i) => {
     const b = findBoost(opt);
     const bonus = b ? b.bonus : 0;
@@ -1576,7 +1598,7 @@ function blacksmithScreen() {
         <h1>Tune Your <em>Fleet</em></h1>
         <div class="wo-sub">${visitNote}</div>
         ${currencyBar()}
-        <div style="margin:12px 0">${itemTuneRows}${rows}</div>
+        <div style="margin:12px 0">${rows}</div>
         <button class="wo-btn" id="leaveBlacksmithBtn">Back on the Road</button>
       </div>
     </div>
@@ -1657,6 +1679,23 @@ function upgradeScreen(returnTo) {
       </div>
     </div>`;
   }).join('');
+  const itemRows = Object.values(ITEMS).filter(item => item.bonus).map(item => {
+    const lvl = itemLevel(item.id);
+    const maxed = lvl >= item.bonus.maxLevel;
+    const cost = maxed ? 0 : itemTuneCost(item, lvl);
+    const refund = lvl > 0 ? itemTuneCost(item, lvl - 1) : 0;
+    const curPct = Math.round((item.bonus.base + item.bonus.perLevel * lvl) * 100);
+    const nextPct = maxed ? curPct : Math.round((item.bonus.base + item.bonus.perLevel * (lvl + 1)) * 100);
+    return `<div class="shopcard">
+      <div class="hdr"><span>${item.name} Mastery (Lv ${lvl}/${item.bonus.maxLevel})</span><span class="price">${maxed ? 'MAX' : cost + ' pts'}</span></div>
+      <div class="note" style="margin:0 0 4px">Current bonus: +${curPct}%.${maxed ? '' : ` Next level: +${nextPct}%.`} This is permanent — it applies to ${item.name} in every future run.</div>
+      <div class="levelbar"><i style="width:${(lvl / item.bonus.maxLevel) * 100}%"></i></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${maxed ? '' : `<button class="wo-btn amber" data-itemlevelup="${item.id}" style="padding:8px 12px;font-size:13px" ${META.points < cost ? 'disabled' : ''}>Level Up</button>`}
+        ${lvl > 0 ? `<button class="wo-btn gray" data-itemleveldown="${item.id}" style="padding:8px 12px;font-size:13px">Refund 1 Level (+${refund} pts)</button>` : ''}
+      </div>
+    </div>`;
+  }).join('');
   const returnLabel = returnTo === 'map' ? 'Continue Route' : returnTo === 'battle' ? 'Back to Battle' : returnTo === 'castle' ? 'Back to Castle' : 'Back';
   return `
     <div class="wo">
@@ -1667,6 +1706,8 @@ function upgradeScreen(returnTo) {
         <div class="wo-sub">Career Points: ${META.points} &middot; Lifetime: ${META.lifetimePoints} &middot; High score: ${META.highScore}</div><div class="note" style="margin:-4px 0 6px">These carry over between playthroughs. In-run upgrades (Tuning Garage) use coins instead and reset every run.</div>
         <button class="wo-btn" id="upgradeContinueBtn" data-return="${returnTo}" style="width:100%;margin-bottom:10px">${returnLabel}</button>
         <div style="margin:12px 0">${rows}</div>
+        <div class="hdr" style="margin-top:4px"><span>Item Mastery</span><span>Permanent — applies whenever you equip that Item</span></div>
+        <div style="margin:6px 0 12px">${itemRows}</div>
         <button class="wo-btn" id="upgradeContinueBtn2" data-return="${returnTo}" style="width:100%">${returnLabel}</button>
       </div>
     </div>
@@ -1782,6 +1823,29 @@ function render(html) {
     const ret = document.getElementById('upgradeContinueBtn')?.dataset.return || 'home';
     render(upgradeScreen(ret));
   });
+  app.querySelectorAll('[data-itemlevelup]').forEach(el => el.onclick = () => {
+    const item = ITEMS[el.dataset.itemlevelup];
+    const lvl = itemLevel(item.id);
+    if (lvl >= item.bonus.maxLevel) return;
+    const cost = itemTuneCost(item, lvl);
+    if (META.points < cost) return;
+    META.points -= cost;
+    META.itemLevels[item.id] = lvl + 1;
+    saveMeta();
+    const ret = document.getElementById('upgradeContinueBtn')?.dataset.return || 'home';
+    render(upgradeScreen(ret));
+  });
+  app.querySelectorAll('[data-itemleveldown]').forEach(el => el.onclick = () => {
+    const item = ITEMS[el.dataset.itemleveldown];
+    const lvl = itemLevel(item.id);
+    if (lvl <= 0) return;
+    const refund = itemTuneCost(item, lvl - 1);
+    META.itemLevels[item.id] = lvl - 1;
+    META.points += refund;
+    saveMeta();
+    const ret = document.getElementById('upgradeContinueBtn')?.dataset.return || 'home';
+    render(upgradeScreen(ret));
+  });
 
   const mapUpgradeBtn = document.getElementById('mapUpgradeBtn'); if (mapUpgradeBtn) mapUpgradeBtn.onclick = () => render(upgradeScreen('map'));
   const castleDungeonNavBtn = document.getElementById('castleDungeonNavBtn'); if (castleDungeonNavBtn) castleDungeonNavBtn.onclick = () => render(castleDungeonScreen());
@@ -1814,13 +1878,6 @@ function render(html) {
     else render(castleMatchScreen());
   });
   const leaveShopBtn = document.getElementById('leaveShopBtn'); if (leaveShopBtn) leaveShopBtn.onclick = () => render(RETURN_TO_CASTLE_MENU ? castleMenuScreen() : mapScreen());
-  app.querySelectorAll('[data-itemtune]').forEach(el => el.onclick = () => {
-    const itemId = el.dataset.itemtune; const cost = +el.dataset.itemtunecost;
-    if (RUN.chips < cost) return;
-    RUN.chips -= cost;
-    RUN.itemLevels[itemId] = (RUN.itemLevels[itemId] || 0) + 1;
-    saveRun(); render(blacksmithScreen());
-  });
   const leaveBlacksmithBtn = document.getElementById('leaveBlacksmithBtn'); if (leaveBlacksmithBtn) leaveBlacksmithBtn.onclick = () => { BLACKSMITH_OPTIONS = null; BLACKSMITH_VISIT = null; render(RETURN_TO_CASTLE_MENU ? castleMenuScreen() : mapScreen()); };
   const leaveTreasureBtn = document.getElementById('leaveTreasureBtn'); if (leaveTreasureBtn) leaveTreasureBtn.onclick = () => render(mapScreen());
   app.querySelectorAll('[data-forge]').forEach(el => el.onclick = () => {

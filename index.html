@@ -341,7 +341,7 @@ function checkCondition(cond, cards) {
   }
   if (cond.type === 'sumThreshold') {
     const sum = cards.reduce((a, c) => a + cardValue(c.rank) + (c.bonus || 0), 0);
-    return { met: cards.length > 0 && sum >= cond.min, label: `Sum ${sum}`, sum };
+    return { met: cards.length > 0 && sum >= cond.min, label: `Σ${sum}`, sum };
   }
   return { met: false, label: '' };
 }
@@ -355,7 +355,7 @@ function describeCondition(cond) {
   if (cond.type === 'suitCount') return `${cond.count}+ ${cond.suit}`;
   if (cond.type === 'parity') return cond.mode === 'all' ? `all ${cond.parity}` : `${cond.count}+ ${cond.parity} cards`;
   if (cond.type === 'exactRank') return cond.requireAll ? `all ${rankLabel(cond.rank)}s` : `a ${rankLabel(cond.rank)}`;
-  if (cond.type === 'sumThreshold') return `cards summing to ${cond.min}+`;
+  if (cond.type === 'sumThreshold') return `Σcards ≥ ${cond.min}`;
   return '';
 }
 function itemRequirementText(item) {
@@ -377,14 +377,15 @@ function computeItemAmount(item, cards, level, condResult) {
     const bonusMet = !item.bonus.condition || checkCondition(item.bonus.condition, cards).met;
     if (bonusMet) {
       const lvl = Math.min(level, item.bonus.maxLevel ?? level);
-      mult += item.bonus.base + item.bonus.perLevel * lvl;
-      bonusApplied = true;
+      const bonusAmt = item.bonus.base + item.bonus.perLevel * lvl;
+      mult += bonusAmt;
+      if (bonusAmt > 0) bonusApplied = true;
     }
   }
   if (item.perCardBonus && cards.length > 1) mult += item.perCardBonus * (cards.length - 1);
   const rawSum = cards.reduce((a, c) => a + cardValue(c.rank) + (c.bonus || 0), 0);
   const amount = Math.round(rawSum * mult);
-  const breakdown = `${rawSum} × ${mult.toFixed(2).replace(/\.?0+$/, '')}${bonusApplied ? ' (bonus applied)' : ''} = ${amount}`;
+  const breakdown = `${rawSum} × ${mult.toFixed(2).replace(/\.?0+$/, '')}${bonusApplied ? ' (bonus)' : ''} = ${amount}`;
   return { amount, breakdown };
 }
 // All Item modification (bonus tuning, uses-per-turn, max cards, kind conversion) lives on
@@ -458,11 +459,13 @@ const ITEMS = {
     condition: { type: 'pokerTier', tier: 1 }, baseMult: 1, kind: 'defense',
     note: 'Needs a Pair. Blocks damage instead of dealing it.' },
   toxic_spill: { id: 'toxic_spill', name: 'Toxic Spill', cost: 40, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
-    condition: { type: 'sumThreshold', min: 5 }, flatAmount: 9, flatAmountPerLevel: 4, kind: 'poison',
-    note: 'Any card(s) summing to 5+ applies poison. Only usable once a turn unless tuned.' },
+    condition: { type: 'any' }, baseMult: 0.5, kind: 'poison',
+    bonus: { base: 0, perLevel: 0.15, maxLevel: 3 },
+    note: 'Up to 3 cards. Poison = Σ(cards) ÷ 2 — play 3 cards worth 22 total for 11 poison.' },
   toxic_flood: { id: 'toxic_flood', name: 'Toxic Flood', cost: 65, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
-    condition: { type: 'sumThreshold', min: 15 }, flatAmount: 20, flatAmountPerLevel: 6, kind: 'poison',
-    note: 'Any card(s) summing to 15+ applies a much bigger poison hit.' },
+    condition: { type: 'any' }, baseMult: 0.75, kind: 'poison',
+    bonus: { base: 0, perLevel: 0.2, maxLevel: 3 },
+    note: 'Up to 4 cards. Poison = Σ(cards) × 0.75 — hits harder per card than Toxic Spill.' },
   torch_burn: { id: 'torch_burn', name: 'Slow Burn', cost: 65, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'pokerTier', tier: 1 }, baseMult: 1, kind: 'burn',
     note: 'Needs a Pair. Burns over 3 turns (weaker each turn) instead of hitting directly — burns stack.' },

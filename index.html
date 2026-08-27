@@ -137,6 +137,12 @@
   .mapnode.farfuture{background:var(--blue-light);border-color:var(--blue-light);color:#c3cae8;cursor:default;opacity:.5}
   .mapnode.avail{background:var(--white);border-color:var(--amber);box-shadow:0 0 0 5px #ff9f1c33;cursor:pointer}
   .mapnode.done{background:var(--green);border-color:var(--green);color:#fff;cursor:default}
+  .mapnode.current{background:var(--blue);border-color:var(--blue-dark);color:#fff;cursor:default;box-shadow:0 0 0 5px #2451e055;animation:herePulse 1.4s ease-in-out infinite}
+  @keyframes herePulse{0%,100%{box-shadow:0 0 0 4px #2451e055}50%{box-shadow:0 0 0 9px #2451e022}}
+  .hereTag{position:absolute;left:50%;bottom:calc(100% + 4px);transform:translateX(-50%);white-space:nowrap;
+    background:var(--blue-dark);color:#fff;font-family:var(--mono);font-size:9.5px;font-weight:700;letter-spacing:.04em;
+    padding:2px 6px;border-radius:4px;pointer-events:none}
+  .hereTag::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:4px solid transparent;border-top-color:var(--blue-dark)}
 
   .shopcard{border:1px solid var(--blue-light);background:var(--bg);border-radius:6px;padding:10px;margin-bottom:8px}
   .pickcard{border:2px solid var(--blue-light);background:var(--bg);border-radius:10px;padding:16px;width:160px;text-align:center}
@@ -448,6 +454,22 @@ function itemUsesCap(item, usesLevel) { return item.usesPerTurn + (item.usesPerT
    storage (never fires, just holds cards until you click one to release it). */
 const ITEMS = {
   card_draw: { id: 'card_draw', name: 'Quick Draw', cost: 0, maxCards: 2, usesPerTurn: 1, condition: { type: 'pokerTier', tier: 1 }, baseMult: 0, drawAmount: 2, drawPerLevel: 1, note: 'Needs a Pair. Draw 2 additional cards.' },
+  // "Attack + draw" family: any regular attack item can carry drawAmount/drawPerLevel to also
+  // draw cards the instant it's played, on top of whatever damage it deals. To build a new
+  // version, copy one of these and swap the condition (pokerTier tier for pairs/trips/quads,
+  // suitCount for "if you play N of a suit", straightLen for a run, etc.) and the drawAmount.
+  pair_draw: { id: 'pair_draw', name: 'Draw & Dash', cost: 40, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+    condition: { type: 'pokerTier', tier: 1 }, baseMult: 1,
+    drawAmount: 2, drawPerLevel: 0,
+    note: 'Needs a Pair. Deals damage and draws 2 cards immediately.' },
+  trips_draw: { id: 'trips_draw', name: 'Triple Draw', cost: 55, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+    condition: { type: 'pokerTier', tier: 3 }, baseMult: 1.4,
+    drawAmount: 3, drawPerLevel: 0,
+    note: 'Needs Three of a Kind. Deals damage and draws 3 cards immediately.' },
+  diamond_draw: { id: 'diamond_draw', name: 'Diamond Dash', cost: 45, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+    condition: { type: 'suitCount', suit: '♦', count: 1 }, baseMult: 1,
+    drawAmount: 1, drawPerLevel: 0,
+    note: 'Needs at least 1 Diamond. Deals damage and draws 1 card immediately.' },
   fender_bender: { id: 'fender_bender', name: 'One-Two Punch', cost: 0, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'pokerTier', tier: 0 }, baseMult: 1,
     bonus: { condition: { type: 'pokerTier', tier: 1 }, base: 0.5, perLevel: 0.25, maxLevel: 2 }, // +50% ONLY if the 2 cards are a Pair, up to +100% tuned
@@ -524,7 +546,7 @@ const ITEMS = {
 
 /* ========== HERO ROSTER (4 total — pick one to play as for the run) ========== */
 const HEROES = {
-  sidebyside: { id: 'sidebyside', name: 'Golf Cart',      icon: '🛺', image: 'vehicles/golf-cart.png', starterItems: ['fender_bender','card_draw'] },
+  sidebyside: { id: 'sidebyside', name: 'Golf Cart',      icon: '🛺', image: 'vehicles/golf-cart.png', starterItems: ['fender_bender','pair_draw'] },
   admin:      { id: 'admin',      name: 'Admin Vehicle',   icon: '🚗', image: 'vehicles/admin-vehicle.png', starterItems: ['fender_bender','escort_wall'] },
   interstate: { id: 'interstate', name: 'Interstate Racer', icon: '🏁', image: 'vehicles/interstate-racer.png', starterItems: ['moto_escort','card_draw'] },
   convoy:     { id: 'convoy',     name: 'Armored Convoy',  icon: '🚛', image: 'vehicles/armored-convoy.png', starterItems: ['triple_threat','escort_wall'] },
@@ -1062,6 +1084,31 @@ function executePlayerAttack(itemId, index) {
   const { amount, breakdown } = computeItemAmount(item, cards, level, condResult);
   const eKind = effectiveKind(item, index);
 
+  // Kind effect (damage/defense/poison/burn/curse) and the draw effect are independent —
+  // an item can do one, the other, or both (e.g. deal damage AND draw cards). A pure-draw
+  // item like Quick Draw just has baseMult 0, so its kind effect amount is 0 and gets skipped.
+  if (amount > 0 || item.flatAmount != null) {
+    if (eKind === 'defense') {
+      BATTLE.playerArmor += amount;
+      battleLog(`${item.name} — ${condResult.label}! +${amount} armor (${breakdown}).`);
+    } else if (eKind === 'poison') {
+      BATTLE.opponent.poisonStacks = BATTLE.opponent.poisonStacks || [];
+      BATTLE.opponent.poisonStacks.push(amount);
+      battleLog(`${item.name} — ${condResult.label}! Applied ${amount} poison.`);
+    } else if (eKind === 'burn') {
+      const stages = [amount, Math.round(amount / 2), Math.round(amount / 4)];
+      BATTLE.opponent.burns = BATTLE.opponent.burns || [];
+      BATTLE.opponent.burns.push({ stages, stageIdx: 0 });
+      battleLog(`${item.name} — ${condResult.label}! Burn applied for ${stages.join(' + ')} damage (stacks with any existing burn).`);
+    } else if (eKind === 'curse') {
+      BATTLE.opponent.curseFromPlayer = (BATTLE.opponent.curseFromPlayer || 0) + amount;
+      battleLog(`${item.name} — ${condResult.label}! Cursed them for ${amount} — it lands if they fail to attack next turn.`);
+    } else {
+      BATTLE.opponent.hpNow = Math.max(0, BATTLE.opponent.hpNow - amount);
+      battleLog(`${item.name} — ${condResult.label}! ${amount} damage (${breakdown}).`);
+    }
+  }
+
   if (item.drawAmount) {
     const drawN = item.drawAmount + (item.drawPerLevel || 0) * level;
     const drawn=[];
@@ -1070,24 +1117,6 @@ function executePlayerAttack(itemId, index) {
       if(BATTLE.deck.length){ const c=BATTLE.deck.pop(); BATTLE.hand.push(c); drawn.push(c); }
     }
     battleLog(`${item.name} — Drew ${drawn.map(c=>rankLabel(c.rank)+c.suit).join(' ') || 'no cards'}.`);
-  } else if (eKind === 'defense') {
-    BATTLE.playerArmor += amount;
-    battleLog(`${item.name} — ${condResult.label}! +${amount} armor (${breakdown}).`);
-  } else if (eKind === 'poison') {
-    BATTLE.opponent.poisonStacks = BATTLE.opponent.poisonStacks || [];
-    BATTLE.opponent.poisonStacks.push(amount);
-    battleLog(`${item.name} — ${condResult.label}! Applied ${amount} poison.`);
-  } else if (eKind === 'burn') {
-    const stages = [amount, Math.round(amount / 2), Math.round(amount / 4)];
-    BATTLE.opponent.burns = BATTLE.opponent.burns || [];
-    BATTLE.opponent.burns.push({ stages, stageIdx: 0 });
-    battleLog(`${item.name} — ${condResult.label}! Burn applied for ${stages.join(' + ')} damage (stacks with any existing burn).`);
-  } else if (eKind === 'curse') {
-    BATTLE.opponent.curseFromPlayer = (BATTLE.opponent.curseFromPlayer || 0) + amount;
-    battleLog(`${item.name} — ${condResult.label}! Cursed them for ${amount} — it lands if they fail to attack next turn.`);
-  } else {
-    BATTLE.opponent.hpNow = Math.max(0, BATTLE.opponent.hpNow - amount);
-    battleLog(`${item.name} — ${condResult.label}! ${amount} damage (${breakdown}).`);
   }
 
   // Resolve the Item's effect.
@@ -1422,11 +1451,12 @@ function mapScreen() {
   for(let r=0;r<rows.length;r++) for(let c=0;c<rows[r].length;c++){
     const node=rows[r][c], x=25+r*colW+colW/2, y=rowY[Math.min(c,rowY.length-1)];
     const isDone=RUN.path.some(p=>p.row===r&&p.col===c);
+    const isCurrent=r===RUN.currentRow&&c===RUN.currentCol;
     const isAvail=avail.some(n=>n.row===r&&n.col===c);
     const isBoss=r===rows.length-1;
     const withinSight=r<=RUN.currentRow+visibleRange;
     const showReal=isBoss||isDone||isAvail||withinSight;
-    const cls=isDone?'done':isAvail?'avail':withinSight?'future':'farfuture';
+    const cls=isCurrent?'current':isDone?'done':isAvail?'avail':withinSight?'future':'farfuture';
     const icon=!showReal?`<span class="vart" style="width:19px;height:19px;font-size:19px">${ICON.fog}</span>`:(node.type==='battle'?art(node.opponent,19):`<span class="vart" style="width:19px;height:19px;font-size:19px">${NODE_ICON[node.type]}</span>`);
     const title=!showReal?'Unscouted':(node.type==='battle'?node.opponent.name:NODE_TITLE[node.type]);
     let tip;
@@ -1442,8 +1472,9 @@ function mapScreen() {
     else tip='Find coins, fuel, and gems.';
 
     nodesHTML+=`<div class="mapnode-wrap ${isBoss?'bossnode ':''}${c===0?'toprow':c===1?'midrow':'bottomrow'}" style="left:${(x/totalW*100)}%;top:${y}px">
+      ${isCurrent?'<div class="hereTag">YOU ARE HERE</div>':''}
       <button class="mapnode ${cls} type-${node.type}" ${showReal?`data-nodeinfo="${r}:${c}"`:''} ${showReal?'':'disabled'}>${icon}</button>
-      <div class="tooltip"><b>${title}</b><br>${tip}</div>
+      <div class="tooltip"><b>${title}</b>${isCurrent?' <span style="color:var(--amber)">(current)</span>':''}<br>${tip}</div>
     </div>`;
   }
 
@@ -1516,7 +1547,21 @@ function battleScreen() {
       <div class="itemReqLine">${itemRequirementText(item)}</div>
       ${bonusLine}
       <div class="vcards">${cardHTML}</div>
-      ${cards.length ? `<div class="note" style="margin:4px 0 0">${ready ? `${previewCalc.breakdown} ${item.drawAmount?`<b>Draw</b> ${item.drawAmount} additional card${item.drawAmount===1?'':'s'}.`:eKind==='poison'?`<span class="effectTip poisonText" data-tip="Poison deals damage at the end of the opponent's turn. Each poison stack is reduced by 3 after it ticks.">poison</span>`:eKind==='burn'?`<span class="effectTip burnText" data-tip="Burn deals damage at the end of the opponent's turn. Each burn application weakens on later turns.">burn</span>`:eKind==='curse'?`<span class="effectTip curseText" data-tip="Curse deals its damage if the opponent fails to attack on the next turn.">curse</span>`:effectWord}` : 'Requirement not met'}</div>` : `<div class="note" style="margin:4px 0 0">${item.drawAmount?`<b>Draw</b> ${item.drawAmount} additional card${item.drawAmount===1?'':'s'}.`:eKind==='poison'?`<span class="effectTip poisonText" data-tip="Poison deals damage at the end of the opponent's turn. Each poison stack is reduced by 3 after it ticks."><b>Poison</b></span> attack · Damage: × ${item.baseMult ?? 1}`:eKind==='burn'?`<span class="effectTip burnText" data-tip="Burn deals damage at the end of the opponent's turn. Each burn application weakens on later turns."><b>Burn</b></span> attack · Damage: × ${item.baseMult ?? 1}`:eKind==='curse'?`<span class="effectTip curseText" data-tip="Curse deals its damage if the opponent fails to attack on the next turn."><b>Curse</b></span> attack · Damage: × ${item.baseMult ?? 1}`:''}</div>`}
+      ${(() => {
+        const hasKindAmount = item.flatAmount != null || (item.baseMult ?? 1) > 0;
+        const drawText = item.drawAmount ? `<b>Draw</b> ${item.drawAmount + (item.drawPerLevel||0)*level} card${(item.drawAmount + (item.drawPerLevel||0)*level)===1?'':'s'}` : '';
+        const kindTag = eKind==='poison'?`<span class="effectTip poisonText" data-tip="Poison deals damage at the end of the opponent's turn. Each poison stack is reduced by 3 after it ticks."><b>Poison</b></span>`
+          :eKind==='burn'?`<span class="effectTip burnText" data-tip="Burn deals damage at the end of the opponent's turn. Each burn application weakens on later turns."><b>Burn</b></span>`
+          :eKind==='curse'?`<span class="effectTip curseText" data-tip="Curse deals its damage if the opponent fails to attack on the next turn."><b>Curse</b></span>`
+          :'';
+        if (cards.length && ready) {
+          const kindText = hasKindAmount ? `${previewCalc.breakdown} ${kindTag||effectWord}` : '';
+          return `<div class="note" style="margin:4px 0 0">${[kindText, drawText].filter(Boolean).join(' + ') || 'Requirement not met'}</div>`;
+        }
+        if (cards.length && !ready) return `<div class="note" style="margin:4px 0 0">Requirement not met</div>`;
+        const staticKindText = hasKindAmount ? `${kindTag ? kindTag+' attack' : 'Attack'} · Damage: × ${item.baseMult ?? 1}` : '';
+        return `<div class="note" style="margin:4px 0 0">${[staticKindText, drawText].filter(Boolean).join(' + ')}</div>`;
+      })()}
       <div style="margin-top:auto">
         <div class="note" style="margin:2px 0 0">${usesLeft > 0 ? `${usesLeft}/${cap} use${cap > 1 ? 's' : ''} left this turn` : 'No uses left this turn'}</div>
         <div style="margin-top:4px">

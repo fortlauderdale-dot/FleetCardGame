@@ -731,22 +731,24 @@ const HEROES = {
 const STARTERS = ['sidebyside', 'admin', 'interstate', 'convoy', 'comingsoon1', 'comingsoon2'];
 // Short, hand-written attack/bonus text for the Pick Your Vehicle screen — one entry per
 // starter item currently in use. Add an entry here whenever a new starter item is introduced.
+const UPGRADE_AT_ITEM_MASTERY = 'Can be upgraded permanently at the Chop Shop (Item Mastery).';
 const STARTER_ITEM_DISPLAY = {
-  fender_bender: { req: 'Up to 2 cards', bonus: '+50% bonus if Pair (grows with tuning)' },
-  pair_draw:     { req: 'Pair', bonus: 'Draw 2 cards immediately' },
+  fender_bender: { req: 'Up to 2 cards', bonusPre: '', bonusNum: '+50%', bonusPost: ' bonus if Pair', upgradeNote: UPGRADE_AT_ITEM_MASTERY },
+  pair_draw:     { req: 'Pair', bonusPre: 'Draw ', bonusNum: '2', bonusPost: ' cards immediately', upgradeNote: null },
   escort_wall:   { req: 'Pair', bonus: 'Blocks damage equal to Σ of cards played (Defense)' },
   moto_escort:   { req: '4-card Straight', bonus: 'Damage scales with the straight' },
-  card_draw:     { req: 'Pair', bonus: 'Draw 2 additional cards (no damage)' },
-  triple_threat: { req: 'Three of a Kind', bonus: '+100% damage (up to +400% with tuning)' },
+  card_draw:     { req: 'Pair', bonusPre: 'Draw ', bonusNum: '2', bonusPost: ' additional cards (no damage)', upgradeNote: UPGRADE_AT_ITEM_MASTERY },
+  triple_threat: { req: 'Three of a Kind', bonusPre: '', bonusNum: '+100%', bonusPost: ' damage', upgradeNote: UPGRADE_AT_ITEM_MASTERY },
 };
 function heroAttacksHTML(hero) {
-  const rows = (hero.starterItems || []).map(iid => {
+  return (hero.starterItems || []).map(iid => {
     const item = ITEMS[iid];
     const d = STARTER_ITEM_DISPLAY[iid];
     if (!item || !d) return '';
-    return `<div style="margin:6px 0"><b>${item.name}</b><div class="note" style="margin:2px 0 0">${d.req}</div><div class="note" style="margin:0 0 0 10px">↳ ${d.bonus}</div></div>`;
+    const numHTML = d.bonusNum ? (d.upgradeNote ? `<b class="hoverTip" title="${d.upgradeNote}">${d.bonusNum}</b>` : `<b>${d.bonusNum}</b>`) : '';
+    const bonusHTML = d.bonusNum ? `${d.bonusPre || ''}${numHTML}${d.bonusPost || ''}` : (d.bonus || '');
+    return `<div style="margin:6px 0"><b>${item.name}</b><div class="note" style="margin:2px 0 0">${d.req}</div><div class="note" style="margin:2px 0 0">${bonusHTML}</div></div>`;
   }).join('');
-  return `<div class="hdr" style="margin-top:8px"><span>Attacks</span><span></span></div>${rows}`;
 }
 function isStarterUnlocked(id) {
   if (id === 'sidebyside' || id === 'admin') return true;
@@ -2263,19 +2265,23 @@ function runEndScreen(won, bonus) {
 function starterSelectScreen() {
   const cards = STARTERS.map(id => {
     if (id === 'comingsoon1' || id === 'comingsoon2') {
-      return `<div class="pickcard locked" style="display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center">
-        <div class="pname">Coming Soon</div>
-        <div class="ptag">A new vehicle is on the way.</div>
+      return `<div style="width:160px">
+        <div class="pickcard locked" style="display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;min-height:230px">
+          <div class="pname">Coming Soon</div>
+          <div class="ptag">A new vehicle is on the way.</div>
+        </div>
       </div>`;
     }
     const hero = HEROES[id];
     const unlocked = isStarterUnlocked(id);
-    return `<div class="pickcard ${unlocked ? '' : 'locked'}" style="display:flex;flex-direction:column">
-      <div class="pname">${hero.name}</div>
-      <div class="picon" style="margin:6px 0">${unlocked ? art(hero, 46) : `<span class="vart" style="width:46px;height:46px;font-size:46px">${ICON.lock}</span>`}</div>
-      ${unlocked ? heroAttacksHTML(hero) : `<div class="ptag">${starterLockNote(id)}</div>`}
-      <div style="flex:1"></div>
-      ${unlocked ? `<button class="wo-btn amber" data-pick="${hero.id}" style="padding:8px 12px;font-size:13px;width:100%;margin-top:10px">Choose</button>` : ''}
+    return `<div style="width:160px">
+      <div class="pname" style="text-align:left;margin-bottom:6px">${hero.name}</div>
+      <div class="pickcard ${unlocked ? '' : 'locked'}" style="display:flex;flex-direction:column;min-height:230px${unlocked ? '' : ';justify-content:center;align-items:center;text-align:center'}">
+        <div class="picon" style="margin:6px 0">${unlocked ? art(hero, 46) : `<span class="vart" style="width:46px;height:46px;font-size:46px">${ICON.lock}</span>`}</div>
+        ${unlocked ? heroAttacksHTML(hero) : `<div class="ptag">${starterLockNote(id)}</div>`}
+        <div style="flex:1"></div>
+        ${unlocked ? `<button class="wo-btn amber" data-pick="${hero.id}" style="padding:8px 12px;font-size:13px;width:100%;margin-top:10px">Choose</button>` : ''}
+      </div>
     </div>`;
   }).join('');
   return `

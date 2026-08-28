@@ -548,6 +548,9 @@ function computeItemAmount(item, cards, level, condResult) {
 // screen never touch any of this.
 function itemLevel(itemId) { return (RUN.itemLevels && RUN.itemLevels[itemId]) || 0; }
 function itemTuneCost(item, lvl) { return 40 * Math.pow(2, lvl); } // coins, doubles each level like card tuning
+// An item can level up if it has a damage `bonus` (mult grows) or a `drawPerLevel` (draw count
+// grows) — this returns how many levels it can take, or 0 if it doesn't scale at all.
+function itemLevelCap(item) { if (item.bonus) return item.bonus.maxLevel ?? 0; if (item.drawPerLevel) return item.levelCap || 0; return 0; }
 function itemUsesLevel(itemId) { return (RUN.itemUsesLevels && RUN.itemUsesLevels[itemId]) || 0; }
 function itemUsesTuneCost(lvl) { return 50 + lvl * 50; } // coins
 const ITEM_MAX_USES_LEVEL = 2; // level 0/1/2 -> 1/2/3 uses per turn
@@ -572,7 +575,7 @@ function itemUsesCap(item, usesLevel) { return item.usesPerTurn + (item.usesPerT
    what the computed amount does: damage / defense (armor) / poison / burn / curse-immune
    storage (never fires, just holds cards until you click one to release it). */
 const ITEMS = {
-  card_draw: { id: 'card_draw', name: 'Quick Draw', cost: 0, maxCards: 2, usesPerTurn: 1, condition: { type: 'pokerTier', tier: 1 }, baseMult: 0, drawAmount: 2, drawPerLevel: 1, note: 'Needs a Pair. Draw 2 additional cards.' },
+  card_draw: { id: 'card_draw', name: 'Quick Draw', cost: 0, maxCards: 2, usesPerTurn: 1, condition: { type: 'pokerTier', tier: 1 }, baseMult: 0, drawAmount: 2, drawPerLevel: 1, levelCap: 3, note: 'Needs a Pair. Draw 2 additional cards.' },
   // "Attack + draw" family: any regular attack item can carry drawAmount/drawPerLevel to also
   // draw cards the instant it's played, on top of whatever damage it deals. To build a new
   // version, copy one of these and swap the condition (pokerTier tier for pairs/trips/quads,
@@ -731,7 +734,7 @@ const HEROES = {
 const STARTERS = ['sidebyside', 'admin', 'interstate', 'convoy', 'comingsoon1', 'comingsoon2'];
 // Short, hand-written attack/bonus text for the Pick Your Vehicle screen — one entry per
 // starter item currently in use. Add an entry here whenever a new starter item is introduced.
-const UPGRADE_AT_ITEM_MASTERY = 'Can be upgraded permanently at the Chop Shop (Item Mastery).';
+const UPGRADE_AT_ITEM_MASTERY = 'Can be upgraded at the Tuning Garage (Item Upgrades) for the rest of that run.';
 const STARTER_ITEM_DISPLAY = {
   fender_bender: { req: 'Up to 2 cards', bonusPre: '', bonusNum: '+50%', bonusPost: ' bonus if Pair', upgradeNote: UPGRADE_AT_ITEM_MASTERY },
   pair_draw:     { req: 'Pair', bonusPre: 'Draw ', bonusNum: '2', bonusPost: ' cards immediately', upgradeNote: null },
@@ -1920,7 +1923,7 @@ function battleScreen() {
       return `<div class="card mini ${c.color === 'red' ? 'red' : ''} ${c.suit === '♣' ? 'club-card' : ''}" data-unassign="${slotKey}|${cardHandIdx}"><div>${rankLabel(c.rank)}</div><div>${c.suit}</div></div>`;
     }).join('');
     const bonusPct = item.bonus ? Math.round((item.bonus.base + item.bonus.perLevel * level) * 100) : 0;
-    const bonusLine = item.bonus && bonusPct > 0 ? `<div class="itemBonusLine">Bonus <b class="hoverTip" title="Can be upgraded permanently on the Upgrades screen (Item Mastery).">+${bonusPct}%</b> if ${describeCondition(item.bonus.condition || item.condition)}</div>` : '';
+    const bonusLine = item.bonus && bonusPct > 0 ? `<div class="itemBonusLine">Bonus <b class="hoverTip" title="Can be upgraded at the Tuning Garage (Item Upgrades) for the rest of this run.">+${bonusPct}%</b> if ${describeCondition(item.bonus.condition || item.condition)}</div>` : '';
 
     const usesBadgeText = cap === Infinity ? '∞' : `${Math.max(0, usesLeft)}/${cap}`;
     return `<div class="itemCard kind-${eKind} ${ready ? 'ready' : ''}" data-assign="${slotKey}" style="border:2px dashed ${cursedAmt ? 'var(--purple)' : 'var(--blue)'}"
@@ -2223,6 +2226,30 @@ function blacksmithScreen() {
       ${btnHTML}
     </div>`;
   }).join('');
+  const seenItemIds = new Set();
+  const itemLevelRows = RUN.hero.items.map(itemId => {
+    if (seenItemIds.has(itemId)) return '';
+    seenItemIds.add(itemId);
+    const item = ITEMS[itemId];
+    if (!item) return '';
+    const cap = itemLevelCap(item);
+    if (cap <= 0) return '';
+    const lvl = itemLevel(itemId);
+    const maxed = lvl >= cap;
+    const cost = maxed ? 0 : itemTuneCost(item, lvl);
+    const refund = lvl > 0 ? itemTuneCost(item, lvl - 1) : 0;
+    const currentText = item.bonus
+      ? `Currently +${Math.round((item.bonus.base + item.bonus.perLevel * lvl) * 100)}% bonus`
+      : `Currently draws ${item.drawAmount + (item.drawPerLevel||0)*lvl} card${(item.drawAmount + (item.drawPerLevel||0)*lvl) === 1 ? '' : 's'}`;
+    return `<div class="shopcard">
+      <div class="hdr"><span><b>${item.name}</b> (Lv ${lvl}/${cap})</span><span class="price">${maxed ? 'MAX' : cost + ' coins'}</span></div>
+      <div class="note" style="margin:0 0 6px">${currentText}</div>
+      <div style="display:flex;justify-content:flex-end;gap:6px;flex-wrap:wrap">
+        ${lvl > 0 ? `<button class="wo-btn gray" data-bonusdown="${itemId}" style="padding:6px 10px;font-size:12px">Refund (+${refund})</button>` : ''}
+        ${maxed ? '' : `<button class="wo-btn amber" data-bonusup="${itemId}" style="padding:6px 10px;font-size:12px" ${RUN.chips < cost ? 'disabled' : ''}>Level Up</button>`}
+      </div>
+    </div>`;
+  }).filter(Boolean).join('');
   const visitNote = BLACKSMITH_VISIT.primary === null
     ? `Pick one card to pay for a main upgrade. You can pay a bit more to also upgrade a second card in the same visit.`
     : (BLACKSMITH_VISIT.secondary === null ? `You can pay extra to also upgrade one more card this visit, or move on.` : `You've used both upgrades this visit. Come back another time to tune more.`);
@@ -2235,6 +2262,7 @@ function blacksmithScreen() {
         <div class="wo-sub">${visitNote}</div>
         ${currencyBar()}
         <div style="margin:12px 0">${rows}</div>
+        ${itemLevelRows ? `<div class="hdr" style="margin-top:14px"><span>Item Upgrades</span><span>Not limited by this visit</span></div><div style="margin:6px 0 12px">${itemLevelRows}</div>` : ''}
         <button class="wo-btn" id="leaveBlacksmithBtn">Back on the Road</button>
         <button class="wo-btn gray" id="openRunUpgradeFromBlacksmithBtn" style="margin-top:8px">Upgrades</button>
       </div>
@@ -2443,15 +2471,16 @@ function render(html) {
   const leaveChopShopBtn = document.getElementById('leaveChopShopBtn'); if (leaveChopShopBtn) leaveChopShopBtn.onclick = () => render(RETURN_TO_CASTLE_MENU ? castleMenuScreen() : mapScreen());
   app.querySelectorAll('[data-bonusup]').forEach(el => el.onclick = () => {
     const item = ITEMS[el.dataset.bonusup];
-    if (!item.bonus) return;
+    const cap = itemLevelCap(item);
+    if (cap <= 0) return;
     const lvl = itemLevel(item.id);
-    if (lvl >= item.bonus.maxLevel) return;
+    if (lvl >= cap) return;
     const cost = itemTuneCost(item, lvl);
     if (RUN.chips < cost) return;
     RUN.chips -= cost;
     RUN.itemLevels[item.id] = lvl + 1;
     saveRun();
-    render(chopShopScreen());
+    render(blacksmithScreen());
   });
   app.querySelectorAll('[data-bonusdown]').forEach(el => el.onclick = () => {
     const item = ITEMS[el.dataset.bonusdown];
@@ -2461,7 +2490,7 @@ function render(html) {
     RUN.itemLevels[item.id] = lvl - 1;
     RUN.chips += refund;
     saveRun();
-    render(chopShopScreen());
+    render(blacksmithScreen());
   });
   app.querySelectorAll('[data-usesup]').forEach(el => el.onclick = () => {
     const item = ITEMS[el.dataset.usesup];

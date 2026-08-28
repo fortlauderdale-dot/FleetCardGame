@@ -534,7 +534,7 @@ const ITEMS = {
     note: `Needs at least 1 ${kw('Diamond')}. Deals damage and draws 1 card immediately.` },
 
   /* -- New attack family (renamed from your originals) -- */
-  all_points: { id: 'all_points', name: 'All-Points Bulletin', cost: 70, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+  all_points: { id: 'all_points', name: 'All-Points Bulletin', cost: 70, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1, minRow: 3,
     condition: { type: 'allSuits' }, flatAmount: 40, flatAmountPerLevel: 5,
     note: `Needs one of each ${kw('Suit')} (4 cards). Flat ${kw('Attack')} for 40 damage.` },
   repo_notice: { id: 'repo_notice', name: 'Repo Notice', cost: 55, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
@@ -567,7 +567,7 @@ const ITEMS = {
     bonus: { condition: { type: 'suitCount', suit: '♠', count: 4 }, base: 1.0, perLevel: 0, maxLevel: 0 },
     note: `Needs exactly 4 cards. Flame damage for the sum, +100% if all 4 are ${kw('Spade')}.` },
 
-  five_alarm_flush: { id: 'five_alarm_flush', name: 'Five-Alarm Flush', cost: 90, maxCards: 5, usesPerTurn: 2, usesPerTurnPerLevel: 1,
+  five_alarm_flush: { id: 'five_alarm_flush', name: 'Five-Alarm Flush', cost: 90, maxCards: 5, usesPerTurn: 2, usesPerTurnPerLevel: 1, minRow: 3,
     condition: { type: 'pokerTier', tier: 5, exactCount: 5 }, baseMult: 1.5,
     note: `Needs exactly 5 cards making a ${kw('Flush')}. Sum +50% damage. 2 uses per turn.` },
 
@@ -576,7 +576,7 @@ const ITEMS = {
     drawAmount: 0, drawUsesCardCount: true, drawBonusFlat: 2, drawPerLevel: 0,
     note: `Cards played must add up to exactly 4 (example: 2+2, or a single 4). Draws a card for each card played, +2. Draws immediately.` },
 
-  chain_starter: { id: 'chain_starter', name: 'Chain Starter', cost: 50, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+  chain_starter: { id: 'chain_starter', name: 'Chain Starter', cost: 50, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1, minRow: 2,
     condition: { type: 'straightLen', len: 3 }, baseMult: 2.5,
     note: `Needs a 3-card ${kw('Straight')} (example: 6, 7, 8). Sum +150% damage.` },
 
@@ -622,7 +622,7 @@ const ITEMS = {
     condition: { type: 'parity', parity: 'odd', mode: 'count', count: 3 }, baseMult: 1.2,
     bonus: { base: 0, perLevel: 0.25, maxLevel: 3 },
     note: 'Needs at least 3 odd cards among your played cards.' },
-  lucky_seven: { id: 'lucky_seven', name: 'Lucky Seven', cost: 60, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+  lucky_seven: { id: 'lucky_seven', name: 'Lucky Seven', cost: 60, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1, minRow: 2,
     condition: { type: 'exactRank', rank: 7 }, baseMult: 2.2,
     bonus: { base: 0, perLevel: 0.4, maxLevel: 3 },
     note: 'Needs a 7 among your played cards. Rare to have one ready, so it hits hard when you do.' },
@@ -1686,6 +1686,7 @@ function runUpgradeCost(kind) {
   return def.mult ? Math.round(def.baseCost * Math.pow(def.mult, n)) : def.baseCost + def.add * n;
 }
 let RUN_UPGRADE_RETURN = 'map';
+let RUN_UPGRADE_RETURN_FROMCASTLE = false;
 function runUpgradeScreen() {
   const rows = Object.entries(RUN_UPGRADE_DEFS).map(([kind, def]) => {
     const n = RUN.runUpgrades[kind] || 0;
@@ -1946,7 +1947,8 @@ const SHOP_CATEGORIES = [
   { id: 'draw', label: 'Draw' },
 ];
 function pickShopStock() {
-  const pool = Object.values(ITEMS).filter(it => it.kind !== 'storage' && it.cost > 0);
+  const row = Math.max(0, RUN.currentRow || 0);
+  const pool = Object.values(ITEMS).filter(it => it.kind !== 'storage' && it.cost > 0 && (it.minRow == null || it.minRow <= row));
   const bags = Object.values(ITEMS).filter(it => it.kind === 'storage' && it.cost > 0);
   const shuffled = shuffle([...pool]);
   const stock = shuffled.slice(0, 8);
@@ -1979,7 +1981,10 @@ function shopScreen(fromCastle=false) {
   return `${noticeHTML()}
     <div class="wo">
       <div class="wo-stripe"></div><div class="wo-body">
-        <div style="position:sticky;top:0;z-index:10;background:var(--white);padding-bottom:10px"><button class="wo-btn gray" id="leaveShopBtn" style="width:100%">${fromCastle ? "Back to Compound" : "Back to Road"}</button></div>
+        <div style="position:sticky;top:0;z-index:10;background:var(--white);padding-bottom:10px;display:flex;gap:8px">
+          <button class="wo-btn gray" id="leaveShopBtn" style="flex:1">${fromCastle ? "Back to Compound" : "Back to Road"}</button>
+          <button class="wo-btn gray" id="openRunUpgradeFromShopBtn" data-fromcastle="${fromCastle ? '1' : '0'}" style="flex:1">Upgrades</button>
+        </div>
         <div class="wo-eyebrow">Dealership</div><h1>Vehicle <em>Department</em></h1>${currencyBar()}
         <div class="hdr" style="margin-top:10px"><span>Available Items (${options.length}${SHOP_FILTER!=='all'?` of ${allOptions.length}`:''})</span><span>Items: ${RUN.hero.items.length}/${RUN.itemCap}</span></div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 10px">${filterButtonsHTML}</div>
@@ -2341,9 +2346,10 @@ function render(html) {
     saveRun();
     render(runUpgradeScreen());
   });
-  const leaveRunUpgradeBtn = document.getElementById('leaveRunUpgradeBtn'); if (leaveRunUpgradeBtn) leaveRunUpgradeBtn.onclick = () => render(RUN_UPGRADE_RETURN === 'battle' ? battleScreen() : mapScreen());
+  const leaveRunUpgradeBtn = document.getElementById('leaveRunUpgradeBtn'); if (leaveRunUpgradeBtn) leaveRunUpgradeBtn.onclick = () => render(RUN_UPGRADE_RETURN === 'battle' ? battleScreen() : RUN_UPGRADE_RETURN === 'shop' ? shopScreen(RUN_UPGRADE_RETURN_FROMCASTLE) : mapScreen());
   const openRunUpgradeFromMapBtn = document.getElementById('openRunUpgradeFromMapBtn'); if (openRunUpgradeFromMapBtn) openRunUpgradeFromMapBtn.onclick = () => { RUN_UPGRADE_RETURN = 'map'; render(runUpgradeScreen()); };
   const openRunUpgradeFromBattleBtn = document.getElementById('openRunUpgradeFromBattleBtn'); if (openRunUpgradeFromBattleBtn) openRunUpgradeFromBattleBtn.onclick = () => { RUN_UPGRADE_RETURN = 'battle'; render(runUpgradeScreen()); };
+  const openRunUpgradeFromShopBtn = document.getElementById('openRunUpgradeFromShopBtn'); if (openRunUpgradeFromShopBtn) openRunUpgradeFromShopBtn.onclick = () => { RUN_UPGRADE_RETURN = 'shop'; RUN_UPGRADE_RETURN_FROMCASTLE = openRunUpgradeFromShopBtn.dataset.fromcastle === '1'; render(runUpgradeScreen()); };
   app.querySelectorAll('[data-levelup]').forEach(el => el.onclick = () => {
     const u = UPGRADE_DEFS.find(x => x.id === el.dataset.levelup);
     const lvl = META.levels[u.id];

@@ -103,7 +103,7 @@
   .vslot .vcards{display:flex;gap:3px;flex-wrap:wrap;min-height:30px;margin-top:6px}
 
   .itemGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
-  .itemCard{border-radius:8px;padding:6px 4px;background:var(--bg);height:128px;display:flex;flex-direction:column;align-items:center;text-align:center;box-sizing:border-box;font-size:12px;position:relative;overflow:hidden}
+  .itemCard{border-radius:8px;padding:6px 4px;background:var(--bg);min-height:172px;display:flex;flex-direction:column;align-items:center;text-align:center;box-sizing:border-box;font-size:12px;position:relative}
   .usesBadge{position:absolute;top:4px;right:4px;font-size:9px;font-weight:800;background:var(--blue-light);color:var(--blue-dark);border-radius:5px;padding:1px 5px;line-height:1.4}
   .usesBadge.depleted{background:#eee;color:var(--dim)}
   .itemCard.ready{border-color:var(--green) !important}
@@ -801,13 +801,16 @@ function revealFraction(row) { return [1.0, 0.8, 0.6, 0.4, 0.25, 0.1, 0][Math.mi
 
 /* ========== LEVELED UPGRADE TREE (permanent, up to 20 levels each) ========== */
 const UPGRADE_DEFS = [
-  { id: 'draw',    label: 'Cards Drawn Per Turn', desc: '+1 card drawn at the start of each turn.', baseCost: 20, inc: 15 },
-  { id: 'chips',   label: 'Starting Coins',       desc: '+5 starting coins at New Playthrough.', baseCost: 10, inc: 8 },
+  { id: 'draw',    label: 'Cards Drawn Per Turn', desc: '+1 card drawn at the start of each turn (also raises your opening hand).', baseCost: 20, inc: 15 },
+  { id: 'chips',   label: 'Starting Coins',       desc: '+8 starting coins at New Playthrough.', baseCost: 10, inc: 8 },
   { id: 'hp',      label: 'Max HP',               desc: '+15 max health per level.', baseCost: 30, inc: 15 },
   { id: 'handCap', label: 'Maximum Hand Size',    desc: '+2 cards to your maximum hand size per level.', baseCost: 15, inc: 10 },
-  { id: 'fuel',    label: 'Starting Fuel',        desc: '+2 starting fuel.', baseCost: 10, inc: 8 },
+  { id: 'fuel',    label: 'Starting Fuel',        desc: '+1 starting fuel per level.', baseCost: 10, inc: 8 },
+  { id: 'fuelCap', label: 'Fuel Tank Size',       desc: '+5 max fuel you can hold per level.', baseCost: 25, inc: 15 },
   { id: 'gem',     label: 'Gem Efficiency',       desc: '+1 card drawn per gem spent.', baseCost: 20, inc: 12 },
-  { id: 'garage',  label: 'Garage Expansion',     desc: '+1 vehicle slot you can own at once.', baseCost: 25, inc: 12 },
+  { id: 'gemCap',  label: 'Gem Pouch Size',       desc: '+2 max gems you can hold per level.', baseCost: 25, inc: 15 },
+  { id: 'energyCap', label: 'Energy Cell Size',   desc: '+5 max energy you can hold per level.', baseCost: 25, inc: 15 },
+  { id: 'garage',  label: 'Garage Expansion',     desc: '+1 starting Item slot.', baseCost: 25, inc: 12 },
   { id: 'range',   label: 'Scout Range',          desc: 'See one additional route space farther ahead.', baseCost: 20, inc: 10 },
   { id: 'fuelpen', label: 'Fuel Efficiency',      desc: 'Running out of fuel costs less score when it happens.', baseCost: 40, inc: 15 },
   { id: 'reveal',  label: 'Battle Scan',          desc: 'Start every battle with 1 extra opponent card already revealed.', baseCost: 25, inc: 15 },
@@ -819,7 +822,15 @@ function upgradeCost(def, atLevel) { return def.baseCost + atLevel * def.inc; } 
 /* ========== META (persists forever) ========== */
 const META_KEY = 'fleetduel-meta-v7';
 function loadMeta() {
-  try { const raw = localStorage.getItem(META_KEY); if (raw) return JSON.parse(raw); } catch (e) {}
+  try {
+    const raw = localStorage.getItem(META_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      parsed.levels = parsed.levels || {};
+      UPGRADE_DEFS.forEach(u => { if (parsed.levels[u.id] == null) parsed.levels[u.id] = 0; });
+      return parsed;
+    }
+  } catch (e) {}
   const levels = {}; UPGRADE_DEFS.forEach(u => levels[u.id] = 0);
   return { points: 0, lifetimePoints: 0, highScore: 0, bestRun: 0, runsPlayed: 0, levels };
 }
@@ -932,9 +943,9 @@ function initRunWithStarter(id) {
   RUN = {
     map: generateMap(), currentRow: -1, currentCol: null, path: [],
     health: 100 + L.hp * 15, maxHealth: 100 + L.hp * 15,
-    chips: 40 + L.chips * 8, fuel: Math.min(20, 10 + L.fuel * 2), energy: 0,
+    chips: 40 + L.chips * 8, fuel: Math.min(20 + (L.fuelCap||0)*5, 10 + (L.fuel||0)), energy: 0,
     hero: { heroId: id, items: [...baseHero.starterItems] },
-    itemCap: Math.min(MAX_ITEM_CAP, 3 + L.garage), handSize: 7 + (L.handCap || 0) * 2, drawPerTurn: 2 + (L.draw || 0), gems: 3, maxGems: 10, maxFuel: 20, maxEnergy: 20,
+    itemCap: Math.min(MAX_ITEM_CAP, 3 + L.garage), handSize: 7 + (L.handCap || 0) * 2, drawPerTurn: 2 + (L.draw || 0), gems: 3, maxGems: 10 + (L.gemCap||0)*2, maxFuel: 20 + (L.fuelCap||0)*5, maxEnergy: 20 + (L.energyCap||0)*5,
     scoreThisRun: 0, lastNotice: null, cardBoosts: [], adminTuneLvl: 0, itemLevels: {}, itemUsesLevels: {}, itemKindOverride: {}, itemMaxCardsLevels: {}, handSortMode: 'value', innSleeps: 0,
     runUpgrades: { itemSlots: 0, drawPerTurn: 0, sightRange: 0, gemDraw: 0, health: 0 },
     castleState: {},
@@ -1130,7 +1141,7 @@ function startBattle(opponentDef, row, col, castleStage=0) {
     });
     if (total) c.bonus = total;
   });
-  drawCards(Math.min(5, RUN.handSize));
+  drawCards(Math.min(5 + (RUN.drawPerTurn - 2), RUN.handSize));
   resortHandAndRelink(RUN.handSortMode);
   drawOpponentCards();
   for (let i = 0; i < 1 + META.levels.reveal; i++) {
@@ -2306,14 +2317,12 @@ function upgradeScreen() {
       ? `Start every battle with ${1 + lvl} opponent card${1 + lvl > 1 ? 's' : ''} already revealed.`
       : u.desc;
     return `<div class="shopcard">
-      <div class="hdr"><span>${u.label} (Lv ${lvl}/${MAX_LEVEL})</span><span class="price">${maxed ? 'MAX' : cost + ' pts'}</span></div>
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
-        <div class="note" style="margin:0 0 4px;flex:1">${desc}</div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;flex-shrink:0">
-          ${maxed ? '' : `<button class="wo-btn amber" data-levelup="${u.id}" style="padding:6px 10px;font-size:12px" ${META.points < cost ? 'disabled' : ''}>Level Up</button>`}
+      <div class="hdr"><span><b>${u.label}</b> (Lv ${lvl}/${MAX_LEVEL})</span><span class="price">${maxed ? 'MAX' : cost + ' pts'}</span></div>
+      <div class="note" style="margin:0 0 6px">${desc}</div>
+      <div style="display:flex;justify-content:flex-end;gap:6px;flex-wrap:wrap">
           ${lvl > 0 ? `<button class="wo-btn gray" data-leveldown="${u.id}" style="padding:6px 10px;font-size:12px">Refund (+${refund})</button>` : ''}
+          ${maxed ? '' : `<button class="wo-btn amber" data-levelup="${u.id}" style="padding:6px 10px;font-size:12px" ${META.points < cost ? 'disabled' : ''}>Level Up</button>`}
         </div>
-      </div>
       <div class="levelbar"><i style="width:${(lvl / MAX_LEVEL) * 100}%"></i></div>
     </div>`;
   }).join('');
@@ -2640,7 +2649,7 @@ function render(html) {
   const restBtn = document.getElementById('restBtn'); if (restBtn) restBtn.onclick = () => { RUN.health = Math.min(RUN.maxHealth, RUN.health + 30); saveRun(); render(mapScreen()); };
   const backToMetaBtn = document.getElementById('backToMetaBtn'); if (backToMetaBtn) backToMetaBtn.onclick = () => render(metaScreen());
   const startRunBtn = document.getElementById('startRunBtn'); if (startRunBtn) startRunBtn.onclick = () => { clearRunSave(); render(starterSelectScreen()); };
-  const continueRunBtn = document.getElementById('continueRunBtn'); if (continueRunBtn) continueRunBtn.onclick = () => { RUN = loadRunSave(); RUN.maxGems=10; RUN.maxFuel=20; RUN.maxEnergy=20; RUN.handSize=7+(META.levels.handCap||0)*2; RUN.itemCap=Math.max(RUN.itemCap||0, Math.min(MAX_ITEM_CAP, 3+(META.levels.garage||0))); RUN.runUpgrades=RUN.runUpgrades||{itemSlots:0,drawPerTurn:0,sightRange:0,gemDraw:0,health:0}; RUN.drawPerTurn=2+(META.levels.draw||0)+RUN.runUpgrades.drawPerTurn; RUN.gems=Math.min(RUN.maxGems,RUN.gems||0); RUN.fuel=Math.min(RUN.maxFuel,RUN.fuel||0); RUN.energy=Math.min(RUN.maxEnergy,RUN.energy||0); RUN.itemLevels=RUN.itemLevels||{}; RUN.itemUsesLevels=RUN.itemUsesLevels||{}; RUN.itemKindOverride=RUN.itemKindOverride||{}; Object.keys(RUN.itemKindOverride).filter(k=>!k.includes('_')).forEach(k=>{ if(RUN.hero?.items?.includes(k) && !RUN.itemKindOverride[`${k}_0`]) RUN.itemKindOverride[`${k}_0`]=RUN.itemKindOverride[k]; }); RUN.itemMaxCardsLevels=RUN.itemMaxCardsLevels||{}; RUN.itemUnlockProgress=RUN.itemUnlockProgress||{}; RUN.itemUnlocked=RUN.itemUnlocked||{}; RUN.itemUnlockPending=RUN.itemUnlockPending||{}; RUN.castleState=RUN.castleState||{}; saveRun(); const savedBattle = loadBattleSave(); if (savedBattle) { BATTLE = savedBattle; IN_BATTLE = true; render(battleScreen()); } else { render(mapScreen()); } };
+  const continueRunBtn = document.getElementById('continueRunBtn'); if (continueRunBtn) continueRunBtn.onclick = () => { RUN = loadRunSave(); RUN.maxGems=10+(META.levels.gemCap||0)*2; RUN.maxFuel=20+(META.levels.fuelCap||0)*5; RUN.maxEnergy=20+(META.levels.energyCap||0)*5; RUN.handSize=7+(META.levels.handCap||0)*2; RUN.itemCap=Math.max(RUN.itemCap||0, Math.min(MAX_ITEM_CAP, 3+(META.levels.garage||0))); RUN.runUpgrades=RUN.runUpgrades||{itemSlots:0,drawPerTurn:0,sightRange:0,gemDraw:0,health:0}; RUN.drawPerTurn=2+(META.levels.draw||0)+RUN.runUpgrades.drawPerTurn; RUN.gems=Math.min(RUN.maxGems,RUN.gems||0); RUN.fuel=Math.min(RUN.maxFuel,RUN.fuel||0); RUN.energy=Math.min(RUN.maxEnergy,RUN.energy||0); RUN.itemLevels=RUN.itemLevels||{}; RUN.itemUsesLevels=RUN.itemUsesLevels||{}; RUN.itemKindOverride=RUN.itemKindOverride||{}; Object.keys(RUN.itemKindOverride).filter(k=>!k.includes('_')).forEach(k=>{ if(RUN.hero?.items?.includes(k) && !RUN.itemKindOverride[`${k}_0`]) RUN.itemKindOverride[`${k}_0`]=RUN.itemKindOverride[k]; }); RUN.itemMaxCardsLevels=RUN.itemMaxCardsLevels||{}; RUN.itemUnlockProgress=RUN.itemUnlockProgress||{}; RUN.itemUnlocked=RUN.itemUnlocked||{}; RUN.itemUnlockPending=RUN.itemUnlockPending||{}; RUN.castleState=RUN.castleState||{}; saveRun(); const savedBattle = loadBattleSave(); if (savedBattle) { BATTLE = savedBattle; IN_BATTLE = true; render(battleScreen()); } else { render(mapScreen()); } };
   app.querySelectorAll('[data-pick]').forEach(el => el.onclick = () => initRunWithStarter(el.dataset.pick));
 }
 

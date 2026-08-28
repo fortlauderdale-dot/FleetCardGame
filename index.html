@@ -50,7 +50,7 @@
   .grid{display:flex;flex-wrap:wrap;gap:10px}
   .currencies{display:flex;gap:10px;flex-wrap:wrap;font-family:var(--mono);font-size:11.5px}
   .cur{background:var(--bg);border:1px solid var(--blue-light);border-radius:6px;padding:4px 8px}
-  .cur.gem{color:var(--blue-dark)} .cur.fuel{color:var(--blue)} .cur.energy{color:var(--gold)} .cur.chip{color:var(--amber)} .cur.pts{color:var(--blue-dark)} .cur.health{color:var(--red)}
+  .cur.gem{color:var(--purple);border-color:var(--purple)} .cur.fuel{color:var(--green);border-color:var(--green)} .cur.energy{color:var(--gold)} .cur.chip{color:var(--amber)} .cur.pts{color:var(--blue-dark)} .cur.health{color:var(--red)}
   .cur{position:relative;cursor:help}.cur[title]:hover::after,.hoverTip[title]:hover::after{content:attr(title);position:absolute;z-index:50;left:50%;transform:translateX(-50%);top:calc(100% + 6px);min-width:170px;max-width:220px;background:#12163a;color:#fff;padding:7px 9px;border-radius:6px;font:12px var(--disp);white-space:normal;box-shadow:3px 3px 0 #173aa8;text-align:left}.bossPreview{border:2px solid var(--red);background:#fff7f7}.mapboss{font-size:12px;font-family:var(--mono);color:var(--dim);margin-top:8px}
   .hoverTip{position:relative;cursor:help}
   .upgradeNum{color:var(--amber)}
@@ -95,13 +95,13 @@
   .vslot .vreq{font-family:var(--mono);font-size:10.5px;color:var(--dim);margin:3px 0}
   .vslot .vcards{display:flex;gap:3px;flex-wrap:wrap;min-height:30px;margin-top:6px}
 
-  .itemGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-  .itemCard{border-radius:8px;padding:10px 8px;background:var(--bg);min-height:150px;display:flex;flex-direction:column;align-items:center;text-align:center;box-sizing:border-box}
+  .itemGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+  .itemCard{border-radius:8px;padding:6px 4px;background:var(--bg);min-height:112px;display:flex;flex-direction:column;align-items:center;text-align:center;box-sizing:border-box;font-size:12px}
   .itemCard.ready{border-color:var(--green) !important}
   .itemCard .hdr{width:100%;justify-content:center;text-align:center}
   .itemCard .vcards{display:flex;gap:3px;flex-wrap:wrap;justify-content:center;min-height:26px;margin-top:4px}
-  .itemReqLine{font-size:16px;font-weight:700;color:var(--ink);margin:5px 0 3px;line-height:1.3}
-  .itemBonusLine{font-size:13px;color:var(--purple);margin:2px 0 0;line-height:1.3}
+  .itemReqLine{font-size:12px;font-weight:700;color:var(--ink);margin:4px 0 2px;line-height:1.25}
+  .itemBonusLine{font-size:10.5px;color:var(--purple);margin:1px 0 0;line-height:1.25}
   .itemBonusLine b{font-weight:800;cursor:help;position:relative}
 
   .card{width:48px;height:64px;border-radius:5px;background:var(--white);color:var(--ink);display:flex;
@@ -858,7 +858,7 @@ function initRunWithStarter(id) {
     health: 100 + L.hp * 15, maxHealth: 100 + L.hp * 15,
     chips: 40 + L.chips * 8, fuel: Math.min(20, 10 + L.fuel * 2), energy: 0,
     hero: { heroId: id, items: [...baseHero.starterItems] },
-    itemCap: 3 + L.garage, handSize: 7 + (L.handCap || 0) * 2, drawPerTurn: 2 + (L.draw || 0), gems: 3, maxGems: 10, maxFuel: 20, maxEnergy: 20,
+    itemCap: Math.min(MAX_ITEM_CAP, 3 + L.garage), handSize: 7 + (L.handCap || 0) * 2, drawPerTurn: 2 + (L.draw || 0), gems: 3, maxGems: 10, maxFuel: 20, maxEnergy: 20,
     scoreThisRun: 0, lastNotice: null, cardBoosts: [], adminTuneLvl: 0, itemLevels: {}, itemUsesLevels: {}, itemKindOverride: {}, itemMaxCardsLevels: {}, handSortMode: 'value', innSleeps: 0,
     runUpgrades: { itemSlots: 0, drawPerTurn: 0, sightRange: 0, gemDraw: 0, health: 0 },
     castleState: {},
@@ -1729,8 +1729,9 @@ function mapScreen() {
 /* ========== RUN-SCOPED UPGRADES (paid with coins, last only for this run) ==========
    Separate from the permanent Upgrades screen (Career Points, forever). Add a 5th kind here
    the same way health was added — the screen and buy handler are generic over this table. */
+const MAX_ITEM_CAP = 9; // 3 rows of 3 — hard ceiling regardless of how many slot upgrades stack
 const RUN_UPGRADE_DEFS = {
-  itemSlots:   { label: 'Item Slot',        desc: '+1 Item slot, this run only.', baseCost: 100, mult: 2, cap: 4 },
+  itemSlots:   { label: 'Item Slot',        desc: '+1 Item slot, this run only.', baseCost: 100, mult: 2, cap: 6 },
   drawPerTurn: { label: 'Cards Drawn/Turn', desc: '+1 card drawn at the start of each turn, this run only.', baseCost: 60, mult: 2, cap: 5 },
   sightRange:  { label: 'Map Sight Range',  desc: '+1 route space visible ahead on the map, this run only.', baseCost: 40, mult: 1.8, cap: 5 },
   gemDraw:     { label: 'Gem Draw',         desc: '+1 card drawn per gem spent, this run only.', baseCost: 50, mult: 2, cap: 4 },
@@ -1896,7 +1897,13 @@ function battleScreen() {
           <div class="note" style="margin:0 0 8px">Drag cards or tap to select &middot; Items: ${RUN.hero.items.length}/${RUN.itemCap}</div>
           <div class="itemGrid">
             ${itemsHTML}
-            ${Array.from({ length: Math.max(0, RUN.itemCap - RUN.hero.items.length) }).map(() => `<div class="itemCard" style="display:flex;align-items:center;justify-content:center;text-align:center;border:2px dashed var(--blue-light);color:var(--dim);font-size:11px">Open item slot<br>(buy at the Dealership)</div>`).join('')}
+            ${(() => {
+              const owned = RUN.hero.items.length;
+              const rowsForOwned = Math.max(1, Math.ceil(owned / 3));
+              const visibleSlots = Math.min(RUN.itemCap, rowsForOwned * 3);
+              const emptyCount = Math.max(0, visibleSlots - owned);
+              return Array.from({ length: emptyCount }).map(() => `<div class="itemCard" style="display:flex;align-items:center;justify-content:center;text-align:center;border:2px dashed var(--blue-light);color:var(--dim);font-size:11px">Open item slot<br>(buy at the Dealership)</div>`).join('');
+            })()}
           </div>
         </div>
       </div>
@@ -2402,7 +2409,7 @@ function render(html) {
     if (RUN.chips < cost) return;
     RUN.chips -= cost;
     RUN.runUpgrades[kind] = n + 1;
-    if (kind === 'itemSlots') RUN.itemCap += 1;
+    if (kind === 'itemSlots') RUN.itemCap = Math.min(MAX_ITEM_CAP, RUN.itemCap + 1);
     else if (kind === 'drawPerTurn') RUN.drawPerTurn += 1;
     else if (kind === 'health') RUN.health = Math.min(RUN.maxHealth, RUN.health + 25);
     saveRun();

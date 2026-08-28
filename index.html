@@ -61,10 +61,11 @@
   .vsMark{font-family:var(--mono);font-weight:800;color:var(--dim);font-size:13px}
   .bigicon{font-size:30px;line-height:1}
 
-  .duelBoard{display:grid;grid-template-columns:1fr 66px 1fr;gap:8px;align-items:start}
+  .duelBoard{display:grid;grid-template-columns:1fr 100px 1fr;gap:8px;align-items:start}
   @media (max-width:700px){ .duelBoard{grid-template-columns:1fr} .duelHead{grid-template-columns:1fr 1fr} .vsMark{display:none} }
-  .deckStack{text-align:center;padding-top:36px}.deckStack .card.back{cursor:default;pointer-events:none}
+  .deckStack{text-align:center;padding-top:20px;display:flex;flex-direction:column;align-items:center;gap:10px}.deckStack .card.back{cursor:default;pointer-events:none}
   .deckStack .card.back::after{content:none}
+  .wo-btn.red{background:var(--red);border-color:#a83236}
 
   .duelMatchup {
   display: grid;
@@ -177,7 +178,7 @@
   .itemCard.kind-curse{background:#f5effd;border-color:#b89add !important}
   .effectTip{font-weight:800;text-decoration:underline dotted;cursor:help;position:relative}
   .effectTip:hover::after{content:attr(data-tip);position:absolute;z-index:60;left:50%;transform:translateX(-50%);top:calc(100% + 5px);width:230px;background:#12163a;color:#fff;padding:8px;border-radius:6px;font:11px var(--disp);text-align:left;box-shadow:3px 3px 0 #173aa8}
-  .log{font-family:var(--mono);font-size:11.5px;color:var(--dim);height:240px;max-height:240px;overflow-y:auto;display:flex;flex-direction:column-reverse;
+  .log{font-family:var(--mono);font-size:11.5px;color:var(--dim);height:240px;max-height:240px;overflow-y:auto;
     border-top:1px dashed var(--blue-light);padding:8px 6px;margin-top:8px}
   .log div{padding:4px 0;border-bottom:1px solid #edf0f8}
   .status{font-weight:800}.poisonText{color:#3f8f4f}.burnText{color:#c53d2f}.curseText{color:#7a45b5}.poisonStatus{color:#3f8f4f}.burnStatus{color:#c53d2f}.curseStatus{color:#7a45b5}
@@ -1880,11 +1881,13 @@ function battleScreen() {
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <button class="wo-btn gray" id="sortToggleBtn" style="padding:8px 12px;font-size:12px">Sort: ${(RUN.handSortMode || 'value') === 'value' ? 'Value' : 'Suit'}</button>
           <button class="wo-btn gray" id="discardSelectedBtn" style="padding:8px 12px;font-size:12px" title="Fold selected cards face-down instead of playing them." ${!selectedIdx.length ? 'disabled' : ''}>Discard Selected</button>
-          <button class="wo-btn" id="endTurnBtn" style="padding:8px 16px;font-size:12px;font-weight:700">END TURN</button>
     </div>
         ${BATTLE.turnDiscard.length ? `<div class="note" style="margin-top:8px">Discarding this turn (tap to undo):</div><div class="hand">${discardStagedHTML}</div>` : ''}
       </div>
-      <div class="deckStack"><div class="card back" style="position:relative"><span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-family:var(--mono);font-weight:700;font-size:13px">${BATTLE.deck.length}</span></div></div>
+      <div class="deckStack">
+        <div class="card back" style="position:relative"><span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-family:var(--mono);font-weight:700;font-size:13px">${BATTLE.deck.length}</span></div>
+        <button class="wo-btn red" id="endTurnBtn" style="padding:8px 10px;font-size:12px;font-weight:700;width:100%">END TURN</button>
+      </div>
       <div class="panel">
         <div class="hdr"><span>${opp.name}'s Cards</span><span></span></div>
         <div class="hand">${poolHTML}</div>
@@ -1929,7 +1932,7 @@ function battleScreen() {
       <button class="wo-btn" id="openRunUpgradeFromBattleBtn" style="width:100%;margin-top:8px">Field Upgrades (this run)</button>
     </div>
     <div class="panel">
-      <div class="log">${BATTLE.logLines.map(l => `<div>${l}</div>`).join('')}</div>
+      <div class="log">${[...BATTLE.logLines].reverse().map(l => `<div>${l}</div>`).join('')}</div>
     </div>
   `;
 }

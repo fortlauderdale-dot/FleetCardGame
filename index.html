@@ -62,7 +62,7 @@
   .duelSide h3{margin:0 0 4px;font-size:18px;color:var(--blue-dark)}
   .duelSide.opp{flex-direction:row-reverse;text-align:right}
   .duelSide .bar-wrap{height:10px}
-  .rewardRow{display:flex;gap:4px;justify-content:flex-end;flex-wrap:wrap;margin-bottom:3px}
+  .rewardRow{display:inline-flex;gap:4px;flex-wrap:wrap;vertical-align:middle}
   .rewardRow .cur{font-size:9px;padding:2px 5px;white-space:nowrap}
   .vsMark{font-family:var(--mono);font-weight:800;color:var(--dim);font-size:13px}
   .bigicon{font-size:30px;line-height:1}
@@ -1677,7 +1677,7 @@ function noticeHTML() {
   const msg = RUN.lastNotice; RUN.lastNotice = null;
   return `<div class="panel" style="border-color:var(--red)"><div class="note" style="color:var(--red);margin:0">${msg}</div></div>`;
 }
-function currencyBar() {
+function currencyBar(extraHTML = '') {
   return `<div class="currencies">
     <div class="cur health" title="Your health. Runs out and the run ends.">${ICON.heart} ${RUN.health}/${RUN.maxHealth} Health</div>
     <div class="cur chip" title="Coins are used to buy vehicles and pay for certain services.">${ICON.coin} ${RUN.chips} Coins</div>
@@ -1685,6 +1685,7 @@ function currencyBar() {
     <div class="cur fuel" title="Fuel is spent when you travel to another stop.">${ICON.fuel} ${RUN.fuel}/${RUN.maxFuel} Fuel</div>
     <div class="cur energy" title="Energy powers vehicle abilities.">${ICON.energy} ${RUN.energy}/${RUN.maxEnergy} Energy</div>
     <div class="cur pts" title="Career Points carry over between playthroughs and only buy Permanent Upgrades.">${ICON.star} ${META.points} Career Points</div>
+    ${extraHTML}
   </div>`;
 }
 
@@ -1956,12 +1957,10 @@ function battleScreen() {
   }).join('');
 
   return `
-    <div class="panel">${currencyBar()}
-      <div style="display:flex;gap:8px;margin-top:8px">
-        <button class="wo-btn" id="openRunUpgradeFromBattleBtn" style="flex:1;padding:8px 12px;font-size:12px">Run Upgrade</button>
-        <button class="wo-btn gray" id="forfeitRunBtn" style="flex:1;padding:8px 12px;font-size:12px">Forfeit Run</button>
-      </div>
-    </div>
+    <div class="panel">${currencyBar(`<div style="margin-left:auto;display:flex;gap:6px">
+        <button class="wo-btn" id="openRunUpgradeFromBattleBtn" style="padding:5px 10px;font-size:11px;white-space:nowrap">Run Upgrade</button>
+        <button class="wo-btn gray" id="forfeitRunBtn" style="padding:5px 10px;font-size:11px;white-space:nowrap">Forfeit Run</button>
+      </div>`)}</div>
     <div class="panel duelHead">
       <div class="duelSide you">${art(PLAYER_ART, 30)}
         <div class="sideInfo">
@@ -1974,13 +1973,14 @@ function battleScreen() {
       <div class="vsMark">VS</div>
       <div class="duelSide opp">${art(opp, 30)}
         <div class="sideInfo">
-          <div class="rewardRow">
-            <span class="cur chip" title="Coins earned for winning.">${ICON.coin} ${Math.round(22 + opp.hp/7)}</span>
-            <span class="cur gem" title="Gems earned for winning.">${ICON.gem} ${2 + BATTLE.row}</span>
-            <span class="cur fuel" title="Fuel earned for winning.">${ICON.fuel} ${3 + BATTLE.row}</span>
-            <span class="cur pts" title="Career Points earned for winning. More for a Perfect Win.">${ICON.star} ${Math.round(5 + BATTLE.row*3)}</span>
-          </div>
-          <h3>${opp.name}${BATTLE.enrageNotified ? ` <span class="hoverTip" style="color:var(--red);font-size:13px" title="This opponent is past its turn limit and hitting harder.">Enraged</span>` : ''}</h3>
+          <h3 style="display:flex;align-items:center;justify-content:flex-end;gap:6px;flex-wrap:wrap">${opp.name}${BATTLE.enrageNotified ? ` <span class="hoverTip" style="color:var(--red);font-size:13px" title="This opponent is past its turn limit and hitting harder.">Enraged</span>` : ''}
+            <span class="rewardRow">
+              <span class="cur chip" title="Coins earned for winning.">${ICON.coin} ${Math.round(22 + opp.hp/7)}</span>
+              <span class="cur gem" title="Gems earned for winning.">${ICON.gem} ${2 + BATTLE.row}</span>
+              <span class="cur fuel" title="Fuel earned for winning.">${ICON.fuel} ${3 + BATTLE.row}</span>
+              <span class="cur pts" title="Career Points earned for winning. More for a Perfect Win.">${ICON.star} ${Math.round(5 + BATTLE.row*3)}</span>
+            </span>
+          </h3>
           <div class="bar-wrap"><div class="bar-fill bar-hp" style="width:${hpPct}%"></div></div>
           <div class="note">${opp.hpNow} / ${opp.hp}${(BATTLE.opponent.poisonStacks||[]).length ? ` &middot; <span class="status poisonStatus hoverTip" title="Poison now: ${(BATTLE.opponent.poisonStacks||[]).reduce((a,n)=>a+n,0)} damage. Next turn: ${(BATTLE.opponent.poisonStacks||[]).map(n=>Math.max(0,n-3)).reduce((a,n)=>a+n,0)} damage.">${ICON.poison} ${(BATTLE.opponent.poisonStacks||[]).reduce((a,n)=>a+n,0)} poison</span>` : ''}${BATTLE.opponent.burns?.length ? ` &middot; <span class="status burnStatus hoverTip" title="Burn now: ${BATTLE.opponent.burns.reduce((a,b)=>a+(b.stages[b.stageIdx]||0),0)} damage. Next turn: ${BATTLE.opponent.burns.reduce((a,b)=>a+(b.stages[b.stageIdx+1]||0),0)} damage.">${ICON.fire} burning</span>` : ''}${BATTLE.opponent.curseFromPlayer ? ` &middot; <span class="status curseStatus hoverTip" title="Curse: ${BATTLE.opponent.curseFromPlayer} damage if the opponent fails to attack.">${ICON.curse} cursed</span>` : ''}</div>
           ${BATTLE.opponent.burns?.length ? `<span class="attackChip" data-detonate="1" style="background:var(--amber);border-color:#c97600;font-size:10px;padding:4px 8px">Detonate for ${BATTLE.opponent.burns.reduce((a,b)=>a+(b.stages[b.stageIdx]||0),0)} now</span>` : ''}
@@ -2003,7 +2003,10 @@ function battleScreen() {
       </div>
       <div class="panel">
         <div class="hand">${poolHTML}</div>
-        <button class="wo-btn amber" id="scoutBtn" style="padding:8px 12px;font-size:12px" ${BATTLE.scoutedThisTurn || RUN.chips < 10 ? 'disabled' : ''}>Reveal a card = 10 ${ICON.coin}</button>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <span class="note hoverTip" style="margin:0" title="How many new cards this opponent draws at the start of each of its turns.">Draws ${opp.drawRate}/turn</span>
+          <button class="wo-btn amber" id="scoutBtn" style="padding:8px 12px;font-size:12px" ${BATTLE.scoutedThisTurn || RUN.chips < 10 ? 'disabled' : ''}>Reveal a card = 10 ${ICON.coin}</button>
+        </div>
       </div>
     </div>
         <div class="duelMatchup">
@@ -2025,10 +2028,7 @@ function battleScreen() {
 
       <div class="matchupSide opponentSide">
         <div class="panel">
-          <div class="hdr">
-            <span>${opp.name}'s Attacks</span>
-            <span>What they'll attack with</span>
-          </div>
+          <div class="note" style="margin:0 0 4px;visibility:hidden">.</div>
           <div class="itemGrid">
             ${opponentAttackBoxHTML(opp)}
           </div>

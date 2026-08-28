@@ -1931,12 +1931,12 @@ function battleScreen() {
       <div class="duelSide opp">${art(opp, 30)}<h3>${opp.name}${BATTLE.enrageNotified ? ` <span class="hoverTip" style="color:var(--red);font-size:13px" title="This opponent is past its turn limit and hitting harder.">ENRAGED</span>` : ''}</h3>
         <div class="bar-wrap"><div class="bar-fill bar-hp" style="width:${hpPct}%"></div></div>
         <div class="note">${opp.hpNow} / ${opp.hp}${(BATTLE.opponent.poisonStacks||[]).length ? ` &middot; <span class="status poisonStatus hoverTip" title="Poison now: ${(BATTLE.opponent.poisonStacks||[]).reduce((a,n)=>a+n,0)} damage. Next turn: ${(BATTLE.opponent.poisonStacks||[]).map(n=>Math.max(0,n-3)).reduce((a,n)=>a+n,0)} damage.">${ICON.poison} ${(BATTLE.opponent.poisonStacks||[]).reduce((a,n)=>a+n,0)} poison</span>` : ''}${BATTLE.opponent.burns?.length ? ` &middot; <span class="status burnStatus hoverTip" title="Burn now: ${BATTLE.opponent.burns.reduce((a,b)=>a+(b.stages[b.stageIdx]||0),0)} damage. Next turn: ${BATTLE.opponent.burns.reduce((a,b)=>a+(b.stages[b.stageIdx+1]||0),0)} damage.">${ICON.fire} burning</span>` : ''}${BATTLE.opponent.curseFromPlayer ? ` &middot; <span class="status curseStatus hoverTip" title="Curse: ${BATTLE.opponent.curseFromPlayer} damage if the opponent fails to attack.">${ICON.curse} cursed</span>` : ''}</div>
+        <div class="note" style="margin-top:2px"><span class="hoverTip" title="Win reward: ${Math.round(22 + opp.hp/7)} coins, ${2 + BATTLE.row} gems, ${3 + BATTLE.row} fuel, ${Math.round(5 + BATTLE.row*3)} Career Points. More for a Perfect Win."><b>Reward</b> ${ICON.coin}${Math.round(22 + opp.hp/7)} ${ICON.gem}${2 + BATTLE.row} ${ICON.fuel}${3 + BATTLE.row} ${ICON.star}${Math.round(5 + BATTLE.row*3)}</span></div>
         ${BATTLE.opponent.burns?.length ? `<span class="attackChip" data-detonate="1" style="background:var(--amber);border-color:#c97600;font-size:10px;padding:4px 8px">Detonate for ${BATTLE.opponent.burns.reduce((a,b)=>a+(b.stages[b.stageIdx]||0),0)} now</span>` : ''}
       </div>
     </div>
     <div class="duelBoard">
       <div class="panel">
-        <div class="hdr"><span>Your Hand</span><span></span></div>
         <div class="hand">${handHTML}</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <button class="wo-btn gray" id="sortToggleBtn" style="padding:8px 12px;font-size:12px">Sort: ${(RUN.handSortMode || 'value') === 'value' ? 'Value' : 'Suit'}</button>
@@ -1949,7 +1949,6 @@ function battleScreen() {
         <button class="wo-btn red" id="endTurnBtn" style="padding:8px 10px;font-size:12px;font-weight:700;width:100%">END TURN</button>
       </div>
       <div class="panel">
-        <div class="hdr"><span>${opp.name}'s Cards</span><span></span></div>
         <div class="hand">${poolHTML}</div>
         <button class="wo-btn amber" id="scoutBtn" style="padding:8px 12px;font-size:12px" ${BATTLE.scoutedThisTurn || RUN.chips < 10 ? 'disabled' : ''}>Reveal a Card (-10 coins)</button>
       </div>
@@ -1957,7 +1956,7 @@ function battleScreen() {
         <div class="duelMatchup">
       <div class="matchupSide playerSide">
         <div class="panel">
-          <div class="note" style="margin:0 0 8px">Drag cards or tap to select &middot; Items: ${RUN.hero.items.length}/${RUN.itemCap}</div>
+          <div class="note" style="margin:0 0 4px">Drag cards or tap to select</div>
           <div class="itemGrid">
             ${itemsHTML}
             ${(() => {
@@ -1984,7 +1983,6 @@ function battleScreen() {
       </div>
     </div>
     <div class="panel">
-      <div class="hdr"><span>Resources</span><span></span></div>
       <div class="resourceRow">
         <button class="wo-btn purple resourceAction gemAction" id="gemDrawBtn" ${RUN.gems < 1 ? 'disabled' : ''}><span class="resourceCount">${ICON.gem} ${RUN.gems}/${RUN.maxGems} GEMS</span><span>Draw ${1 + META.levels.gem + (RUN.runUpgrades?.gemDraw||0)} Cards</span><span class="note" style="margin:0;color:#e8daf7">Cost: <b>${GEM_DRAW_COST}</b> gem</span></button>
         <button class="wo-btn green resourceAction fuelAction" id="fuelHealBtn" title="Fuel also gets you across the map — spending it here means less for travel." ${RUN.fuel < FUEL_HESTORE_COST || RUN.health >= RUN.maxHealth ? 'disabled' : ''}><span class="resourceCount">${ICON.fuel} ${RUN.fuel}/${RUN.maxFuel} FUEL</span><span>Use ${FUEL_HESTORE_COST} Fuel → +${FUEL_HEAL_AMOUNT} Health</span></button>

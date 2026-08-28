@@ -53,7 +53,7 @@
   .cur{border:1px solid var(--blue-light);border-radius:6px;padding:4px 8px}
   .cur.gem{color:var(--purple);border-color:var(--purple);background:#f5effd} .cur.fuel{color:var(--green);border-color:var(--green);background:#eef9ee} .cur.energy{color:#8a6d00;border-color:var(--gold);background:#fff9df} .cur.chip{color:#a35f00;border-color:var(--amber);background:#fff4e0} .cur.pts{color:var(--blue-dark);border-color:var(--blue-dark);background:var(--blue-light)} .cur.health{color:var(--red);border-color:var(--red);background:#fdecec}
   .cur{position:relative;cursor:help}.cur[title]:hover::after,.hoverTip[title]:hover::after{content:attr(title);position:absolute;z-index:50;left:50%;transform:translateX(-50%);top:calc(100% + 6px);min-width:170px;max-width:220px;background:#12163a;color:#fff;padding:7px 9px;border-radius:6px;font:12px var(--disp);white-space:normal;box-shadow:3px 3px 0 #173aa8;text-align:left}.bossPreview{border:2px solid var(--red);background:#fff7f7}.mapboss{font-size:12px;font-family:var(--mono);color:var(--dim);margin-top:8px}
-  .hoverTip{position:relative;cursor:help}
+  .hoverTip{position:relative;cursor:help;text-decoration:underline dotted;text-underline-offset:2px}
   .upgradeNum{color:var(--amber)}
 
   .duelHead{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center}
@@ -341,7 +341,7 @@ function opponentAttackBoxHTML(opp) {
     let bonusLine = '';
     let damageLine = '';
     if (a.sumThreshold) {
-      bonusLine = `Needs those cards to add up to ${a.sumThreshold.min}+`;
+      bonusLine = `Needs Σ${a.sumThreshold.min}+`;
       damageLine = `Flat ${a.sumThreshold.damage} damage if met`;
     } else if (a.fewCardsThreshold) {
       bonusLine = `Only works using ${a.fewCardsThreshold.max} card${a.fewCardsThreshold.max > 1 ? 's' : ''} or fewer`;
@@ -356,9 +356,9 @@ function opponentAttackBoxHTML(opp) {
       damageLine = `${a.suitPunish.base || 0} damage + ${a.suitPunish.perCard} per ${a.suitPunish.suit} discarded`;
     } else if (minTier > 0) {
       bonusLine = `Needs at least a ${TIERS[minTier]}`;
-      damageLine = a.straightLen ? `Damage: straight value × ${TIER_MULT[minTier].toFixed(1)}+ (better hands hit harder)` : `Damage: card sum × ${TIER_MULT[minTier].toFixed(1)}+ (better hands hit harder)`;
+      damageLine = a.straightLen ? `Damage: straight value × ${TIER_MULT[minTier].toFixed(1)}+` : `Damage: Σ × ${TIER_MULT[minTier].toFixed(1)}+`;
     } else {
-      damageLine = a.straightLen ? 'Damage: straight value' : (cap === 1 ? 'Damage: card value' : 'Damage: card sum');
+      damageLine = a.straightLen ? 'Damage: straight value' : (cap === 1 ? 'Damage: card value' : 'Damage: Σ of cards played');
     }
     const STATUS_EFFECTS = { burn: 'Burn', poison: 'Poison', curse: 'Curse' };
     const effectLabel = STATUS_EFFECTS[effect];
@@ -586,37 +586,37 @@ const ITEMS = {
     note: `Needs one of each ${kw('Suit')} (4 cards). Flat ${kw('Attack')} for 40 damage.` },
   repo_notice: { id: 'repo_notice', name: 'Repo Notice', cost: 55, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'colorCount', color: 'blk', count: 2 }, baseMult: 1, kind: 'curse',
-    note: `Needs 2+ ${kw('Black')} cards. Curses the opponent for the sum of the cards played.` },
+    note: `Needs 2+ ${kw('Black')} cards. Curses the opponent for Σ of the cards played.` },
   safety_inspection: { id: 'safety_inspection', name: 'Safety Inspection', cost: 55, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'colorCount', color: 'red', count: 2 }, baseMult: 1, kind: 'defense',
-    note: `Needs 2+ ${kw('Red')} cards. Blocks damage equal to the sum of the cards played.` },
+    note: `Needs 2+ ${kw('Red')} cards. Blocks damage equal to Σ of the cards played.` },
   jinxed_duo: { id: 'jinxed_duo', name: 'Jinxed Duo', cost: 60, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'cardIn', cards: [{ rank: 3, suit: '♣' }, { rank: 4, suit: '♣' }] }, baseMult: 1,
     flatBonus: 16, flatBonusPerLevel: 0, kind: 'poison',
     drawAmount: 1, drawPerLevel: 0,
-    note: `Needs the 3${kw('Club',"club")} or 4${kw('Club',"club")}. Poison damage for the sum of cards played + 16, then draw 1 card immediately.` },
+    note: `Needs the 3${kw('Club',"club")} or 4${kw('Club',"club")}. Poison damage for Σ of cards played + 16, then draw 1 card immediately.` },
 
   /* -- Suit-flavored "exactly 4 cards" burn items -- */
   heart_inferno: { id: 'heart_inferno', name: 'Heart Inferno', cost: 65, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'exactCount', count: 4 }, baseMult: 1, kind: 'burn',
     bonus: { condition: { type: 'suitCount', suit: '♥', count: 4 }, base: 1.0, perLevel: 0, maxLevel: 0 },
-    note: `Needs exactly 4 cards. Flame damage for the sum, +100% if all 4 are ${kw('Heart',"heart")}.` },
+    note: `Needs exactly 4 cards. Flame damage for Σ, +100% if all 4 are ${kw('Heart',"heart")}.` },
   diamond_inferno: { id: 'diamond_inferno', name: 'Diamond Inferno', cost: 65, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'exactCount', count: 4 }, baseMult: 1, kind: 'burn',
     bonus: { condition: { type: 'suitCount', suit: '♦', count: 4 }, base: 1.0, perLevel: 0, maxLevel: 0 },
-    note: `Needs exactly 4 cards. Flame damage for the sum, +100% if all 4 are ${kw('Diamond')}.` },
+    note: `Needs exactly 4 cards. Flame damage for Σ, +100% if all 4 are ${kw('Diamond')}.` },
   club_inferno: { id: 'club_inferno', name: 'Club Inferno', cost: 65, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'exactCount', count: 4 }, baseMult: 1, kind: 'burn',
     bonus: { condition: { type: 'suitCount', suit: '♣', count: 4 }, base: 1.0, perLevel: 0, maxLevel: 0 },
-    note: `Needs exactly 4 cards. Flame damage for the sum, +100% if all 4 are ${kw('Club',"club")}.` },
+    note: `Needs exactly 4 cards. Flame damage for Σ, +100% if all 4 are ${kw('Club',"club")}.` },
   spade_inferno: { id: 'spade_inferno', name: 'Spade Inferno', cost: 65, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'exactCount', count: 4 }, baseMult: 1, kind: 'burn',
     bonus: { condition: { type: 'suitCount', suit: '♠', count: 4 }, base: 1.0, perLevel: 0, maxLevel: 0 },
-    note: `Needs exactly 4 cards. Flame damage for the sum, +100% if all 4 are ${kw('Spade')}.` },
+    note: `Needs exactly 4 cards. Flame damage for Σ, +100% if all 4 are ${kw('Spade')}.` },
 
   five_alarm_flush: { id: 'five_alarm_flush', name: 'Five-Alarm Flush', cost: 90, maxCards: 5, usesPerTurn: 2, usesPerTurnPerLevel: 1, minRow: 3,
     condition: { type: 'pokerTier', tier: 5, exactCount: 5 }, baseMult: 1.5,
-    note: `Needs exactly 5 cards making a ${kw('Flush')}. Sum +50% damage. 2 uses per turn.` },
+    note: `Needs exactly 5 cards making a ${kw('Flush')}. Σ +50% damage. 2 uses per turn.` },
 
   exact_change: { id: 'exact_change', name: 'Exact Change', cost: 35, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'sumExact', value: 4 }, baseMult: 0,
@@ -625,7 +625,7 @@ const ITEMS = {
 
   chain_starter: { id: 'chain_starter', name: 'Chain Starter', cost: 50, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1, minRow: 2,
     condition: { type: 'straightLen', len: 3 }, baseMult: 2.5,
-    note: `Needs a 3-card ${kw('Straight')} (example: 6, 7, 8). Sum +150% damage.` },
+    note: `Needs a 3-card ${kw('Straight')} (example: 6, 7, 8). Σ +150% damage.` },
 
   drawstone: { id: 'drawstone', name: 'Drawstone', cost: 40, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'sumThreshold', min: 7 }, baseMult: 0,
@@ -675,7 +675,7 @@ const ITEMS = {
     note: 'Needs a 7 among your played cards. Rare to have one ready, so it hits hard when you do.' },
   escort_wall: { id: 'escort_wall', name: 'Roadblock', cost: 45, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'pokerTier', tier: 1 }, baseMult: 1, kind: 'defense',
-    note: `Needs a Pair. Blocks damage equal to the sum of the cards played, instead of dealing damage.` },
+    note: `Needs a Pair. Blocks damage equal to Σ of the cards played, instead of dealing damage.` },
   toxic_spill: { id: 'toxic_spill', name: 'Toxic Spill', cost: 40, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'any' }, baseMult: 0.5, kind: 'poison',
     bonus: { base: 0, perLevel: 0.15, maxLevel: 3 },
@@ -724,7 +724,7 @@ const STARTERS = ['sidebyside', 'admin', 'interstate', 'convoy', 'comingsoon1', 
 const STARTER_ITEM_DISPLAY = {
   fender_bender: { req: 'Up to 2 cards', bonus: '+50% bonus if Pair (grows with tuning)' },
   pair_draw:     { req: 'Pair', bonus: 'Draw 2 cards immediately' },
-  escort_wall:   { req: 'Pair', bonus: 'Blocks damage equal to the sum of cards played (Defense)' },
+  escort_wall:   { req: 'Pair', bonus: 'Blocks damage equal to Σ of cards played (Defense)' },
   moto_escort:   { req: '4-card Straight', bonus: 'Damage scales with the straight' },
   card_draw:     { req: 'Pair', bonus: 'Draw 2 additional cards (no damage)' },
   triple_threat: { req: 'Three of a Kind', bonus: '+100% damage (up to +400% with tuning)' },
@@ -820,6 +820,23 @@ const RUN_KEY = 'fleetduel-run-v80-heroitem';
 function saveRun() { try { localStorage.setItem(RUN_KEY, JSON.stringify(RUN)); } catch (e) {} }
 function loadRunSave() { try { const raw = localStorage.getItem(RUN_KEY); if (raw) return JSON.parse(raw); } catch (e) {} return null; }
 function clearRunSave() { try { localStorage.removeItem(RUN_KEY); } catch (e) {} }
+
+/* ========== BATTLE SAVE (so a refresh or re-launch mid-fight resumes exactly, rather than
+   letting someone peek at an opponent's hand/attacks and reroll a different path) ========== */
+const BATTLE_KEY = 'fleetduel-battle-v1';
+let IN_BATTLE = false;
+function saveBattleState() { try { localStorage.setItem(BATTLE_KEY, JSON.stringify(BATTLE, (k, v) => v instanceof Set ? [...v] : v)); } catch (e) {} }
+function loadBattleSave() {
+  try {
+    const raw = localStorage.getItem(BATTLE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (parsed) parsed.usedThisTurn = new Set(parsed.usedThisTurn || []);
+    return parsed;
+  } catch (e) {}
+  return null;
+}
+function clearBattleSave() { try { localStorage.removeItem(BATTLE_KEY); } catch (e) {} }
 
 /* ========== MAP GENERATION (21-space horizontal route with a central Fleet Compound) ========== */
 const ROWS = 19;
@@ -1071,6 +1088,7 @@ function rollTreasure() {
   return { ...prize, amount: actual };
 }
 function endRun(won) {
+  IN_BATTLE = false; clearBattleSave();
   const bonus = Math.round(RUN.path.length * (won ? 5 : 2) + (won ? 40 : 0));
   earnPoints(bonus);
   META.bestRun = Math.max(META.bestRun, RUN.path.length);
@@ -1083,6 +1101,7 @@ function endRun(won) {
 
 /* ========== BATTLE LOGIC ========== */
 function startBattle(opponentDef, row, col, castleStage=0) {
+  IN_BATTLE = true;
   BATTLE = {
     opponent: { ...opponentDef, hpNow: opponentDef.hp, poisonStacks: [], lockProgress: 0 }, row, col, castleStage,
     deck: shuffle(freshDeck()), discard: [],
@@ -1596,7 +1615,7 @@ function endTurn() {
     if (BATTLE.opponent.hpNow <= 0) { winBattle(); return; }
   }
 
-  if (RUN.health <= 0) { render(nodeResultScreen(false, {})); return; }
+  if (RUN.health <= 0) { IN_BATTLE = false; clearBattleSave(); render(nodeResultScreen(false, {})); return; }
 
   BATTLE.turn++;
   drawCards(RUN.drawPerTurn);
@@ -1606,6 +1625,7 @@ function endTurn() {
   render(battleScreen());
 }
 function winBattle(outlast) {
+  IN_BATTLE = false; clearBattleSave();
   if (BATTLE.castleStage) {
     const stage = BATTLE.castleStage;
     const reward = stage === 1
@@ -2324,6 +2344,7 @@ let MAP_SCROLL_X = 0;
 function render(html) {
   const app = document.getElementById('app');
   app.innerHTML = `<div class="game-stage">${html}</div>`;
+  if (IN_BATTLE) saveBattleState();
   const mw = app.querySelector('.mapwrap');
   if (mw) { mw.scrollLeft = MAP_SCROLL_X; mw.onscroll = () => { MAP_SCROLL_X = mw.scrollLeft; }; if (RUN && mw.querySelector('.mapnode-wrap')) { requestAnimationFrame(()=>{ const row = Math.max(0,RUN.currentRow); const colW = 94; const target = Math.max(0, row*colW - mw.clientWidth*0.38); mw.scrollLeft = target; MAP_SCROLL_X = target; }); } }
 
@@ -2343,7 +2364,7 @@ function render(html) {
     executePlayerAttack(match[1], Number(match[2]));
   };
 });
-  const forfeitRunBtn = document.getElementById('forfeitRunBtn'); if (forfeitRunBtn) forfeitRunBtn.onclick = () => { if (confirm('Forfeit this run? This will count as a loss.')) endRun(false); };
+  const forfeitRunBtn = document.getElementById('forfeitRunBtn'); if (forfeitRunBtn) forfeitRunBtn.onclick = () => { if (confirm('Forfeit this run? This will count as a loss.')) { IN_BATTLE = false; clearBattleSave(); endRun(false); } };
   const endTurnBtn = document.getElementById('endTurnBtn'); if (endTurnBtn) endTurnBtn.onclick = () => { endTurn(); };
   app.querySelectorAll('[data-detonate]').forEach(el => el.onclick = (e) => { e.stopPropagation(); detonateBurn(); });
   const sortToggleBtn = document.getElementById('sortToggleBtn'); if (sortToggleBtn) sortToggleBtn.onclick = toggleHandSort;
@@ -2587,12 +2608,26 @@ function render(html) {
   const restBtn = document.getElementById('restBtn'); if (restBtn) restBtn.onclick = () => { RUN.health = Math.min(RUN.maxHealth, RUN.health + 30); saveRun(); render(mapScreen()); };
   const backToMetaBtn = document.getElementById('backToMetaBtn'); if (backToMetaBtn) backToMetaBtn.onclick = () => render(metaScreen());
   const startRunBtn = document.getElementById('startRunBtn'); if (startRunBtn) startRunBtn.onclick = () => { clearRunSave(); render(starterSelectScreen()); };
-  const continueRunBtn = document.getElementById('continueRunBtn'); if (continueRunBtn) continueRunBtn.onclick = () => { RUN = loadRunSave(); RUN.maxGems=10; RUN.maxFuel=20; RUN.maxEnergy=20; RUN.handSize=7+(META.levels.handCap||0)*2; RUN.itemCap=Math.max(RUN.itemCap||0, Math.min(MAX_ITEM_CAP, 3+(META.levels.garage||0))); RUN.runUpgrades=RUN.runUpgrades||{itemSlots:0,drawPerTurn:0,sightRange:0,gemDraw:0,health:0}; RUN.drawPerTurn=2+(META.levels.draw||0)+RUN.runUpgrades.drawPerTurn; RUN.gems=Math.min(RUN.maxGems,RUN.gems||0); RUN.fuel=Math.min(RUN.maxFuel,RUN.fuel||0); RUN.energy=Math.min(RUN.maxEnergy,RUN.energy||0); RUN.itemLevels=RUN.itemLevels||{}; RUN.itemUsesLevels=RUN.itemUsesLevels||{}; RUN.itemKindOverride=RUN.itemKindOverride||{}; Object.keys(RUN.itemKindOverride).filter(k=>!k.includes('_')).forEach(k=>{ if(RUN.hero?.items?.includes(k) && !RUN.itemKindOverride[`${k}_0`]) RUN.itemKindOverride[`${k}_0`]=RUN.itemKindOverride[k]; }); RUN.itemMaxCardsLevels=RUN.itemMaxCardsLevels||{}; RUN.itemUnlockProgress=RUN.itemUnlockProgress||{}; RUN.itemUnlocked=RUN.itemUnlocked||{}; RUN.itemUnlockPending=RUN.itemUnlockPending||{}; RUN.castleState=RUN.castleState||{}; saveRun(); render(mapScreen()); };
+  const continueRunBtn = document.getElementById('continueRunBtn'); if (continueRunBtn) continueRunBtn.onclick = () => { RUN = loadRunSave(); RUN.maxGems=10; RUN.maxFuel=20; RUN.maxEnergy=20; RUN.handSize=7+(META.levels.handCap||0)*2; RUN.itemCap=Math.max(RUN.itemCap||0, Math.min(MAX_ITEM_CAP, 3+(META.levels.garage||0))); RUN.runUpgrades=RUN.runUpgrades||{itemSlots:0,drawPerTurn:0,sightRange:0,gemDraw:0,health:0}; RUN.drawPerTurn=2+(META.levels.draw||0)+RUN.runUpgrades.drawPerTurn; RUN.gems=Math.min(RUN.maxGems,RUN.gems||0); RUN.fuel=Math.min(RUN.maxFuel,RUN.fuel||0); RUN.energy=Math.min(RUN.maxEnergy,RUN.energy||0); RUN.itemLevels=RUN.itemLevels||{}; RUN.itemUsesLevels=RUN.itemUsesLevels||{}; RUN.itemKindOverride=RUN.itemKindOverride||{}; Object.keys(RUN.itemKindOverride).filter(k=>!k.includes('_')).forEach(k=>{ if(RUN.hero?.items?.includes(k) && !RUN.itemKindOverride[`${k}_0`]) RUN.itemKindOverride[`${k}_0`]=RUN.itemKindOverride[k]; }); RUN.itemMaxCardsLevels=RUN.itemMaxCardsLevels||{}; RUN.itemUnlockProgress=RUN.itemUnlockProgress||{}; RUN.itemUnlocked=RUN.itemUnlocked||{}; RUN.itemUnlockPending=RUN.itemUnlockPending||{}; RUN.castleState=RUN.castleState||{}; saveRun(); const savedBattle = loadBattleSave(); if (savedBattle) { BATTLE = savedBattle; IN_BATTLE = true; render(battleScreen()); } else { render(mapScreen()); } };
   app.querySelectorAll('[data-pick]').forEach(el => el.onclick = () => initRunWithStarter(el.dataset.pick));
 }
 
 /* ========== BOOT ========== */
-render(metaScreen());
+(function boot() {
+  // A saved battle only makes sense alongside a saved run — if a mid-fight refresh happens,
+  // resume straight into that exact fight instead of dropping back to the main menu or map,
+  // so nobody can peek at an opponent's hand/attacks and reroll a different path.
+  const savedBattle = loadBattleSave();
+  const savedRun = loadRunSave();
+  if (savedBattle && savedRun) {
+    RUN = savedRun;
+    BATTLE = savedBattle;
+    IN_BATTLE = true;
+    render(battleScreen());
+    return;
+  }
+  render(metaScreen());
+})();
 </script>
 </body>
 </html>

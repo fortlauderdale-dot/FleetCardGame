@@ -2304,8 +2304,9 @@ function runEndScreen(won, bonus) {
 function starterSelectScreen() {
   const cards = STARTERS.map(id => {
     if (id === 'comingsoon1' || id === 'comingsoon2') {
-      return `<div style="width:160px">
-        <div class="pickcard locked" style="display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;min-height:230px">
+      return `<div style="width:160px;display:flex;flex-direction:column">
+        <div style="height:20px;margin-bottom:6px"></div>
+        <div class="pickcard locked" style="display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;height:240px;padding:12px;box-sizing:border-box">
           <div class="pname">Coming Soon</div>
           <div class="ptag">A new vehicle is on the way.</div>
         </div>
@@ -2313,10 +2314,10 @@ function starterSelectScreen() {
     }
     const hero = HEROES[id];
     const unlocked = isStarterUnlocked(id);
-    return `<div style="width:160px">
-      <div class="pname" style="text-align:left;margin-bottom:6px">${hero.name}</div>
-      <div class="pickcard ${unlocked ? '' : 'locked'}" style="display:flex;flex-direction:column;min-height:230px${unlocked ? '' : ';justify-content:center;align-items:center;text-align:center'}">
-        <div class="picon" style="margin:6px 0">${unlocked ? art(hero, 46) : `<span class="vart" style="width:46px;height:46px;font-size:46px">${ICON.lock}</span>`}</div>
+    return `<div style="width:160px;display:flex;flex-direction:column">
+      <div class="pname" style="text-align:center;height:20px;margin-bottom:6px;overflow:hidden">${hero.name}</div>
+      <div class="pickcard ${unlocked ? '' : 'locked'}" style="display:flex;flex-direction:column;height:240px;padding:8px 12px 12px;box-sizing:border-box${unlocked ? '' : ';justify-content:center;align-items:center;text-align:center'}">
+        <div class="picon" style="margin:0 0 6px">${unlocked ? art(hero, 46) : `<span class="vart" style="width:46px;height:46px;font-size:46px">${ICON.lock}</span>`}</div>
         ${unlocked ? heroAttacksHTML(hero) : `<div class="ptag">${starterLockNote(id)}</div>`}
         <div style="flex:1"></div>
         ${unlocked ? `<button class="wo-btn amber" data-pick="${hero.id}" style="padding:8px 12px;font-size:13px;width:100%;margin-top:10px">Choose</button>` : ''}
@@ -2327,7 +2328,6 @@ function starterSelectScreen() {
     <div class="wo">
       <div class="wo-stripe"></div>
       <div class="wo-body">
-        <div class="wo-eyebrow">Before You Roll Out</div>
         <h1>Pick Your <em>Vehicle</em></h1>
         <div class="grid" style="margin:12px 0">${cards}</div>
       </div>

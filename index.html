@@ -838,6 +838,7 @@ function initRunWithStarter(id) {
     itemCap: 2 + L.garage, handSize: 7 + (L.handCap || 0) * 2, drawPerTurn: 2 + (L.draw || 0), gems: 3, maxGems: 10, maxFuel: 20, maxEnergy: 20,
     scoreThisRun: 0, lastNotice: null, cardBoosts: [], adminTuneLvl: 0, itemLevels: {}, itemUsesLevels: {}, itemKindOverride: {}, itemMaxCardsLevels: {}, handSortMode: 'value', innSleeps: 0,
     runUpgrades: { itemSlots: 0, drawPerTurn: 0, sightRange: 0, gemDraw: 0, health: 0 },
+    castleState: {},
   };
   saveRun();
   render(mapScreen());
@@ -873,7 +874,6 @@ function selectNode(row, col) {
   else if (node.type === 'treasure') { const found = rollTreasure(); render(treasureScreen(found)); }
 }
 
-let CASTLE_STATE = null;
 let RETURN_TO_CASTLE_MENU = false;
 
 const CASTLE_FIRST = { id:'castleGuard', name:'Castle Guard', icon:'🛡️', image: 'vehicles/castle-guard.png', hp:75, minTier:2, drawRate: 3, turnLimit:7 };
@@ -908,9 +908,9 @@ function castleDungeonScreen(message='') {
       ${currencyBar()}
       ${message ? `<div class="panel"><div class="note">${message}</div></div>` : ''}
       <div class="shopcard"><h3>Battle Challenge</h3><div class="note">Win the first battle to earn the listed reward, then choose whether to risk a second, harder battle for a larger reward.</div>
-        <div class="currencies"><div class="cur chip">${ICON.coin} 30 coins</div><div class="cur gem">${ICON.gem} 2 gems</div><div class="cur fuel">${ICON.fuel} 6 fuel</div></div><button class="wo-btn amber" id="castleBattle1Btn" ${CASTLE_STATE?.firstDone?'disabled':''}>${CASTLE_STATE?.firstDone?'First Battle Won':'Battle 1'}</button>
+        <div class="currencies"><div class="cur chip">${ICON.coin} 30 coins</div><div class="cur gem">${ICON.gem} 2 gems</div><div class="cur fuel">${ICON.fuel} 6 fuel</div></div><button class="wo-btn amber" id="castleBattle1Btn" ${RUN.castleState?.firstDone?'disabled':''}>${RUN.castleState?.firstDone?'First Battle Won':'Battle 1'}</button>
       </div>
-      ${CASTLE_STATE?.firstDone && !CASTLE_STATE?.secondDone ? `<div class="shopcard"><h3>High-Roller Battle</h3><div class="note">The second fight is harder and awards a random Item Card.</div><div class="currencies"><div class="cur chip">${ICON.coin} 70 coins</div><div class="cur gem">${ICON.gem} 4 gems</div><div class="cur fuel">${ICON.fuel} 10 fuel</div><div class="cur pts">Random Item Card</div></div><button class="wo-btn amber" id="castleBattle2Btn">Battle 2</button></div>` : ''}
+      ${RUN.castleState?.firstDone && !RUN.castleState?.secondDone ? `<div class="shopcard"><h3>High-Roller Battle</h3><div class="note">The second fight is harder and awards a random Item Card.</div><div class="currencies"><div class="cur chip">${ICON.coin} 70 coins</div><div class="cur gem">${ICON.gem} 4 gems</div><div class="cur fuel">${ICON.fuel} 10 fuel</div><div class="cur pts">Random Item Card</div></div><button class="wo-btn amber" id="castleBattle2Btn">Battle 2</button></div>` : ''}
       <button class="wo-btn gray" id="backToCastleMenuBtn">Back to Compound Menu</button>
     </div>
   </div>`;
@@ -931,17 +931,17 @@ function castleInnScreen(message='') {
 }
 
 function castleMatchScreen() {
-  if (!CASTLE_STATE) CASTLE_STATE={};
-  if (!CASTLE_STATE.matchCards) {
+  if (!RUN.castleState) RUN.castleState = {};
+  if (!RUN.castleState.matchCards) {
     const suits = shuffle([...SUITS]).slice(0,3).map(s=>s.s);
-    CASTLE_STATE.matchCards = shuffle(suits.flatMap((s,i)=>[{id:i*2,suit:s},{id:i*2+1,suit:s}]).map(c=>({...c,flipped:false})));
-    CASTLE_STATE.matchGuesses = 4;
-    CASTLE_STATE.matchPick = [];
+    RUN.castleState.matchCards = shuffle(suits.flatMap((s,i)=>[{id:i*2,suit:s},{id:i*2+1,suit:s}]).map(c=>({...c,flipped:false})));
+    RUN.castleState.matchGuesses = 4;
+    RUN.castleState.matchPick = [];
   }
-  const cards=CASTLE_STATE.matchCards.map((c,i)=>`<button class="card mini ${c.flipped?'':'back'}" data-match="${i}" ${c.flipped?'disabled':''}>${c.flipped?c.suit:'?'}</button>`).join('');
+  const cards=RUN.castleState.matchCards.map((c,i)=>`<button class="card mini ${c.flipped?'':'back'}" data-match="${i}" ${c.flipped?'disabled':''}>${c.flipped?c.suit:'?'}</button>`).join('');
   return `<div class="wo"><div class="wo-stripe"></div><div class="wo-body">
     <div class="wo-eyebrow">Fleet Compound</div><h1>Fleet Carnival <em>Matching Game</em></h1>
-    <div class="wo-sub">Guesses left: ${CASTLE_STATE.matchGuesses}</div>
+    <div class="wo-sub">Guesses left: ${RUN.castleState.matchGuesses}</div>
     <div class="grid" style="grid-template-columns:repeat(3,1fr);max-width:360px">${cards}</div>
     <div class="note" style="margin:10px 0">Match a pair to win a random reward. A wrong guess uses one of your attempts.</div>
     <button class="wo-btn gray" id="leaveMatchBtn">Back to Compound</button>
@@ -1002,9 +1002,9 @@ function endRun(won) {
 }
 
 /* ========== BATTLE LOGIC ========== */
-function startBattle(opponentDef, row, col) {
+function startBattle(opponentDef, row, col, castleStage=0) {
   BATTLE = {
-    opponent: { ...opponentDef, hpNow: opponentDef.hp, poisonStacks: [], lockProgress: 0 }, row, col, castleStage: CASTLE_STATE?.stage || 0,
+    opponent: { ...opponentDef, hpNow: opponentDef.hp, poisonStacks: [], lockProgress: 0 }, row, col, castleStage,
     deck: shuffle(freshDeck()), discard: [],
     oppDeck: shuffle(freshDeck()), oppDiscard: [],
     hand: [], oppPool: [], usedThisTurn: new Set(), scoutedThisTurn: false, abilityUsedThisTurn: false, opponentStunned: false,
@@ -1490,16 +1490,17 @@ function endTurn() {
   render(battleScreen());
 }
 function winBattle(outlast) {
-  if (BATTLE.castleStage || CASTLE_STATE?.stage) {
-    const stage = CASTLE_STATE?.stage || BATTLE.castleStage;
+  if (BATTLE.castleStage) {
+    const stage = BATTLE.castleStage;
     const reward = stage === 1
       ? { coins: 30, gems: 2, fuel: 6 }
       : { coins: 70, gems: 4, fuel: 10 };
     RUN.chips += reward.coins;
     RUN.gems = Math.min(RUN.maxGems, RUN.gems + reward.gems);
     RUN.fuel = Math.min(RUN.maxFuel, RUN.fuel + reward.fuel);
-    if (stage === 1) CASTLE_STATE.firstDone = true;
-    if (stage === 2) CASTLE_STATE.secondDone = true;
+    if (!RUN.castleState) RUN.castleState = {};
+    if (stage === 1) RUN.castleState.firstDone = true;
+    if (stage === 2) RUN.castleState.secondDone = true;
     saveRun();
     render(castleDungeonScreen(`You won Battle ${stage}. Reward: +${reward.coins} coins, +${reward.gems} gems, +${reward.fuel} fuel.`));
     return;
@@ -2350,20 +2351,20 @@ function render(html) {
   });
 
   const castleDungeonNavBtn = document.getElementById('castleDungeonNavBtn'); if (castleDungeonNavBtn) castleDungeonNavBtn.onclick = () => render(castleDungeonScreen());
-  const castleWizardNavBtn = document.getElementById('castleWizardNavBtn'); if (castleWizardNavBtn) castleWizardNavBtn.onclick = () => { CASTLE_STATE = CASTLE_STATE || {}; render(castleMatchScreen()); };
+  const castleWizardNavBtn = document.getElementById('castleWizardNavBtn'); if (castleWizardNavBtn) castleWizardNavBtn.onclick = () => { if (!RUN.castleState) RUN.castleState = {}; render(castleMatchScreen()); };
   const castleBlacksmithNavBtn = document.getElementById('castleBlacksmithNavBtn'); if (castleBlacksmithNavBtn) castleBlacksmithNavBtn.onclick = () => { RETURN_TO_CASTLE_MENU = true; BLACKSMITH_OPTIONS = pickBlacksmithOptions(); BLACKSMITH_VISIT = { primary: null, secondary: null }; render(blacksmithScreen()); };
   const castleChopShopNavBtn = document.getElementById('castleChopShopNavBtn'); if (castleChopShopNavBtn) castleChopShopNavBtn.onclick = () => { RETURN_TO_CASTLE_MENU = true; render(chopShopScreen()); };
   const castleShopNavBtn = document.getElementById('castleShopNavBtn'); if (castleShopNavBtn) castleShopNavBtn.onclick = () => { RETURN_TO_CASTLE_MENU = true; render(shopScreen(true)); };
   const castleInnNavBtn = document.getElementById('castleInnNavBtn'); if (castleInnNavBtn) castleInnNavBtn.onclick = () => render(castleInnScreen());
   const backToCastleMenuBtn = document.getElementById('backToCastleMenuBtn'); if (backToCastleMenuBtn) backToCastleMenuBtn.onclick = () => render(castleMenuScreen());
-  const castleBattle1Btn = document.getElementById('castleBattle1Btn'); if (castleBattle1Btn) castleBattle1Btn.onclick = () => { CASTLE_STATE = CASTLE_STATE || {}; CASTLE_STATE.stage=1; startBattle(CASTLE_FIRST, 10, 0); };
-  const castleBattle2Btn = document.getElementById('castleBattle2Btn'); if (castleBattle2Btn) castleBattle2Btn.onclick = () => { CASTLE_STATE = CASTLE_STATE || {}; CASTLE_STATE.stage=2; startBattle(CASTLE_SECOND, 10, 0); };
+  const castleBattle1Btn = document.getElementById('castleBattle1Btn'); if (castleBattle1Btn) castleBattle1Btn.onclick = () => { if (!RUN.castleState) RUN.castleState = {}; startBattle(CASTLE_FIRST, 10, 0, 1); };
+  const castleBattle2Btn = document.getElementById('castleBattle2Btn'); if (castleBattle2Btn) castleBattle2Btn.onclick = () => { if (!RUN.castleState) RUN.castleState = {}; startBattle(CASTLE_SECOND, 10, 0, 2); };
   const castleFuelBtn = document.getElementById('castleFuelBtn'); if (castleFuelBtn) castleFuelBtn.onclick = () => { if (RUN.chips>=5) { RUN.chips-=5; RUN.fuel=Math.min(RUN.maxFuel,RUN.fuel+10); saveRun(); render(castleInnScreen('You refueled for 5 coins.')); } };
   const castleRestBtn = document.getElementById('castleRestBtn'); if (castleRestBtn) castleRestBtn.onclick = () => { const cost=RUN.innSleeps===0?0:20*RUN.innSleeps; if(RUN.chips<cost || RUN.health>=RUN.maxHealth)return; RUN.chips-=cost; RUN.innSleeps=(RUN.innSleeps||0)+1; RUN.health=Math.min(RUN.maxHealth,RUN.health+20); saveRun(); render(castleInnScreen(`You slept and recovered 20 health${cost?` for ${cost} coins`:''}.`)); };
   const leaveCastleBtn = document.getElementById('leaveCastleBtn'); if (leaveCastleBtn) leaveCastleBtn.onclick = () => render(mapScreen());
   const leaveMatchBtn = document.getElementById('leaveMatchBtn'); if (leaveMatchBtn) leaveMatchBtn.onclick = () => render(castleMenuScreen());
   app.querySelectorAll('[data-match]').forEach(el => el.onclick = () => {
-    const i=+el.dataset.match, st=CASTLE_STATE;
+    const i=+el.dataset.match, st=RUN.castleState;
     if (!st || st.matchGuesses<=0 || st.matchPick.includes(i) || st.matchCards[i].flipped) return;
     st.matchPick.push(i); st.matchCards[i].flipped=true;
     if (st.matchPick.length===2) {
@@ -2415,7 +2416,7 @@ function render(html) {
   const restBtn = document.getElementById('restBtn'); if (restBtn) restBtn.onclick = () => { RUN.health = Math.min(RUN.maxHealth, RUN.health + 30); saveRun(); render(mapScreen()); };
   const backToMetaBtn = document.getElementById('backToMetaBtn'); if (backToMetaBtn) backToMetaBtn.onclick = () => render(metaScreen());
   const startRunBtn = document.getElementById('startRunBtn'); if (startRunBtn) startRunBtn.onclick = () => { clearRunSave(); render(starterSelectScreen()); };
-  const continueRunBtn = document.getElementById('continueRunBtn'); if (continueRunBtn) continueRunBtn.onclick = () => { RUN = loadRunSave(); RUN.maxGems=10; RUN.maxFuel=20; RUN.maxEnergy=20; RUN.handSize=7+(META.levels.handCap||0)*2; RUN.runUpgrades=RUN.runUpgrades||{itemSlots:0,drawPerTurn:0,sightRange:0,gemDraw:0,health:0}; RUN.drawPerTurn=2+(META.levels.draw||0)+RUN.runUpgrades.drawPerTurn; RUN.gems=Math.min(RUN.maxGems,RUN.gems||0); RUN.fuel=Math.min(RUN.maxFuel,RUN.fuel||0); RUN.energy=Math.min(RUN.maxEnergy,RUN.energy||0); RUN.itemLevels=RUN.itemLevels||{}; RUN.itemUsesLevels=RUN.itemUsesLevels||{}; RUN.itemKindOverride=RUN.itemKindOverride||{}; Object.keys(RUN.itemKindOverride).filter(k=>!k.includes('_')).forEach(k=>{ if(RUN.hero?.items?.includes(k) && !RUN.itemKindOverride[`${k}_0`]) RUN.itemKindOverride[`${k}_0`]=RUN.itemKindOverride[k]; }); RUN.itemMaxCardsLevels=RUN.itemMaxCardsLevels||{}; RUN.itemUnlockProgress=RUN.itemUnlockProgress||{}; RUN.itemUnlocked=RUN.itemUnlocked||{}; RUN.itemUnlockPending=RUN.itemUnlockPending||{}; saveRun(); render(mapScreen()); };
+  const continueRunBtn = document.getElementById('continueRunBtn'); if (continueRunBtn) continueRunBtn.onclick = () => { RUN = loadRunSave(); RUN.maxGems=10; RUN.maxFuel=20; RUN.maxEnergy=20; RUN.handSize=7+(META.levels.handCap||0)*2; RUN.runUpgrades=RUN.runUpgrades||{itemSlots:0,drawPerTurn:0,sightRange:0,gemDraw:0,health:0}; RUN.drawPerTurn=2+(META.levels.draw||0)+RUN.runUpgrades.drawPerTurn; RUN.gems=Math.min(RUN.maxGems,RUN.gems||0); RUN.fuel=Math.min(RUN.maxFuel,RUN.fuel||0); RUN.energy=Math.min(RUN.maxEnergy,RUN.energy||0); RUN.itemLevels=RUN.itemLevels||{}; RUN.itemUsesLevels=RUN.itemUsesLevels||{}; RUN.itemKindOverride=RUN.itemKindOverride||{}; Object.keys(RUN.itemKindOverride).filter(k=>!k.includes('_')).forEach(k=>{ if(RUN.hero?.items?.includes(k) && !RUN.itemKindOverride[`${k}_0`]) RUN.itemKindOverride[`${k}_0`]=RUN.itemKindOverride[k]; }); RUN.itemMaxCardsLevels=RUN.itemMaxCardsLevels||{}; RUN.itemUnlockProgress=RUN.itemUnlockProgress||{}; RUN.itemUnlocked=RUN.itemUnlocked||{}; RUN.itemUnlockPending=RUN.itemUnlockPending||{}; RUN.castleState=RUN.castleState||{}; saveRun(); render(mapScreen()); };
   app.querySelectorAll('[data-pick]').forEach(el => el.onclick = () => initRunWithStarter(el.dataset.pick));
 }
 

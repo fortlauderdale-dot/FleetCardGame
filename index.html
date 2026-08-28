@@ -1664,11 +1664,11 @@ function noticeHTML() {
 }
 function currencyBar() {
   return `<div class="currencies">
-    <div class="cur health" title="Your health. Runs out and the run ends.">${ICON.heart} ${RUN.health}/${RUN.maxHealth} health</div>
-    <div class="cur chip" title="Coins are used to buy vehicles and pay for certain services.">${ICON.coin} ${RUN.chips} coins</div>
-    <div class="cur gem" title="Gems let you draw extra cards during a battle.">${ICON.gem} ${RUN.gems}/${RUN.maxGems} gems</div>
-    <div class="cur fuel" title="Fuel is spent when you travel to another stop.">${ICON.fuel} ${RUN.fuel}/${RUN.maxFuel} fuel</div>
-    <div class="cur energy" title="Energy powers vehicle abilities.">${ICON.energy} ${RUN.energy}/${RUN.maxEnergy} energy</div>
+    <div class="cur health" title="Your health. Runs out and the run ends.">${ICON.heart} ${RUN.health}/${RUN.maxHealth} Health</div>
+    <div class="cur chip" title="Coins are used to buy vehicles and pay for certain services.">${ICON.coin} ${RUN.chips} Coins</div>
+    <div class="cur gem" title="Gems let you draw extra cards during a battle.">${ICON.gem} ${RUN.gems}/${RUN.maxGems} Gems</div>
+    <div class="cur fuel" title="Fuel is spent when you travel to another stop.">${ICON.fuel} ${RUN.fuel}/${RUN.maxFuel} Fuel</div>
+    <div class="cur energy" title="Energy powers vehicle abilities.">${ICON.energy} ${RUN.energy}/${RUN.maxEnergy} Energy</div>
     <div class="cur pts" title="Career Points carry over between playthroughs and only buy Permanent Upgrades.">${ICON.star} ${META.points} Career Points</div>
   </div>`;
 }
@@ -1959,18 +1959,19 @@ function battleScreen() {
       <div class="panel">
         <div class="hand">${handHTML}</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="wo-btn gray" id="sortToggleBtn" style="padding:8px 12px;font-size:12px">Sort: ${(RUN.handSortMode || 'value') === 'value' ? 'Value' : 'Suit'}</button>
+          <button class="wo-btn gray" id="sortToggleBtn" style="padding:8px 12px;font-size:12px;width:92px;text-align:center">Sort: ${(RUN.handSortMode || 'value') === 'value' ? 'Value' : 'Suit'}</button>
           <button class="wo-btn gray" id="discardSelectedBtn" style="padding:8px 12px;font-size:12px" title="Fold selected cards face-down instead of playing them." ${!selectedIdx.length ? 'disabled' : ''}>Discard Selected</button>
+          <button class="wo-btn purple" id="gemDrawBtn" style="padding:8px 12px;font-size:12px" ${RUN.gems < 1 ? 'disabled' : ''}>Draw ${1 + META.levels.gem + (RUN.runUpgrades?.gemDraw||0)} card${(1 + META.levels.gem + (RUN.runUpgrades?.gemDraw||0)) > 1 ? 's' : ''} = ${GEM_DRAW_COST} ${ICON.gem}</button>
     </div>
         ${BATTLE.turnDiscard.length ? `<div class="note" style="margin-top:8px">Discarding this turn (tap to undo):</div><div class="hand">${discardStagedHTML}</div>` : ''}
       </div>
       <div class="deckStack">
-        <div class="card back" style="position:relative"><span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-family:var(--mono);font-weight:700;font-size:13px">${BATTLE.deck.length}</span></div>
+        <div class="card back" style="position:relative"><span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-family:var(--mono);font-weight:700;font-size:16px">${BATTLE.deck.length}</span></div>
         <button class="wo-btn red" id="endTurnBtn" style="padding:8px 10px;font-size:12px;font-weight:700;width:100%">END TURN</button>
       </div>
       <div class="panel">
         <div class="hand">${poolHTML}</div>
-        <button class="wo-btn amber" id="scoutBtn" style="padding:8px 12px;font-size:12px" ${BATTLE.scoutedThisTurn || RUN.chips < 10 ? 'disabled' : ''}>Reveal a Card (-10 coins)</button>
+        <button class="wo-btn amber" id="scoutBtn" style="padding:8px 12px;font-size:12px" ${BATTLE.scoutedThisTurn || RUN.chips < 10 ? 'disabled' : ''}>Reveal a card = 10 ${ICON.coin}</button>
       </div>
     </div>
         <div class="duelMatchup">
@@ -2003,10 +2004,7 @@ function battleScreen() {
       </div>
     </div>
     <div class="panel">
-      <div class="resourceRow">
-        <button class="wo-btn purple resourceAction gemAction" id="gemDrawBtn" ${RUN.gems < 1 ? 'disabled' : ''}><span class="resourceCount">${ICON.gem} ${RUN.gems}/${RUN.maxGems} GEMS</span><span>Draw ${1 + META.levels.gem + (RUN.runUpgrades?.gemDraw||0)} Cards</span><span class="note" style="margin:0;color:#e8daf7">Cost: <b>${GEM_DRAW_COST}</b> gem</span></button>
-        <button class="wo-btn green resourceAction fuelAction" id="fuelHealBtn" title="Fuel also gets you across the map — spending it here means less for travel." ${RUN.fuel < FUEL_HESTORE_COST || RUN.health >= RUN.maxHealth ? 'disabled' : ''}><span class="resourceCount">${ICON.fuel} ${RUN.fuel}/${RUN.maxFuel} FUEL</span><span>Use ${FUEL_HESTORE_COST} Fuel → +${FUEL_HEAL_AMOUNT} Health</span></button>
-      </div>
+      <button class="wo-btn green" id="fuelHealBtn" title="Fuel also gets you across the map — spending it here means less for travel." style="width:100%;padding:8px 12px;font-size:12px" ${RUN.fuel < FUEL_HESTORE_COST || RUN.health >= RUN.maxHealth ? 'disabled' : ''}>Heal ${FUEL_HEAL_AMOUNT} = ${FUEL_HESTORE_COST} ${ICON.fuel}</button>
       <button class="wo-btn" id="openRunUpgradeFromBattleBtn" style="width:100%;margin-top:8px">Run Upgrade</button>
     </div>
     <div class="panel">

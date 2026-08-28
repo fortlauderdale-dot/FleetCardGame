@@ -22,6 +22,8 @@
   .game-stage{}
   .treasure-modal{position:fixed;inset:0;background:#12163acc;display:flex;align-items:center;justify-content:center;z-index:100;padding:20px}
   .treasure-modal .wo{max-width:560px;width:100%;margin:0}
+  .map-popup-overlay{position:absolute;inset:0;background:#12163acc;display:flex;align-items:center;justify-content:center;z-index:100;padding:14px;border-radius:10px}
+  .map-popup-overlay .wo{max-width:400px;width:100%;margin:0;max-height:100%;overflow-y:auto}
   .treasure-prize{font-size:28px;font-weight:800;color:var(--blue-dark);text-align:center;margin:16px 0}
 
   .wo{background:var(--white);color:var(--ink);border:3px solid var(--blue);border-radius:12px;box-shadow:6px 6px 0 var(--blue-dark);padding:0;margin:16px 0;overflow:hidden}
@@ -1752,8 +1754,8 @@ function nodePopupScreen(r, c) {
       <div class="cur pts">${ICON.star} +15 Career Points</div>
     </div>
     <div class="note" style="margin-top:4px">Awarded when your final hit exactly matches their remaining HP.</div>` : '';
-  return `<div class="treasure-modal">
-    <div class="wo" style="max-width:420px;width:100%">
+  return `<div class="map-popup-overlay">
+    <div class="wo" style="width:100%">
       <div class="wo-stripe"></div>
       <div class="wo-body">
         <div class="wo-eyebrow">${info.title}</div>
@@ -1829,14 +1831,14 @@ function mapScreen() {
     ${currencyBar()}
     <button class="wo-btn amber" id="openRunUpgradeFromMapBtn" style="width:100%;margin:8px 0">Run Upgrade</button>
     <div class="hdr" style="margin-top:8px"><span>World 1 - City Fleet (21 spaces)</span><span>Choose your next stop.</span></div>
-    <div class="mapwrap" style="width:100%;height:${totalH}px;overflow-x:auto;overflow-y:hidden">
+    <div class="mapwrap" style="width:100%;height:${totalH}px;overflow-x:auto;overflow-y:hidden;position:relative">
       <div style="position:relative;width:${totalW}px;height:${totalH}px">
         <svg width="${totalW}" height="${totalH}" viewBox="0 0 ${totalW} ${totalH}" style="position:absolute;left:0;top:0;pointer-events:none">${svgLines}</svg>
         ${nodesHTML}
       </div>
+      ${MAP_POPUP ? nodePopupScreen(MAP_POPUP.row, MAP_POPUP.col) : ''}
     </div>
-  </div>
-  ${MAP_POPUP ? nodePopupScreen(MAP_POPUP.row, MAP_POPUP.col) : ''}`;
+  </div>`;
 }
 
 /* ========== RUN-SCOPED UPGRADES (paid with coins, last only for this run) ==========
@@ -1980,7 +1982,7 @@ function battleScreen() {
     <div class="panel duelHead">
       <div class="duelSide you">${art(PLAYER_ART, 30)}
         <div class="sideInfo">
-          <h3>${fleetLabel()}</h3>
+          <h3 style="text-align:right">${fleetLabel()}</h3>
           <div class="bar-wrap"><div class="bar-fill bar-health" style="width:${healthPct}%"></div></div>
           <div class="note">${RUN.health} / ${RUN.maxHealth}${BATTLE.playerArmor ? ` &middot; <span class="vart" style="width:12px;height:12px;font-size:12px">${ICON.shield}</span> ${BATTLE.playerArmor} armor` : ''}</div>
           <div style="margin-top:4px;display:flex;justify-content:flex-end"><button class="wo-btn green" id="fuelHealBtn" title="Fuel also gets you across the map — spending it here means less for travel." style="padding:6px 10px;font-size:11px" ${RUN.fuel < FUEL_HESTORE_COST || RUN.health >= RUN.maxHealth ? 'disabled' : ''}>Heal ${FUEL_HEAL_AMOUNT} = ${FUEL_HESTORE_COST} ${ICON.fuel}</button></div>
@@ -1989,7 +1991,7 @@ function battleScreen() {
       <div class="vsMark">VS</div>
       <div class="duelSide opp">${art(opp, 30)}
         <div class="sideInfo">
-          <h3 style="display:flex;align-items:center;justify-content:flex-end;gap:6px;flex-wrap:wrap">${opp.name}${BATTLE.enrageNotified ? ` <span class="hoverTip" style="color:var(--red);font-size:13px" title="This opponent is past its turn limit and hitting harder.">Enraged</span>` : ''}
+          <h3 style="display:flex;align-items:center;justify-content:space-between;gap:6px;flex-wrap:nowrap">${opp.name}${BATTLE.enrageNotified ? ` <span class="hoverTip" style="color:var(--red);font-size:13px" title="This opponent is past its turn limit and hitting harder.">Enraged</span>` : ''}
             <span class="rewardRow">
               <span class="cur chip" title="Coins earned for winning.">${ICON.coin} ${Math.round(22 + opp.hp/7)}</span>
               <span class="cur gem" title="Gems earned for winning.">${ICON.gem} ${2 + BATTLE.row}</span>

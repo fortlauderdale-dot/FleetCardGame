@@ -2401,6 +2401,18 @@ function render(html) {
     saveRun();
     render(blacksmithScreen());
   });
+  app.querySelectorAll('[data-sell]').forEach(el => el.onclick = () => {
+    const i = +el.dataset.sell;
+    const id = RUN.hero.items[i];
+    const it = ITEMS[id];
+    if (!it) return;
+    const modCost=(itemLevel(id)>0?itemTuneCost(it,Math.max(0,itemLevel(id)-1)):0)+(itemUsesLevel(id)>0?itemUsesTuneCost(itemUsesLevel(id)-1):0)+(itemMaxCardsLevel(id)>0?itemMaxCardsTuneCost(itemMaxCardsLevel(id)-1):0)+(RUN.itemKindOverride[`${id}_${i}`] || RUN.itemKindOverride[id]?itemKindConvertCost():0);
+    const sellValue = Math.floor((it.cost+modCost)/2);
+    RUN.chips += sellValue;
+    RUN.hero.items.splice(i, 1);
+    saveRun();
+    render(shopScreen());
+  });
     app.querySelectorAll('[data-buy]').forEach(el => el.onclick = () => {
     const cost = +el.dataset.cost;
     if (RUN.chips < cost || RUN.hero.items.length >= RUN.itemCap) return;

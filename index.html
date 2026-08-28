@@ -57,8 +57,13 @@
   .upgradeNum{color:var(--amber)}
 
   .duelHead{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center}
-  .duelSide h3{margin:0 0 4px;font-size:20px;color:var(--blue-dark)}
-  .duelSide.opp{text-align:right}
+  .duelSide{display:flex;align-items:center;gap:8px}
+  .duelSide .sideInfo{flex:1;min-width:0}
+  .duelSide h3{margin:0 0 4px;font-size:18px;color:var(--blue-dark)}
+  .duelSide.opp{flex-direction:row-reverse;text-align:right}
+  .duelSide .bar-wrap{height:10px}
+  .rewardRow{display:flex;gap:4px;justify-content:flex-end;flex-wrap:wrap;margin-bottom:3px}
+  .rewardRow .cur{font-size:9px;padding:2px 5px;white-space:nowrap}
   .vsMark{font-family:var(--mono);font-weight:800;color:var(--dim);font-size:13px}
   .bigicon{font-size:30px;line-height:1}
 
@@ -98,7 +103,9 @@
   .vslot .vcards{display:flex;gap:3px;flex-wrap:wrap;min-height:30px;margin-top:6px}
 
   .itemGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
-  .itemCard{border-radius:8px;padding:6px 4px;background:var(--bg);min-height:112px;display:flex;flex-direction:column;align-items:center;text-align:center;box-sizing:border-box;font-size:12px}
+  .itemCard{border-radius:8px;padding:6px 4px;background:var(--bg);height:128px;display:flex;flex-direction:column;align-items:center;text-align:center;box-sizing:border-box;font-size:12px;position:relative;overflow:hidden}
+  .usesBadge{position:absolute;top:4px;right:4px;font-size:9px;font-weight:800;background:var(--blue-light);color:var(--blue-dark);border-radius:5px;padding:1px 5px;line-height:1.4}
+  .usesBadge.depleted{background:#eee;color:var(--dim)}
   .itemCard.ready{border-color:var(--green) !important}
   .itemCard .hdr{width:100%;justify-content:center;text-align:center}
   .itemCard .vcards{display:flex;gap:3px;flex-wrap:wrap;justify-content:center;min-height:26px;margin-top:4px}
@@ -1893,8 +1900,10 @@ function battleScreen() {
     const bonusPct = item.bonus ? Math.round((item.bonus.base + item.bonus.perLevel * level) * 100) : 0;
     const bonusLine = item.bonus && bonusPct > 0 ? `<div class="itemBonusLine">Bonus <b class="hoverTip" title="Can be upgraded permanently on the Upgrades screen (Item Mastery).">+${bonusPct}%</b> if ${describeCondition(item.bonus.condition || item.condition)}</div>` : '';
 
+    const usesBadgeText = cap === Infinity ? '∞' : `${Math.max(0, usesLeft)}/${cap}`;
     return `<div class="itemCard kind-${eKind} ${ready ? 'ready' : ''}" data-assign="${slotKey}" style="border:2px dashed ${cursedAmt ? 'var(--purple)' : 'var(--blue)'}"
         ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleCardDrop(event,'${slotKey}',${effectiveMaxCards(item)})">
+      <div class="usesBadge ${usesLeft <= 0 ? 'depleted' : ''} hoverTip" title="Uses left this turn">${usesBadgeText}</div>
       <div class="hdr" style="font-weight:600; color:${eKind==='poison'?'#4d8f45':eKind==='burn'?'#c4472d':eKind==='curse'?'#7a4aa8':'var(--blue-dark)'}">${item.name}${cursedAmt ? ` <span class="vart" style="width:12px;height:12px;font-size:12px;color:var(--purple)">${ICON.curse}</span> cursed` : ''}</div>
       <div class="vcards">${cardHTML}</div>
       <div class="itemReqLine">${itemRequirementText(item, eKind)}</div>
@@ -1917,7 +1926,6 @@ function battleScreen() {
         return `<div class="note" style="margin:4px 0 0">${[staticKindText, drawText].filter(Boolean).join(' + ')}</div>${unlockText?`<div class="note" style="margin:2px 0 0">${unlockText}</div>`:''}`;
       })()}
       <div style="margin-top:auto">
-        <div class="note" style="margin:2px 0 0">${usesLeft > 0 ? `${usesLeft}/${cap} use${cap > 1 ? 's' : ''} left this turn` : 'No uses left this turn'}</div>
         <div style="margin-top:4px">
           ${idxs.length ? `<button class="wo-btn gray" style="padding:3px 6px;font-size:10px" data-clear="${slotKey}">Clear</button>` : ''}
           ${ready && usesLeft > 0 ? `<span class="attackChip" data-attack="${slotKey}" style="font-size:10px; padding:3px 6px">Attack ▶</span>` : ''}
@@ -1943,16 +1951,27 @@ function battleScreen() {
     <div style="display:flex;justify-content:flex-end;margin-bottom:6px"><button class="wo-btn gray" id="forfeitRunBtn" style="padding:6px 10px;font-size:11px">Forfeit Run</button></div>
     <div class="panel">${currencyBar()}</div>
     <div class="panel duelHead">
-      <div class="duelSide you">${art(PLAYER_ART, 30)}<h3>${fleetLabel()}</h3>
-        <div class="bar-wrap"><div class="bar-fill bar-health" style="width:${healthPct}%"></div></div>
-        <div class="note">${RUN.health} / ${RUN.maxHealth}${BATTLE.playerArmor ? ` &middot; <span class="vart" style="width:12px;height:12px;font-size:12px">${ICON.shield}</span> ${BATTLE.playerArmor} armor` : ''}</div>
+      <div class="duelSide you">${art(PLAYER_ART, 30)}
+        <div class="sideInfo">
+          <h3>${fleetLabel()}</h3>
+          <div class="bar-wrap"><div class="bar-fill bar-health" style="width:${healthPct}%"></div></div>
+          <div class="note">${RUN.health} / ${RUN.maxHealth}${BATTLE.playerArmor ? ` &middot; <span class="vart" style="width:12px;height:12px;font-size:12px">${ICON.shield}</span> ${BATTLE.playerArmor} armor` : ''}</div>
+        </div>
       </div>
       <div class="vsMark">VS</div>
-      <div class="duelSide opp">${art(opp, 30)}<h3>${opp.name}${BATTLE.enrageNotified ? ` <span class="hoverTip" style="color:var(--red);font-size:13px" title="This opponent is past its turn limit and hitting harder.">ENRAGED</span>` : ''}</h3>
-        <div class="bar-wrap"><div class="bar-fill bar-hp" style="width:${hpPct}%"></div></div>
-        <div class="note">${opp.hpNow} / ${opp.hp}${(BATTLE.opponent.poisonStacks||[]).length ? ` &middot; <span class="status poisonStatus hoverTip" title="Poison now: ${(BATTLE.opponent.poisonStacks||[]).reduce((a,n)=>a+n,0)} damage. Next turn: ${(BATTLE.opponent.poisonStacks||[]).map(n=>Math.max(0,n-3)).reduce((a,n)=>a+n,0)} damage.">${ICON.poison} ${(BATTLE.opponent.poisonStacks||[]).reduce((a,n)=>a+n,0)} poison</span>` : ''}${BATTLE.opponent.burns?.length ? ` &middot; <span class="status burnStatus hoverTip" title="Burn now: ${BATTLE.opponent.burns.reduce((a,b)=>a+(b.stages[b.stageIdx]||0),0)} damage. Next turn: ${BATTLE.opponent.burns.reduce((a,b)=>a+(b.stages[b.stageIdx+1]||0),0)} damage.">${ICON.fire} burning</span>` : ''}${BATTLE.opponent.curseFromPlayer ? ` &middot; <span class="status curseStatus hoverTip" title="Curse: ${BATTLE.opponent.curseFromPlayer} damage if the opponent fails to attack.">${ICON.curse} cursed</span>` : ''}</div>
-        <div class="note" style="margin-top:2px"><span class="hoverTip" title="Win reward: ${Math.round(22 + opp.hp/7)} coins, ${2 + BATTLE.row} gems, ${3 + BATTLE.row} fuel, ${Math.round(5 + BATTLE.row*3)} Career Points. More for a Perfect Win."><b>Reward</b> ${ICON.coin}${Math.round(22 + opp.hp/7)} ${ICON.gem}${2 + BATTLE.row} ${ICON.fuel}${3 + BATTLE.row} ${ICON.star}${Math.round(5 + BATTLE.row*3)}</span></div>
-        ${BATTLE.opponent.burns?.length ? `<span class="attackChip" data-detonate="1" style="background:var(--amber);border-color:#c97600;font-size:10px;padding:4px 8px">Detonate for ${BATTLE.opponent.burns.reduce((a,b)=>a+(b.stages[b.stageIdx]||0),0)} now</span>` : ''}
+      <div class="duelSide opp">${art(opp, 30)}
+        <div class="sideInfo">
+          <div class="rewardRow">
+            <span class="cur chip" title="Coins earned for winning.">${ICON.coin} ${Math.round(22 + opp.hp/7)}</span>
+            <span class="cur gem" title="Gems earned for winning.">${ICON.gem} ${2 + BATTLE.row}</span>
+            <span class="cur fuel" title="Fuel earned for winning.">${ICON.fuel} ${3 + BATTLE.row}</span>
+            <span class="cur pts" title="Career Points earned for winning. More for a Perfect Win.">${ICON.star} ${Math.round(5 + BATTLE.row*3)}</span>
+          </div>
+          <h3>${opp.name}${BATTLE.enrageNotified ? ` <span class="hoverTip" style="color:var(--red);font-size:13px" title="This opponent is past its turn limit and hitting harder.">ENRAGED</span>` : ''}</h3>
+          <div class="bar-wrap"><div class="bar-fill bar-hp" style="width:${hpPct}%"></div></div>
+          <div class="note">${opp.hpNow} / ${opp.hp}${(BATTLE.opponent.poisonStacks||[]).length ? ` &middot; <span class="status poisonStatus hoverTip" title="Poison now: ${(BATTLE.opponent.poisonStacks||[]).reduce((a,n)=>a+n,0)} damage. Next turn: ${(BATTLE.opponent.poisonStacks||[]).map(n=>Math.max(0,n-3)).reduce((a,n)=>a+n,0)} damage.">${ICON.poison} ${(BATTLE.opponent.poisonStacks||[]).reduce((a,n)=>a+n,0)} poison</span>` : ''}${BATTLE.opponent.burns?.length ? ` &middot; <span class="status burnStatus hoverTip" title="Burn now: ${BATTLE.opponent.burns.reduce((a,b)=>a+(b.stages[b.stageIdx]||0),0)} damage. Next turn: ${BATTLE.opponent.burns.reduce((a,b)=>a+(b.stages[b.stageIdx+1]||0),0)} damage.">${ICON.fire} burning</span>` : ''}${BATTLE.opponent.curseFromPlayer ? ` &middot; <span class="status curseStatus hoverTip" title="Curse: ${BATTLE.opponent.curseFromPlayer} damage if the opponent fails to attack.">${ICON.curse} cursed</span>` : ''}</div>
+          ${BATTLE.opponent.burns?.length ? `<span class="attackChip" data-detonate="1" style="background:var(--amber);border-color:#c97600;font-size:10px;padding:4px 8px">Detonate for ${BATTLE.opponent.burns.reduce((a,b)=>a+(b.stages[b.stageIdx]||0),0)} now</span>` : ''}
+        </div>
       </div>
     </div>
     <div class="duelBoard">

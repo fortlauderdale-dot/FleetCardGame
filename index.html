@@ -295,7 +295,7 @@ function art(entity, px) {
   }
   return `<span class="vart" style="width:${px}px;height:${px}px;font-size:${px}px">${fb}</span>`;
 }
-const PLAYER_ART = { name: 'Your Fleet', icon: '🚚', image: 'vehicles/work-truck.jpg' };
+const PLAYER_ART = { name: 'Your Fleet', icon: '🚚', image: 'vehicles/work-truck.png' };
 function fleetLabel() { return META.playerName ? `${META.playerName}'s Fleet` : 'Your Fleet'; }
 // Read-only box(es) showing what the opponent can attack with — mirrors the player's vslot UI.
 // Supports a future opp.attacks array (multiple named attacks); falls back to their single generic attack.
@@ -664,10 +664,10 @@ const ITEMS = {
 
 /* ========== HERO ROSTER (4 total — pick one to play as for the run) ========== */
 const HEROES = {
-  sidebyside: { id: 'sidebyside', name: 'Golf Cart',      icon: '🛺', image: 'vehicles/golf-cart.jpg', starterItems: ['fender_bender','pair_draw'] },
-  admin:      { id: 'admin',      name: 'Admin Vehicle',   icon: '🚗', image: 'vehicles/admin-vehicle.jpg', starterItems: ['fender_bender','escort_wall'] },
-  interstate: { id: 'interstate', name: 'Interstate Racer', icon: '🏁', image: 'vehicles/interstate-racer.jpg', starterItems: ['moto_escort','card_draw'] },
-  convoy:     { id: 'convoy',     name: 'Armored Convoy',  icon: '🚛', image: 'vehicles/armored-convoy.jpg', starterItems: ['triple_threat','escort_wall'] },
+  sidebyside: { id: 'sidebyside', name: 'Golf Cart',      icon: '🛺', image: 'vehicles/golf-cart.png', starterItems: ['fender_bender','pair_draw'] },
+  admin:      { id: 'admin',      name: 'Admin Vehicle',   icon: '🚗', image: 'vehicles/admin-vehicle.png', starterItems: ['fender_bender','escort_wall'] },
+  interstate: { id: 'interstate', name: 'Interstate Racer', icon: '🏁', image: 'vehicles/interstate-racer.png', starterItems: ['moto_escort','card_draw'] },
+  convoy:     { id: 'convoy',     name: 'Armored Convoy',  icon: '🚛', image: 'vehicles/armored-convoy.png', starterItems: ['triple_threat','escort_wall'] },
 };
 const STARTERS = ['sidebyside', 'admin', 'interstate', 'convoy'];
 function isStarterUnlocked(id) {
@@ -687,32 +687,32 @@ function starterLockNote(id) {
    burn signature at the top of the tier); Evil Mechanic is a recurring curse-flavored
    nuisance; Gas Leak uses the same lock/countdown mechanic bomb squad trucks used to. */
 const OPPONENT_TIERS = [
-  [ { id: 'trashfire', name: 'Trash Can Fire', icon: '🔥', image: 'hazards/trash-fire.jpg', hp: 35, minTier: 0, drawRate: 2, turnLimit: 6, attacks: [{ name: 'Ember Flare', maxCards: 1, minTier: 0 }] },
-    { id: 'pothole', name: 'Nasty Pothole', icon: '🕳️', image: 'hazards/pothole.jpg', hp: 40, minTier: 0, drawRate: 2, turnLimit: 6, attacks: [{ name: 'Axle Buster', maxCards: 2, minTier: 0 }] },
-    { id: 'looseDog', name: 'Loose Dog', icon: '🐕', image: 'hazards/loose-dog.jpg', hp: 45, minTier: 0, drawRate: 2, turnLimit: 6, attacks: [{ name: 'Snap Bite', maxCards: 1, minTier: 0 }] } ],
-  [ { id: 'jaywalker', name: 'Jaywalker', icon: '🚶', image: 'hazards/jaywalker.jpg', hp: 50, minTier: 1, drawRate: 2, turnLimit: 6, attacks: [{ name: 'Sudden Dash', maxCards: 2, minTier: 1 }, { name: 'Quick Step', maxCards: 1, minTier: 0, effect: 'draw' }] },
-    { id: 'grumpyMeter', name: 'Broken Meter', icon: '🅿️', image: 'hazards/broken-meter.jpg', hp: 55, minTier: 1, drawRate: 2, turnLimit: 6, attacks: [{ name: 'Coin Jam', maxCards: 2, minTier: 1, effect: 'stealFuel' }, { name: 'Repo Notice', maxCards: 2, minTier: 1, effect: 'curse' }] },
-    { id: 'looseWire', name: 'Downed Power Line', icon: '⚡', image: 'hazards/downed-line.jpg', hp: 60, minTier: 0, drawRate: 2, turnLimit: 6, attacks: [{ name: 'Live Wire Shock', maxCards: 2, minTier: 0, effect: 'stun' }] } ],
-  [ { id: 'angryCitizen', name: 'Angry Citizen', icon: '😠', image: 'hazards/angry-citizen.jpg', hp: 65, minTier: 1, drawRate: 3, turnLimit: 7, attacks: [{ name: 'Shouting Match', maxCards: 3, minTier: 1 }, { name: 'Harassment', maxCards: 2, minTier: 1, effect: 'curse' }] },
-    { id: 'hydrant', name: 'Burst Hydrant', icon: '💦', image: 'hazards/burst-hydrant.jpg', hp: 70, minTier: 1, drawRate: 3, turnLimit: 7, attacks: [{ name: 'Pressure Blast', maxCards: 3, minTier: 1, effect: 'burn' }] },
-    { id: 'dumpsterFire', name: 'Dumpster Fire', icon: '🔥', image: 'hazards/dumpster-fire.jpg', hp: 75, minTier: 2, drawRate: 3, turnLimit: 7,
+  [ { id: 'trashfire', name: 'Trash Can Fire', icon: '🔥', image: 'hazards/trash-fire.png', hp: 35, minTier: 0, drawRate: 2, turnLimit: 6, attacks: [{ name: 'Ember Flare', maxCards: 1, minTier: 0 }] },
+    { id: 'pothole', name: 'Nasty Pothole', icon: '🕳️', image: 'hazards/pothole.png', hp: 40, minTier: 0, drawRate: 2, turnLimit: 6, attacks: [{ name: 'Axle Buster', maxCards: 2, minTier: 0 }] },
+    { id: 'looseDog', name: 'Loose Dog', icon: '🐕', image: 'hazards/loose-dog.png', hp: 45, minTier: 0, drawRate: 2, turnLimit: 6, attacks: [{ name: 'Snap Bite', maxCards: 1, minTier: 0 }] } ],
+  [ { id: 'jaywalker', name: 'Jaywalker', icon: '🚶', image: 'hazards/jaywalker.png', hp: 50, minTier: 1, drawRate: 2, turnLimit: 6, attacks: [{ name: 'Sudden Dash', maxCards: 2, minTier: 1 }, { name: 'Quick Step', maxCards: 1, minTier: 0, effect: 'draw' }] },
+    { id: 'grumpyMeter', name: 'Broken Meter', icon: '🅿️', image: 'hazards/broken-meter.png', hp: 55, minTier: 1, drawRate: 2, turnLimit: 6, attacks: [{ name: 'Coin Jam', maxCards: 2, minTier: 1, effect: 'stealFuel' }, { name: 'Repo Notice', maxCards: 2, minTier: 1, effect: 'curse' }] },
+    { id: 'looseWire', name: 'Downed Power Line', icon: '⚡', image: 'hazards/downed-line.png', hp: 60, minTier: 0, drawRate: 2, turnLimit: 6, attacks: [{ name: 'Live Wire Shock', maxCards: 2, minTier: 0, effect: 'stun' }] } ],
+  [ { id: 'angryCitizen', name: 'Angry Citizen', icon: '😠', image: 'hazards/angry-citizen.png', hp: 65, minTier: 1, drawRate: 3, turnLimit: 7, attacks: [{ name: 'Shouting Match', maxCards: 3, minTier: 1 }, { name: 'Harassment', maxCards: 2, minTier: 1, effect: 'curse' }] },
+    { id: 'hydrant', name: 'Burst Hydrant', icon: '💦', image: 'hazards/burst-hydrant.png', hp: 70, minTier: 1, drawRate: 3, turnLimit: 7, attacks: [{ name: 'Pressure Blast', maxCards: 3, minTier: 1, effect: 'burn' }] },
+    { id: 'dumpsterFire', name: 'Dumpster Fire', icon: '🔥', image: 'hazards/dumpster-fire.png', hp: 75, minTier: 2, drawRate: 3, turnLimit: 7,
       special: { type: 'redSteal', redThreshold: 3, fuelSteal: 1, extraDraw: 1 }, attacks: [{ name: 'Rancid Blaze', maxCards: 3, minTier: 2, effect: 'burn' }] } ],
-  [ { id: 'evilMechanic1', name: 'Evil Mechanic', icon: '🔧', image: 'hazards/evil-mechanic.jpg', hp: 80, minTier: 2, drawRate: 3, turnLimit: 7,
+  [ { id: 'evilMechanic1', name: 'Evil Mechanic', icon: '🔧', image: 'hazards/evil-mechanic.png', hp: 80, minTier: 2, drawRate: 3, turnLimit: 7,
       curse: { count: 1, amount: 8, chance: 0.5 }, attacks: [{ name: 'Sabotage', maxCards: 3, minTier: 2, effect: 'curse' }] },
-    { id: 'streetFire', name: 'Street Fire', icon: '🔥', image: 'hazards/street-fire.jpg', hp: 85, minTier: 3, drawRate: 3, turnLimit: 7,
+    { id: 'streetFire', name: 'Street Fire', icon: '🔥', image: 'hazards/street-fire.png', hp: 85, minTier: 3, drawRate: 3, turnLimit: 7,
       special: { type: 'lifesteal', pct: 0.5 }, attacks: [{ name: 'Scorching Wave', maxCards: 3, minTier: 3, effect: 'burn' }] },
-    { id: 'sinkhole', name: 'Sinkhole', icon: '🕳️', image: 'hazards/sinkhole.jpg', hp: 90, minTier: 1, drawRate: 3, turnLimit: 7, attacks: [{ name: 'Ground Collapse', maxCards: 3, minTier: 1 }, { name: 'Aftershock', maxCards: 2, minTier: 1, effect: 'poison' }, { name: 'All-Points Bulletin', maxCards: 4, minTier: 2 }] },
-    { id: 'gasLeak1', name: 'Gas Leak', icon: '⛽', image: 'hazards/gas-leak.jpg', hp: 95, locked: true, lockThreshold: 45, lockAttack: 39, drawRate: 3, turnLimit: 8, releaseAttackName: 'Ignition Blast' } ],
-  [ { id: 'flashFlood', name: 'Flash Flood', icon: '🌊', image: 'hazards/flash-flood.jpg', hp: 100, minTier: 3, drawRate: 4, turnLimit: 8, attacks: [{ name: 'Flash Deluge', maxCards: 4, minTier: 3 }, { name: 'Toxic Spray', maxCards: 3, minTier: 2, effect: 'poison' }] },
-    { id: 'riot', name: 'Angry Mob', icon: '📢', image: 'hazards/angry-mob.jpg', hp: 105, minTier: 2, drawRate: 4, turnLimit: 8, attacks: [{ name: 'Crowd Surge', maxCards: 4, minTier: 2 }, { name: 'Crowd Pressure', maxCards: 3, minTier: 2, effect: 'curse' }] },
-    { id: 'blackout', name: 'Blackout', icon: '🌑', image: 'hazards/blackout.jpg', hp: 110, minTier: 1, drawRate: 3, turnLimit: 8, attacks: [{ name: 'Total Shutdown', maxCards: 3, minTier: 1, effect: 'stealFuel' }, { name: 'Blackout', maxCards: 2, minTier: 2 }] } ],
-  [ { id: 'stormSurge', name: 'Storm Surge', icon: '🌊', image: 'hazards/storm-surge.jpg', hp: 115, minTier: 3, drawRate: 4, turnLimit: 8, attacks: [{ name: 'Tidal Slam', maxCards: 4, minTier: 3, effect: 'burn' }, { name: 'Undertow', maxCards: 3, minTier: 2, effect: 'poison' }] },
-    { id: 'buildingFire', name: 'Building Fire', icon: '🔥', image: 'hazards/building-fire.jpg', hp: 120, minTier: 4, drawRate: 4, turnLimit: 8, attacks: [{ name: 'Inferno Blast', maxCards: 4, minTier: 4, effect: 'burn' }] },
-    { id: 'evilMechanic2', name: 'Evil Mechanic (Repeat Offender)', icon: '🔧', image: 'hazards/evil-mechanic-2.jpg', hp: 125, minTier: 2, drawRate: 4, turnLimit: 8,
+    { id: 'sinkhole', name: 'Sinkhole', icon: '🕳️', image: 'hazards/sinkhole.png', hp: 90, minTier: 1, drawRate: 3, turnLimit: 7, attacks: [{ name: 'Ground Collapse', maxCards: 3, minTier: 1 }, { name: 'Aftershock', maxCards: 2, minTier: 1, effect: 'poison' }, { name: 'All-Points Bulletin', maxCards: 4, minTier: 2 }] },
+    { id: 'gasLeak1', name: 'Gas Leak', icon: '⛽', image: 'hazards/gas-leak.png', hp: 95, locked: true, lockThreshold: 45, lockAttack: 39, drawRate: 3, turnLimit: 8, releaseAttackName: 'Ignition Blast' } ],
+  [ { id: 'flashFlood', name: 'Flash Flood', icon: '🌊', image: 'hazards/flash-flood.png', hp: 100, minTier: 3, drawRate: 4, turnLimit: 8, attacks: [{ name: 'Flash Deluge', maxCards: 4, minTier: 3 }, { name: 'Toxic Spray', maxCards: 3, minTier: 2, effect: 'poison' }] },
+    { id: 'riot', name: 'Angry Mob', icon: '📢', image: 'hazards/angry-mob.png', hp: 105, minTier: 2, drawRate: 4, turnLimit: 8, attacks: [{ name: 'Crowd Surge', maxCards: 4, minTier: 2 }, { name: 'Crowd Pressure', maxCards: 3, minTier: 2, effect: 'curse' }] },
+    { id: 'blackout', name: 'Blackout', icon: '🌑', image: 'hazards/blackout.png', hp: 110, minTier: 1, drawRate: 3, turnLimit: 8, attacks: [{ name: 'Total Shutdown', maxCards: 3, minTier: 1, effect: 'stealFuel' }, { name: 'Blackout', maxCards: 2, minTier: 2 }] } ],
+  [ { id: 'stormSurge', name: 'Storm Surge', icon: '🌊', image: 'hazards/storm-surge.png', hp: 115, minTier: 3, drawRate: 4, turnLimit: 8, attacks: [{ name: 'Tidal Slam', maxCards: 4, minTier: 3, effect: 'burn' }, { name: 'Undertow', maxCards: 3, minTier: 2, effect: 'poison' }] },
+    { id: 'buildingFire', name: 'Building Fire', icon: '🔥', image: 'hazards/building-fire.png', hp: 120, minTier: 4, drawRate: 4, turnLimit: 8, attacks: [{ name: 'Inferno Blast', maxCards: 4, minTier: 4, effect: 'burn' }] },
+    { id: 'evilMechanic2', name: 'Evil Mechanic (Repeat Offender)', icon: '🔧', image: 'hazards/evil-mechanic-2.png', hp: 125, minTier: 2, drawRate: 4, turnLimit: 8,
       curse: { count: 2, amount: 10, chance: 0.55 }, attacks: [{ name: 'Double Sabotage', maxCards: 4, minTier: 2, effect: 'curse' }] },
-    { id: 'gasLeak2', name: 'Major Gas Leak', icon: '⛽', image: 'hazards/gas-leak-2.jpg', hp: 130, locked: true, lockThreshold: 70, lockAttack: 60, drawRate: 4, turnLimit: 9, releaseAttackName: 'Massive Ignition' } ],
+    { id: 'gasLeak2', name: 'Major Gas Leak', icon: '⛽', image: 'hazards/gas-leak-2.png', hp: 130, locked: true, lockThreshold: 70, lockAttack: 60, drawRate: 4, turnLimit: 9, releaseAttackName: 'Massive Ignition' } ],
 ];
-const BOSS = { id: 'wildfire', name: 'Wildfire', icon: '🔥', image: 'hazards/wildfire.jpg', hp: 145, minTier: 3, drawRate: 4, turnLimit: 10, boss: true,
+const BOSS = { id: 'wildfire', name: 'Wildfire', icon: '🔥', image: 'hazards/wildfire.png', hp: 145, minTier: 3, drawRate: 4, turnLimit: 10, boss: true,
   curse: { count: 2, amount: 10, chance: 0.5 }, attacks: [{ name: 'Firestorm Surge', maxCards: 5, minTier: 3, effect: 'burn' }, { name: 'Ashfall', maxCards: 4, minTier: 2, effect: 'poison' }],
   attackInfo: 'Attack: uses its best poker hand for about 10-35 damage, depending on the hand. Can also curse your equipped Items — an Item that doesn\'t fire before turn end takes its curse damage.' };
 function revealFraction(row) { return [1.0, 0.8, 0.6, 0.4, 0.25, 0.1, 0][Math.min(row, 6)]; }
@@ -876,8 +876,8 @@ function selectNode(row, col) {
 
 let RETURN_TO_CASTLE_MENU = false;
 
-const CASTLE_FIRST = { id:'castleGuard', name:'Castle Guard', icon:'🛡️', image: 'vehicles/castle-guard.jpg', hp:75, minTier:2, drawRate: 3, turnLimit:7 };
-const CASTLE_SECOND = { id:'castleChampion', name:'Castle Champion', icon:'🏰', image: 'vehicles/castle-champion.jpg', hp:105, minTier:3, drawRate: 4, turnLimit:8 };
+const CASTLE_FIRST = { id:'castleGuard', name:'Castle Guard', icon:'🛡️', image: 'vehicles/castle-guard.png', hp:75, minTier:2, drawRate: 3, turnLimit:7 };
+const CASTLE_SECOND = { id:'castleChampion', name:'Castle Champion', icon:'🏰', image: 'vehicles/castle-champion.png', hp:105, minTier:3, drawRate: 4, turnLimit:8 };
 
 function castleMenuScreen(message='') {
   return `${noticeHTML()}
@@ -1240,7 +1240,9 @@ function executePlayerAttack(itemId, index) {
       BATTLE.opponent.curseFromPlayer = (BATTLE.opponent.curseFromPlayer || 0) + amount;
       battleLog(`${item.name} [${cardsStr}] — ${condResult.label}! Cursed them for ${amount} (${breakdown}) — it lands if they fail to attack next turn.`);
     } else {
+      const atkBefore = BATTLE.opponent.hpNow;
       BATTLE.opponent.hpNow = Math.max(0, BATTLE.opponent.hpNow - amount);
+      if (amount === atkBefore && atkBefore > 0) BATTLE.exactKill = true;
       battleLog(`${item.name} [${cardsStr}] — ${condResult.label}! ${amount} damage (${breakdown}).`);
     }
   }

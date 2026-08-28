@@ -1047,6 +1047,17 @@ function drawOpponentCards() {
 }
 function battleLog(msg) { BATTLE.logLines.push(msg); if (BATTLE.logLines.length > 60) BATTLE.logLines.shift(); }
 
+// Every opponent already carries a hand-tuned turnLimit (6-10, scaling with difficulty) that
+// was never actually wired to anything — battles could stall out indefinitely behind armor or
+// poison with zero consequence. This makes that data do something: past their turnLimit, an
+// opponent "enrages," hitting +12% harder for each turn over, capped at +100%. Rewards playing
+// to close a fight out instead of turtling forever.
+function enrageMultiplier(opp, turn) {
+  if (!opp || !opp.turnLimit) return 1;
+  const over = Math.max(0, turn - opp.turnLimit);
+  return 1 + Math.min(1.0, over * 0.12);
+}
+
 // Curse: an opponent can curse 1, 2, 3, or a random number of cards currently in the player's hand.
 // If the player hasn't played a cursed card by the end of the turn it was checked, it deals its damage and clears.
 function tryApplyCurse() {
@@ -1385,8 +1396,12 @@ function endTurn() {
     battleLog(`${BATTLE.opponent.name} is stunned and doesn't counter-attack.`);
     BATTLE.opponentStunned = false;
   } else if (BATTLE.opponent.locked) {
+    if (BATTLE.opponent.turnLimit && BATTLE.turn === BATTLE.opponent.turnLimit + 1 && !BATTLE.enrageNotified) {
+      BATTLE.enrageNotified = true;
+      battleLog(`${BATTLE.opponent.name} is enraged from the drawn-out fight — its attacks hit harder from here on.`);
+    }
     if (BATTLE.opponent.lockProgress >= BATTLE.opponent.lockThreshold) {
-      let oppDmg = BATTLE.opponent.lockAttack;
+      let oppDmg = Math.round(BATTLE.opponent.lockAttack * enrageMultiplier(BATTLE.opponent, BATTLE.turn));
       if (BATTLE.playerArmor > 0) {
         const blocked = Math.min(BATTLE.playerArmor, oppDmg);
         BATTLE.playerArmor -= blocked; oppDmg -= blocked;
@@ -1405,6 +1420,10 @@ function endTurn() {
     const maxCards = opponentMaxCards(BATTLE.opponent);
     let anyAttack = false;
     let attackDef = null;
+    if (BATTLE.opponent.turnLimit && BATTLE.turn === BATTLE.opponent.turnLimit + 1 && !BATTLE.enrageNotified) {
+      BATTLE.enrageNotified = true;
+      battleLog(`${BATTLE.opponent.name} is enraged from the drawn-out fight — its attacks hit harder from here on.`);
+    }
     for (let swing = 0; swing < attackTimes; swing++) {
       const choices=(BATTLE.opponent.attacks&&BATTLE.opponent.attacks.length?BATTLE.opponent.attacks:[{}]);
       const viable=choices.map(a=>({a,best:bestHandFromPool(BATTLE.oppPool,a.maxCards??maxCards)})).filter(x=>x.best.tier >= (x.a.minTier??BATTLE.opponent.minTier));
@@ -1412,7 +1431,7 @@ function endTurn() {
       viable.sort((x,y)=>(y.best.tier-x.best.tier)||((y.a.minTier??0)-(x.a.minTier??0)));
       const pick=viable[0]; attackDef=pick.a; const best=pick.best;
       anyAttack = true;
-      let oppDmg = damageFor(best.cards, best.mult);
+      let oppDmg = Math.round(damageFor(best.cards, best.mult) * enrageMultiplier(BATTLE.opponent, BATTLE.turn));
       if (BATTLE.playerArmor > 0) {
         const blocked = Math.min(BATTLE.playerArmor, oppDmg);
         BATTLE.playerArmor -= blocked; oppDmg -= blocked;
@@ -1616,7 +1635,7 @@ function mapScreen() {
     if(!showReal) tip='Move closer to scout this stop.';
     else if(node.type==='battle'){
       const o=node.opponent;
-      tip=`${o.name}<br>HP: ${o.hp}<br>Needs ${TIERS[o.minTier]}+<br>Draws ${o.drawRate}/turn${o.attackInfo?`<br>${o.attackInfo}`:''}${o.boss?'<br><b>World Boss</b>':''}`;
+      tip=`${o.name}<br>HP: ${o.hp}<br>Needs ${TIERS[o.minTier]}+<br>Draws ${o.drawRate}/turn${o.turnLimit?`<br>Enrages after turn ${o.turnLimit}`:''}${o.attackInfo?`<br>${o.attackInfo}`:''}${o.boss?'<br><b>World Boss</b>':''}`;
     } else if(node.type==='shop') tip='Dealership — buy and sell Items.';
     else if(node.type==='rest') tip='Restore 30 health.';
     else if(node.type==='blacksmith') tip='Spend coins to permanently boost a card, rank, or suit for this run.';
@@ -1786,7 +1805,7 @@ function battleScreen() {
         <div class="note">${RUN.health} / ${RUN.maxHealth}${BATTLE.playerArmor ? ` &middot; <span class="vart" style="width:12px;height:12px;font-size:12px">${ICON.shield}</span> ${BATTLE.playerArmor} armor` : ''}</div>
       </div>
       <div class="vsMark">VS</div>
-      <div class="duelSide opp">${art(opp, 30)}<h3>${opp.name}</h3>
+      <div class="duelSide opp">${art(opp, 30)}<h3>${opp.name}${BATTLE.enrageNotified ? ` <span class="hoverTip" style="color:var(--red);font-size:13px" title="This opponent is past its turn limit and hitting harder.">ENRAGED</span>` : ''}</h3>
         <div class="bar-wrap"><div class="bar-fill bar-hp" style="width:${hpPct}%"></div></div>
         <div class="note">${opp.hpNow} / ${opp.hp}${(BATTLE.opponent.poisonStacks||[]).length ? ` &middot; <span class="status poisonStatus hoverTip" title="Poison now: ${(BATTLE.opponent.poisonStacks||[]).reduce((a,n)=>a+n,0)} damage. Next turn: ${(BATTLE.opponent.poisonStacks||[]).map(n=>Math.max(0,n-3)).reduce((a,n)=>a+n,0)} damage.">${ICON.poison} ${(BATTLE.opponent.poisonStacks||[]).reduce((a,n)=>a+n,0)} poison</span>` : ''}${BATTLE.opponent.burns?.length ? ` &middot; <span class="status burnStatus hoverTip" title="Burn now: ${BATTLE.opponent.burns.reduce((a,b)=>a+(b.stages[b.stageIdx]||0),0)} damage. Next turn: ${BATTLE.opponent.burns.reduce((a,b)=>a+(b.stages[b.stageIdx+1]||0),0)} damage.">${ICON.fire} burning</span>` : ''}${BATTLE.opponent.curseFromPlayer ? ` &middot; <span class="status curseStatus hoverTip" title="Curse: ${BATTLE.opponent.curseFromPlayer} damage if the opponent fails to attack.">${ICON.curse} cursed</span>` : ''}</div>
         ${BATTLE.opponent.burns?.length ? `<span class="attackChip" data-detonate="1" style="background:var(--amber);border-color:#c97600;font-size:10px;padding:4px 8px">Detonate for ${BATTLE.opponent.burns.reduce((a,b)=>a+(b.stages[b.stageIdx]||0),0)} now</span>` : ''}
@@ -1903,8 +1922,32 @@ function nodeResultScreen(won, rewards) {
   `;
 }
 
+let SHOP_FILTER = 'all';
+function shopItemCategory(it) {
+  if (it.kind === 'defense') return 'defense';
+  if (it.kind === 'poison') return 'poison';
+  if (it.kind === 'burn') return 'burn';
+  if (it.kind === 'curse') return 'curse';
+  if ((it.drawAmount || it.drawUsesCardCount) && (it.baseMult ?? 1) === 0) return 'draw';
+  return 'attack';
+}
+const SHOP_CATEGORIES = [
+  { id: 'all', label: 'All' },
+  { id: 'attack', label: 'Attack' },
+  { id: 'defense', label: 'Defense' },
+  { id: 'poison', label: 'Poison' },
+  { id: 'burn', label: 'Burn' },
+  { id: 'curse', label: 'Curse' },
+  { id: 'draw', label: 'Draw' },
+];
 function shopScreen(fromCastle=false) {
-  const options = Object.values(ITEMS).filter(it => it.kind !== 'storage' && it.cost > 0);
+  const allOptions = Object.values(ITEMS).filter(it => it.kind !== 'storage' && it.cost > 0);
+  const options = SHOP_FILTER === 'all' ? allOptions : allOptions.filter(it => shopItemCategory(it) === SHOP_FILTER);
+  const filterButtonsHTML = SHOP_CATEGORIES.map(cat => {
+    const count = cat.id === 'all' ? allOptions.length : allOptions.filter(it => shopItemCategory(it) === cat.id).length;
+    if (cat.id !== 'all' && count === 0) return '';
+    return `<button class="wo-btn ${SHOP_FILTER === cat.id ? 'amber' : 'gray'}" data-shopfilter="${cat.id}" style="padding:5px 10px;font-size:11px">${cat.label} (${count})</button>`;
+  }).join('');
   const itemRows = options.map(it => `<div class="shopcard">
     <div class="hdr"><span>${it.name}</span><span class="price">${it.cost} coins</span></div>
     <div class="itemReqLine">${itemRequirementText(it)}</div>
@@ -1923,8 +1966,9 @@ function shopScreen(fromCastle=false) {
       <div class="wo-stripe"></div><div class="wo-body">
         <div style="position:sticky;top:0;z-index:10;background:var(--white);padding-bottom:10px"><button class="wo-btn gray" id="leaveShopBtn" style="width:100%">${fromCastle ? "Back to Compound" : "Back to Road"}</button></div>
         <div class="wo-eyebrow">Dealership</div><h1>Vehicle <em>Department</em></h1>${currencyBar()}
-        <div class="hdr" style="margin-top:10px"><span>Available Items (${options.length})</span><span>Items: ${RUN.hero.items.length}/${RUN.itemCap}</span></div>
-        <div style="margin:6px 0 12px">${itemRows}</div>
+        <div class="hdr" style="margin-top:10px"><span>Available Items (${options.length}${SHOP_FILTER!=='all'?` of ${allOptions.length}`:''})</span><span>Items: ${RUN.hero.items.length}/${RUN.itemCap}</span></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 10px">${filterButtonsHTML}</div>
+        <div style="margin:6px 0 12px">${itemRows || '<div class="note">No items in this category.</div>'}</div>
         ${ownedRows ? `<div class="hdr" style="margin-top:14px"><span>Your Items</span><span>Sell to make room</span></div>${ownedRows}` : ''}
       </div>
     </div>`;
@@ -2360,6 +2404,10 @@ function render(html) {
     RUN.chips -= cost;
     RUN.hero.items.push(el.dataset.buy);
     saveRun();
+    render(shopScreen());
+  });
+  app.querySelectorAll('[data-shopfilter]').forEach(el => el.onclick = () => {
+    SHOP_FILTER = el.dataset.shopfilter;
     render(shopScreen());
   });
 

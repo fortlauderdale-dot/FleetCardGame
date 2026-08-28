@@ -313,23 +313,74 @@ function opponentAttackBoxHTML(opp) {
     </div>`;
   }
 
-  const attacks = (opp.attacks && opp.attacks.length ? opp.attacks : [{}]).map(a => ({
-    name: a.name || opp.name,
-    minTier: a.minTier ?? opp.minTier,
-    straightLen: a.straightLen ?? opp.straightLen,
-    maxCards: a.maxCards ?? opponentMaxCards(opp),
-    effect: a.effect || 'damage'
-  }));
+  const rawAttacks = (opp.attacks && opp.attacks.length ? opp.attacks : [{}]);
   const swings = opp.usesPerTurn ?? OPPONENT_USES_PER_TURN_DEFAULT;
+  const EFFECT_TIP = {
+    burn: 'Burn deals damage over the next few turns after it lands, weaker each turn.',
+    poison: 'Poison deals damage at the end of a turn, then weakens after it ticks.',
+    curse: 'Curse locks onto one of your equipped Items — fire that Item before your turn ends or take the curse damage instead.',
+    stun: 'Stun cancels your next counter-attack.',
+    heal: 'Heal restores some of this opponent\'s own HP.',
+    stealFuel: 'Steals fuel you\'d otherwise use to travel the map.',
+    draw: 'Draws this opponent an extra card to attack with next.',
+  };
+  const kindClass = e => e === 'burn' ? 'kind-burn' : e === 'poison' ? 'kind-poison' : e === 'curse' ? 'kind-curse' : '';
 
-  return attacks.map(a => {
-    const cap = a.maxCards ?? 5;
-    const reqText = a.straightLen ? `Any ${a.straightLen} cards in a row` : (cap === 1 ? 'Any 1 card' : `Up to ${cap} cards, ${TIERS[a.minTier]} or better`);
-    const damageText = a.effect==='burn' ? 'Burns over 3 turns' : a.effect==='poison' ? 'Applies poison' : a.effect==='curse' ? 'Curses an Item' : a.effect==='heal' ? 'Restores its HP' : a.effect==='stealFuel' ? 'Can steal fuel' : a.straightLen ? 'Damage: straight value' : (cap === 1 ? 'Damage: card value' : 'Damage: hand value');
-    return `<div class="itemCard" style="cursor:default">
-      <div class="hdr" style="font-weight:600; color:var(--blue-dark)">${art(opp, 18)} ${a.name}</div>
-      <div class="itemReqLine">${reqText}</div>
-      <div class="note" style="margin-top:4px">${damageText}</div>
+  return rawAttacks.map(a => {
+    const name = a.name || opp.name;
+    const minTier = a.minTier ?? opp.minTier ?? 0;
+    const cap = a.maxCards ?? opponentMaxCards(opp);
+    const effect = a.effect || 'damage';
+
+    // Line 1 — how many cards this attack uses, nothing else. Mirrors the player's itemReqLine.
+    const capLine = a.straightLen ? `Any ${a.straightLen} cards in a row` : (cap === 1 ? '1 card' : `Up to ${cap} cards`);
+
+    // Line 2 — the specific condition/bonus, mirroring the player's itemBonusLine. Only one of
+    // these mechanics applies per attack (they're mutually exclusive by design).
+    let bonusLine = '';
+    let damageLine = '';
+    if (a.sumThreshold) {
+      bonusLine = `Needs those cards to add up to ${a.sumThreshold.min}+`;
+      damageLine = `Flat ${a.sumThreshold.damage} damage if met`;
+    } else if (a.fewCardsThreshold) {
+      bonusLine = `Only works using ${a.fewCardsThreshold.max} card${a.fewCardsThreshold.max > 1 ? 's' : ''} or fewer`;
+      damageLine = `Flat ${a.fewCardsThreshold.damage} damage`;
+    } else if (a.perFaceCard) {
+      bonusLine = `Extra damage per face card (J/Q/K) played`;
+      damageLine = `${a.perFaceCard.damage} damage × number of face cards used`;
+    } else if (a.discardHand) {
+      damageLine = `No damage — knocks ${a.discardHand.count} card${a.discardHand.count > 1 ? 's' : ''} out of your hand instead`;
+    } else if (a.suitPunish) {
+      bonusLine = `Bonus scales with ${a.suitPunish.suit} cards already in your discard pile`;
+      damageLine = `${a.suitPunish.base || 0} damage + ${a.suitPunish.perCard} per ${a.suitPunish.suit} discarded`;
+    } else if (minTier > 0) {
+      bonusLine = `Needs at least a ${TIERS[minTier]}`;
+      damageLine = a.straightLen ? `Damage: straight value × ${TIER_MULT[minTier].toFixed(1)}+ (better hands hit harder)` : `Damage: card sum × ${TIER_MULT[minTier].toFixed(1)}+ (better hands hit harder)`;
+    } else {
+      damageLine = a.straightLen ? 'Damage: straight value' : (cap === 1 ? 'Damage: card value' : 'Damage: card sum');
+    }
+    const turnNote = a.minTurn ? `<div class="note" style="margin:2px 0 0">Only usable from turn ${a.minTurn} onward</div>` : '';
+
+    // Poison/Burn/Curse get the bold, hoverable, colored-card treatment, matching the player's
+    // own items. Other effects (heal/stealFuel/draw/stun) stay as plain descriptive text.
+    const STATUS_EFFECTS = { burn: 'Burn', poison: 'Poison', curse: 'Curse' };
+    const effectLabel = STATUS_EFFECTS[effect];
+    const effectTag = effectLabel ? `<span class="effectTip ${effect}Text" data-tip="${EFFECT_TIP[effect]}"><b>${effectLabel}</b></span>` : '';
+    const effectLine = effect === 'curse' ? `${effectTag} one of your Items`
+      : effectTag ? `Applies ${effectTag}`
+      : effect === 'heal' ? 'Restores its own HP'
+      : effect === 'stealFuel' ? 'Can steal fuel'
+      : effect === 'draw' ? 'Draws itself an extra card'
+      : effect === 'stun' ? `<span class="hoverTip" title="${EFFECT_TIP.stun}"><b>Stuns</b></span> your next counter-attack`
+      : '';
+
+    return `<div class="itemCard ${kindClass(effect)}" style="cursor:default">
+      <div class="hdr" style="font-weight:600; color:var(--blue-dark)">${art(opp, 18)} ${name}</div>
+      <div class="itemReqLine">${capLine}</div>
+      ${bonusLine ? `<div class="itemBonusLine">${bonusLine}</div>` : ''}
+      <div class="note" style="margin-top:4px">${damageLine}</div>
+      ${effectLine ? `<div class="note" style="margin-top:2px">${effectLine}</div>` : ''}
+      ${turnNote}
       <div style="margin-top:auto">
         <div class="note" style="margin:2px 0 0">Attacks ${swings}x per turn</div>
       </div>
@@ -898,6 +949,16 @@ function selectNode(row, col) {
   else if (node.type === 'treasure') { const found = rollTreasure(); render(treasureScreen(found)); }
 }
 
+function reenterCurrentNode(row, col) {
+  const node = RUN.map.nodes[row][col];
+  if (node.type === 'castle') { render(castleMenuScreen()); return; }
+  if (node.type === 'shop') { RETURN_TO_CASTLE_MENU = false; RUN.shopStock = null; render(shopScreen()); return; }
+  if (node.type === 'rest') { render(garageScreen()); return; }
+  if (node.type === 'blacksmith') { RETURN_TO_CASTLE_MENU = false; BLACKSMITH_OPTIONS = pickBlacksmithOptions(); BLACKSMITH_VISIT = { primary: null, secondary: null }; render(blacksmithScreen()); return; }
+  if (node.type === 'chopshop') { RETURN_TO_CASTLE_MENU = false; render(chopShopScreen('map')); return; }
+  // Battles and Supply Caches aren't re-enterable stops — nothing to do for those here.
+  render(mapScreen());
+}
 let RETURN_TO_CASTLE_MENU = false;
 
 const CASTLE_FIRST = { id:'castleGuard', name:'Castle Guard', icon:'🛡️', image: 'vehicles/castle-guard.jpg', hp:75, minTier:2, drawRate: 3, turnLimit:7 };
@@ -1598,6 +1659,7 @@ function currencyBar() {
 }
 
 let MAP_POPUP = null; // {row, col} of the node currently shown in the map info popup
+function tierNeedText(minTier) { return minTier > 0 ? `At least a ${TIERS[minTier]}` : 'Any card'; }
 function nodePopupContent(r, c) {
   const node = RUN.map.nodes[r][c];
   const glyph = (svg) => `<span class="vart" style="width:64px;height:64px;font-size:64px">${svg}</span>`;
@@ -1608,7 +1670,7 @@ function nodePopupContent(r, c) {
       title: o.name, art: art(o, 64),
       rows: [
         ['HP', o.hp],
-        ['Requirement', o.locked ? `Locked — clears at ${o.lockThreshold}, then hits for a flat ${o.lockAttack}` : `Needs ${TIERS[o.minTier]}+ to attack`],
+        ['Requirement', o.locked ? `Locked — clears at ${o.lockThreshold}, then hits for a flat ${o.lockAttack}` : `${tierNeedText(o.minTier)} needed to attack`],
         ['Draws', `${o.drawRate}/turn`],
       ],
       extra: `${o.attackInfo ? `<div class="note">${o.attackInfo}</div>` : ''}${o.boss ? `<div class="note" style="color:var(--red);font-weight:700">World Boss</div>` : ''}`,
@@ -1625,6 +1687,9 @@ function nodePopupContent(r, c) {
 }
 function nodePopupScreen(r, c) {
   const isAvail = availableNextNodes().some(n => n.row === r && n.col === c);
+  const nodeType = RUN.map.nodes[r][c].type;
+  const isReenterable = ['shop', 'rest', 'blacksmith', 'chopshop', 'castle'].includes(nodeType);
+  const isCurrent = r === RUN.currentRow && c === RUN.currentCol && isReenterable;
   const info = nodePopupContent(r, c);
   const rewardsHTML = info.rewards ? `
     <div class="hdr" style="margin-top:10px"><span>Rewards for winning</span><span></span></div>
@@ -1651,7 +1716,7 @@ function nodePopupScreen(r, c) {
         ${info.extra || ''}
         ${rewardsHTML}
         <div style="display:flex;gap:8px;margin-top:14px">
-          ${isAvail ? `<button class="wo-btn amber" id="popupGoBtn" style="flex:1">${info.actionLabel}</button>` : ''}
+          ${isAvail ? `<button class="wo-btn amber" id="popupGoBtn" style="flex:1">${info.actionLabel}</button>` : isCurrent ? `<button class="wo-btn amber" id="popupReenterBtn" style="flex:1">Go Back In</button>` : ''}
           <button class="wo-btn gray" id="popupCloseBtn" style="flex:1">Close</button>
         </div>
       </div>
@@ -1696,7 +1761,7 @@ function mapScreen() {
     if(!showReal) tip='Move closer to scout this stop.';
     else if(node.type==='battle'){
       const o=node.opponent;
-      tip=`${o.name}<br>HP: ${o.hp}<br>Needs ${TIERS[o.minTier]}+<br>Draws ${o.drawRate}/turn${o.turnLimit?`<br>Enrages after turn ${o.turnLimit}`:''}${o.attackInfo?`<br>${o.attackInfo}`:''}${o.boss?'<br><b>World Boss</b>':''}`;
+      tip=`${o.name}<br>HP: ${o.hp}<br>${tierNeedText(o.minTier)} needed to attack<br>Draws ${o.drawRate}/turn${o.turnLimit?`<br>Enrages after turn ${o.turnLimit}`:''}${o.attackInfo?`<br>${o.attackInfo}`:''}${o.boss?'<br><b>World Boss</b>':''}`;
     } else if(node.type==='shop') tip='Dealership — buy and sell Items.';
     else if(node.type==='rest') tip='Restore 30 health.';
     else if(node.type==='blacksmith') tip='Spend coins to permanently boost a card, rank, or suit for this run.';
@@ -1715,7 +1780,7 @@ function mapScreen() {
   <div class="panel">
     <div class="hdr"><span>Health: ${RUN.health}/${RUN.maxHealth}</span><span>Items: ${RUN.hero.items.length}/${RUN.itemCap}</span></div>
     ${currencyBar()}
-    <button class="wo-btn amber" id="openRunUpgradeFromMapBtn" style="width:100%;margin:8px 0">Field Upgrades (this run)</button>
+    <button class="wo-btn amber" id="openRunUpgradeFromMapBtn" style="width:100%;margin:8px 0">Run Upgrade</button>
     <div class="hdr" style="margin-top:8px"><span>World 1 - City Fleet (21 spaces)</span><span>Choose your next stop.</span></div>
     <div class="mapwrap" style="width:100%;height:${totalH}px;overflow-x:auto;overflow-y:hidden">
       <div style="position:relative;width:${totalW}px;height:${totalH}px">
@@ -1759,7 +1824,7 @@ function runUpgradeScreen() {
   }).join('');
   return `${noticeHTML()}<div class="wo"><div class="wo-stripe"></div><div class="wo-body">
     <button class="wo-btn gray" id="leaveRunUpgradeBtn" style="width:100%;margin-bottom:10px">Back</button>
-    <div class="wo-eyebrow">Field Upgrades</div><h1>Run <em>Upgrades</em></h1>${currencyBar()}
+    <div class="wo-eyebrow">Run Upgrade</div><h1>Run <em>Upgrades</em></h1>${currencyBar()}
     <div class="note" style="margin:8px 0 12px">Paid for with coins. These bonuses last only for this run and reset when the run ends.</div>
     <div style="margin:6px 0">${rows}</div>
   </div></div>`;
@@ -1929,7 +1994,7 @@ function battleScreen() {
         <button class="wo-btn amber resourceAction gemAction" id="gemDrawBtn" ${RUN.gems < 1 ? 'disabled' : ''}><span class="resourceCount">${ICON.gem} ${RUN.gems}/${RUN.maxGems} GEMS</span><span>Draw ${1 + META.levels.gem + (RUN.runUpgrades?.gemDraw||0)} Cards</span><span class="note" style="margin:0">Cost: <b>${GEM_DRAW_COST}</b> gem</span></button>
         <button class="wo-btn amber resourceAction fuelAction" id="fuelHealBtn" title="Fuel also gets you across the map — spending it here means less for travel." ${RUN.fuel < FUEL_HESTORE_COST || RUN.health >= RUN.maxHealth ? 'disabled' : ''}><span class="resourceCount">${ICON.fuel} ${RUN.fuel}/${RUN.maxFuel} FUEL</span><span>Use ${FUEL_HESTORE_COST} Fuel → +${FUEL_HEAL_AMOUNT} Health</span></button>
       </div>
-      <button class="wo-btn" id="openRunUpgradeFromBattleBtn" style="width:100%;margin-top:8px">Field Upgrades (this run)</button>
+      <button class="wo-btn" id="openRunUpgradeFromBattleBtn" style="width:100%;margin-top:8px">Run Upgrade</button>
     </div>
     <div class="panel">
       <div class="log">${[...BATTLE.logLines].reverse().map(l => `<div>${l}</div>`).join('')}</div>
@@ -2304,6 +2369,7 @@ function render(html) {
   app.querySelectorAll('[data-nodeinfo]').forEach(el => el.onclick = () => { const [r, c] = el.dataset.nodeinfo.split(':').map(Number); MAP_POPUP = { row: r, col: c }; render(mapScreen()); });
   const popupCloseBtn = document.getElementById('popupCloseBtn'); if (popupCloseBtn) popupCloseBtn.onclick = () => { MAP_POPUP = null; render(mapScreen()); };
   const popupGoBtn = document.getElementById('popupGoBtn'); if (popupGoBtn) popupGoBtn.onclick = () => { const p = MAP_POPUP; MAP_POPUP = null; if (p) selectNode(p.row, p.col); };
+  const popupReenterBtn = document.getElementById('popupReenterBtn'); if (popupReenterBtn) popupReenterBtn.onclick = () => { const p = MAP_POPUP; MAP_POPUP = null; if (p) reenterCurrentNode(p.row, p.col); };
 
   const continueBtn = document.getElementById('continueBtn');
   if (continueBtn) continueBtn.onclick = () => {

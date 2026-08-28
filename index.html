@@ -157,6 +157,9 @@
   .hereTag::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:4px solid transparent;border-top-color:var(--blue-dark)}
 
   .shopcard{border:1px solid var(--blue-light);background:var(--bg);border-radius:6px;padding:10px;margin-bottom:8px}
+  .shopGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .shopGrid .shopcard{margin-bottom:0}
+  @media (max-width:600px){.shopGrid{grid-template-columns:1fr}}
   .pickcard{border:2px solid var(--blue-light);background:var(--bg);border-radius:10px;padding:16px;width:160px;text-align:center}
   .pickcard .picon{font-size:46px}
   .pickcard .pname{font-weight:700;font-size:16px;color:var(--blue-dark);margin-top:6px}
@@ -2150,18 +2153,26 @@ function shopScreen(fromCastle=false) {
     if (cat.id !== 'all' && count === 0) return '';
     return `<button class="wo-btn ${SHOP_FILTER === cat.id ? 'amber' : 'gray'}" data-shopfilter="${cat.id}" style="padding:5px 10px;font-size:11px">${cat.label} (${count})</button>`;
   }).join('');
-  const itemRows = options.map(it => `<div class="shopcard">
+  const itemRows = options.map(it => `<div class="shopcard" style="display:flex;flex-direction:column;height:100%;box-sizing:border-box">
     <div class="hdr"><span>${it.name}</span><span class="price">${it.cost} coins</span></div>
     <div class="itemReqLine">${itemRequirementText(it)}</div>
-    <div class="note" style="margin:0 0 6px">Damage: ${it.baseMult != null ? ` × ${it.baseMult}` : 'special effect'}</div>
-    <div class="note" style="margin:0 0 6px">${it.note || ''}</div>
-    <button class="wo-btn amber" data-buy="${it.id}" data-cost="${it.cost}" ${RUN.chips < it.cost || RUN.hero.items.length >= RUN.itemCap ? 'disabled' : ''} style="padding:8px 12px;font-size:13px">${RUN.hero.items.length >= RUN.itemCap ? 'No open item slot' : 'Purchase'}</button>
+    <div class="note" style="margin:0 0 4px">Damage: ${it.baseMult != null ? ` × ${it.baseMult}` : 'special effect'}</div>
+    <div class="note" style="margin:0 0 4px;flex:1">${it.note || ''}</div>
+    <div style="display:flex;justify-content:flex-end">
+      <button class="wo-btn amber" data-buy="${it.id}" data-cost="${it.cost}" ${RUN.chips < it.cost || RUN.hero.items.length >= RUN.itemCap ? 'disabled' : ''} style="padding:8px 12px;font-size:13px">${RUN.hero.items.length >= RUN.itemCap ? 'No open item slot' : 'Purchase'}</button>
+    </div>
   </div>`).join('');
   const ownedRows = RUN.hero.items.map((id,i)=>{
     const it=ITEMS[id]; if(!it) return '';
     const modCost=(itemLevel(id)>0?itemTuneCost(it,Math.max(0,itemLevel(id)-1)):0)+(itemUsesLevel(id)>0?itemUsesTuneCost(itemUsesLevel(id)-1):0)+(itemMaxCardsLevel(id)>0?itemMaxCardsTuneCost(itemMaxCardsLevel(id)-1):0)+(RUN.itemKindOverride[`${id}_${i}`] || RUN.itemKindOverride[id]?itemKindConvertCost():0);
     const sell=Math.floor((it.cost+modCost)/2);
-    return `<div class="shopcard"><div class="hdr"><span>${it.name}</span><span class="price">Sell: ${sell} coins</span></div><div class="note">Owned Item ${i+1}. Includes 50% of its purchase price and paid run modifications.</div><button class="wo-btn gray" data-sell="${i}" style="padding:8px 12px;font-size:13px">Sell Item</button></div>`;
+    return `<div class="shopcard" style="display:flex;flex-direction:column;height:100%;box-sizing:border-box">
+      <div class="hdr"><span>${it.name}</span><span class="price">Sell: ${sell} coins</span></div>
+      <div class="note" style="flex:1">Owned Item ${i+1}. Includes 50% of its purchase price and paid run modifications.</div>
+      <div style="display:flex;justify-content:flex-end">
+        <button class="wo-btn gray" data-sell="${i}" style="padding:8px 12px;font-size:13px">Sell Item</button>
+      </div>
+    </div>`;
   }).join('');
   return `${noticeHTML()}
     <div class="wo">
@@ -2173,8 +2184,8 @@ function shopScreen(fromCastle=false) {
         <div class="wo-eyebrow">Dealership</div><h1>Vehicle <em>Department</em></h1>${currencyBar()}
         <div class="hdr" style="margin-top:10px"><span>Available Items (${options.length}${SHOP_FILTER!=='all'?` of ${allOptions.length}`:''})</span><span>Items: ${RUN.hero.items.length}/${RUN.itemCap}</span></div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 10px">${filterButtonsHTML}</div>
-        <div style="margin:6px 0 12px">${itemRows || '<div class="note">No items in this category.</div>'}</div>
-        ${ownedRows ? `<div class="hdr" style="margin-top:14px"><span>Your Items</span><span>Sell to make room</span></div>${ownedRows}` : ''}
+        <div class="shopGrid" style="margin:6px 0 12px">${itemRows || '<div class="note">No items in this category.</div>'}</div>
+        ${ownedRows ? `<div class="hdr" style="margin-top:14px"><span>Your Items</span><span>Sell to make room</span></div><div class="shopGrid">${ownedRows}</div>` : ''}
       </div>
     </div>`;
 }

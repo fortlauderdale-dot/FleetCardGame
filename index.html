@@ -162,7 +162,7 @@
   @media (max-width:600px){.shopGrid{grid-template-columns:1fr}}
   .pickcard{border:2px solid var(--blue-light);background:var(--bg);border-radius:10px;padding:16px;width:160px;text-align:center}
   .pickcard .picon{font-size:46px;display:flex;align-items:center;justify-content:center}
-  .pickcard .pname{font-weight:700;font-size:16px;color:var(--blue-dark);margin-top:6px}
+  .pname{font-weight:700;font-size:17px;letter-spacing:.01em;color:var(--blue-dark)}
   .pickcard .ptag{font-family:var(--mono);font-size:11px;color:var(--dim);margin:4px 0 10px}
   .pickcard.locked{opacity:.55}
   .pickcard.locked .picon{filter:grayscale(1)}
@@ -2318,7 +2318,7 @@ function starterSelectScreen() {
     if (id === 'comingsoon1' || id === 'comingsoon2') {
       return `<div style="width:160px;display:flex;flex-direction:column">
         <div style="height:20px;margin-bottom:6px"></div>
-        <div class="pickcard locked" style="display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;height:270px;padding:12px;box-sizing:border-box">
+        <div class="pickcard locked" style="display:flex;flex-direction:column;flex:1;justify-content:center;align-items:center;text-align:center;padding:12px;box-sizing:border-box">
           <div class="pname">Coming Soon</div>
           <div class="ptag">A new vehicle is on the way.</div>
         </div>
@@ -2328,7 +2328,7 @@ function starterSelectScreen() {
     const unlocked = isStarterUnlocked(id);
     return `<div style="width:160px;display:flex;flex-direction:column">
       <div class="pname" style="text-align:center;height:20px;margin-bottom:6px;overflow:hidden">${hero.name}</div>
-      <div class="pickcard ${unlocked ? '' : 'locked'}" style="display:flex;flex-direction:column;height:270px;padding:8px 12px 12px;box-sizing:border-box${unlocked ? '' : ';justify-content:center;align-items:center;text-align:center'}">
+      <div class="pickcard ${unlocked ? '' : 'locked'}" style="display:flex;flex-direction:column;flex:1;padding:8px 12px 12px;box-sizing:border-box${unlocked ? '' : ';justify-content:center;align-items:center;text-align:center'}">
         <div class="picon" style="margin:0 0 6px">${unlocked ? art(hero, 46) : `<span class="vart" style="width:46px;height:46px;font-size:46px">${ICON.lock}</span>`}</div>
         ${unlocked ? heroAttacksHTML(hero) : `<div class="ptag">${starterLockNote(id)}</div>`}
         ${unlocked ? `<div style="flex:1"></div><button class="wo-btn amber" data-pick="${hero.id}" style="padding:8px 12px;font-size:13px;width:100%;margin-top:10px">Choose</button>` : ''}

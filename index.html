@@ -37,6 +37,7 @@
   .wo-btn.amber{background:var(--amber);border-color:#c97600}
   .wo-btn.gray{background:#8a90ab;border-color:#5c6280}
   .wo-btn.purple{background:var(--purple);border-color:#5c2ea0}
+  .wo-btn.green{background:var(--green);border-color:#1f7a48}
   .wo-btn:disabled{opacity:.4;cursor:default}
   .wo-btn.half{width:48%}
 
@@ -49,8 +50,8 @@
 
   .grid{display:flex;flex-wrap:wrap;gap:10px}
   .currencies{display:flex;gap:10px;flex-wrap:wrap;font-family:var(--mono);font-size:11.5px}
-  .cur{background:var(--bg);border:1px solid var(--blue-light);border-radius:6px;padding:4px 8px}
-  .cur.gem{color:var(--purple);border-color:var(--purple)} .cur.fuel{color:var(--green);border-color:var(--green)} .cur.energy{color:var(--gold)} .cur.chip{color:var(--amber)} .cur.pts{color:var(--blue-dark)} .cur.health{color:var(--red)}
+  .cur{border:1px solid var(--blue-light);border-radius:6px;padding:4px 8px}
+  .cur.gem{color:var(--purple);border-color:var(--purple);background:#f5effd} .cur.fuel{color:var(--green);border-color:var(--green);background:#eef9ee} .cur.energy{color:#8a6d00;border-color:var(--gold);background:#fff9df} .cur.chip{color:#a35f00;border-color:var(--amber);background:#fff4e0} .cur.pts{color:var(--blue-dark);border-color:var(--blue-dark);background:var(--blue-light)} .cur.health{color:var(--red);border-color:var(--red);background:#fdecec}
   .cur{position:relative;cursor:help}.cur[title]:hover::after,.hoverTip[title]:hover::after{content:attr(title);position:absolute;z-index:50;left:50%;transform:translateX(-50%);top:calc(100% + 6px);min-width:170px;max-width:220px;background:#12163a;color:#fff;padding:7px 9px;border-radius:6px;font:12px var(--disp);white-space:normal;box-shadow:3px 3px 0 #173aa8;text-align:left}.bossPreview{border:2px solid var(--red);background:#fff7f7}.mapboss{font-size:12px;font-family:var(--mono);color:var(--dim);margin-top:8px}
   .hoverTip{position:relative;cursor:help}
   .upgradeNum{color:var(--amber)}
@@ -171,8 +172,8 @@
   .resourceRow{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;align-items:stretch}
   .resourceAction{display:flex;flex-direction:column;gap:5px;align-items:center;justify-content:center;text-align:center;min-height:68px}
   .resourceCount{font-size:12px;font-weight:800;letter-spacing:.03em}
-  .resourceAction.gemAction{border-color:#aebce9;background:#f7f9ff;color:var(--ink)}
-  .resourceAction.fuelAction{border-color:#aebce9;background:#f7f9ff;color:var(--ink)}
+  .resourceAction.gemAction{border-color:#5c2ea0}
+  .resourceAction.fuelAction{border-color:#1f7a48}
   .itemCard.kind-poison{background:#eef9ee;border-color:#8fbd8f !important}
   .itemCard.kind-burn{background:#fff0ed;border-color:#e5a39a !important}
   .itemCard.kind-curse{background:#f5effd;border-color:#b89add !important}
@@ -359,10 +360,6 @@ function opponentAttackBoxHTML(opp) {
     } else {
       damageLine = a.straightLen ? 'Damage: straight value' : (cap === 1 ? 'Damage: card value' : 'Damage: card sum');
     }
-    const turnNote = a.minTurn ? `<div class="note" style="margin:2px 0 0">Only usable from turn ${a.minTurn} onward</div>` : '';
-
-    // Poison/Burn/Curse get the bold, hoverable, colored-card treatment, matching the player's
-    // own items. Other effects (heal/stealFuel/draw/stun) stay as plain descriptive text.
     const STATUS_EFFECTS = { burn: 'Burn', poison: 'Poison', curse: 'Curse' };
     const effectLabel = STATUS_EFFECTS[effect];
     const effectTag = effectLabel ? `<span class="effectTip ${effect}Text" data-tip="${EFFECT_TIP[effect]}"><b>${effectLabel}</b></span>` : '';
@@ -378,9 +375,7 @@ function opponentAttackBoxHTML(opp) {
       <div class="hdr" style="font-weight:600; color:var(--blue-dark)">${art(opp, 18)} ${name}</div>
       <div class="itemReqLine">${capLine}</div>
       ${bonusLine ? `<div class="itemBonusLine">${bonusLine}</div>` : ''}
-      <div class="note" style="margin-top:4px">${damageLine}</div>
-      ${effectLine ? `<div class="note" style="margin-top:2px">${effectLine}</div>` : ''}
-      ${turnNote}
+      <div class="note" style="margin-top:4px">${damageLine}${effectLine ? ` · ${effectLine}` : ''}${a.minTurn ? ` · from turn ${a.minTurn}` : ''}</div>
       <div style="margin-top:auto">
         <div class="note" style="margin:2px 0 0">Attacks ${swings}x per turn</div>
       </div>
@@ -1991,8 +1986,8 @@ function battleScreen() {
     <div class="panel">
       <div class="hdr"><span>Resources</span><span></span></div>
       <div class="resourceRow">
-        <button class="wo-btn amber resourceAction gemAction" id="gemDrawBtn" ${RUN.gems < 1 ? 'disabled' : ''}><span class="resourceCount">${ICON.gem} ${RUN.gems}/${RUN.maxGems} GEMS</span><span>Draw ${1 + META.levels.gem + (RUN.runUpgrades?.gemDraw||0)} Cards</span><span class="note" style="margin:0">Cost: <b>${GEM_DRAW_COST}</b> gem</span></button>
-        <button class="wo-btn amber resourceAction fuelAction" id="fuelHealBtn" title="Fuel also gets you across the map — spending it here means less for travel." ${RUN.fuel < FUEL_HESTORE_COST || RUN.health >= RUN.maxHealth ? 'disabled' : ''}><span class="resourceCount">${ICON.fuel} ${RUN.fuel}/${RUN.maxFuel} FUEL</span><span>Use ${FUEL_HESTORE_COST} Fuel → +${FUEL_HEAL_AMOUNT} Health</span></button>
+        <button class="wo-btn purple resourceAction gemAction" id="gemDrawBtn" ${RUN.gems < 1 ? 'disabled' : ''}><span class="resourceCount">${ICON.gem} ${RUN.gems}/${RUN.maxGems} GEMS</span><span>Draw ${1 + META.levels.gem + (RUN.runUpgrades?.gemDraw||0)} Cards</span><span class="note" style="margin:0;color:#e8daf7">Cost: <b>${GEM_DRAW_COST}</b> gem</span></button>
+        <button class="wo-btn green resourceAction fuelAction" id="fuelHealBtn" title="Fuel also gets you across the map — spending it here means less for travel." ${RUN.fuel < FUEL_HESTORE_COST || RUN.health >= RUN.maxHealth ? 'disabled' : ''}><span class="resourceCount">${ICON.fuel} ${RUN.fuel}/${RUN.maxFuel} FUEL</span><span>Use ${FUEL_HESTORE_COST} Fuel → +${FUEL_HEAL_AMOUNT} Health</span></button>
       </div>
       <button class="wo-btn" id="openRunUpgradeFromBattleBtn" style="width:100%;margin-top:8px">Run Upgrade</button>
     </div>
@@ -2190,6 +2185,7 @@ function blacksmithScreen() {
   `;
 }
 function treasureScreen(found) {
+  const curClass = { coins: 'chip', fuel: 'fuel', gems: 'gem', energy: 'energy', points: 'pts' }[found.kind] || '';
   const text = found.amount > 0 ? `You found ${found.amount} ${found.label.toLowerCase()}!` : `Your ${found.label.toLowerCase()} was already full.`;
   return `
     <div class="treasure-modal">
@@ -2198,7 +2194,7 @@ function treasureScreen(found) {
         <div class="wo-body">
           <div class="wo-eyebrow">Supply Cache</div>
           <h1>Treasure <em>Found</em></h1>
-          <div class="treasure-prize"><span class="vart" style="width:28px;height:28px;font-size:28px;vertical-align:-6px">${found.icon}</span> ${text}</div>
+          <div class="treasure-prize" style="display:flex;justify-content:center"><span class="cur ${curClass}" style="font-size:22px;padding:6px 14px;display:inline-flex;align-items:center;gap:8px"><span class="vart" style="width:28px;height:28px;font-size:28px">${found.icon}</span> ${text}</span></div>
           <div class="wo-sub" style="text-align:center">The cache contained one random reward.</div>
           <div style="text-align:center"><button class="wo-btn amber" id="leaveTreasureBtn">Continue Route</button></div>
         </div>
@@ -2593,7 +2589,7 @@ function render(html) {
   const restBtn = document.getElementById('restBtn'); if (restBtn) restBtn.onclick = () => { RUN.health = Math.min(RUN.maxHealth, RUN.health + 30); saveRun(); render(mapScreen()); };
   const backToMetaBtn = document.getElementById('backToMetaBtn'); if (backToMetaBtn) backToMetaBtn.onclick = () => render(metaScreen());
   const startRunBtn = document.getElementById('startRunBtn'); if (startRunBtn) startRunBtn.onclick = () => { clearRunSave(); render(starterSelectScreen()); };
-  const continueRunBtn = document.getElementById('continueRunBtn'); if (continueRunBtn) continueRunBtn.onclick = () => { RUN = loadRunSave(); RUN.maxGems=10; RUN.maxFuel=20; RUN.maxEnergy=20; RUN.handSize=7+(META.levels.handCap||0)*2; RUN.runUpgrades=RUN.runUpgrades||{itemSlots:0,drawPerTurn:0,sightRange:0,gemDraw:0,health:0}; RUN.drawPerTurn=2+(META.levels.draw||0)+RUN.runUpgrades.drawPerTurn; RUN.gems=Math.min(RUN.maxGems,RUN.gems||0); RUN.fuel=Math.min(RUN.maxFuel,RUN.fuel||0); RUN.energy=Math.min(RUN.maxEnergy,RUN.energy||0); RUN.itemLevels=RUN.itemLevels||{}; RUN.itemUsesLevels=RUN.itemUsesLevels||{}; RUN.itemKindOverride=RUN.itemKindOverride||{}; Object.keys(RUN.itemKindOverride).filter(k=>!k.includes('_')).forEach(k=>{ if(RUN.hero?.items?.includes(k) && !RUN.itemKindOverride[`${k}_0`]) RUN.itemKindOverride[`${k}_0`]=RUN.itemKindOverride[k]; }); RUN.itemMaxCardsLevels=RUN.itemMaxCardsLevels||{}; RUN.itemUnlockProgress=RUN.itemUnlockProgress||{}; RUN.itemUnlocked=RUN.itemUnlocked||{}; RUN.itemUnlockPending=RUN.itemUnlockPending||{}; RUN.castleState=RUN.castleState||{}; saveRun(); render(mapScreen()); };
+  const continueRunBtn = document.getElementById('continueRunBtn'); if (continueRunBtn) continueRunBtn.onclick = () => { RUN = loadRunSave(); RUN.maxGems=10; RUN.maxFuel=20; RUN.maxEnergy=20; RUN.handSize=7+(META.levels.handCap||0)*2; RUN.itemCap=Math.max(RUN.itemCap||0, Math.min(MAX_ITEM_CAP, 3+(META.levels.garage||0))); RUN.runUpgrades=RUN.runUpgrades||{itemSlots:0,drawPerTurn:0,sightRange:0,gemDraw:0,health:0}; RUN.drawPerTurn=2+(META.levels.draw||0)+RUN.runUpgrades.drawPerTurn; RUN.gems=Math.min(RUN.maxGems,RUN.gems||0); RUN.fuel=Math.min(RUN.maxFuel,RUN.fuel||0); RUN.energy=Math.min(RUN.maxEnergy,RUN.energy||0); RUN.itemLevels=RUN.itemLevels||{}; RUN.itemUsesLevels=RUN.itemUsesLevels||{}; RUN.itemKindOverride=RUN.itemKindOverride||{}; Object.keys(RUN.itemKindOverride).filter(k=>!k.includes('_')).forEach(k=>{ if(RUN.hero?.items?.includes(k) && !RUN.itemKindOverride[`${k}_0`]) RUN.itemKindOverride[`${k}_0`]=RUN.itemKindOverride[k]; }); RUN.itemMaxCardsLevels=RUN.itemMaxCardsLevels||{}; RUN.itemUnlockProgress=RUN.itemUnlockProgress||{}; RUN.itemUnlocked=RUN.itemUnlocked||{}; RUN.itemUnlockPending=RUN.itemUnlockPending||{}; RUN.castleState=RUN.castleState||{}; saveRun(); render(mapScreen()); };
   app.querySelectorAll('[data-pick]').forEach(el => el.onclick = () => initRunWithStarter(el.dataset.pick));
 }
 

@@ -640,8 +640,10 @@ const ITEMS = {
   torch_burn: { id: 'torch_burn', name: 'Slow Burn', cost: 65, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'pokerTier', tier: 1 }, baseMult: 1, kind: 'burn',
     note: 'Needs a Pair. Burns over 3 turns (weaker each turn) instead of hitting directly — burns stack.' },
-  supply_bag: { id: 'supply_bag', name: 'Supply Stash', cost: 35, maxCards: 10, kind: 'storage', maxStore: 6,
-    note: 'Holds up to 6 cards turn to turn. Never attacks, never gets cursed. Click a stored card to take it back.' },
+  supply_bag: { id: 'supply_bag', name: 'Supply Stash', cost: 25, maxCards: 10, kind: 'storage', maxStore: 2,
+    note: 'Holds up to 2 cards turn to turn. Never attacks, never gets cursed. Click a stored card to take it back.' },
+  supply_bag_big: { id: 'supply_bag_big', name: 'Supply Stash+', cost: 50, maxCards: 10, kind: 'storage', maxStore: 3,
+    note: 'Holds up to 3 cards turn to turn. Never attacks, never gets cursed. Click a stored card to take it back.' },
   spade_bag: { id: 'spade_bag', name: 'Spade Stash', cost: 30, maxCards: 10, kind: 'storage', maxStore: 4,
     acceptFilter: { suit: '♠' },
     note: 'Holds up to 4 Spades only. Click a stored card to take it back.' },
@@ -835,7 +837,7 @@ function initRunWithStarter(id) {
     health: 100 + L.hp * 15, maxHealth: 100 + L.hp * 15,
     chips: 40 + L.chips * 8, fuel: Math.min(20, 10 + L.fuel * 2), energy: 0,
     hero: { heroId: id, items: [...baseHero.starterItems] },
-    itemCap: 2 + L.garage, handSize: 7 + (L.handCap || 0) * 2, drawPerTurn: 2 + (L.draw || 0), gems: 3, maxGems: 10, maxFuel: 20, maxEnergy: 20,
+    itemCap: 3 + L.garage, handSize: 7 + (L.handCap || 0) * 2, drawPerTurn: 2 + (L.draw || 0), gems: 3, maxGems: 10, maxFuel: 20, maxEnergy: 20,
     scoreThisRun: 0, lastNotice: null, cardBoosts: [], adminTuneLvl: 0, itemLevels: {}, itemUsesLevels: {}, itemKindOverride: {}, itemMaxCardsLevels: {}, handSortMode: 'value', innSleeps: 0,
     runUpgrades: { itemSlots: 0, drawPerTurn: 0, sightRange: 0, gemDraw: 0, health: 0 },
     castleState: {},
@@ -867,7 +869,7 @@ function selectNode(row, col) {
   if (node.type === 'battle') { startBattle(node.opponent, row, col); return; }
   commitNode(row, col);
   if (node.type === 'castle') render(castleMenuScreen());
-  else if (node.type === 'shop') { RETURN_TO_CASTLE_MENU = false; render(shopScreen()); }
+  else if (node.type === 'shop') { RETURN_TO_CASTLE_MENU = false; RUN.shopStock = null; render(shopScreen()); }
   else if (node.type === 'rest') render(garageScreen());
   else if (node.type === 'blacksmith') { RETURN_TO_CASTLE_MENU = false; BLACKSMITH_OPTIONS = pickBlacksmithOptions(); BLACKSMITH_VISIT = { primary: null, secondary: null }; render(blacksmithScreen()); }
   else if (node.type === 'chopshop') { RETURN_TO_CASTLE_MENU = false; render(chopShopScreen('map')); }
@@ -1943,8 +1945,18 @@ const SHOP_CATEGORIES = [
   { id: 'curse', label: 'Curse' },
   { id: 'draw', label: 'Draw' },
 ];
+function pickShopStock() {
+  const pool = Object.values(ITEMS).filter(it => it.kind !== 'storage' && it.cost > 0);
+  const bags = Object.values(ITEMS).filter(it => it.kind === 'storage' && it.cost > 0);
+  const shuffled = shuffle([...pool]);
+  const stock = shuffled.slice(0, 8);
+  // Always include at least one storage bag option so hold-card items stay purchasable.
+  if (bags.length) stock.push(shuffle([...bags])[0]);
+  return stock;
+}
 function shopScreen(fromCastle=false) {
-  const allOptions = Object.values(ITEMS).filter(it => it.kind !== 'storage' && it.cost > 0);
+  if (!RUN.shopStock) RUN.shopStock = pickShopStock().map(it => it.id);
+  const allOptions = RUN.shopStock.map(id => ITEMS[id]).filter(Boolean);
   const options = SHOP_FILTER === 'all' ? allOptions : allOptions.filter(it => shopItemCategory(it) === SHOP_FILTER);
   const filterButtonsHTML = SHOP_CATEGORIES.map(cat => {
     const count = cat.id === 'all' ? allOptions.length : allOptions.filter(it => shopItemCategory(it) === cat.id).length;

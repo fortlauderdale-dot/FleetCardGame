@@ -341,13 +341,16 @@ function opponentAttackBoxHTML(opp) {
     const effect = a.effect || 'damage';
 
     // Line 1 — how many cards this attack uses, nothing else. Mirrors the player's itemReqLine.
-    const capLine = a.straightLen ? `Any ${a.straightLen} cards in a row` : (cap === 1 ? '1 card' : `Up to ${cap} cards`);
+    const capLine = a.autoFire ? 'No card needed' : a.straightLen ? `Any ${a.straightLen} cards in a row` : (cap === 1 ? '1 card' : `Up to ${cap} cards`);
 
     // Line 2 — the specific condition/bonus, mirroring the player's itemBonusLine. Only one of
     // these mechanics applies per attack (they're mutually exclusive by design).
     let bonusLine = '';
     let damageLine = '';
-    if (a.sumThreshold) {
+    if (a.autoFire) {
+      bonusLine = a.minTurn ? `Kicks in on its own from turn ${a.minTurn} onward` : `Kicks in on its own`;
+      damageLine = `Flat ${a.autoFire.damage} damage every turn once active`;
+    } else if (a.sumThreshold) {
       bonusLine = `Needs Σ${a.sumThreshold.min}+`;
       damageLine = `Flat ${a.sumThreshold.damage} damage if met`;
     } else if (a.fewCardsThreshold) {
@@ -382,7 +385,7 @@ function opponentAttackBoxHTML(opp) {
       <div class="hdr" style="font-weight:600; color:var(--blue-dark)">${art(opp, 18)} ${name}</div>
       <div class="itemReqLine">${capLine}</div>
       ${bonusLine ? `<div class="itemBonusLine">${bonusLine}</div>` : ''}
-      <div class="note" style="margin-top:4px">${damageLine}${effectLine ? ` · ${effectLine}` : ''}${a.minTurn ? ` · from turn ${a.minTurn}` : ''}</div>
+      <div class="note" style="margin-top:4px">${damageLine}${effectLine ? ` · ${effectLine}` : ''}${a.minTurn && !a.autoFire ? ` · from turn ${a.minTurn}` : ''}</div>
       <div style="margin-top:auto">
         <div class="note" style="margin:2px 0 0">Attacks ${swings}x per turn</div>
       </div>
@@ -766,7 +769,7 @@ const OPPONENT_TIERS = [
   [ { id: 'trashfire', name: 'Trash Can Fire', icon: '🔥', image: 'Hazards/trash-fire.jpg', hp: 35, minTier: 0, drawRate: 2, turnLimit: 6, attacks: [{ name: 'Ember Flare', maxCards: 1, minTier: 0 }] },
     { id: 'pothole', name: 'Nasty Pothole', icon: '🕳️', image: 'Hazards/pothole.jpg', hp: 40, minTier: 0, drawRate: 2, turnLimit: 6, attacks: [{ name: 'Axle Buster', maxCards: 2, minTier: 0 }] },
     { id: 'looseDog', name: 'Loose Dog', icon: '🐕', image: 'Hazards/loose-dog.jpg', hp: 45, minTier: 0, drawRate: 2, turnLimit: 6, attacks: [{ name: 'Snap Bite', maxCards: 1, minTier: 0 }] } ],
-  [ { id: 'jaywalker', name: 'Jaywalker', icon: '🚶', image: 'Hazards/jaywalker.jpg', hp: 50, minTier: 1, drawRate: 2, turnLimit: 6, attacks: [{ name: 'Sudden Dash', maxCards: 2, minTier: 1 }, { name: 'Quick Step', maxCards: 1, minTier: 0, effect: 'draw' }] },
+  [ { id: 'jaywalker', name: 'Jaywalker', icon: '🚶', image: 'Hazards/jaywalker.jpg', hp: 50, minTier: 1, drawRate: 2, attacks: [{ name: 'Sudden Dash', maxCards: 2, minTier: 1 }, { name: 'Enrage', minTurn: 7, autoFire: { damage: 15 } }] },
     { id: 'grumpyMeter', name: 'Broken Meter', icon: '🅿️', image: 'Hazards/broken-meter.jpg', hp: 55, minTier: 1, drawRate: 2, turnLimit: 6, attacks: [{ name: 'Coin Jam', maxCards: 2, minTier: 1, effect: 'stealFuel' }, { name: 'Repo Notice', maxCards: 2, minTier: 1, effect: 'curse' }, { name: 'Ticket Slip', maxCards: 2, minTier: 0, discardHand: { count: 1 } }] },
     { id: 'looseWire', name: 'Downed Power Line', icon: '⚡', image: 'Hazards/downed-line.jpg', hp: 60, minTier: 0, drawRate: 2, turnLimit: 6, attacks: [{ name: 'Live Wire Shock', maxCards: 2, minTier: 0, effect: 'stun' }] } ],
   [ { id: 'angryCitizen', name: 'Angry Citizen', icon: '😠', image: 'Hazards/angry-citizen.jpg', hp: 65, minTier: 1, drawRate: 3, turnLimit: 7, attacks: [{ name: 'Shouting Match', maxCards: 3, minTier: 1 }, { name: 'Harassment', maxCards: 2, minTier: 1, effect: 'curse' }, { name: 'Grudge Match', maxCards: 3, minTier: 0, suitPunish: { suit: '♥', perCard: 4, base: 6 } }] },
@@ -1545,8 +1548,9 @@ function endTurn() {
     }
     for (let swing = 0; swing < attackTimes; swing++) {
       const choices=(BATTLE.opponent.attacks&&BATTLE.opponent.attacks.length?BATTLE.opponent.attacks:[{}]);
-      const viable=choices.map(a=>({a,best:bestHandFromPool(BATTLE.oppPool,a.maxCards??maxCards)})).filter(x=>{
+      const viable=choices.map(a=>({a,best: a.autoFire ? { cards: [], tier: 999, label: 'Auto', mult: 0 } : bestHandFromPool(BATTLE.oppPool,a.maxCards??maxCards)})).filter(x=>{
         if (x.a.minTurn != null && BATTLE.turn < x.a.minTurn) return false;
+        if (x.a.autoFire) return true;
         if (x.a.sumThreshold) return x.best.cards.reduce((s,c)=>s+cardValue(c.rank),0) >= x.a.sumThreshold.min;
         if (x.a.fewCardsThreshold) return x.best.cards.length > 0 && x.best.cards.length <= x.a.fewCardsThreshold.max;
         if (x.a.perFaceCard) return x.best.cards.length > 0;
@@ -1558,7 +1562,9 @@ function endTurn() {
       const pick=viable[0]; attackDef=pick.a; const best=pick.best;
       anyAttack = true;
       let oppDmg;
-      if (attackDef.sumThreshold) {
+      if (attackDef.autoFire) {
+        oppDmg = Math.round(attackDef.autoFire.damage * enrageMultiplier(BATTLE.opponent, BATTLE.turn));
+      } else if (attackDef.sumThreshold) {
         oppDmg = Math.round(attackDef.sumThreshold.damage * enrageMultiplier(BATTLE.opponent, BATTLE.turn));
       } else if (attackDef.fewCardsThreshold) {
         oppDmg = Math.round(attackDef.fewCardsThreshold.damage * enrageMultiplier(BATTLE.opponent, BATTLE.turn));
@@ -1601,7 +1607,9 @@ function endTurn() {
           specialLog = ` It steals ${fuelStolen} fuel and draws an extra card!`;
         }
       }
-      battleLog(`${BATTLE.opponent.name} used ${attackDef.name || best.label} with ${best.label} (${usedText}) — ${oppDmg} damage.${specialLog} Your health: ${RUN.health}/${RUN.maxHealth}.`);
+      battleLog(attackDef.autoFire
+        ? `${BATTLE.opponent.name}'s ${attackDef.name || 'attack'} kicks in — ${oppDmg} damage.${specialLog} Your health: ${RUN.health}/${RUN.maxHealth}.`
+        : `${BATTLE.opponent.name} used ${attackDef.name || best.label} with ${best.label} (${usedText}) — ${oppDmg} damage.${specialLog} Your health: ${RUN.health}/${RUN.maxHealth}.`);
       BATTLE.oppPool = BATTLE.oppPool.filter(c => !best.cards.includes(c));
       if (RUN.health <= 0) break;
     }

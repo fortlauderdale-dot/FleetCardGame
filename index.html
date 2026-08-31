@@ -2948,25 +2948,73 @@ function render(html) {
   const castleBattle2Btn = document.getElementById('castleBattle2Btn'); if (castleBattle2Btn) castleBattle2Btn.onclick = () => { if (!RUN.castleState) RUN.castleState = {}; startBattle(CASTLE_SECOND, 10, 0, 2); };
   const leaveCastleBtn = document.getElementById('leaveCastleBtn'); if (leaveCastleBtn) leaveCastleBtn.onclick = () => render(mapScreen());
   const leaveMatchBtn = document.getElementById('leaveMatchBtn'); if (leaveMatchBtn) leaveMatchBtn.onclick = () => render(castleMenuScreen());
-  app.querySelectorAll('[data-match]').forEach(el => el.onclick = () => {
-    const i=+el.dataset.match, st=RUN.castleState;
-    if (!st || st.matchGuesses<=0 || st.matchPick.includes(i) || st.matchCards[i].flipped || st.matchCards[i].matched) return;
-    st.matchPick.push(i); st.matchCards[i].flipped=true;
-    if (st.matchPick.length===2) {
-      const [a,b]=st.matchPick;
-      if (st.matchCards[a].key===st.matchCards[b].key) {
-        st.matchCards[a].matched=true; st.matchCards[b].matched=true; st.matchPick=[];
-        const reward=Math.random()<0.5 ? {coins:20+Math.floor(Math.random()*21),gems:1} : {coins:15,fuel:8};
-        RUN.chips+=reward.coins||0; RUN.gems=Math.min(RUN.maxGems,RUN.gems+(reward.gems||0)); RUN.fuel=Math.min(RUN.maxFuel,RUN.fuel+(reward.fuel||0));
-        st.matchGuesses++; saveRun();
-        render(castleMatchScreen());
-        setTimeout(()=>{ render(castleMenuScreen(`Match! You won ${reward.coins||0} coins${reward.gems?`, ${reward.gems} gem`:''}${reward.fuel?`, ${reward.fuel} fuel`:''}.`)); },900);
-      } else {
-        st.matchGuesses--;
-        render(castleMatchScreen());
-        setTimeout(()=>{ st.matchPick.forEach(x=>st.matchCards[x].flipped=false); st.matchPick=[]; render(st.matchGuesses>0?castleMatchScreen():castleMenuScreen('No match. The game is over for this visit.')); },900);
+    app.querySelectorAll('[data-match]').forEach(el => {
+    el.onclick = () => {
+      const i = +el.dataset.match;
+      const st = RUN.castleState;
+      
+      // Safety gate: block clicks if input is locked out during a delay timer
+      if (!st || st.matchGuesses <= 0 || st.matchPick.includes(i) || st.matchCards[i].flipped || st.matchCards[i].matched || st.matchLock) return;
+      
+      st.matchPick.push(i); 
+      st.matchCards[i].flipped = true;
+      render(castleMatchScreen()); // Render immediately to reveal the first or second card face-up
+      
+      if (st.matchPick.length === 2) {
+        const [a, b] = st.matchPick;
+        st.matchLock = true; // Engage execution lock so they can't spam other hidden items
+        
+        if (st.matchCards[a].suit === st.matchCards[b].suit) {
+          // A MATCH IS FOUND! Set status flags
+          st.matchCards[a].matched = true;
+          st.matchCards[b].matched = true;
+          st.matchPick = [];
+          
+          // Match reward configuration
+          const reward = Math.random() < 0.5 ? { coins: 25, gems: 1 } : { coins: 15, fuel: 8 };
+          RUN.chips += reward.coins || 0; 
+          RUN.gems = Math.min(RUN.maxGems, RUN.gems + (reward.gems || 0)); 
+          RUN.fuel = Math.min(RUN.maxFuel, RUN.fuel + (reward.fuel || 0));
+          saveRun();
+
+          // 1-second celebration delay: Let them process what they matched before kicking them out
+          setTimeout(() => {
+            st.matchLock = false;
+            // Check if every card has been matched successfully
+            const boardCleared = st.matchCards.every(c => c.matched);
+            if (boardCleared) {
+              st.matchCards = null; // Clear state variables so they can play fresh on their next visit
+              render(castleMenuScreen(`Jackpot! You cleared the entire board! Bonus +50 coins applied.`));
+              RUN.chips += 50;
+              saveRun();
+            } else {
+              render(castleMatchScreen()); // Refresh the active grid layout
+            }
+          }, 1000);
+          
+        } else {
+          // MISMATCH: Deduct an attempt point
+          st.matchGuesses--;
+          
+          // 1.2-second memorization delay: Freeze cards face-up so the player can actually study the board
+          setTimeout(() => {
+            st.matchCards[a].flipped = false;
+            st.matchCards[b].flipped = false;
+            st.matchPick = [];
+            st.matchLock = false;
+            
+            if (st.matchGuesses <= 0) {
+              st.matchCards = null; // Wipe out state values on a game-over loss
+              render(castleMenuScreen('Out of attempts! The matching session is over for this visit.'));
+            } else {
+              render(castleMatchScreen());
+            }
+          }, 1200);
+        }
       }
-    }
+    };
+  });
+
     else render(castleMatchScreen());
   });
   const leaveShopBtn = document.getElementById('leaveShopBtn'); if (leaveShopBtn) leaveShopBtn.onclick = () => render(RETURN_TO_CASTLE_MENU ? castleMenuScreen() : mapScreen());

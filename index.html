@@ -947,7 +947,7 @@ function generateMap() {
   const nodes = [], edges = [];
   const tierForRow = r => Math.min(OPPONENT_TIERS.length - 1, Math.floor(r / 3));
   const castleRow = 10;
-  const rowCounts = [1,3,1,3,3,1,3,3,3,3,1,3,3,3,3,3,3,3,3,2];
+  const rowCounts = [1,2,1,2,3,1,2,3,2,2,1,2,3,2,2,3,2,2,3,2];
 
   // Global world multiplier configuration
   // Set to 1.0 for World 1, can be hooked into a menu later for World 2 (1.5), World 3 (2.0), etc.
@@ -997,19 +997,27 @@ function generateMap() {
   // Scale the final world Boss object as well
   nodes.push([{type:'battle', opponent: scaleMonsterForNewWorld(BOSS, worldMultiplier)}]);
 
-  // Dense, cross-lane connections.
+  // Proximity-based connections: each node mostly links to the node(s) nearest its own
+  // position in the next row, so lanes stay roughly parallel. A rare wildcard jump keeps
+  // some randomness without turning the map into a tangle of crossing lines.
   for(let r=0;r<nodes.length-1;r++){
     const cur=nodes[r], next=nodes[r+1];
     const add=(a,b)=>{if(!edges.some(e=>e.fromRow===r&&e.fromCol===a&&e.toRow===r+1&&e.toCol===b))edges.push({fromRow:r,fromCol:a,toRow:r+1,toCol:b});};
     if(r===0){ for(let b=0;b<next.length;b++) add(0,b); }
-    else if(r===1 && next.length===1){ cur.forEach((_,a)=>add(a,0)); }
+    else if(cur.length===1){ for(let b=0;b<next.length;b++) add(0,b); }
+    else if(next.length===1){ cur.forEach((_,a)=>add(a,0)); }
     else {
+      const forwardRatio = (next.length-1)/(cur.length-1);
       cur.forEach((_,a)=>{
-        const choices=new Set([Math.floor(Math.random()*next.length), Math.min(next.length-1,a), Math.min(next.length-1,a+1)]);
-        if(next.length>=3 && Math.random()<0.55) choices.add(Math.floor(Math.random()*next.length));
+        const target = Math.round(a*forwardRatio);
+        const choices=new Set([target]);
+        if(Math.random()<0.5 && target>0) choices.add(target-1);
+        if(Math.random()<0.5 && target<next.length-1) choices.add(target+1);
+        if(Math.random()<0.15) choices.add(Math.max(0,Math.min(next.length-1, target+(Math.random()<0.5?-2:2))));
         choices.forEach(b=>add(a,b));
       });
-      for(let b=0;b<next.length;b++) if(!edges.some(e=>e.fromRow===r&&e.toCol===b)) add(Math.min(cur.length-1,Math.floor(Math.random()*cur.length)),b);
+      const backwardRatio = (cur.length-1)/(next.length-1);
+      for(let b=0;b<next.length;b++) if(!edges.some(e=>e.fromRow===r&&e.toCol===b)) add(Math.round(b*backwardRatio),b);
     }
   }
   return {nodes,edges};
@@ -1340,7 +1348,7 @@ function drawOpponentCards() {
     if (BATTLE.opponent.locked) BATTLE.opponent.lockProgress += cardValue(c.rank);
   }
 }
-function battleLog(msg) { BATTLE.logLines.push(msg); if (BATTLE.logLines.length > 60) BATTLE.logLines.shift(); }
+function battleLog(msg) { BATTLE.logLines.push({ turn: BATTLE.turn, msg }); if (BATTLE.logLines.length > 200) BATTLE.logLines.shift(); }
 
 // Every opponent already carries a hand-tuned turnLimit (6-10, scaling with difficulty) that
 // was never actually wired to anything — battles could stall out indefinitely behind armor or
@@ -1744,13 +1752,17 @@ function endTurn() {
     }
     if (BATTLE.opponent.lockProgress >= BATTLE.opponent.lockThreshold) {
       let oppDmg = Math.round(BATTLE.opponent.lockAttack * enrageMultiplier(BATTLE.opponent, BATTLE.turn));
+      const rawDmg = oppDmg;
+      let armorBlocked = 0;
       if (BATTLE.playerArmor > 0) {
-        const blocked = Math.min(BATTLE.playerArmor, oppDmg);
-        BATTLE.playerArmor -= blocked; oppDmg -= blocked;
-        battleLog(`Your armor absorbed ${blocked} damage.`);
+        armorBlocked = Math.min(BATTLE.playerArmor, oppDmg);
+        BATTLE.playerArmor -= armorBlocked; oppDmg -= armorBlocked;
       }
       RUN.health = Math.max(0, RUN.health - oppDmg);
-      battleLog(`${BATTLE.opponent.name} clears the lock and hits for a flat ${oppDmg}! It locks back up. Your health: ${RUN.health}/${RUN.maxHealth}.`);
+      const dmgPhrase = armorBlocked > 0
+        ? `${rawDmg} damage, but your armor absorbed ${armorBlocked}${oppDmg > 0 ? ` (${oppDmg} got through)` : ''}${BATTLE.playerArmor > 0 ? ` and you have ${BATTLE.playerArmor} armor remaining` : ', and your armor is gone'}`
+        : `a flat ${oppDmg}`;
+      battleLog(`${BATTLE.opponent.name} clears the lock and hits for ${dmgPhrase}! It locks back up. Your health: ${RUN.health}/${RUN.maxHealth}.`);
       BATTLE.opponent.lockProgress = 0;
       BATTLE.oppPool = [];
       opponentLandedHit = true;
@@ -1809,10 +1821,11 @@ function endTurn() {
       } else {
         oppDmg = Math.round(damageFor(best.cards, best.mult) * enrageMultiplier(BATTLE.opponent, BATTLE.turn));
       }
+      const rawDmg = oppDmg;
+      let armorBlocked = 0;
       if (BATTLE.playerArmor > 0) {
-        const blocked = Math.min(BATTLE.playerArmor, oppDmg);
-        BATTLE.playerArmor -= blocked; oppDmg -= blocked;
-        battleLog(`Your armor absorbed ${blocked} damage.`);
+        armorBlocked = Math.min(BATTLE.playerArmor, oppDmg);
+        BATTLE.playerArmor -= armorBlocked; oppDmg -= armorBlocked;
       }
       RUN.health = Math.max(0, RUN.health - oppDmg);
       const usedText = best.cards.map(c => `${rankLabel(c.rank)}${c.suit}`).join(' ');
@@ -1836,9 +1849,12 @@ function endTurn() {
           specialLog = ` It steals ${fuelStolen} fuel and draws an extra card!`;
         }
       }
+      const dmgPhrase = armorBlocked > 0
+        ? `${rawDmg} damage, but your armor absorbed ${armorBlocked}${oppDmg > 0 ? ` (${oppDmg} got through)` : ''}${BATTLE.playerArmor > 0 ? ` and you have ${BATTLE.playerArmor} armor remaining` : ', and your armor is gone'}`
+        : `${oppDmg} damage`;
       battleLog(attackDef.autoFire
-        ? `${BATTLE.opponent.name}'s ${attackDef.name || 'attack'} kicks in — ${oppDmg} damage.${specialLog} Your health: ${RUN.health}/${RUN.maxHealth}.`
-        : `${BATTLE.opponent.name} used ${attackDef.name || best.label} with ${best.label} (${usedText}) — ${oppDmg} damage.${specialLog} Your health: ${RUN.health}/${RUN.maxHealth}.`);
+        ? `${BATTLE.opponent.name}'s ${attackDef.name || 'attack'} kicks in — ${dmgPhrase}.${specialLog} Your health: ${RUN.health}/${RUN.maxHealth}.`
+        : `${BATTLE.opponent.name} used ${attackDef.name || best.label} with ${best.label} (${usedText}) — ${dmgPhrase}.${specialLog} Your health: ${RUN.health}/${RUN.maxHealth}.`);
       BATTLE.oppPool = BATTLE.oppPool.filter(c => !best.cards.includes(c));
       if (RUN.health <= 0) break;
     }
@@ -1865,7 +1881,6 @@ function endTurn() {
   drawCards(RUN.drawPerTurn);
   resortHandAndRelink(RUN.handSortMode);
   drawOpponentCards();
-  battleLog(`— Turn ${BATTLE.turn} —`);
   render(battleScreen());
 }
 function winBattle(outlast) {
@@ -2143,9 +2158,10 @@ function battleScreen() {
         ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleCardDrop(event,'${slotKey}',${effectiveMaxCards(item)})">
       <div class="usesBadge ${usesLeft <= 0 ? 'depleted' : ''} hoverTip" title="Uses left this turn">${usesBadgeText}</div>
       <div class="hdr" style="font-weight:600; color:${eKind==='defense'?'var(--defense)':eKind==='poison'?'#4d8f45':eKind==='burn'?'#c4472d':eKind==='curse'?'#7a4aa8':'var(--blue-dark)'}">${item.name}${cursedAmt ? ` <span class="vart" style="width:12px;height:12px;font-size:12px;color:var(--purple)">${ICON.curse}</span> cursed` : ''}</div>
-      <div class="vcards">${cardHTML}</div>
       <div class="itemReqLine">${itemRequirementText(item, eKind)}</div>
       ${bonusLine}
+      <div class="itemDivider"></div>
+      <div class="vcards">${cardHTML}</div>
       <div class="itemDivider"></div>
       ${cooldownLeft > 0 ? `<div class="note" style="margin:4px 0 0"><span class="hoverTip" title="This item can't be used again until its cooldown runs out.">On cooldown: ${cooldownLeft} turn${cooldownLeft > 1 ? 's' : ''} left</span></div>` : ''}
       ${(() => {
@@ -2268,7 +2284,8 @@ function battleScreen() {
       </div>
     </div>
     <div class="panel">
-      <div class="log">${[...BATTLE.logLines].reverse().map(l => `<div>${l}</div>`).join('')}</div>
+      <div class="hdr" style="margin-bottom:0">Turn ${BATTLE.turn}</div>
+      <div class="log">${BATTLE.logLines.filter(l => l.turn === BATTLE.turn).map(l => `<div>${l.msg}</div>`).join('')}</div>
     </div>
   `;
 }

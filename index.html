@@ -792,11 +792,11 @@ const OPPONENT_TIERS = [
       curse: { count: 1, amount: 8, chance: 0.5 }, attacks: [{ name: 'Sabotage', maxCards: 3, minTier: 2, effect: 'curse' }] },
     { id: 'streetFire', name: 'Street Fire', icon: '🔥', image: 'Hazards/street-fire.jpg', hp: 85, minTier: 3, drawRate: 3, turnLimit: 7,
       special: { type: 'lifesteal', pct: 0.5 }, attacks: [{ name: 'Scorching Wave', maxCards: 3, minTier: 3, effect: 'burn' }] },
-    { id: 'sinkhole', name: 'Sinkhole', icon: '🕳️', image: 'Hazards/sinkhole.jpg', hp: 90, minTier: 1, drawRate: 3, turnLimit: 7, attacks: [{ name: 'Ground Collapse', maxCards: 3, minTier: 1 }, { name: 'Aftershock', maxCards: 2, minTier: 1, effect: 'poison' }, { name: 'All-Points Bulletin', maxCards: 4, minTier: 2 }, { name: 'Structural Failure', maxCards: 4, minTier: 0, sumThreshold: { min: 20, damage: 17 } }] },
+    { id: 'sinkhole', name: 'Sinkhole', icon: '🕳️', image: 'Hazards/sinkhole.jpg', hp: 90, minTier: 1, drawRate: 3, turnLimit: 7, attacks: [{ name: 'All-Points Bulletin', maxCards: 4, minTier: 2 }, { name: 'Ground Collapse', maxCards: 3, minTier: 1 }, { name: 'Aftershock', maxCards: 2, minTier: 1, effect: 'poison' }, { name: 'Structural Failure', maxCards: 4, minTier: 0, sumThreshold: { min: 20, damage: 17 } }] },
     { id: 'gasLeak1', name: 'Gas Leak', icon: '⛽', image: 'Hazards/gas-leak.jpg', hp: 95, locked: true, lockThreshold: 45, lockAttack: 39, drawRate: 3, turnLimit: 8, releaseAttackName: 'Ignition Blast' } ],
   [ { id: 'flashFlood', name: 'Flash Flood', icon: '🌊', image: 'Hazards/flash-flood.jpg', hp: 100, minTier: 3, drawRate: 4, turnLimit: 8, attacks: [{ name: 'Flash Deluge', maxCards: 4, minTier: 3 }, { name: 'Toxic Spray', maxCards: 3, minTier: 2, effect: 'poison' }, { name: 'Rising Waters', maxCards: 4, minTier: 0, minTurn: 5, sumThreshold: { min: 15, damage: 26 } }] },
     { id: 'riot', name: 'Angry Mob', icon: '📢', image: 'Hazards/angry-mob.jpg', hp: 105, minTier: 2, drawRate: 4, turnLimit: 8, usesPerTurn: 2, attacks: [{ name: 'Crowd Surge', maxCards: 4, minTier: 2 }, { name: 'Crowd Pressure', maxCards: 3, minTier: 2, effect: 'curse' }, { name: 'Mob Pile-On', maxCards: 4, minTier: 0, perFaceCard: { damage: 8 } }] },
-    { id: 'blackout', name: 'Blackout', icon: '🌑', image: 'Hazards/blackout.jpg', hp: 110, minTier: 1, drawRate: 3, turnLimit: 8, attacks: [{ name: 'Total Shutdown', maxCards: 3, minTier: 1, effect: 'stealFuel' }, { name: 'Blackout', maxCards: 2, minTier: 2 }] } ],
+    { id: 'blackout', name: 'Blackout', icon: '🌑', image: 'Hazards/blackout.jpg', hp: 110, minTier: 1, drawRate: 3, turnLimit: 8, attacks: [{ name: 'Blackout', maxCards: 2, minTier: 2 }, { name: 'Total Shutdown', maxCards: 3, minTier: 1, effect: 'stealFuel' }] } ],
   [ { id: 'stormSurge', name: 'Storm Surge', icon: '🌊', image: 'Hazards/storm-surge.jpg', hp: 115, minTier: 3, drawRate: 4, turnLimit: 8, attacks: [{ name: 'Tidal Slam', maxCards: 4, minTier: 3, effect: 'burn' }, { name: 'Undertow', maxCards: 3, minTier: 2, effect: 'poison' }] },
     { id: 'buildingFire', name: 'Building Fire', icon: '🔥', image: 'Hazards/building-fire.jpg', hp: 120, minTier: 4, drawRate: 4, turnLimit: 8, attacks: [{ name: 'Inferno Blast', maxCards: 4, minTier: 4, effect: 'burn' }, { name: 'Structural Collapse', maxCards: 5, minTier: 0, sumThreshold: { min: 28, damage: 24 }, effect: 'stealFuel' }] },
     { id: 'evilMechanic2', name: 'Evil Mechanic (Repeat Offender)', icon: '🔧', image: 'Hazards/evil-mechanic-2.jpg', hp: 125, minTier: 2, drawRate: 4, turnLimit: 8,
@@ -1594,18 +1594,27 @@ function endTurn() {
     }
     for (let swing = 0; swing < attackTimes; swing++) {
       const choices=(BATTLE.opponent.attacks&&BATTLE.opponent.attacks.length?BATTLE.opponent.attacks:[{}]);
-      const viable=choices.map(a=>({a,best: a.autoFire ? { cards: [], tier: 999, label: 'Auto', mult: 0 } : bestHandFromPool(BATTLE.oppPool,a.maxCards??maxCards)})).filter(x=>{
-        if (x.a.minTurn != null && BATTLE.turn < x.a.minTurn) return false;
-        if (x.a.autoFire) return true;
-        if (x.a.sumThreshold) return x.best.cards.reduce((s,c)=>s+cardValue(c.rank),0) >= x.a.sumThreshold.min;
-        if (x.a.fewCardsThreshold) return x.best.cards.length > 0 && x.best.cards.length <= x.a.fewCardsThreshold.max;
-        if (x.a.perFaceCard) return x.best.cards.length > 0;
-        if (x.a.discardHand) return x.best.cards.length > 0;
-        return x.best.tier >= (x.a.minTier??BATTLE.opponent.minTier);
-      });
-      if(!viable.length) break;
-      viable.sort((x,y)=>(y.best.tier-x.best.tier)||((y.a.minTier??0)-(x.a.minTier??0)));
-      const pick=viable[0]; attackDef=pick.a; const best=pick.best;
+      // Left-to-right selection: try each attack in card order and use the FIRST one that's
+      // viable, rather than picking whichever scores highest. This means the leftmost attack
+      // should be the hardest to trigger (its "signature" move) and attacks get easier moving
+      // right, so a great hand fires the big one, a mediocre hand falls through to something
+      // easier, and a truly empty pool means no attack at all this swing.
+      let pick = null;
+      for (const a of choices) {
+        const best = a.autoFire ? { cards: [], tier: 999, label: 'Auto', mult: 0 } : bestHandFromPool(BATTLE.oppPool, a.maxCards ?? maxCards);
+        if (a.minTurn != null && BATTLE.turn < a.minTurn) continue;
+        let viable;
+        if (a.autoFire) viable = true;
+        else if (a.sumThreshold) viable = best.cards.reduce((s,c)=>s+cardValue(c.rank),0) >= a.sumThreshold.min;
+        else if (a.fewCardsThreshold) viable = best.cards.length > 0 && best.cards.length <= a.fewCardsThreshold.max;
+        else if (a.perFaceCard) viable = best.cards.length > 0;
+        else if (a.discardHand) viable = best.cards.length > 0;
+        else viable = best.tier >= (a.minTier ?? BATTLE.opponent.minTier);
+        if (viable) { pick = { a, best }; break; }
+      }
+      if (!pick) break;
+      const { a: attackDefPicked, best } = pick;
+      attackDef = attackDefPicked;
       anyAttack = true;
       let oppDmg;
       if (attackDef.autoFire) {

@@ -707,10 +707,10 @@ const ITEMS = {
   torch_burn: { id: 'torch_burn', name: 'Slow Burn', cost: 65, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'pokerTier', tier: 1 }, baseMult: 1, kind: 'burn',
     note: 'Needs a Pair. Burns over 3 turns (weaker each turn) instead of hitting directly — burns stack.' },
-  supply_bag: { id: 'supply_bag', name: 'Supply Stash', cost: 25, maxCards: 10, kind: 'storage', maxStore: 2,
-    note: 'Holds up to 2 cards turn to turn. Never attacks, never gets cursed. Click a stored card to take it back.' },
-  supply_bag_big: { id: 'supply_bag_big', name: 'Supply Stash+', cost: 50, maxCards: 10, kind: 'storage', maxStore: 3,
-    note: 'Holds up to 3 cards turn to turn. Never attacks, never gets cursed. Click a stored card to take it back.' },
+  supply_bag: { id: 'supply_bag', name: 'Regular Stash', cost: 25, maxCards: 4, kind: 'storage', maxStore: 4,
+    note: 'Holds up to 4 cards of any kind turn to turn (up to 6 with Chop Shop upgrades). Never attacks, never gets cursed. Click a stored card to take it back.' },
+  supply_bag_big: { id: 'supply_bag_big', name: 'Elite Stash', cost: 50, maxCards: 5, kind: 'storage', maxStore: 5,
+    note: 'Holds up to 5 cards of any kind turn to turn (up to 7 with Chop Shop upgrades). Never attacks, never gets cursed. Click a stored card to take it back.' },
   spade_bag: { id: 'spade_bag', name: 'Spade Stash', cost: 30, maxCards: 13, kind: 'storage', maxStore: 13,
     acceptFilter: { suit: '♠' },
     note: 'Holds up to 13 Spades only (every Spade in the deck, so it will never run out of room). Click a stored card to take it back.' },
@@ -879,8 +879,8 @@ function pickNodeType(forcedType) {
   const r = Math.random();
   if (r < 0.70) return 'battle';
   if (r < 0.80) return 'rest';
-  if (r < 0.88) return 'blacksmith';
-  if (r < 0.94) return 'chopshop';
+  if (r < 0.92) return 'blacksmith';
+  if (r < 0.95) return 'chopshop';
   return 'treasure';
 }
 function generateMap() {
@@ -1232,7 +1232,7 @@ function assignSelectedTo(slotKey) {
   if (!item) return;
 
   if (!BATTLE.slots[slotKey]) BATTLE.slots[slotKey] = [];
-  const cap = item.kind === 'storage' ? item.maxStore : effectiveMaxCards(item);
+  const cap = effectiveMaxCards(item);
   const room = cap - BATTLE.slots[slotKey].length;
   if (room <= 0) return;
 
@@ -1934,11 +1934,11 @@ function battleScreen() {
         return `<div class="card mini ${c.color === 'red' ? 'red' : ''} ${c.suit === '♣' ? 'club-card' : ''}" data-unassign="${slotKey}|${cardHandIdx}" title="Click to take this card back"><div>${rankLabel(c.rank)}</div><div>${c.suit}</div></div>`;
       }).join('') || `<span class="note" style="margin:0">Drag or tap cards to store them</span>`;
       return `<div class="itemCard" data-assign="${slotKey}" style="border:2px dashed var(--purple)"
-          ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleCardDrop(event,'${slotKey}',${item.maxStore})">
+          ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleCardDrop(event,'${slotKey}',${effectiveMaxCards(item)})">
         <div class="hdr" style="font-weight:600;color:var(--purple)">${item.name} (storage)</div>
         <div class="note" style="font-size:11px">${item.note}</div>
         <div class="vcards">${cardHTML}</div>
-        <div class="note" style="margin:4px 0 0">Holding ${idxs.length}/${item.maxStore}</div>
+        <div class="note" style="margin:4px 0 0">Holding ${idxs.length}/${effectiveMaxCards(item)}</div>
       </div>`;
     }
 
@@ -2292,6 +2292,43 @@ function blacksmithScreen() {
       </div>
     </div>`;
   }).filter(Boolean).join('');
+  const seenForCapacity = new Set();
+  const capacityRows = RUN.hero.items.map(itemId => {
+    if (seenForCapacity.has(itemId)) return '';
+    seenForCapacity.add(itemId);
+    const item = ITEMS[itemId]; if (!item) return '';
+    const lvl = itemMaxCardsLevel(itemId);
+    const maxed = lvl >= ITEM_MAX_CARDS_BONUS_CAP;
+    const cost = maxed ? 0 : itemMaxCardsTuneCost(lvl);
+    const refund = lvl > 0 ? itemMaxCardsTuneCost(lvl - 1) : 0;
+    const label = item.kind === 'storage' ? 'cards it can hold' : 'cards it can use at once';
+    return `<div class="shopcard">
+      <div class="hdr"><span><b>${item.name}</b> (Lv ${lvl}/${ITEM_MAX_CARDS_BONUS_CAP})</span><span class="price">${maxed ? 'MAX' : cost + ' coins'}</span></div>
+      <div class="note" style="margin:0 0 6px">Currently ${effectiveMaxCards(item)} ${label}.</div>
+      <div style="display:flex;justify-content:flex-end;gap:6px;flex-wrap:wrap">
+        ${lvl > 0 ? `<button class="wo-btn gray" data-cardsdown="${itemId}" style="padding:6px 10px;font-size:12px">Refund (+${refund})</button>` : ''}
+        ${maxed ? '' : `<button class="wo-btn amber" data-cardsup="${itemId}" style="padding:6px 10px;font-size:12px" ${RUN.chips < cost ? 'disabled' : ''}>+1 Capacity</button>`}
+      </div>
+    </div>`;
+  }).filter(Boolean).join('');
+  const seenForUses = new Set();
+  const usesRows = RUN.hero.items.map(itemId => {
+    if (seenForUses.has(itemId)) return '';
+    seenForUses.add(itemId);
+    const item = ITEMS[itemId]; if (!item || item.kind === 'storage' || !item.usesPerTurnPerLevel) return '';
+    const lvl = itemUsesLevel(itemId);
+    const maxed = lvl >= ITEM_MAX_USES_LEVEL;
+    const cost = maxed ? 0 : itemUsesTuneCost(lvl);
+    const refund = lvl > 0 ? itemUsesTuneCost(lvl - 1) : 0;
+    return `<div class="shopcard">
+      <div class="hdr"><span><b>${item.name}</b> (Lv ${lvl}/${ITEM_MAX_USES_LEVEL})</span><span class="price">${maxed ? 'MAX' : cost + ' coins'}</span></div>
+      <div class="note" style="margin:0 0 6px">Currently ${itemUsesCap(item, lvl)} use${itemUsesCap(item, lvl) > 1 ? 's' : ''} per turn.</div>
+      <div style="display:flex;justify-content:flex-end;gap:6px;flex-wrap:wrap">
+        ${lvl > 0 ? `<button class="wo-btn gray" data-usesdown="${itemId}" style="padding:6px 10px;font-size:12px">Refund (+${refund})</button>` : ''}
+        ${maxed ? '' : `<button class="wo-btn amber" data-usesup="${itemId}" style="padding:6px 10px;font-size:12px" ${RUN.chips < cost ? 'disabled' : ''}>+1 Use Per Turn</button>`}
+      </div>
+    </div>`;
+  }).filter(Boolean).join('');
   const visitNote = BLACKSMITH_VISIT.primary === null
     ? `Pick one card to pay for a main upgrade. You can pay a bit more to also upgrade a second card in the same visit.`
     : (BLACKSMITH_VISIT.secondary === null ? `You can pay extra to also upgrade one more card this visit, or move on.` : `You've used both upgrades this visit. Come back another time to tune more.`);
@@ -2305,6 +2342,8 @@ function blacksmithScreen() {
         ${currencyBar()}
         <div style="margin:12px 0">${rows}</div>
         ${itemLevelRows ? `<div class="hdr" style="margin-top:14px"><span>Item Upgrades</span><span>Not limited by this visit</span></div><div style="margin:6px 0 12px">${itemLevelRows}</div>` : ''}
+        ${capacityRows ? `<div class="hdr" style="margin-top:14px"><span>Capacity Upgrades</span><span>Up to +${ITEM_MAX_CARDS_BONUS_CAP}</span></div><div style="margin:6px 0 12px">${capacityRows}</div>` : ''}
+        ${usesRows ? `<div class="hdr" style="margin-top:14px"><span>Uses Per Turn Upgrades</span><span>Up to +${ITEM_MAX_USES_LEVEL}</span></div><div style="margin:6px 0 12px">${usesRows}</div>` : ''}
         <button class="wo-btn" id="leaveBlacksmithBtn">Back on the Road</button>
         <button class="wo-btn gray" id="openRunUpgradeFromBlacksmithBtn" style="margin-top:8px">Upgrades</button>
       </div>

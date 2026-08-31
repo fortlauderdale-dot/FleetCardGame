@@ -774,39 +774,58 @@ function starterLockNote(id) {
 }
 
 /* ========== OPPONENT ROSTER — CITY HAZARD EVENTS (World 1) ==========
-   Ranked bad -> good, 3 per tier, plus a boss. Fire escalates by severity (and gets a
-   burn signature at the top of the tier); Evil Mechanic is a recurring curse-flavored
-   nuisance; Gas Leak uses the same lock/countdown mechanic bomb squad trucks used to. */
+
 const OPPONENT_TIERS = [
-  [ { id: 'trashfire', name: 'Trash Can Fire', icon: '🔥', image: 'Hazards/trash-fire.jpg', hp: 35, minTier: 0, drawRate: 2, turnLimit: 6, attacks: [{ name: 'Ember Flare', maxCards: 1, minTier: 0 }] },
-    { id: 'pothole', name: 'Nasty Pothole', icon: '🕳️', image: 'Hazards/pothole.jpg', hp: 40, minTier: 0, drawRate: 2, turnLimit: 6, attacks: [{ name: 'Axle Buster', maxCards: 2, minTier: 0 }] },
-    { id: 'looseDog', name: 'Loose Dog', icon: '🐕', image: 'Hazards/loose-dog.jpg', hp: 45, minTier: 0, drawRate: 2, turnLimit: 6, attacks: [{ name: 'Snap Bite', maxCards: 1, minTier: 0 }] } ],
-  [ { id: 'jaywalker', name: 'Jaywalker', icon: '🚶', image: 'Hazards/jaywalker.jpg', hp: 50, minTier: 1, drawRate: 2, attacks: [{ name: 'Sudden Dash', maxCards: 2, minTier: 1 }, { name: 'Enrage', minTurn: 7, autoFire: { damage: 15 } }] },
-    { id: 'grumpyMeter', name: 'Broken Meter', icon: '🅿️', image: 'Hazards/broken-meter.jpg', hp: 55, minTier: 1, drawRate: 2, turnLimit: 6, attacks: [{ name: 'Coin Jam', maxCards: 2, minTier: 1, effect: 'stealFuel' }, { name: 'Repo Notice', maxCards: 2, minTier: 1, effect: 'curse' }, { name: 'Ticket Slip', maxCards: 2, minTier: 0, discardHand: { count: 1 } }] },
-    { id: 'looseWire', name: 'Downed Power Line', icon: '⚡', image: 'Hazards/downed-line.jpg', hp: 60, minTier: 0, drawRate: 2, turnLimit: 6, attacks: [{ name: 'Live Wire Shock', maxCards: 2, minTier: 0, effect: 'stun' }] } ],
-  [ { id: 'angryCitizen', name: 'Angry Citizen', icon: '😠', image: 'Hazards/angry-citizen.jpg', hp: 65, minTier: 1, drawRate: 3, turnLimit: 7, attacks: [{ name: 'Shouting Match', maxCards: 3, minTier: 1 }, { name: 'Harassment', maxCards: 2, minTier: 1, effect: 'curse' }, { name: 'Grudge Match', maxCards: 3, minTier: 0, suitPunish: { suit: '♥', perCard: 4, base: 6 } }] },
-    { id: 'hydrant', name: 'Burst Hydrant', icon: '💦', image: 'Hazards/burst-hydrant.jpg', hp: 70, minTier: 1, drawRate: 3, turnLimit: 7, attacks: [{ name: 'Pressure Blast', maxCards: 3, minTier: 1, effect: 'burn' }] },
-    { id: 'dumpsterFire', name: 'Dumpster Fire', icon: '🔥', image: 'Hazards/dumpster-fire.jpg', hp: 75, minTier: 2, drawRate: 3, turnLimit: 7,
-      special: { type: 'redSteal', redThreshold: 3, fuelSteal: 1, extraDraw: 1 }, attacks: [{ name: 'Rancid Blaze', maxCards: 3, minTier: 2, effect: 'burn' }] } ],
-  [ { id: 'evilMechanic1', name: 'Evil Mechanic', icon: '🔧', image: 'Hazards/evil-mechanic.jpg', hp: 80, minTier: 2, drawRate: 3, turnLimit: 7,
-      curse: { count: 1, amount: 8, chance: 0.5 }, attacks: [{ name: 'Sabotage', maxCards: 3, minTier: 2, effect: 'curse' }] },
-    { id: 'streetFire', name: 'Street Fire', icon: '🔥', image: 'Hazards/street-fire.jpg', hp: 85, minTier: 3, drawRate: 3, turnLimit: 7,
-      special: { type: 'lifesteal', pct: 0.5 }, attacks: [{ name: 'Scorching Wave', maxCards: 3, minTier: 3, effect: 'burn' }] },
-    { id: 'sinkhole', name: 'Sinkhole', icon: '🕳️', image: 'Hazards/sinkhole.jpg', hp: 90, minTier: 1, drawRate: 3, turnLimit: 7, attacks: [{ name: 'All-Points Bulletin', maxCards: 4, minTier: 2 }, { name: 'Ground Collapse', maxCards: 3, minTier: 1 }, { name: 'Aftershock', maxCards: 2, minTier: 1, effect: 'poison' }, { name: 'Structural Failure', maxCards: 4, minTier: 0, sumThreshold: { min: 20, damage: 17 } }] },
-    { id: 'gasLeak1', name: 'Gas Leak', icon: '⛽', image: 'Hazards/gas-leak.jpg', hp: 95, locked: true, lockThreshold: 45, lockAttack: 39, drawRate: 3, turnLimit: 8, releaseAttackName: 'Ignition Blast' } ],
-  [ { id: 'flashFlood', name: 'Flash Flood', icon: '🌊', image: 'Hazards/flash-flood.jpg', hp: 100, minTier: 3, drawRate: 4, turnLimit: 8, attacks: [{ name: 'Flash Deluge', maxCards: 4, minTier: 3 }, { name: 'Toxic Spray', maxCards: 3, minTier: 2, effect: 'poison' }, { name: 'Rising Waters', maxCards: 4, minTier: 0, minTurn: 5, sumThreshold: { min: 15, damage: 26 } }] },
-    { id: 'riot', name: 'Angry Mob', icon: '📢', image: 'Hazards/angry-mob.jpg', hp: 105, minTier: 2, drawRate: 4, turnLimit: 8, usesPerTurn: 2, attacks: [{ name: 'Crowd Surge', maxCards: 4, minTier: 2 }, { name: 'Crowd Pressure', maxCards: 3, minTier: 2, effect: 'curse' }, { name: 'Mob Pile-On', maxCards: 4, minTier: 0, perFaceCard: { damage: 8 } }] },
-    { id: 'blackout', name: 'Blackout', icon: '🌑', image: 'Hazards/blackout.jpg', hp: 110, minTier: 1, drawRate: 3, turnLimit: 8, attacks: [{ name: 'Blackout', maxCards: 2, minTier: 2 }, { name: 'Total Shutdown', maxCards: 3, minTier: 1, effect: 'stealFuel' }] } ],
-  [ { id: 'stormSurge', name: 'Storm Surge', icon: '🌊', image: 'Hazards/storm-surge.jpg', hp: 115, minTier: 3, drawRate: 4, turnLimit: 8, attacks: [{ name: 'Tidal Slam', maxCards: 4, minTier: 3, effect: 'burn' }, { name: 'Undertow', maxCards: 3, minTier: 2, effect: 'poison' }] },
-    { id: 'buildingFire', name: 'Building Fire', icon: '🔥', image: 'Hazards/building-fire.jpg', hp: 120, minTier: 4, drawRate: 4, turnLimit: 8, attacks: [{ name: 'Inferno Blast', maxCards: 4, minTier: 4, effect: 'burn' }, { name: 'Structural Collapse', maxCards: 5, minTier: 0, sumThreshold: { min: 28, damage: 24 }, effect: 'stealFuel' }] },
-    { id: 'evilMechanic2', name: 'Evil Mechanic (Repeat Offender)', icon: '🔧', image: 'Hazards/evil-mechanic-2.jpg', hp: 125, minTier: 2, drawRate: 4, turnLimit: 8,
-      curse: { count: 2, amount: 10, chance: 0.55 }, attacks: [{ name: 'Double Sabotage', maxCards: 4, minTier: 2, effect: 'curse' }, { name: 'Total Wreckage', maxCards: 5, minTier: 0, sumThreshold: { min: 32, damage: 30 } }] },
-    { id: 'looseDog2', name: 'Loose Dog 2', icon: '🐕', image: 'Hazards/loose-dog-2.jpg', hp: 115, minTier: 0, drawRate: 3, turnLimit: 8, attacks: [{ name: 'Snap Bite', maxCards: 1, minTier: 0 }, { name: 'Cornered Snarl', maxCards: 2, minTier: 0, fewCardsThreshold: { max: 1, damage: 26 } }] },
-    { id: 'gasLeak2', name: 'Major Gas Leak', icon: '⛽', image: 'Hazards/gas-leak-2.jpg', hp: 130, locked: true, lockThreshold: 70, lockAttack: 60, drawRate: 4, turnLimit: 9, releaseAttackName: 'Massive Ignition' } ],
+  // --- TIER 1: Minor Street Impediments (Early Game) ---
+  [ 
+    { id: 'trashfire', name: 'Trash Can Fire', icon: '🔥', image: 'Hazards/trash-fire.jpg', hp: 35, minTier: 0, drawRate: 2, turnLimit: 6, attacks: [{ name: 'Ember Flare', maxCards: 1, minTier: 0 }] },
+    { id: 'pothole', name: 'Nasty Pothole', icon: '🕳️', image: 'Hazards/pothole.jpg', hp: 42, minTier: 0, drawRate: 2, turnLimit: 6, attacks: [{ name: 'Axle Buster', maxCards: 1, minTier: 0, fewCardsThreshold: { max: 1, damage: 14 } }] },
+    { id: 'flickerlight', name: 'Flickering Street Light', icon: '💡', image: 'Hazards/flicker-light.jpg', hp: 45, minTier: 0, drawRate: 2, turnLimit: 6, attacks: [{ name: 'Static Discharge', maxCards: 2, minTier: 0 }] } 
+  ],
+
+  // --- TIER 2: Active Road Obstacles & Complex Rules ---
+  [ 
+    { id: 'jaywalker', name: 'Jaywalker', icon: '🚶', image: 'Hazards/jaywalker.jpg', hp: 55, minTier: 1, drawRate: 2, attacks: [{ name: 'Sudden Dash', maxCards: 2, minTier: 1 }, { name: 'Enrage', minTurn: 6, autoFire: { damage: 15 } }] },
+    { id: 'grumpyMeter', name: 'Broken Meter', icon: '🅿️', image: 'Hazards/broken-meter.jpg', hp: 60, minTier: 1, drawRate: 2, turnLimit: 6, attacks: [{ name: 'Coin Jam', maxCards: 2, minTier: 1, effect: 'stealFuel' }, { name: 'Repo Notice', maxCards: 2, minTier: 1, effect: 'curse' }, { name: 'Ticket Slip', maxCards: 2, minTier: 0, discardHand: { count: 1 } }] },
+    { id: 'looseWire', name: 'Downed Power Line', icon: '⚡', image: 'Hazards/downed-line.jpg', hp: 65, minTier: 0, drawRate: 2, turnLimit: 6, attacks: [{ name: 'Live Wire Shock', maxCards: 2, minTier: 0, effect: 'stun' }] } 
+  ],
+
+  // --- TIER 3: The Mid-Way Drain (High pressure threshold math) ---
+  [ 
+    { id: 'angryCitizen', name: 'Angry Citizen', icon: '😠', image: 'Hazards/angry-citizen.jpg', hp: 75, minTier: 1, drawRate: 3, turnLimit: 6, attacks: [{ name: 'Shouting Match', maxCards: 3, minTier: 1 }, { name: 'Harassment', maxCards: 2, minTier: 1, effect: 'curse' }, { name: 'Grudge Match', maxCards: 3, minTier: 0, suitPunish: { suit: '♥', perCard: 4, base: 6 } }] },
+    { id: 'hydrant', name: 'Burst Hydrant', icon: '💦', image: 'Hazards/burst-hydrant.jpg', hp: 80, minTier: 0, drawRate: 3, turnLimit: 6, attacks: [{ name: 'Pressure Blast Explosion', maxCards: 4, minTier: 0, sumThreshold: { min: 25, damage: 24 } }] },
+    { id: 'dumpsterFire', name: 'Dumpster Fire', icon: '🔥', image: 'Hazards/dumpster-fire.jpg', hp: 85, minTier: 2, drawRate: 3, turnLimit: 7, special: { type: 'redSteal', redThreshold: 3, fuelSteal: 1, extraDraw: 1 }, attacks: [{ name: 'Rancid Blaze', maxCards: 3, minTier: 2, effect: 'burn' }] } 
+  ],
+
+  // --- TIER 4: The Halfway Gatekeeper (The soft progression wall) ---
+  [ 
+    { id: 'evilMechanic1', name: 'Evil Mechanic', icon: '🔧', image: 'Hazards/evil-mechanic.jpg', hp: 95, minTier: 2, drawRate: 3, turnLimit: 7, curse: { count: 1, amount: 10, chance: 0.6 }, attacks: [{ name: 'Sabotage Engine', maxCards: 3, minTier: 2, effect: 'curse' }] },
+    { id: 'streetFire', name: 'Street Fire', icon: '🔥', image: 'Hazards/street-fire.jpg', hp: 100, minTier: 3, drawRate: 3, turnLimit: 7, special: { type: 'lifesteal', pct: 0.5 }, attacks: [{ name: 'Scorching Wave', maxCards: 3, minTier: 3, effect: 'burn' }] },
+    { id: 'sinkhole', name: 'Sinkhole', icon: '🕳️', image: 'Hazards/sinkhole.jpg', hp: 105, minTier: 1, drawRate: 3, turnLimit: 7, attacks: [{ name: 'All-Points Bulletin', maxCards: 4, minTier: 2 }, { name: 'Ground Collapse', maxCards: 3, minTier: 1 }, { name: 'Aftershock', maxCards: 2, minTier: 1, effect: 'poison' }] },
+    { id: 'gasLeak1', name: 'Gas Leak', icon: '⛽', image: 'Hazards/gas-leak.jpg', hp: 110, locked: true, lockThreshold: 55, lockAttack: 42, drawRate: 3, turnLimit: 7, releaseAttackName: 'Ignition Explosion' } 
+  ],
+
+  // --- TIER 5: Large Scale Grid Disruption ---
+  [ 
+    { id: 'flashFlood', name: 'Flash Flood', icon: '🌊', image: 'Hazards/flash-flood.jpg', hp: 115, minTier: 3, drawRate: 4, turnLimit: 8, attacks: [ { name: 'Flash Deluge', maxCards: 4, minTier: 3 }, { name: 'Toxic Spray', maxCards: 3, minTier: 2, effect: 'poison' }, { name: 'Rising Waters', maxCards: 4, minTier: 0, minTurn: 4, sumThreshold: { min: 20, damage: 28 } }] },
+    { id: 'riot', name: 'Angry Mob', icon: '📢', image: 'Hazards/angry-mob.jpg', hp: 120, minTier: 2, drawRate: 4, turnLimit: 8, usesPerTurn: 2, attacks: [{ name: 'Crowd Surge', maxCards: 4, minTier: 2 }, { name: 'Crowd Pressure', maxCards: 3, minTier: 2, effect: 'curse' }, { name: 'Mob Pile-On', maxCards: 4, minTier: 0, perFaceCard: { damage: 8 } }] },
+    { id: 'blackout', name: 'Blackout', icon: '🌑', image: 'Hazards/blackout.jpg', hp: 125, minTier: 1, drawRate: 3, turnLimit: 8, attacks: [{ name: 'Blackout Surge', maxCards: 2, minTier: 2 }, { name: 'Total Shutdown', maxCards: 3, minTier: 1, effect: 'stealFuel' }] } 
+  ],
+
+  // --- TIER 6: Advanced Route Hazards & Elite Evolutions ---
+  [ 
+    { id: 'stormSurge', name: 'Storm Surge', icon: '🌊', image: 'Hazards/storm-surge.jpg', hp: 130, minTier: 3, drawRate: 4, turnLimit: 8, attacks: [{ name: 'Tidal Slam', maxCards: 4, minTier: 3, effect: 'burn' }, { name: 'Undertow', maxCards: 3, minTier: 2, effect: 'poison' }] },
+    { id: 'buildingFire', name: 'Building Fire', icon: '🔥', image: 'Hazards/building-fire.jpg', hp: 135, minTier: 4, drawRate: 4, turnLimit: 8, attacks: [{ name: 'Inferno Blast', maxCards: 4, minTier: 4, effect: 'burn' }, { name: 'Structural Collapse', maxCards: 5, minTier: 0, sumThreshold: { min: 30, damage: 26 }, effect: 'stealFuel' }] },
+    { id: 'evilMechanic2', name: 'Evil Mechanic (Repeat Offender)', icon: '🔧', image: 'Hazards/evil-mechanic-2.jpg', hp: 140, minTier: 2, drawRate: 4, turnLimit: 8, curse: { count: 2, amount: 12, chance: 0.6 }, attacks: [{ name: 'Double Sabotage', maxCards: 4, minTier: 2, effect: 'curse' }, { name: 'Total Wreckage', maxCards: 5, minTier: 0, sumThreshold: { min: 32, damage: 32 } }] },
+    { id: 'looseDog2', name: 'Loose Dog 2', icon: '🐕', image: 'Hazards/loose-dog-2.jpg', hp: 130, minTier: 0, drawRate: 3, turnLimit: 8, attacks: [{ name: 'Snap Bite', maxCards: 1, minTier: 0 }, { name: 'Cornered Snarl', maxCards: 2, minTier: 0, fewCardsThreshold: { max: 1, damage: 28 } }] },
+    { id: 'gasLeak2', name: 'Major Gas Leak', icon: '⛽', image: 'Hazards/gas-leak-2.jpg', hp: 145, locked: true, lockThreshold: 75, lockAttack: 65, drawRate: 4, turnLimit: 9, releaseAttackName: 'Massive Ignition' },
+    { id: 'streetlight_elite', name: 'Live Wire Street Light [Elite]', icon: '⚡', image: 'Hazards/downed-line.jpg', hp: 135, minTier: 2, drawRate: 4, turnLimit: 8, attacks: [{ name: 'High-Voltage Arc', maxCards: 3, minTier: 2, effect: 'stun' }, { name: 'Ground Crackle', maxCards: 3, minTier: 0, sumThreshold: { min: 25, damage: 26 } }] },
+    { id: 'sinkhole_elite', name: 'Crumbling Sinkhole [Elite]', icon: '🕳️', image: 'Hazards/sinkhole.jpg', hp: 140, minTier: 1, drawRate: 4, turnLimit: 8, attacks: [{ name: 'Chasm Collapse', maxCards: 5, minTier: 0, sumThreshold: { min: 35, damage: 45 } }, { name: 'Corrosive Mud', maxCards: 2, minTier: 1, effect: 'poison' }] }
+  ],
 ];
-const BOSS = { id: 'wildfire', name: 'Wildfire', icon: '🔥', image: 'Hazards/wildfire.jpg', hp: 145, minTier: 3, drawRate: 4, turnLimit: 10, boss: true, usesPerTurn: 2,
-  curse: { count: 2, amount: 10, chance: 0.5 }, attacks: [{ name: 'Firestorm Surge', maxCards: 5, minTier: 3, effect: 'burn' }, { name: 'Ashfall', maxCards: 4, minTier: 2, effect: 'poison' }, { name: 'Total Engulfment', maxCards: 5, minTier: 0, perFaceCard: { damage: 10 } }],
-  attackInfo: 'Attack: uses its best poker hand for about 10-35 damage, depending on the hand, and can hit twice a turn. Can also curse your equipped Items — an Item that doesn\'t fire before turn end takes its curse damage.' };
+
+const BOSS = { id: 'wildfire', name: 'Wildfire', icon: '🔥', image: 'Hazards/wildfire.jpg', hp: 160, minTier: 3, drawRate: 4, turnLimit: 10, boss: true, usesPerTurn: 2, curse: { count: 2, amount: 12, chance: 0.55 }, attacks: [{ name: 'Firestorm Surge', maxCards: 5, minTier: 3, effect: 'burn' }, { name: 'Ashfall', maxCards: 4, minTier: 2, effect: 'poison' }, { name: 'Total Engulfment', maxCards: 5, minTier: 0, perFaceCard: { damage: 12 } }], attackInfo: 'Attack: uses its best poker hand for about 10-35 damage, depending on the hand, and can hit twice a turn. Can also curse your equipped Items — an Item that doesn\'t fire before turn end takes its curse damage.' };
+
 function revealFraction(row) { return [1.0, 0.8, 0.6, 0.4, 0.25, 0.1, 0][Math.min(row, 6)]; }
 
 /* ========== LEVELED UPGRADE TREE (permanent, up to 20 levels each) ========== */
@@ -883,18 +902,48 @@ function pickNodeType(forcedType) {
   if (r < 0.95) return 'chopshop';
   return 'treasure';
 }
+/* ========== MONSTER REPURPOSING SCALER ==========
+   Pass an existing monster object from World 1 along with a world difficulty modifier 
+   (e.g., 1.5 for World 2, 2.2 for World 3). Automatically rescales stats seamlessly. */
+function scaleMonsterForNewWorld(baseMonster, worldMultiplier) {
+  const scaled = JSON.parse(JSON.stringify(baseMonster)); // Deep copy the blueprint
+  
+  scaled.hp = Math.round(scaled.hp * worldMultiplier);
+  scaled.name = `${scaled.name} (Sector ${Math.ceil(worldMultiplier)})`;
+  
+  if (scaled.lockAttack) scaled.lockAttack = Math.round(scaled.lockAttack * worldMultiplier);
+  if (scaled.lockThreshold) scaled.lockThreshold = Math.round(scaled.lockThreshold * (1 + (worldMultiplier - 1) * 0.4));
+
+  if (scaled.attacks) {
+    scaled.attacks.forEach(a => {
+      if (a.autoFire) a.autoFire.damage = Math.round(a.autoFire.damage * worldMultiplier);
+      if (a.sumThreshold) a.sumThreshold.damage = Math.round(a.sumThreshold.damage * worldMultiplier);
+      if (a.fewCardsThreshold) a.fewCardsThreshold.damage = Math.round(a.fewCardsThreshold.damage * worldMultiplier);
+      if (a.perFaceCard) a.perFaceCard.damage = Math.round(a.perFaceCard.damage * worldMultiplier);
+      if (a.suitPunish) a.suitPunish.base = Math.round((a.suitPunish.base || 0) * worldMultiplier);
+    });
+  }
+  return scaled;
+}
 function generateMap() {
   const nodes = [], edges = [];
   const tierForRow = r => Math.min(OPPONENT_TIERS.length - 1, Math.floor(r / 3));
   const castleRow = 10;
-  const rowCounts = [1,2,1,3,2,2,3,2,2,2,1,3,2,2,2,2,2,2,2,2];
+  const rowCounts =;
 
-  // Start -> two choices -> merge at the guaranteed third-stop Dealership.
-  // Thereafter the three lanes freely intermingle. Exactly 29 of 41 route nodes are battles (~71%).
+  // Global world multiplier configuration
+  // Set to 1.0 for World 1, can be hooked into a menu later for World 2 (1.5), World 3 (2.0), etc.
+  const worldMultiplier = RUN.worldMultiplier || 1.0; 
+
   for (let r=0;r<rowCounts.length;r++) {
     const row=[];
+    // Pull the raw layout pool
     const pool=shuffle([...(OPPONENT_TIERS[tierForRow(r)])]);
-    for(let c=0;c<rowCounts[r];c++) row.push({type:'pending', opponent:pool[c%pool.length]});
+    for(let c=0;c<rowCounts[r];c++) {
+      // Use your new scaler to smoothly modify the base stats based on the world multiplier
+      const baseOpp = pool[c%pool.length];
+      row.push({type:'pending', opponent: scaleMonsterForNewWorld(baseOpp, worldMultiplier)});
+    }
     nodes.push(row);
   }
   nodes[0][0].type='battle';
@@ -906,17 +955,28 @@ function generateMap() {
   for(let r=0;r<nodes.length;r++) for(let c=0;c<nodes[r].length;c++)
     if(nodes[r][c].type==='pending') eligible.push({r,c});
   shuffle(eligible);
-  const needBattles=29-3; // start + two row-1 battles already set
-  eligible.slice(0,needBattles).forEach(({r,c})=>nodes[r][c]={type:'battle',opponent:OPPONENT_TIERS[tierForRow(r)][Math.floor(Math.random()*OPPONENT_TIERS[tierForRow(r)].length)]});
+  
+  // Set standard battles dynamically using the scaled versions
+  const needBattles=29-3; 
+  eligible.slice(0,needBattles).forEach(({r,c})=> {
+    const baseOpp = OPPONENT_TIERS[tierForRow(r)][Math.floor(Math.random()*OPPONENT_TIERS[tierForRow(r)].length)];
+    nodes[r][c]={type:'battle', opponent: scaleMonsterForNewWorld(baseOpp, worldMultiplier)};
+  });
+  
   eligible.slice(needBattles).forEach(({r,c})=>{
     const t=pickNodeType();
-    nodes[r][c]= t==='battle'
-      ? {type:'battle', opponent:OPPONENT_TIERS[tierForRow(r)][Math.floor(Math.random()*OPPONENT_TIERS[tierForRow(r)].length)]}
-      : {type:t};
+    if (t==='battle') {
+      const baseOpp = OPPONENT_TIERS[tierForRow(r)][Math.floor(Math.random()*OPPONENT_TIERS[tierForRow(r)].length)];
+      nodes[r][c]={type:'battle', opponent: scaleMonsterForNewWorld(baseOpp, worldMultiplier)};
+    } else {
+      nodes[r][c]={type:t};
+    }
   });
-  nodes.push([{type:'battle',opponent:BOSS}]);
+  
+  // Scale the final world Boss object as well
+  nodes.push([{type:'battle', opponent: scaleMonsterForNewWorld(BOSS, worldMultiplier)}]);
 
-  // Dense, cross-lane connections. Every node has a route forward and every next node has a parent.
+  // Dense, cross-lane connections.
   for(let r=0;r<nodes.length-1;r++){
     const cur=nodes[r], next=nodes[r+1];
     const add=(a,b)=>{if(!edges.some(e=>e.fromRow===r&&e.fromCol===a&&e.toRow===r+1&&e.toCol===b))edges.push({fromRow:r,fromCol:a,toRow:r+1,toCol:b});};
@@ -933,6 +993,7 @@ function generateMap() {
   }
   return {nodes,edges};
 }
+
 
 /* ========== RUN STATE ========== */
 let RUN = null;

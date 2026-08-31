@@ -3005,9 +3005,6 @@ function render(html) {
 
 /* ========== BOOT ========== */
 (function boot() {
-  // A saved battle only makes sense alongside a saved run — if a mid-fight refresh happens,
-  // resume straight into that exact fight instead of dropping back to the main menu or map,
-  // so nobody can peek at an opponent's hand/attacks and reroll a different path.
   const savedBattle = loadBattleSave();
   const savedRun = loadRunSave();
   if (savedBattle && savedRun) {

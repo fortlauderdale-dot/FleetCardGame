@@ -122,6 +122,7 @@
   .card div:last-child{font-size:23px;line-height:1}
   .card.red{color:var(--red)}
   .card.selected{outline:3px solid var(--amber);transform:translateY(-6px)}
+  .card.matched{outline:3px solid var(--green)}
   .card.cursed{outline:2px solid var(--purple)}
   .card.mini{width:37px;height:52px;font-size:14px;cursor:pointer;gap:0}
   .card.mini div:last-child{font-size:18px !important;line-height:1}
@@ -942,7 +943,7 @@ function generateMap() {
   const nodes = [], edges = [];
   const tierForRow = r => Math.min(OPPONENT_TIERS.length - 1, Math.floor(r / 3));
   const castleRow = 10;
-  const rowCounts =;
+  const rowCounts = [1,3,3,3,4,4,4,3,3,2,1];
 
   // Global world multiplier configuration
   // Set to 1.0 for World 1, can be hooked into a menu later for World 2 (1.5), World 3 (2.0), etc.
@@ -1185,19 +1186,19 @@ function castleInnScreen(message='') {
   </div>`; 
 }
 
+const MATCH_ICON_KEYS = ['truck','wrench','fuel','hammer','shield','star','gift','coin','fire'];
 function castleMatchScreen() {
   if (!RUN.castleState) RUN.castleState = {};
   if (!RUN.castleState.matchCards) {
-    const suits = shuffle([...SUITS]).slice(0,3).map(s=>s.s);
-    RUN.castleState.matchCards = shuffle(suits.flatMap((s,i)=>[{id:i*2,suit:s},{id:i*2+1,suit:s}]).map(c=>({...c,flipped:false})));
+    RUN.castleState.matchCards = shuffle(MATCH_ICON_KEYS.flatMap((k,i)=>[{id:i*2,key:k},{id:i*2+1,key:k}]).map(c=>({...c,flipped:false,matched:false})));
     RUN.castleState.matchGuesses = 4;
     RUN.castleState.matchPick = [];
   }
-  const cards=RUN.castleState.matchCards.map((c,i)=>`<button class="card mini ${c.flipped?'':'back'}" data-match="${i}" ${c.flipped?'disabled':''}>${c.flipped?c.suit:'?'}</button>`).join('');
+  const cards=RUN.castleState.matchCards.map((c,i)=>`<button class="card ${c.matched?'matched':''} ${(c.flipped||c.matched)?'':'back'}" data-match="${i}" ${(c.flipped||c.matched)?'disabled':''}>${(c.flipped||c.matched)?ICON[c.key]:'?'}</button>`).join('');
   return `<div class="wo"><div class="wo-stripe"></div><div class="wo-body">
     <div class="wo-eyebrow">Fleet Compound</div><h1>Fleet Carnival <em>Matching Game</em></h1>
     <div class="wo-sub">Guesses left: ${RUN.castleState.matchGuesses}</div>
-    <div class="grid" style="grid-template-columns:repeat(3,1fr);max-width:360px">${cards}</div>
+    <div class="grid" style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;max-width:340px">${cards}</div>
     <div class="note" style="margin:10px 0">Match a pair to win a random reward. A wrong guess uses one of your attempts.</div>
     <button class="wo-btn gray" id="leaveMatchBtn">Back to Compound</button>
   </div></div>`;
@@ -2912,37 +2913,25 @@ function render(html) {
   const backToCastleMenuBtn = document.getElementById('backToCastleMenuBtn'); if (backToCastleMenuBtn) backToCastleMenuBtn.onclick = () => render(castleMenuScreen());
   const castleBattle1Btn = document.getElementById('castleBattle1Btn'); if (castleBattle1Btn) castleBattle1Btn.onclick = () => { if (!RUN.castleState) RUN.castleState = {}; startBattle(CASTLE_FIRST, 10, 0, 1); };
   const castleBattle2Btn = document.getElementById('castleBattle2Btn'); if (castleBattle2Btn) castleBattle2Btn.onclick = () => { if (!RUN.castleState) RUN.castleState = {}; startBattle(CASTLE_SECOND, 10, 0, 2); };
-  const castleFuelBtn = document.getElementById('castleFuelBtn'); if (castleFuelBtn) castleFuelBtn.onclick = () => { if (RUN.chips>=5) { RUN.chips-=5; RUN.fuel=Math.min(RUN.maxFuel,RUN.fuel+10); saveRun(); render(castleInnScreen('You refueled for 5 coins.')); } };
-  const castleRestBtn = document.getElementById('castleRestBtn'); 
-    if (castleRestBtn) {
-      castleRestBtn.onclick = () => { 
-      const cost = RUN.innSleeps === 0 ? 0 : 20 * RUN.innSleeps; 
-      if (RUN.chips < cost || RUN.health >= RUN.maxHealth) return; 
-      
-      RUN.chips -= cost; 
-      RUN.innSleeps = (RUN.innSleeps || 0) + 1; 
-      RUN.health = Math.min(RUN.maxHealth, RUN.health + 30); 
-      
-      saveRun(); 
-      render(castleInnScreen(`You slept and recovered 30 health${cost ? ` for ${cost} coins` : ''}.`)); 
-      };
-    }
-
   const leaveCastleBtn = document.getElementById('leaveCastleBtn'); if (leaveCastleBtn) leaveCastleBtn.onclick = () => render(mapScreen());
   const leaveMatchBtn = document.getElementById('leaveMatchBtn'); if (leaveMatchBtn) leaveMatchBtn.onclick = () => render(castleMenuScreen());
   app.querySelectorAll('[data-match]').forEach(el => el.onclick = () => {
     const i=+el.dataset.match, st=RUN.castleState;
-    if (!st || st.matchGuesses<=0 || st.matchPick.includes(i) || st.matchCards[i].flipped) return;
+    if (!st || st.matchGuesses<=0 || st.matchPick.includes(i) || st.matchCards[i].flipped || st.matchCards[i].matched) return;
     st.matchPick.push(i); st.matchCards[i].flipped=true;
     if (st.matchPick.length===2) {
       const [a,b]=st.matchPick;
-      if (st.matchCards[a].suit===st.matchCards[b].suit) {
+      if (st.matchCards[a].key===st.matchCards[b].key) {
+        st.matchCards[a].matched=true; st.matchCards[b].matched=true; st.matchPick=[];
         const reward=Math.random()<0.5 ? {coins:20+Math.floor(Math.random()*21),gems:1} : {coins:15,fuel:8};
         RUN.chips+=reward.coins||0; RUN.gems=Math.min(RUN.maxGems,RUN.gems+(reward.gems||0)); RUN.fuel=Math.min(RUN.maxFuel,RUN.fuel+(reward.fuel||0));
-        st.matchGuesses++; saveRun(); render(castleMenuScreen(`Match! You won ${reward.coins||0} coins${reward.gems?`, ${reward.gems} gem`:''}${reward.fuel?`, ${reward.fuel} fuel`:''}.`));
+        st.matchGuesses++; saveRun();
+        render(castleMatchScreen());
+        setTimeout(()=>{ render(castleMenuScreen(`Match! You won ${reward.coins||0} coins${reward.gems?`, ${reward.gems} gem`:''}${reward.fuel?`, ${reward.fuel} fuel`:''}.`)); },900);
       } else {
         st.matchGuesses--;
-        setTimeout(()=>{ st.matchPick.forEach(x=>st.matchCards[x].flipped=false); st.matchPick=[]; render(st.matchGuesses>0?castleMatchScreen():castleMenuScreen('No match. The game is over for this visit.')); },350);
+        render(castleMatchScreen());
+        setTimeout(()=>{ st.matchPick.forEach(x=>st.matchCards[x].flipped=false); st.matchPick=[]; render(st.matchGuesses>0?castleMatchScreen():castleMenuScreen('No match. The game is over for this visit.')); },900);
       }
     }
     else render(castleMatchScreen());

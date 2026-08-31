@@ -1187,22 +1187,55 @@ function castleInnScreen(message='') {
 }
 
 const MATCH_ICON_KEYS = ['truck','wrench','fuel','hammer','shield','star','gift','coin','fire'];
+/* ========== FLEET CARNIVAL MATCHING GAME LAYOUT ========== */
 function castleMatchScreen() {
   if (!RUN.castleState) RUN.castleState = {};
+  
+  // Set up a full 18-card grid (6 columns x 3 rows = 9 identical matching pairs)
   if (!RUN.castleState.matchCards) {
-    RUN.castleState.matchCards = shuffle(MATCH_ICON_KEYS.flatMap((k,i)=>[{id:i*2,key:k},{id:i*2+1,key:k}]).map(c=>({...c,flipped:false,matched:false})));
-    RUN.castleState.matchGuesses = 4;
+    const symbols = ['♦', '♣', '♥', '♠', '♦', '♣', '♥', '♠', '♦']; // 9 distinct pairs
+    RUN.castleState.matchCards = shuffle(
+      symbols.flatMap((suitSymbol, i) => [
+        { id: i * 2, suit: suitSymbol, color: (suitSymbol === '♥' || suitSymbol === '♦') ? 'red' : 'blk', flipped: false, matched: false },
+        { id: i * 2 + 1, suit: suitSymbol, color: (suitSymbol === '♥' || suitSymbol === '♦') ? 'red' : 'blk', flipped: false, matched: false }
+      ])
+    );
+    RUN.castleState.matchGuesses = 6; // Fair attempt limit for a larger grid
     RUN.castleState.matchPick = [];
   }
-  const cards=RUN.castleState.matchCards.map((c,i)=>`<button class="card ${c.matched?'matched':''} ${(c.flipped||c.matched)?'':'back'}" data-match="${i}" ${(c.flipped||c.matched)?'disabled':''}>${(c.flipped||c.matched)?ICON[c.key]:'?'}</button>`).join('');
-  return `<div class="wo"><div class="wo-stripe"></div><div class="wo-body">
-    <div class="wo-eyebrow">Fleet Compound</div><h1>Fleet Carnival <em>Matching Game</em></h1>
-    <div class="wo-sub">Guesses left: ${RUN.castleState.matchGuesses}</div>
-    <div class="grid" style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;max-width:340px">${cards}</div>
-    <div class="note" style="margin:10px 0">Match a pair to win a random reward. A wrong guess uses one of your attempts.</div>
-    <button class="wo-btn gray" id="leaveMatchBtn">Back to Compound</button>
-  </div></div>`;
+
+  // Uses full battle-screen sizing styles (.card) and grid mechanics
+  const cards = RUN.castleState.matchCards.map((c, i) => {
+    const isRed = c.color === 'red' ? 'red' : '';
+    const isClub = c.suit === '♣' ? 'club-card' : '';
+    const displayState = (c.flipped || c.matched) ? '' : 'back';
+    const isDisabled = (c.flipped || c.matched || RUN.castleState.matchLock) ? 'disabled' : '';
+    
+    return `<button class="card ${isRed} ${isClub} ${displayState}" data-match="${i}" ${isDisabled}>
+              <div>${(c.flipped || c.matched) ? '' : '?'}</div>
+              <div>${(c.flipped || c.matched) ? c.suit : ''}</div>
+            </button>`;
+  }).join('');
+
+  return `
+    <div class="wo">
+      <div class="wo-stripe"></div>
+      <div class="wo-body">
+        <div class="wo-eyebrow">Fleet Compound</div>
+        <h1>Fleet Carnival <em>Matching Game</em></h1>
+        <div class="wo-sub">Attempts Left: ${RUN.castleState.matchGuesses}</div>
+        
+        <!-- Arranged into a clean, easy-to-read 6-column grid using large battle-size elements -->
+        <div style="display:grid; grid-template-columns:repeat(6, 1fr); gap:10px; max-width:360px; margin:0 auto">
+          ${cards}
+        </div>
+        
+        <div class="note" style="margin:14px 0 10px; text-align:center">Match all pairs using full battle-size elements. Finding a wrong matchup will lock selections momentarily to let you look at the board.</div>
+        <button class="wo-btn gray" id="leaveMatchBtn" style="width:100%">Back to Compound Menu</button>
+      </div>
+    </div>`;
 }
+
 
 let BLACKSMITH_OPTIONS = null;
 let BLACKSMITH_VISIT = null; // { primary: idx|null, secondary: idx|null } — one paid upgrade, plus one optional paid add-on, per visit

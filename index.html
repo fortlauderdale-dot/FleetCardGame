@@ -106,6 +106,9 @@
   .vslot .vcards{display:flex;gap:3px;flex-wrap:wrap;min-height:30px;margin-top:6px}
 
   .itemGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+  .dealerGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  @media (max-width:700px){.dealerGrid{grid-template-columns:repeat(2,1fr)}}
+  @media (max-width:460px){.dealerGrid{grid-template-columns:1fr}}
   .itemCard{border-radius:8px;padding:6px 4px;background:var(--bg);min-height:172px;display:flex;flex-direction:column;align-items:center;text-align:center;box-sizing:border-box;font-size:12px;position:relative}
   .usesBadge{position:absolute;top:4px;right:4px;font-size:9px;font-weight:800;background:var(--blue-light);color:var(--blue-dark);border-radius:5px;padding:1px 5px;line-height:1.4}
   .usesBadge.depleted{background:#eee;color:var(--dim)}
@@ -674,7 +677,7 @@ const ITEMS = {
   triple_threat: { id: 'triple_threat', name: 'Triple Threat', cost: 45, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'pokerTier', tier: 3 }, baseMult: 1,
     bonus: { base: 1.0, perLevel: 1.0, maxLevel: 3 }, // Three of a Kind: +100% up to +400% tuned
-    note: 'Needs Three of a Kind. Hits much harder than a Pair item, and tunes further too.' },
+    note: 'Needs Three of a Kind. A big hit that tunes even further with upgrades.' },
   bike_dash: { id: 'bike_dash', name: 'Short Fuse', cost: 30, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'straightLen', len: 2 }, baseMult: straightMult(2),
     note: 'Needs a 2-card straight (example: 7-8, any suits).' },
@@ -711,14 +714,14 @@ const ITEMS = {
   toxic_spill: { id: 'toxic_spill', name: 'Toxic Spill', cost: 40, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'any' }, baseMult: 0.5, kind: 'poison',
     bonus: { base: 0, perLevel: 0.15, maxLevel: 3 },
-    note: 'Up to 3 cards. Poison = ÷ 2 — play 3 cards worth 22 total for 11 poison.' },
+    note: 'Up to 3 cards. Poison equal to half your total card value.' },
   toxic_flood: { id: 'toxic_flood', name: 'Toxic Flood', cost: 65, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'any' }, baseMult: 0.75, kind: 'poison',
     bonus: { base: 0, perLevel: 0.2, maxLevel: 3 },
-    note: 'Up to 4 cards. Poison =  × 0.75 — hits harder per card than Toxic Spill.' },
+    note: 'Up to 4 cards. Poison equal to 75% of your total card value.' },
   torch_burn: { id: 'torch_burn', name: 'Slow Burn', cost: 65, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'pokerTier', tier: 1 }, baseMult: 1, kind: 'burn',
-    note: 'Needs a Pair. Burns over 3 turns (weaker each turn) instead of hitting directly — burns stack.' },
+    note: 'Needs a Pair. Burns over 3 turns instead of hitting directly, and burns can stack.' },
   supply_bag: { id: 'supply_bag', name: 'Regular Stash', cost: 25, maxCards: 4, kind: 'storage', maxStore: 4,
     note: 'Holds up to 4 cards of any kind turn to turn (up to 6 with Chop Shop upgrades). Never attacks, never gets cursed. Click a stored card to take it back.' },
   supply_bag_big: { id: 'supply_bag_big', name: 'Elite Stash', cost: 50, maxCards: 5, kind: 'storage', maxStore: 5,
@@ -2341,6 +2344,50 @@ function pickShopStock() {
   if (bags.length) stock.push(shuffle([...bags])[0]);
   return stock;
 }
+// One shared card style for the Dealership, matching the equipped-item cards used in battle
+// (same header colors, same Poison/Burn/Curse hover tags) so an item looks the same whether
+// you're buying it or using it. `opts` is either {mode:'buy', disabled, disabledLabel} or
+// {mode:'sell', sell, index}.
+function dealerItemCardHTML(item, opts) {
+  const eKind = effectiveKind(item);
+  const headerColor = eKind === 'defense' ? 'var(--defense)' : eKind === 'poison' ? '#4d8f45' : eKind === 'burn' ? '#c4472d' : eKind === 'curse' ? '#7a4aa8' : 'var(--blue-dark)';
+  const priceLabel = opts.mode === 'buy' ? `${item.cost} coins` : `${opts.sell} coins`;
+  const footer = opts.mode === 'buy'
+    ? `<button class="wo-btn amber" data-buy="${item.id}" data-cost="${item.cost}" ${opts.disabled ? 'disabled' : ''} style="width:100%;padding:7px 10px;font-size:12px;margin:4px 0 6px">${opts.disabledLabel || 'Purchase'}</button>`
+    : `<button class="wo-btn gray" data-sell="${opts.index}" style="width:100%;padding:7px 10px;font-size:12px;margin:4px 0 6px">Sell</button>`;
+  const head = `<div class="hdr" style="font-weight:700;color:${headerColor};width:100%;text-align:left">${item.name}</div>
+    <div class="price" style="text-align:left">${priceLabel}</div>
+    ${footer}
+    <div class="itemDivider"></div>`;
+
+  if (item.kind === 'storage') {
+    return `<div class="itemCard" style="min-height:auto;text-align:left;align-items:flex-start;padding:8px">
+      ${head}
+      <div class="note" style="text-align:left;margin:0">${item.note || ''}</div>
+    </div>`;
+  }
+
+  const hasKindAmount = item.flatAmount != null || (item.baseMult ?? 1) > 0;
+  const drawN = item.drawUsesCardCount ? (item.maxCards + (item.drawBonusFlat || 0)) : (item.drawAmount || 0);
+  const drawText = (item.drawAmount || item.drawUsesCardCount) ? `<span class="hoverTip" title="Draws ${drawN} card${drawN === 1 ? '' : 's'} immediately after this item is used."><b>Draw</b> ${drawN} card${drawN === 1 ? '' : 's'}</span>` : '';
+  const kindTag = eKind === 'poison' ? `<span class="effectTip poisonText" data-tip="Poison deals its damage at the end of the opponent's turn, then drops by 3 each turn until it's gone."><b>Poison</b></span>`
+    : eKind === 'burn' ? `<span class="effectTip burnText" data-tip="Burn hits for full damage, then half, then a quarter, fading out over 3 turns."><b>Burn</b></span>`
+    : eKind === 'curse' ? `<span class="effectTip curseText" data-tip="Curse goes off if this item isn't fired again before the opponent's next turn."><b>Curse</b></span>`
+    : '';
+  const amountWord = eKind === 'defense' ? 'Blocks' : 'Damage';
+  const kindLine = hasKindAmount ? `${kindTag || `<b>${amountWord}</b>`} &times;${item.baseMult ?? 1}` : '';
+  const bonusPct = item.bonus ? Math.round(item.bonus.base * 100) : 0;
+  const bonusLine = item.bonus && bonusPct > 0 ? `<div class="itemBonusLine">Bonus <b>+${bonusPct}%</b> if ${describeCondition(item.bonus.condition || item.condition)}</div>` : '';
+  const unlockLine = item.unlockThreshold != null ? `<div class="note" style="margin:2px 0 0;text-align:left"><span class="hoverTip" title="Deal ${item.unlockThreshold} total damage through this item over the run to unlock a one-time bonus draw of 4."><b>Unlocks</b> at ${item.unlockThreshold} dmg</span></div>` : '';
+
+  return `<div class="itemCard" style="min-height:auto;text-align:left;align-items:flex-start;padding:8px">
+    ${head}
+    <div class="itemReqLine" style="text-align:left">${itemRequirementText(item, eKind)}</div>
+    ${kindLine || drawText ? `<div class="note" style="margin:2px 0 0;text-align:left">${[kindLine, drawText].filter(Boolean).join(' + ')}</div>` : ''}
+    ${bonusLine}
+    ${unlockLine}
+  </div>`;
+}
 function shopScreen(fromCastle=false) {
   if (!RUN.shopStock) RUN.shopStock = pickShopStock().map(it => it.id);
   const allOptions = RUN.shopStock.map(id => ITEMS[id]).filter(Boolean);
@@ -2350,39 +2397,29 @@ function shopScreen(fromCastle=false) {
     if (cat.id !== 'all' && count === 0) return '';
     return `<button class="wo-btn ${SHOP_FILTER === cat.id ? 'amber' : 'gray'}" data-shopfilter="${cat.id}" style="padding:5px 10px;font-size:11px">${cat.label} (${count})</button>`;
   }).join('');
-  const itemRows = options.map(it => `<div class="shopcard" style="display:flex;flex-direction:column;height:100%;box-sizing:border-box">
-    <div class="hdr"><span>${it.name}</span><span class="price">${it.cost} coins</span></div>
-    <div class="itemReqLine">${itemRequirementText(it)}</div>
-    <div class="note" style="margin:0 0 4px">Damage: ${it.kind === 'unlock' ? 'Σ (see note below for its one-time unlock bonus)' : (it.baseMult != null ? ` × ${it.baseMult}` : 'special effect')}</div>
-    <div class="note" style="margin:0 0 4px;flex:1">${it.note || ''}</div>
-    <div style="display:flex;justify-content:flex-end">
-      <button class="wo-btn amber" data-buy="${it.id}" data-cost="${it.cost}" ${RUN.chips < it.cost || RUN.hero.items.length >= RUN.itemCap ? 'disabled' : ''} style="padding:8px 12px;font-size:13px">${RUN.hero.items.length >= RUN.itemCap ? 'No open item slot' : 'Purchase'}</button>
-    </div>
-  </div>`).join('');
+  const itemRows = options.map(it => dealerItemCardHTML(it, {
+    mode: 'buy',
+    disabled: RUN.chips < it.cost || RUN.hero.items.length >= RUN.itemCap,
+    disabledLabel: RUN.hero.items.length >= RUN.itemCap ? 'No open slot' : null,
+  })).join('');
   const ownedRows = RUN.hero.items.map((id,i)=>{
     const it=ITEMS[id]; if(!it) return '';
     const modCost=(itemLevel(id)>0?itemTuneCost(it,Math.max(0,itemLevel(id)-1)):0)+(itemUsesLevel(id)>0?itemUsesTuneCost(itemUsesLevel(id)-1):0)+(itemMaxCardsLevel(id)>0?itemMaxCardsTuneCost(itemMaxCardsLevel(id)-1):0)+(RUN.itemKindOverride[`${id}_${i}`] || RUN.itemKindOverride[id]?itemKindConvertCost():0);
     const sell=Math.floor((it.cost+modCost)/2);
-    return `<div class="shopcard" style="display:flex;flex-direction:column;height:100%;box-sizing:border-box">
-      <div class="hdr"><span>${it.name}</span><span class="price">Sell: ${sell} coins</span></div>
-      <div class="note" style="flex:1">Owned Item ${i+1}. Includes 50% of its purchase price and paid run modifications.</div>
-      <div style="display:flex;justify-content:flex-end">
-        <button class="wo-btn gray" data-sell="${i}" style="padding:8px 12px;font-size:13px">Sell Item</button>
-      </div>
-    </div>`;
+    return dealerItemCardHTML(it, { mode: 'sell', sell, index: i });
   }).join('');
   return `${noticeHTML()}
     <div class="wo">
       <div class="wo-stripe"></div><div class="wo-body">
-        <div style="position:sticky;top:0;z-index:10;background:var(--white);padding-bottom:10px;display:flex;gap:8px">
+        <div class="wo-eyebrow">Fleet Compound</div><h1>Dealership</h1>${currencyBar()}
+        <div class="hdr" style="margin-top:10px"><span>Available Items (${options.length}${SHOP_FILTER!=='all'?` of ${allOptions.length}`:''})</span><span>Items: ${RUN.hero.items.length}/${RUN.itemCap}</span></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 10px">${filterButtonsHTML}</div>
+        <div class="dealerGrid" style="margin:6px 0 12px">${itemRows || '<div class="note">No items in this category.</div>'}</div>
+        ${ownedRows ? `<div class="hdr" style="margin-top:14px"><span>Equipped Items</span></div><div class="dealerGrid">${ownedRows}</div>` : ''}
+        <div style="display:flex;gap:8px;margin-top:16px">
           <button class="wo-btn gray" id="leaveShopBtn" style="flex:1">${fromCastle ? "Back to Compound" : "Back to Road"}</button>
           <button class="wo-btn gray" id="openRunUpgradeFromShopBtn" data-fromcastle="${fromCastle ? '1' : '0'}" style="flex:1">Upgrades</button>
         </div>
-        <div class="wo-eyebrow">Dealership</div><h1>Vehicle <em>Department</em></h1>${currencyBar()}
-        <div class="hdr" style="margin-top:10px"><span>Available Items (${options.length}${SHOP_FILTER!=='all'?` of ${allOptions.length}`:''})</span><span>Items: ${RUN.hero.items.length}/${RUN.itemCap}</span></div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 10px">${filterButtonsHTML}</div>
-        <div class="shopGrid" style="margin:6px 0 12px">${itemRows || '<div class="note">No items in this category.</div>'}</div>
-        ${ownedRows ? `<div class="hdr" style="margin-top:14px"><span>Your Items</span><span>Sell to make room</span></div><div class="shopGrid">${ownedRows}</div>` : ''}
       </div>
     </div>`;
 }

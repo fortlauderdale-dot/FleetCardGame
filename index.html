@@ -3015,8 +3015,6 @@ function render(html) {
     };
   });
 
-    else render(castleMatchScreen());
-  });
   const leaveShopBtn = document.getElementById('leaveShopBtn'); if (leaveShopBtn) leaveShopBtn.onclick = () => render(RETURN_TO_CASTLE_MENU ? castleMenuScreen() : mapScreen());
   const leaveBlacksmithBtn = document.getElementById('leaveBlacksmithBtn'); if (leaveBlacksmithBtn) leaveBlacksmithBtn.onclick = () => { BLACKSMITH_OPTIONS = null; BLACKSMITH_VISIT = null; render(RETURN_TO_CASTLE_MENU ? castleMenuScreen() : mapScreen()); };
   const leaveTreasureBtn = document.getElementById('leaveTreasureBtn'); if (leaveTreasureBtn) leaveTreasureBtn.onclick = () => render(mapScreen());

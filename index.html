@@ -11,7 +11,7 @@
   :root{
     --blue:#2451e0; --blue-dark:#173aa8; --blue-light:#e8edfd;
     --white:#ffffff; --bg:#eef1fb; --ink:#12163a; --dim:#5c6280;
-    --amber:#ff9f1c; --red:#e5484d; --green:#2fae66; --purple:#8a4fe0; --gold:#d4af00; --defense:#0f766e; --defense-light:#e8f5f4; --defense-border:#68aaa5;
+    --amber:#ff9f1c; --red:#e5484d; --green:#2fae66; --purple:#8a4fe0; --gold:#d4af00;
     --disp:'Aptos','Aptos Display',ui-sans-serif,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
     --mono:'Aptos','Aptos Display',ui-sans-serif,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
   }
@@ -61,8 +61,7 @@
   .duelHead{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center}
   .duelSide{display:flex;align-items:center;gap:8px}
   .duelSide .sideInfo{flex:1;min-width:0}
-  .duelSide h3{margin:0 0 4px;font-size:18px;color:var(--blue-dark);height:22px;display:flex;align-items:center;overflow:visible;position:relative}
-  .duelSide .rewardRow{position:absolute;right:0;top:0;transform:translateY(-1px)}
+  .duelSide h3{margin:0 0 4px;font-size:18px;color:var(--blue-dark);height:22px;display:flex;align-items:center;overflow:hidden}
   .duelSide.opp{flex-direction:row-reverse;text-align:right}
   .duelSide .bar-wrap{height:10px}
   .rewardRow{display:inline-flex;gap:4px;flex-wrap:wrap;vertical-align:middle}
@@ -106,9 +105,6 @@
   .vslot .vcards{display:flex;gap:3px;flex-wrap:wrap;min-height:30px;margin-top:6px}
 
   .itemGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
-  .dealerGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-  @media (max-width:700px){.dealerGrid{grid-template-columns:repeat(2,1fr)}}
-  @media (max-width:460px){.dealerGrid{grid-template-columns:1fr}}
   .itemCard{border-radius:8px;padding:6px 4px;background:var(--bg);min-height:172px;display:flex;flex-direction:column;align-items:center;text-align:center;box-sizing:border-box;font-size:12px;position:relative}
   .usesBadge{position:absolute;top:4px;right:4px;font-size:9px;font-weight:800;background:var(--blue-light);color:var(--blue-dark);border-radius:5px;padding:1px 5px;line-height:1.4}
   .usesBadge.depleted{background:#eee;color:var(--dim)}
@@ -125,7 +121,6 @@
   .card div:last-child{font-size:23px;line-height:1}
   .card.red{color:var(--red)}
   .card.selected{outline:3px solid var(--amber);transform:translateY(-6px)}
-  .card.matched{outline:3px solid var(--green)}
   .card.cursed{outline:2px solid var(--purple)}
   .card.mini{width:37px;height:52px;font-size:14px;cursor:pointer;gap:0}
   .card.mini div:last-child{font-size:18px !important;line-height:1}
@@ -195,11 +190,7 @@
   .itemCard.kind-poison{background:#eef9ee;border-color:#8fbd8f !important}
   .itemCard.kind-burn{background:#fff0ed;border-color:#e5a39a !important}
   .itemCard.kind-curse{background:#f5effd;border-color:#b89add !important}
-  .itemCard.kind-defense{background:var(--defense-light);border-color:var(--defense-border) !important}
-  .itemCard.kind-defense .hdr{color:var(--defense) !important}
-  .defenseText,.armorText{color:var(--defense) !important}
-  .defenseText{font-weight:800}
-  .attackChip.defendChip{background:var(--defense);border-color:#075e57}
+  .itemCard.kind-defense{background:#eaf1fd;border-color:#8fb3e8 !important}
   .itemCard.kind-damage{background:#fff8ec;border-color:#e8c07a !important}
   .effectTip{font-weight:800;text-decoration:underline dotted;cursor:help;position:relative}
   .effectTip:hover::after{content:attr(data-tip);position:absolute;z-index:60;left:50%;transform:translateX(-50%);top:calc(100% + 5px);width:230px;background:#12163a;color:#fff;padding:8px;border-radius:6px;font:11px var(--disp);text-align:left;box-shadow:3px 3px 0 #173aa8}
@@ -358,7 +349,7 @@ function opponentAttackBoxHTML(opp) {
     const effect = a.effect || 'damage';
 
     // Line 1 — how many cards this attack uses, nothing else. Mirrors the player's itemReqLine.
-    const capLine = a.autoFire ? 'No card needed' : a.straightLen ? `Any ${a.straightLen} cards in a row` : (minTier > 0 ? `${TIERS[minTier]} to Attack` : (cap === 1 ? '1 card' : `Up to ${cap} cards`));
+    const capLine = a.autoFire ? 'No card needed' : a.straightLen ? `Any ${a.straightLen} cards in a row` : (cap === 1 ? '1 card' : `Up to ${cap} cards`);
 
     // Line 2 — the specific condition/bonus, mirroring the player's itemBonusLine. Only one of
     // these mechanics applies per attack (they're mutually exclusive by design).
@@ -367,6 +358,9 @@ function opponentAttackBoxHTML(opp) {
     if (a.autoFire) {
       bonusLine = a.minTurn ? `Kicks in on its own from turn ${a.minTurn} onward` : `Kicks in on its own`;
       damageLine = `Flat ${a.autoFire.damage} damage every turn once active`;
+    } else if (a.sumExact) {
+      bonusLine = `Needs Σ = ${a.sumExact.value} exactly`;
+      damageLine = `Flat ${a.sumExact.damage} damage if met`;
     } else if (a.sumThreshold) {
       bonusLine = `Needs Σ${a.sumThreshold.min}+`;
       damageLine = `Flat ${a.sumThreshold.damage} damage if met`;
@@ -382,8 +376,8 @@ function opponentAttackBoxHTML(opp) {
       bonusLine = `Bonus scales with ${a.suitPunish.suit} cards already in your discard pile`;
       damageLine = `${a.suitPunish.base || 0} damage + ${a.suitPunish.perCard} per ${a.suitPunish.suit} discarded`;
     } else if (minTier > 0) {
-      bonusLine = '';
-      damageLine = a.straightLen ? `Damage: straight value × ${TIER_MULT[minTier].toFixed(1)}` : `Damage: Σ × ${TIER_MULT[minTier].toFixed(1)}`;
+      bonusLine = `Needs at least a ${TIERS[minTier]}`;
+      damageLine = a.straightLen ? `Damage: straight value × ${TIER_MULT[minTier].toFixed(1)}+` : `Damage: Σ × ${TIER_MULT[minTier].toFixed(1)}+`;
     } else {
       damageLine = a.straightLen ? 'Damage: straight value' : 'Damage: Σ';
     }
@@ -404,7 +398,7 @@ function opponentAttackBoxHTML(opp) {
       <div class="itemReqLine">${capLine}</div>
       ${bonusLine ? `<div class="itemBonusLine">${bonusLine}</div>` : ''}
       <div class="itemDivider"></div>
-      <div class="note" style="margin-top:4px">${damageLine}${effectLine ? ` · ${effectLine}` : ''}${a.minTurn && !a.autoFire ? ` · from turn ${a.minTurn}` : ''}</div>
+      <div class="note" style="margin-top:4px">${damageLine}${effectLine ? ` · ${effectLine}` : ''}${a.minTurn && !a.autoFire ? ` · from turn ${a.minTurn}` : ''}${a.usesPerCombat != null ? ` · max ${a.usesPerCombat}× per fight` : ''}</div>
     </div>`;
   }).join('');
 }
@@ -514,8 +508,8 @@ function itemRequirementText(item, kindForVerb) {
   const max = effectiveMaxCards(item);
   const numHTML = `<span class="upgradeNum hoverTip" title="Card limit can be raised at the Chop Shop.">${max}</span>`;
   const cond = item.condition;
-  const k = normalizeItemKind(kindForVerb || item.kind || item.itemType || 'damage');
-  const verb = k === 'defense' ? `<span class="defenseText">Defend</span>` : k === 'poison' ? 'Poison' : k === 'burn' ? 'Burn' : k === 'curse' ? 'Curse' : kw('Attack');
+  const k = kindForVerb || item.kind || 'damage';
+  const verb = k === 'defense' ? kw('Defend') : k === 'poison' ? 'Poison' : k === 'burn' ? 'Burn' : k === 'curse' ? 'Curse' : kw('Attack');
   let specific = '';
   if (cond?.type === 'suitCount') specific = `${cond.count === 1 ? '1' : `Up to ${max}`} ${cond.suit}`;
   else if (cond?.type === 'colorCount') specific = `${cond.count}+ ${kw(cond.color === 'red' ? 'Red' : 'Black')} cards`;
@@ -577,16 +571,10 @@ function effectiveMaxCards(item) { return item.maxCards + itemMaxCardsLevel(item
 // An item can be converted for the rest of this run from a plain damage attack into a status
 // effect (poison/burn/curse) at the Chop Shop. Only items with no fixed `kind` (i.e. "regular
 // attack") are eligible — defense and already-status items keep their identity.
-function normalizeItemKind(kind) {
-  const k = String(kind || 'damage').toLowerCase();
-  return k.includes('defend') || k === 'defense' ? 'defense' : k;
-}
 function effectiveKind(item, instanceIndex = null) {
   const key = instanceIndex == null ? item.id : `${item.id}_${instanceIndex}`;
-  const baseKind = normalizeItemKind(item.kind || item.itemType || 'damage');
   const override = RUN.itemKindOverride && (RUN.itemKindOverride[key] || RUN.itemKindOverride[item.id]);
-  // Defensive Items keep their defensive identity even if an old run contains a stale kind override.
-  return baseKind === 'defense' ? 'defense' : normalizeItemKind(override || baseKind);
+  return override || item.kind || 'damage';
 }
 function itemKindConvertCost() { return 100; } // coins
 function itemUsesCap(item, usesLevel) { return item.usesPerTurn + (item.usesPerTurnPerLevel || 0) * usesLevel; }
@@ -677,7 +665,7 @@ const ITEMS = {
   triple_threat: { id: 'triple_threat', name: 'Triple Threat', cost: 45, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'pokerTier', tier: 3 }, baseMult: 1,
     bonus: { base: 1.0, perLevel: 1.0, maxLevel: 3 }, // Three of a Kind: +100% up to +400% tuned
-    note: 'Needs Three of a Kind. A big hit that tunes even further with upgrades.' },
+    note: 'Needs Three of a Kind. Hits much harder than a Pair item, and tunes further too.' },
   bike_dash: { id: 'bike_dash', name: 'Short Fuse', cost: 30, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'straightLen', len: 2 }, baseMult: straightMult(2),
     note: 'Needs a 2-card straight (example: 7-8, any suits).' },
@@ -714,14 +702,14 @@ const ITEMS = {
   toxic_spill: { id: 'toxic_spill', name: 'Toxic Spill', cost: 40, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'any' }, baseMult: 0.5, kind: 'poison',
     bonus: { base: 0, perLevel: 0.15, maxLevel: 3 },
-    note: 'Up to 3 cards. Poison equal to half your total card value.' },
+    note: 'Up to 3 cards. Poison = ÷ 2 — play 3 cards worth 22 total for 11 poison.' },
   toxic_flood: { id: 'toxic_flood', name: 'Toxic Flood', cost: 65, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'any' }, baseMult: 0.75, kind: 'poison',
     bonus: { base: 0, perLevel: 0.2, maxLevel: 3 },
-    note: 'Up to 4 cards. Poison equal to 75% of your total card value.' },
+    note: 'Up to 4 cards. Poison =  × 0.75 — hits harder per card than Toxic Spill.' },
   torch_burn: { id: 'torch_burn', name: 'Slow Burn', cost: 65, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'pokerTier', tier: 1 }, baseMult: 1, kind: 'burn',
-    note: 'Needs a Pair. Burns over 3 turns instead of hitting directly, and burns can stack.' },
+    note: 'Needs a Pair. Burns over 3 turns (weaker each turn) instead of hitting directly — burns stack.' },
   supply_bag: { id: 'supply_bag', name: 'Regular Stash', cost: 25, maxCards: 4, kind: 'storage', maxStore: 4,
     note: 'Holds up to 4 cards of any kind turn to turn (up to 6 with Chop Shop upgrades). Never attacks, never gets cursed. Click a stored card to take it back.' },
   supply_bag_big: { id: 'supply_bag_big', name: 'Elite Stash', cost: 50, maxCards: 5, kind: 'storage', maxStore: 5,
@@ -788,59 +776,96 @@ function starterLockNote(id) {
   return '';
 }
 
-/* ========== OPPONENT ROSTER — CITY HAZARD EVENTS (World 1) ========== */
-
+/* ========== OPPONENT ROSTER — CITY HAZARD EVENTS (World 1) ==========
+   Ranked bad -> good, 3 per tier, plus a boss. Fire escalates by severity (and gets a
+   burn signature at the top of the tier); Evil Mechanic is a recurring curse-flavored
+   nuisance; Gas Leak uses the same lock/countdown mechanic bomb squad trucks used to. */
 const OPPONENT_TIERS = [
-  // --- TIER 1: Minor Street Impediments (Early Game) ---
-  [ 
-    { id: 'trashfire', name: 'Trash Can Fire', icon: '🔥', image: 'Hazards/trash-fire.jpg', hp: 35, minTier: 0, drawRate: 2, turnLimit: 6, attacks: [{ name: 'Ember Flare', maxCards: 1, minTier: 0 }] },
-    { id: 'pothole', name: 'Nasty Pothole', icon: '🕳️', image: 'Hazards/pothole.jpg', hp: 42, minTier: 0, drawRate: 2, turnLimit: 6, attacks: [{ name: 'Axle Buster', maxCards: 1, minTier: 0, fewCardsThreshold: { max: 1, damage: 14 } }] },
-    { id: 'flickerlight', name: 'Flickering Street Light', icon: '💡', image: 'Hazards/flicker-light.jpg', hp: 45, minTier: 0, drawRate: 2, turnLimit: 6, attacks: [{ name: 'Static Discharge', maxCards: 2, minTier: 0 }] } 
-  ],
-
-  // --- TIER 2: Active Road Obstacles & Complex Rules ---
-  [ 
-    { id: 'jaywalker', name: 'Jaywalker', icon: '🚶', image: 'Hazards/jaywalker.jpg', hp: 55, minTier: 1, drawRate: 2, attacks: [{ name: 'Sudden Dash', maxCards: 2, minTier: 1 }, { name: 'Enrage', minTurn: 6, autoFire: { damage: 15 } }] },
-    { id: 'grumpyMeter', name: 'Broken Meter', icon: '🅿️', image: 'Hazards/broken-meter.jpg', hp: 60, minTier: 1, drawRate: 2, turnLimit: 6, attacks: [{ name: 'Coin Jam', maxCards: 2, minTier: 1, effect: 'stealFuel' }, { name: 'Repo Notice', maxCards: 2, minTier: 1, effect: 'curse' }, { name: 'Ticket Slip', maxCards: 2, minTier: 0, discardHand: { count: 1 } }] },
-    { id: 'looseWire', name: 'Downed Power Line', icon: '⚡', image: 'Hazards/downed-line.jpg', hp: 65, minTier: 0, drawRate: 2, turnLimit: 6, attacks: [{ name: 'Live Wire Shock', maxCards: 2, minTier: 0, effect: 'stun' }] } 
-  ],
-
-  // --- TIER 3: The Mid-Way Drain (High pressure threshold math) ---
-  [ 
-    { id: 'angryCitizen', name: 'Angry Citizen', icon: '😠', image: 'Hazards/angry-citizen.jpg', hp: 75, minTier: 1, drawRate: 3, turnLimit: 6, attacks: [{ name: 'Shouting Match', maxCards: 3, minTier: 1 }, { name: 'Harassment', maxCards: 2, minTier: 1, effect: 'curse' }, { name: 'Grudge Match', maxCards: 3, minTier: 0, suitPunish: { suit: '♥', perCard: 4, base: 6 } }] },
-    { id: 'hydrant', name: 'Burst Hydrant', icon: '💦', image: 'Hazards/burst-hydrant.jpg', hp: 80, minTier: 0, drawRate: 3, turnLimit: 6, attacks: [{ name: 'Pressure Blast Explosion', maxCards: 4, minTier: 0, sumThreshold: { min: 25, damage: 24 } }] },
-    { id: 'dumpsterFire', name: 'Dumpster Fire', icon: '🔥', image: 'Hazards/dumpster-fire.jpg', hp: 85, minTier: 2, drawRate: 3, turnLimit: 7, special: { type: 'redSteal', redThreshold: 3, fuelSteal: 1, extraDraw: 1 }, attacks: [{ name: 'Rancid Blaze', maxCards: 3, minTier: 2, effect: 'burn' }] } 
-  ],
-
-  // --- TIER 4: The Halfway Gatekeeper (The soft progression wall) ---
-  [ 
-    { id: 'evilMechanic1', name: 'Evil Mechanic', icon: '🔧', image: 'Hazards/evil-mechanic.jpg', hp: 95, minTier: 2, drawRate: 3, turnLimit: 7, curse: { count: 1, amount: 10, chance: 0.6 }, attacks: [{ name: 'Sabotage Engine', maxCards: 3, minTier: 2, effect: 'curse' }] },
-    { id: 'streetFire', name: 'Street Fire', icon: '🔥', image: 'Hazards/street-fire.jpg', hp: 100, minTier: 3, drawRate: 3, turnLimit: 7, special: { type: 'lifesteal', pct: 0.5 }, attacks: [{ name: 'Scorching Wave', maxCards: 3, minTier: 3, effect: 'burn' }] },
-    { id: 'sinkhole', name: 'Sinkhole', icon: '🕳️', image: 'Hazards/sinkhole.jpg', hp: 105, minTier: 1, drawRate: 3, turnLimit: 7, attacks: [{ name: 'All-Points Bulletin', maxCards: 4, minTier: 2 }, { name: 'Ground Collapse', maxCards: 3, minTier: 1 }, { name: 'Aftershock', maxCards: 2, minTier: 1, effect: 'poison' }] },
-    { id: 'gasLeak1', name: 'Gas Leak', icon: '⛽', image: 'Hazards/gas-leak.jpg', hp: 110, locked: true, lockThreshold: 55, lockAttack: 42, drawRate: 3, turnLimit: 7, releaseAttackName: 'Ignition Explosion' } 
-  ],
-
-  // --- TIER 5: Large Scale Grid Disruption ---
-  [ 
-    { id: 'flashFlood', name: 'Flash Flood', icon: '🌊', image: 'Hazards/flash-flood.jpg', hp: 115, minTier: 3, drawRate: 4, turnLimit: 8, attacks: [ { name: 'Flash Deluge', maxCards: 4, minTier: 3 }, { name: 'Toxic Spray', maxCards: 3, minTier: 2, effect: 'poison' }, { name: 'Rising Waters', maxCards: 4, minTier: 0, minTurn: 4, sumThreshold: { min: 20, damage: 28 } }] },
-    { id: 'riot', name: 'Angry Mob', icon: '📢', image: 'Hazards/angry-mob.jpg', hp: 120, minTier: 2, drawRate: 4, turnLimit: 8, usesPerTurn: 2, attacks: [{ name: 'Crowd Surge', maxCards: 4, minTier: 2 }, { name: 'Crowd Pressure', maxCards: 3, minTier: 2, effect: 'curse' }, { name: 'Mob Pile-On', maxCards: 4, minTier: 0, perFaceCard: { damage: 8 } }] },
-    { id: 'blackout', name: 'Blackout', icon: '🌑', image: 'Hazards/blackout.jpg', hp: 125, minTier: 1, drawRate: 3, turnLimit: 8, attacks: [{ name: 'Blackout Surge', maxCards: 2, minTier: 2 }, { name: 'Total Shutdown', maxCards: 3, minTier: 1, effect: 'stealFuel' }] } 
-  ],
-
-  // --- TIER 6: Advanced Route Hazards & Elite Evolutions ---
-  [ 
-    { id: 'stormSurge', name: 'Storm Surge', icon: '🌊', image: 'Hazards/storm-surge.jpg', hp: 130, minTier: 3, drawRate: 4, turnLimit: 8, attacks: [{ name: 'Tidal Slam', maxCards: 4, minTier: 3, effect: 'burn' }, { name: 'Undertow', maxCards: 3, minTier: 2, effect: 'poison' }] },
-    { id: 'buildingFire', name: 'Building Fire', icon: '🔥', image: 'Hazards/building-fire.jpg', hp: 135, minTier: 4, drawRate: 4, turnLimit: 8, attacks: [{ name: 'Inferno Blast', maxCards: 4, minTier: 4, effect: 'burn' }, { name: 'Structural Collapse', maxCards: 5, minTier: 0, sumThreshold: { min: 30, damage: 26 }, effect: 'stealFuel' }] },
-    { id: 'evilMechanic2', name: 'Evil Mechanic (Repeat Offender)', icon: '🔧', image: 'Hazards/evil-mechanic-2.jpg', hp: 140, minTier: 2, drawRate: 4, turnLimit: 8, curse: { count: 2, amount: 12, chance: 0.6 }, attacks: [{ name: 'Double Sabotage', maxCards: 4, minTier: 2, effect: 'curse' }, { name: 'Total Wreckage', maxCards: 5, minTier: 0, sumThreshold: { min: 32, damage: 32 } }] },
-    { id: 'looseDog2', name: 'Loose Dog 2', icon: '🐕', image: 'Hazards/loose-dog-2.jpg', hp: 130, minTier: 0, drawRate: 3, turnLimit: 8, attacks: [{ name: 'Snap Bite', maxCards: 1, minTier: 0 }, { name: 'Cornered Snarl', maxCards: 2, minTier: 0, fewCardsThreshold: { max: 1, damage: 28 } }] },
-    { id: 'gasLeak2', name: 'Major Gas Leak', icon: '⛽', image: 'Hazards/gas-leak-2.jpg', hp: 145, locked: true, lockThreshold: 75, lockAttack: 65, drawRate: 4, turnLimit: 9, releaseAttackName: 'Massive Ignition' },
-    { id: 'streetlight_elite', name: 'Live Wire Street Light [Elite]', icon: '⚡', image: 'Hazards/downed-line.jpg', hp: 135, minTier: 2, drawRate: 4, turnLimit: 8, attacks: [{ name: 'High-Voltage Arc', maxCards: 3, minTier: 2, effect: 'stun' }, { name: 'Ground Crackle', maxCards: 3, minTier: 0, sumThreshold: { min: 25, damage: 26 } }] },
-    { id: 'sinkhole_elite', name: 'Crumbling Sinkhole [Elite]', icon: '🕳️', image: 'Hazards/sinkhole.jpg', hp: 140, minTier: 1, drawRate: 4, turnLimit: 8, attacks: [{ name: 'Chasm Collapse', maxCards: 5, minTier: 0, sumThreshold: { min: 35, damage: 45 } }, { name: 'Corrosive Mud', maxCards: 2, minTier: 1, effect: 'poison' }] }
-  ],
+  [ { id: 'trashfire', name: 'Trash Can Fire', icon: '🔥', image: 'Hazards/trash-fire.jpg', hp: 35, minTier: 0, drawRate: 2, turnLimit: 6, attacks: [{ name: 'Ember Flare', maxCards: 1, minTier: 0 }] },
+    { id: 'pothole', name: 'Nasty Pothole', icon: '🕳️', image: 'Hazards/pothole.jpg', hp: 40, minTier: 0, drawRate: 2, turnLimit: 6, attacks: [{ name: 'Axle Buster', maxCards: 2, minTier: 0 }] },
+    { id: 'looseDog', name: 'Loose Dog', icon: '🐕', image: 'Hazards/loose-dog.jpg', hp: 45, minTier: 0, drawRate: 2, turnLimit: 6, attacks: [{ name: 'Snap Bite', maxCards: 1, minTier: 0 }] } ],
+  [ { id: 'jaywalker', name: 'Jaywalker', icon: '🚶', image: 'Hazards/jaywalker.jpg', hp: 50, minTier: 1, drawRate: 2, attacks: [{ name: 'Sudden Dash', maxCards: 2, minTier: 1 }, { name: 'Enrage', minTurn: 7, autoFire: { damage: 15 } }] },
+    { id: 'grumpyMeter', name: 'Broken Meter', icon: '🅿️', image: 'Hazards/broken-meter.jpg', hp: 55, minTier: 1, drawRate: 2, turnLimit: 6, attacks: [{ name: 'Coin Jam', maxCards: 2, minTier: 1, effect: 'stealFuel' }, { name: 'Repo Notice', maxCards: 2, minTier: 1, effect: 'curse' }, { name: 'Ticket Slip', maxCards: 2, minTier: 0, discardHand: { count: 1 } }] },
+    { id: 'looseWire', name: 'Downed Power Line', icon: '⚡', image: 'Hazards/downed-line.jpg', hp: 60, minTier: 0, drawRate: 2, turnLimit: 6, attacks: [{ name: 'Live Wire Shock', maxCards: 2, minTier: 0, effect: 'stun' }] } ],
+  [ { id: 'angryCitizen', name: 'Angry Citizen', icon: '😠', image: 'Hazards/angry-citizen.jpg', hp: 65, minTier: 1, drawRate: 3, turnLimit: 7, attacks: [{ name: 'Shouting Match', maxCards: 3, minTier: 1 }, { name: 'Harassment', maxCards: 2, minTier: 1, effect: 'curse' }, { name: 'Grudge Match', maxCards: 3, minTier: 0, suitPunish: { suit: '♥', perCard: 4, base: 6 } }] },
+    { id: 'hydrant', name: 'Burst Hydrant', icon: '💦', image: 'Hazards/burst-hydrant.jpg', hp: 70, minTier: 1, drawRate: 3, turnLimit: 7, attacks: [{ name: 'Pressure Blast', maxCards: 3, minTier: 1, effect: 'burn' }] },
+    { id: 'dumpsterFire', name: 'Dumpster Fire', icon: '🔥', image: 'Hazards/dumpster-fire.jpg', hp: 75, minTier: 2, drawRate: 3, turnLimit: 7,
+      special: { type: 'redSteal', redThreshold: 3, fuelSteal: 1, extraDraw: 1 }, attacks: [{ name: 'Rancid Blaze', maxCards: 3, minTier: 2, effect: 'burn' }] } ],
+  [ { id: 'evilMechanic1', name: 'Evil Mechanic', icon: '🔧', image: 'Hazards/evil-mechanic.jpg', hp: 80, minTier: 2, drawRate: 3, turnLimit: 7,
+      curse: { count: 1, amount: 8, chance: 0.5 }, attacks: [{ name: 'Sabotage', maxCards: 3, minTier: 2, effect: 'curse' }] },
+    { id: 'streetFire', name: 'Street Fire', icon: '🔥', image: 'Hazards/street-fire.jpg', hp: 85, minTier: 3, drawRate: 3, turnLimit: 7,
+      special: { type: 'lifesteal', pct: 0.5 }, attacks: [{ name: 'Scorching Wave', maxCards: 3, minTier: 3, effect: 'burn' }] },
+    { id: 'sinkhole', name: 'Sinkhole', icon: '🕳️', image: 'Hazards/sinkhole.jpg', hp: 90, minTier: 1, drawRate: 3, turnLimit: 7, attacks: [{ name: 'All-Points Bulletin', maxCards: 4, minTier: 2 }, { name: 'Ground Collapse', maxCards: 3, minTier: 1 }, { name: 'Aftershock', maxCards: 2, minTier: 1, effect: 'poison' }, { name: 'Structural Failure', maxCards: 4, minTier: 0, sumThreshold: { min: 20, damage: 17 } }] },
+    { id: 'gasLeak1', name: 'Gas Leak', icon: '⛽', image: 'Hazards/gas-leak.jpg', hp: 95, locked: true, lockThreshold: 45, lockAttack: 39, drawRate: 3, turnLimit: 8, releaseAttackName: 'Ignition Blast' } ],
+  [ { id: 'flashFlood', name: 'Flash Flood', icon: '🌊', image: 'Hazards/flash-flood.jpg', hp: 100, minTier: 3, drawRate: 4, turnLimit: 8, attacks: [{ name: 'Flash Deluge', maxCards: 4, minTier: 3 }, { name: 'Toxic Spray', maxCards: 3, minTier: 2, effect: 'poison' }, { name: 'Rising Waters', maxCards: 4, minTier: 0, minTurn: 5, sumThreshold: { min: 15, damage: 26 } }] },
+    { id: 'riot', name: 'Angry Mob', icon: '📢', image: 'Hazards/angry-mob.jpg', hp: 105, minTier: 2, drawRate: 4, turnLimit: 8, usesPerTurn: 2, attacks: [{ name: 'Crowd Surge', maxCards: 4, minTier: 2 }, { name: 'Crowd Pressure', maxCards: 3, minTier: 2, effect: 'curse' }, { name: 'Mob Pile-On', maxCards: 4, minTier: 0, perFaceCard: { damage: 8 } }] },
+    { id: 'blackout', name: 'Blackout', icon: '🌑', image: 'Hazards/blackout.jpg', hp: 110, minTier: 1, drawRate: 3, turnLimit: 8, attacks: [{ name: 'Blackout', maxCards: 2, minTier: 2 }, { name: 'Total Shutdown', maxCards: 3, minTier: 1, effect: 'stealFuel' }] } ],
+  [ { id: 'stormSurge', name: 'Storm Surge', icon: '🌊', image: 'Hazards/storm-surge.jpg', hp: 115, minTier: 3, drawRate: 4, turnLimit: 8, attacks: [{ name: 'Perfect Wave', maxCards: 4, minTier: 0, sumExact: { value: 26, damage: 30 } }, { name: 'Tidal Slam', maxCards: 4, minTier: 3, effect: 'burn' }, { name: 'Undertow', maxCards: 3, minTier: 2, effect: 'poison' }] },
+    { id: 'buildingFire', name: 'Building Fire', icon: '🔥', image: 'Hazards/building-fire.jpg', hp: 120, minTier: 4, drawRate: 4, turnLimit: 8, attacks: [{ name: 'Inferno Blast', maxCards: 4, minTier: 4, effect: 'burn' }, { name: 'Structural Collapse', maxCards: 5, minTier: 0, sumThreshold: { min: 28, damage: 24 }, effect: 'stealFuel' }] },
+    { id: 'evilMechanic2', name: 'Evil Mechanic (Repeat Offender)', icon: '🔧', image: 'Hazards/evil-mechanic-2.jpg', hp: 125, minTier: 2, drawRate: 4, turnLimit: 8,
+      curse: { count: 2, amount: 10, chance: 0.55 }, attacks: [{ name: 'Double Sabotage', maxCards: 4, minTier: 2, effect: 'curse' }, { name: 'Total Wreckage', maxCards: 5, minTier: 0, sumThreshold: { min: 32, damage: 30 } }] },
+    { id: 'looseDog2', name: 'Loose Dog 2', icon: '🐕', image: 'Hazards/loose-dog-2.jpg', hp: 115, minTier: 0, drawRate: 3, turnLimit: 8, attacks: [{ name: 'Snap Bite', maxCards: 1, minTier: 0 }, { name: 'Cornered Snarl', maxCards: 2, minTier: 0, fewCardsThreshold: { max: 1, damage: 26 } }] },
+    { id: 'gasLeak2', name: 'Major Gas Leak', icon: '⛽', image: 'Hazards/gas-leak-2.jpg', hp: 130, locked: true, lockThreshold: 70, lockAttack: 60, drawRate: 4, turnLimit: 9, releaseAttackName: 'Massive Ignition' } ],
+  [ { id: 'raccoon', name: 'Dumpster Raccoon', icon: '🦝', image: 'Hazards/raccoon.jpg', hp: 48, minTier: 0, drawRate: 2, turnLimit: 6,
+      attacks: [{ name: 'Trash Bandit', maxCards: 2, minTier: 1, effect: 'stealCoins', stealCoinsAmount: 6 }, { name: 'Hiss & Scratch', maxCards: 1, minTier: 0 }] } ],
+  [ { id: 'aggroTrucker', name: 'Aggressive Trucker', icon: '🚚', image: 'Hazards/aggro-trucker.jpg', hp: 132, minTier: 1, drawRate: 3, turnLimit: 8,
+      attacks: [{ name: 'Road Rage', straightLen: 3, minTier: 0, effect: 'shield', shieldAmount: 10 }, { name: 'Grille Slam', maxCards: 3, minTier: 1 }] },
+    { id: 'loanShark', name: 'Loan Shark', icon: '🕴️', image: 'Hazards/loan-shark.jpg', hp: 128, minTier: 0, drawRate: 3, turnLimit: 8,
+      attacks: [{ name: 'Blackjack', maxCards: 5, minTier: 0, sumExact: { value: 21, damage: 42 } }, { name: 'Collections Call', maxCards: 2, minTier: 1, effect: 'stealCoins', stealCoinsAmount: 10 }] },
+    { id: 'snowplow', name: 'Snowplow', icon: '🚜', image: 'Hazards/snowplow.jpg', hp: 138, minTier: 5, drawRate: 3, turnLimit: 8,
+      attacks: [{ name: 'Full Clear', maxCards: 5, minTier: 5 }, { name: 'Push Through', maxCards: 4, minTier: 0, sumThreshold: { min: 30, damage: 22 }, effect: 'draw' }] },
+    { id: 'ambulance', name: 'Ambulance', icon: '🚑', image: 'Hazards/ambulance.jpg', hp: 118, minTier: 1, drawRate: 3, turnLimit: 8,
+      attacks: [{ name: 'Rushing Strike', maxCards: 2, minTier: 1 }, { name: 'Emergency Shield', maxCards: 1, minTier: 0, effect: 'shield', shieldAmount: 12 }] } ],
+  [ { id: 'ticketBot', name: 'Ticket Bot', icon: '🤖', image: 'Hazards/ticket-bot.jpg', hp: 140, minTier: 0, drawRate: 3, turnLimit: 8, usesPerTurn: 2, defeatBonus: { type: 'coins', amount: 10 },
+      attacks: [{ name: 'Quadruple Fine', straightLen: 4, minTier: 0 }, { name: 'Late Fee', straightLen: 3, minTier: 0 }] },
+    { id: 'scrapThief', name: 'Scrap Thief', icon: '🐀', image: 'Hazards/scrap-thief.jpg', hp: 145, minTier: 0, drawRate: 4, turnLimit: 8,
+      attacks: [{ name: 'Grab and Go', maxCards: 3, minTier: 0, effect: 'stealFuel' }, { name: 'Junkyard Scrap', maxCards: 2, minTier: 1 }] },
+    { id: 'towTruck', name: 'Tow Truck', icon: '🛻', image: 'Hazards/tow-truck.jpg', hp: 150, minTier: 1, drawRate: 3, turnLimit: 9,
+      attacks: [{ name: 'Hook and Haul', maxCards: 3, minTier: 1, effect: 'cleanse' }, { name: 'Impound Jab', maxCards: 2, minTier: 0 }] },
+    { id: 'joyrider', name: 'Joyrider', icon: '🏎️', image: 'Hazards/joyrider.jpg', hp: 122, minTier: 0, drawRate: 3, turnLimit: 8, usesPerTurn: 2,
+      attacks: [{ name: 'Hot Wire', maxCards: 1, minTier: 0, effect: 'stealCoins', stealCoinsAmount: 5 }, { name: 'Peel Out', maxCards: 1, minTier: 0, effect: 'draw' }] } ],
+  [ { id: 'touristCar', name: 'Confused Tourist', icon: '🚗', image: 'Hazards/confused-tourist.jpg', hp: 155, minTier: 1, drawRate: 3, turnLimit: 9,
+      attacks: [{ name: 'Sudden U-Turn', maxCards: 2, minTier: 1 }, { name: 'GPS Recalculating', maxCards: 4, minTier: 0, sumThreshold: { min: 35, damage: 18 }, effect: 'heal' }] },
+    { id: 'foodTruck', name: 'Food Truck', icon: '🌮', image: 'Hazards/food-truck.jpg', hp: 148, minTier: 1, drawRate: 3, turnLimit: 8,
+      attacks: [{ name: 'Grease Fire', maxCards: 2, minTier: 1 }, { name: 'Hot Sauce Splash', maxCards: 2, minTier: 0, effect: 'burn' }] },
+    { id: 'scooterRider', name: 'Scooter Rider', icon: '🛵', image: 'Hazards/scooter-rider.jpg', hp: 130, minTier: 0, drawRate: 3, turnLimit: 8,
+      attacks: [{ name: 'Weave and Dart', straightLen: 3, minTier: 0 }, { name: 'Sidewalk Hop', straightLen: 2, minTier: 0 }] },
+    { id: 'dumpTruck', name: 'Dump Truck', icon: '🚛', image: 'Hazards/dump-truck.jpg', hp: 160, minTier: 0, drawRate: 3, turnLimit: 9,
+      attacks: [{ name: 'Full Load Drop', maxCards: 4, minTier: 0, sumThreshold: { min: 36, damage: 34 } }, { name: 'Tailgate Bash', maxCards: 3, minTier: 0, sumThreshold: { min: 20, damage: 16 } }] } ],
+  [ { id: 'strayCat', name: 'Stray Cat', icon: '🐈', image: 'Hazards/stray-cat.jpg', hp: 120, minTier: 0, drawRate: 3, turnLimit: 8,
+      attacks: [{ name: 'Pounce', maxCards: 3, minTier: 0, fewCardsThreshold: { max: 1, damage: 12 } }, { name: 'Hiss', maxCards: 1, minTier: 0 }] },
+    { id: 'looseChicken', name: 'Loose Chicken', icon: '🐔', image: 'Hazards/loose-chicken.jpg', hp: 115, minTier: 0, drawRate: 3, turnLimit: 8,
+      attacks: [{ name: 'Feather Flurry', maxCards: 1, minTier: 0 }] },
+    { id: 'deerStrike', name: 'Deer Strike', icon: '🦌', image: 'Hazards/deer-strike.jpg', hp: 142, minTier: 0, drawRate: 3, turnLimit: 8,
+      attacks: [{ name: 'Sudden Crossing', maxCards: 4, minTier: 0, sumThreshold: { min: 25, damage: 39 } }, { name: 'Startled Bolt', maxCards: 2, minTier: 0 }] },
+    { id: 'runawayGoose', name: 'Runaway Goose', icon: '🪿', image: 'Hazards/runaway-goose.jpg', hp: 118, minTier: 0, drawRate: 3, turnLimit: 8,
+      attacks: [{ name: 'Wing Slap', straightLen: 3, minTier: 0 }, { name: 'Honk and Charge', straightLen: 2, minTier: 0 }] } ],
+  [ { id: 'fairBull', name: 'County Fair Bull', icon: '🐂', image: 'Hazards/fair-bull.jpg', hp: 165, minTier: 0, drawRate: 3, turnLimit: 9,
+      attacks: [{ name: 'Full Charge', maxCards: 5, minTier: 0, sumThreshold: { min: 40, damage: 46 } }, { name: 'Snort and Stomp', maxCards: 2, minTier: 0 }] },
+    { id: 'ratKing', name: 'Rat King', icon: '🐭', image: 'Hazards/rat-king.jpg', hp: 158, minTier: 1, drawRate: 4, turnLimit: 9, discardOnHit: 1,
+      attacks: [{ name: 'Swarm Bite', maxCards: 2, minTier: 1 }] },
+    { id: 'newsChopper', name: 'News Helicopter', icon: '🚁', image: 'Hazards/news-chopper.jpg', hp: 150, minTier: 2, drawRate: 4, turnLimit: 9,
+      attacks: [{ name: 'Rotor Wash', maxCards: 3, minTier: 2, effect: 'burn' }, { name: 'Spotlight Glare', maxCards: 2, minTier: 1 }] },
+    { id: 'rescueChopper', name: 'Rescue Chopper', icon: '🚁', image: 'Hazards/rescue-chopper.jpg', hp: 130, minTier: 3, drawRate: 4, turnLimit: 9, reviveOnce: true,
+      attacks: [{ name: 'Downwash Sweep', maxCards: 5, minTier: 3, effect: 'heal' }] } ],
+  [ { id: 'trafficDrone', name: 'Traffic Drone', icon: '🛸', image: 'Hazards/traffic-drone.jpg', hp: 168, minTier: 5, drawRate: 4, turnLimit: 9, drawOnHit: 1,
+      attacks: [{ name: 'Surveillance Sting', maxCards: 4, minTier: 5, effect: 'poison' }] },
+    { id: 'policeChopper', name: 'Police Helicopter', icon: '🚁', image: 'Hazards/police-chopper.jpg', hp: 172, minTier: 0, drawRate: 4, turnLimit: 9,
+      attacks: [{ name: 'Searchlight Freeze', maxCards: 3, minTier: 0, effect: 'stun' }, { name: 'Loudspeaker Order', maxCards: 3, minTier: 0 }] },
+    { id: 'constructionCrane', name: 'Construction Crane', icon: '🏗️', image: 'Hazards/construction-crane.jpg', hp: 180, minTier: 5, drawRate: 4, turnLimit: 10,
+      attacks: [{ name: 'Wrecking Swing', maxCards: 5, minTier: 5 }, { name: 'Load Drop Stun', maxCards: 4, minTier: 0, effect: 'stun' }] },
+    { id: 'vendingMachine', name: 'Vending Machine', icon: '🥤', image: 'Hazards/vending-machine.jpg', hp: 175, minTier: 0, drawRate: 3, turnLimit: 9,
+      attacks: [{ name: 'Overheat', maxCards: 4, minTier: 0, sumThreshold: { min: 35, damage: 30 }, effect: 'selfDamage', selfDamageAmount: 20 }, { name: 'Jammed Snack', maxCards: 2, minTier: 0, effect: 'draw' }] } ],
+  [ { id: 'chemTanker', name: 'Chemical Tanker', icon: '🚛', image: 'Hazards/chem-tanker.jpg', hp: 190, minTier: 0, drawRate: 4, turnLimit: 10,
+      attacks: [{ name: 'Toxic Overflow', maxCards: 4, minTier: 0, sumThreshold: { min: 35, damage: 22 }, effect: 'poison' }, { name: 'Coolant Burst', maxCards: 3, minTier: 0, effect: 'selfDamage', selfDamageAmount: 15 }] },
+    { id: 'oilDrum', name: 'Leaking Oil Drum', icon: '🛢️', image: 'Hazards/oil-drum.jpg', hp: 145, minTier: 0, drawRate: 3, turnLimit: 8,
+      attacks: [{ name: 'Slick Spray', maxCards: 2, minTier: 0, effect: 'poison' }] },
+    { id: 'trafficLight', name: 'Broken Traffic Light', icon: '🚦', image: 'Hazards/traffic-light.jpg', hp: 135, minTier: 0, drawRate: 3, turnLimit: 8, usesPerTurn: 2,
+      attacks: [{ name: 'Stuck on Red', maxCards: 1, minTier: 0 }] } ],
 ];
-
-const BOSS = { id: 'wildfire', name: 'Wildfire', icon: '🔥', image: 'Hazards/wildfire.jpg', hp: 160, minTier: 3, drawRate: 4, turnLimit: 10, boss: true, usesPerTurn: 2, curse: { count: 2, amount: 12, chance: 0.55 }, attacks: [{ name: 'Firestorm Surge', maxCards: 5, minTier: 3, effect: 'burn' }, { name: 'Ashfall', maxCards: 4, minTier: 2, effect: 'poison' }, { name: 'Total Engulfment', maxCards: 5, minTier: 0, perFaceCard: { damage: 12 } }], attackInfo: 'Attack: uses its best poker hand for about 10-35 damage, depending on the hand, and can hit twice a turn. Can also curse your equipped Items — an Item that doesn\'t fire before turn end takes its curse damage.' };
-
+const BOSS = { id: 'wildfire', name: 'Wildfire', icon: '🔥', image: 'Hazards/wildfire.jpg', hp: 145, minTier: 3, drawRate: 4, turnLimit: 10, boss: true, usesPerTurn: 2,
+  curse: { count: 2, amount: 10, chance: 0.5 }, attacks: [{ name: 'Wall of Flame', maxCards: 5, minTier: 5, usesPerCombat: 3, effect: 'burn' }, { name: 'Firestorm Surge', maxCards: 5, minTier: 3, effect: 'burn' }, { name: 'Ashfall', maxCards: 4, minTier: 2, effect: 'poison' }, { name: 'Total Engulfment', maxCards: 5, minTier: 0, perFaceCard: { damage: 10 } }],
+  attackInfo: 'Attack: uses its best poker hand for about 10-35 damage, depending on the hand, and can hit twice a turn. Its strongest move, Wall of Flame, only has 3 uses in the whole fight. Can also curse your equipped Items — an Item that doesn\'t fire before turn end takes its curse damage.' };
 function revealFraction(row) { return [1.0, 0.8, 0.6, 0.4, 0.25, 0.1, 0][Math.min(row, 6)]; }
 
 /* ========== LEVELED UPGRADE TREE (permanent, up to 20 levels each) ========== */
@@ -908,95 +933,59 @@ function clearBattleSave() { try { localStorage.removeItem(BATTLE_KEY); } catch 
 /* ========== MAP GENERATION (21-space horizontal route with a central Fleet Compound) ========== */
 const ROWS = 19;
 const WORLD_COUNT = 1;
-function pickNodeType(forcedType) {
+function pickNodeType(forcedType, row) {
   if (forcedType) return forcedType;
   const r = Math.random();
-  if (r < 0.65) return 'battle';
-  if (r < 0.75) return 'rest';
-  if (r < 0.84) return 'blacksmith';
-  if (r < 0.89) return 'chopshop';
-  if (r < 0.95) return 'shop'; // Added extra loose dealerships on the highway
-  return 'treasure';
-}
-
-/* ========== MONSTER REPURPOSING SCALER ==========
-   Pass an existing monster object from World 1 along with a world difficulty modifier 
-   (e.g., 1.5 for World 2, 2.2 for World 3). Automatically rescales stats seamlessly. */
-function scaleMonsterForNewWorld(baseMonster, worldMultiplier) {
-  const scaled = JSON.parse(JSON.stringify(baseMonster)); // Deep copy the blueprint
-  
-  scaled.hp = Math.round(scaled.hp * worldMultiplier);
-  scaled.name = `${scaled.name} (Sector ${Math.ceil(worldMultiplier)})`;
-  
-  if (scaled.lockAttack) scaled.lockAttack = Math.round(scaled.lockAttack * worldMultiplier);
-  if (scaled.lockThreshold) scaled.lockThreshold = Math.round(scaled.lockThreshold * (1 + (worldMultiplier - 1) * 0.4));
-
-  if (scaled.attacks) {
-    scaled.attacks.forEach(a => {
-      if (a.autoFire) a.autoFire.damage = Math.round(a.autoFire.damage * worldMultiplier);
-      if (a.sumThreshold) a.sumThreshold.damage = Math.round(a.sumThreshold.damage * worldMultiplier);
-      if (a.fewCardsThreshold) a.fewCardsThreshold.damage = Math.round(a.fewCardsThreshold.damage * worldMultiplier);
-      if (a.perFaceCard) a.perFaceCard.damage = Math.round(a.perFaceCard.damage * worldMultiplier);
-      if (a.suitPunish) a.suitPunish.base = Math.round((a.suitPunish.base || 0) * worldMultiplier);
-    });
+  // Early rows lean slightly more toward Pit Stops and less toward battles, giving a
+  // first-time player more chances to heal before they've built up a deck. This is a
+  // starting point, not a tuned curve — adjust based on actual playtest results.
+  if (row != null && row <= 4) {
+    if (r < 0.60) return 'battle';
+    if (r < 0.75) return 'rest';
+    if (r < 0.87) return 'blacksmith';
+    if (r < 0.90) return 'chopshop';
+    return 'treasure';
   }
-  return scaled;
+  if (r < 0.70) return 'battle';
+  if (r < 0.80) return 'rest';
+  if (r < 0.92) return 'blacksmith';
+  if (r < 0.95) return 'chopshop';
+  return 'treasure';
 }
 function generateMap() {
   const nodes = [], edges = [];
   const tierForRow = r => Math.min(OPPONENT_TIERS.length - 1, Math.floor(r / 3));
   const castleRow = 10;
-  const rowCounts = [1,3,3,3,4,4,4,3,3,2,1];
+  const rowCounts = [1,2,1,3,2,2,3,2,2,2,1,3,2,2,2,2,2,2,2,2];
 
-  // Global world multiplier configuration
-  // Set to 1.0 for World 1, can be hooked into a menu later for World 2 (1.5), World 3 (2.0), etc.
-  const worldMultiplier = RUN.worldMultiplier || 1.0; 
-
+  // Start -> two choices -> merge at the guaranteed third-stop Dealership.
+  // Thereafter the three lanes freely intermingle. Exactly 29 of 41 route nodes are battles (~71%).
   for (let r=0;r<rowCounts.length;r++) {
     const row=[];
-    // Pull the raw layout pool
     const pool=shuffle([...(OPPONENT_TIERS[tierForRow(r)])]);
-    for(let c=0;c<rowCounts[r];c++) {
-      // Use your new scaler to smoothly modify the base stats based on the world multiplier
-      const baseOpp = pool[c%pool.length];
-      row.push({type:'pending', opponent: scaleMonsterForNewWorld(baseOpp, worldMultiplier)});
-    }
+    for(let c=0;c<rowCounts[r];c++) row.push({type:'pending', opponent:pool[c%pool.length]});
     nodes.push(row);
   }
-  
-  //=====Guaranteed Stops=====
   nodes[0][0].type='battle';
   nodes[1].forEach(n=>n.type='battle');
   nodes[2][0]={type:'shop'};
-  nodes[5][0]={type:'rest'};
   nodes[castleRow][0]={type:'castle'};
 
   const eligible=[];
   for(let r=0;r<nodes.length;r++) for(let c=0;c<nodes[r].length;c++)
     if(nodes[r][c].type==='pending') eligible.push({r,c});
   shuffle(eligible);
-  
-  // Set standard battles dynamically using the scaled versions
-  const needBattles=29-3; 
-  eligible.slice(0,needBattles).forEach(({r,c})=> {
-    const baseOpp = OPPONENT_TIERS[tierForRow(r)][Math.floor(Math.random()*OPPONENT_TIERS[tierForRow(r)].length)];
-    nodes[r][c]={type:'battle', opponent: scaleMonsterForNewWorld(baseOpp, worldMultiplier)};
-  });
-  
+  const needBattles=29-3; // start + two row-1 battles already set
+  eligible.slice(0,needBattles).forEach(({r,c})=>nodes[r][c]={type:'battle',opponent:OPPONENT_TIERS[tierForRow(r)][Math.floor(Math.random()*OPPONENT_TIERS[tierForRow(r)].length)]});
   eligible.slice(needBattles).forEach(({r,c})=>{
-    const t=pickNodeType();
-    if (t==='battle') {
-      const baseOpp = OPPONENT_TIERS[tierForRow(r)][Math.floor(Math.random()*OPPONENT_TIERS[tierForRow(r)].length)];
-      nodes[r][c]={type:'battle', opponent: scaleMonsterForNewWorld(baseOpp, worldMultiplier)};
-    } else {
-      nodes[r][c]={type:t};
-    }
+    const t=pickNodeType(null, r);
+    nodes[r][c]= t==='battle'
+      ? {type:'battle', opponent:OPPONENT_TIERS[tierForRow(r)][Math.floor(Math.random()*OPPONENT_TIERS[tierForRow(r)].length)]}
+      : {type:t};
   });
-  
-  // Scale the final world Boss object as well
-  nodes.push([{type:'battle', opponent: scaleMonsterForNewWorld(BOSS, worldMultiplier)}]);
+  nodes.push([{type:'battle',opponent:BOSS}]);
 
-  // Dense, cross-lane connections.
+  // Dense, cross-lane connections. Every node has a route forward and every next node has a parent.
   for(let r=0;r<nodes.length-1;r++){
     const cur=nodes[r], next=nodes[r+1];
     const add=(a,b)=>{if(!edges.some(e=>e.fromRow===r&&e.fromCol===a&&e.toRow===r+1&&e.toCol===b))edges.push({fromRow:r,fromCol:a,toRow:r+1,toCol:b});};
@@ -1014,7 +1003,6 @@ function generateMap() {
   return {nodes,edges};
 }
 
-
 /* ========== RUN STATE ========== */
 let RUN = null;
 let BATTLE = null;
@@ -1031,73 +1019,36 @@ const BASE_GAS_PENALTY = 15;
 function initRunWithStarter(id) {
   const L = META.levels;
   const baseHero = HEROES[id];
-  
   RUN = {
-    worldMultiplier: 1.0, 
-    map: null,
-    currentRow: -1, 
-    currentCol: null, 
-    path: [],
-    health: 100 + L.hp * 15, 
-    maxHealth: 100 + L.hp * 15,
-    chips: 40 + L.chips * 8, 
-    fuel: Math.min(20 + (L.fuelCap||0)*5, 10 + (L.fuel||0)), 
-    energy: 0,
+    map: generateMap(), currentRow: -1, currentCol: null, path: [],
+    health: 100 + L.hp * 15, maxHealth: 100 + L.hp * 15,
+    chips: 40 + L.chips * 8, fuel: Math.min(20 + (L.fuelCap||0)*5, 10 + (L.fuel||0)), energy: 0,
     hero: { heroId: id, items: [...baseHero.starterItems] },
-    itemCap: Math.min(MAX_ITEM_CAP, 3 + L.garage), 
-    handSize: 7 + (L.handCap || 0) * 2, 
-    drawPerTurn: 2 + (L.draw || 0), 
-    gems: 3, 
-    maxGems: 10 + (L.gemCap||0)*2, 
-    maxFuel: 20 + (L.fuelCap||0)*5, 
-    maxEnergy: 20 + (L.energyCap||0)*5,
-    scoreThisRun: 0, 
-    lastNotice: null, 
-    cardBoosts: [], 
-    adminTuneLvl: 0, 
-    itemLevels: {}, 
-    itemUsesLevels: {}, 
-    itemKindOverride: {}, 
-    itemMaxCardsLevels: {}, 
-    handSortMode: 'value', 
-    innSleeps: 0,
+    itemCap: Math.min(MAX_ITEM_CAP, 3 + L.garage), handSize: 7 + (L.handCap || 0) * 2, drawPerTurn: 2 + (L.draw || 0), gems: 3, maxGems: 10 + (L.gemCap||0)*2, maxFuel: 20 + (L.fuelCap||0)*5, maxEnergy: 20 + (L.energyCap||0)*5,
+    scoreThisRun: 0, lastNotice: null, cardBoosts: [], adminTuneLvl: 0, itemLevels: {}, itemUsesLevels: {}, itemKindOverride: {}, itemMaxCardsLevels: {}, handSortMode: 'value', innSleeps: 0,
     runUpgrades: { itemSlots: 0, drawPerTurn: 0, sightRange: 0, gemDraw: 0, health: 0 },
     castleState: {},
   };
-
-  RUN.map = generateMap();
-  
   saveRun();
   render(mapScreen());
 }
-
 function availableNextNodes() {
   if (RUN.currentRow === -1) return [{ row: 0, col: 0 }];
   return RUN.map.edges.filter(e => e.fromRow === RUN.currentRow && e.fromCol === RUN.currentCol).map(e => ({ row: e.toRow, col: e.toCol }));
 }
-
 function payTravelCost() {
   RUN.fuel -= FUEL_COST_PER_MOVE;
   RUN.energy = Math.min(RUN.maxEnergy, RUN.energy + ENERGY_PER_MOVE);
-  RUN.innSleeps = 0; 
   if (RUN.fuel < 0) {
-    RUN.fuel = 0; // Keep the tank clamped at zero
-    
-    // Out of gas: Player suffers a physical breakdown penalty instead of losing score points
-    RUN.health = Math.max(0, RUN.health - 10);
-    RUN.lastNotice = `Out of fuel! Pushing your fleet manually to the next stop cost you 10 HP.`;
-    
-    // Immediate check: If the travel toll drops them to zero, the run crashes out right here
-    if (RUN.health <= 0) {
-      RUN.lastNotice = `Out of fuel and out of health! Your fleet collapsed on the open highway.`;
-      saveRun();
-      endRun(false); // Triggers the Run Lost summary screen
-      return;
-    }
+    RUN.fuel = 0;
+    const reduction = META.levels.fuelpen * 2;
+    const loss = Math.max(3, BASE_GAS_PENALTY - reduction);
+    META.points = Math.max(0, META.points - loss);
+    RUN.scoreThisRun = Math.max(0, RUN.scoreThisRun - loss);
+    saveMeta();
+    RUN.lastNotice = `Ran out of fuel — lost ${loss} Career Points getting towed to the next stop.`;
   }
 }
-
-
 function commitNode(row, col) { RUN.currentRow = row; RUN.currentCol = col; RUN.path.push({ row, col }); saveRun(); }
 function selectNode(row, col) {
   payTravelCost();
@@ -1121,6 +1072,18 @@ function reenterCurrentNode(row, col) {
   if (node.type === 'chopshop') { RETURN_TO_CASTLE_MENU = false; render(chopShopScreen('map')); return; }
   // Battles and Supply Caches aren't re-enterable stops — nothing to do for those here.
   render(mapScreen());
+}
+function checkOpponentDeath() {
+  if (BATTLE.opponent.hpNow > 0) return false;
+  if (BATTLE.opponent.reviveOnce && !BATTLE.opponent.revived) {
+    BATTLE.opponent.revived = true;
+    BATTLE.opponent.hpNow = Math.round(BATTLE.opponent.hp * 0.4);
+    battleLog(`${BATTLE.opponent.name} refuses to go down and revives with ${BATTLE.opponent.hpNow} HP!`);
+    render(battleScreen());
+    return true;
+  }
+  winBattle();
+  return true;
 }
 let RETURN_TO_CASTLE_MENU = false;
 
@@ -1163,82 +1126,38 @@ function castleDungeonScreen(message='') {
     </div>
   </div>`;
 }
-function castleInnScreen(message='') { 
+function castleInnScreen(message='') {
   return `${noticeHTML()}
   <div class="wo">
-    <div class="wo-stripe"></div>
-    <div class="wo-body">
+    <div class="wo-stripe"></div><div class="wo-body">
       <div class="wo-eyebrow">Inn</div>
       <h1>Rest &amp; <em>Refuel</em></h1>
       ${currencyBar()}
       ${message ? `<div class="panel"><div class="note">${message}</div></div>` : ''}
-      <div class="shopcard">
-        <h3>Cheap Refuel</h3>
-        <div class="note">Spend 5 coins to gain 10 fuel.</div>
-        <button class="wo-btn" id="castleFuelBtn" ${RUN.fuel >= RUN.maxFuel ? 'disabled' : ''}>Refuel +10</button>
-      </div>
-      <div class="shopcard">
-        <h3>Sleep</h3>
-        <div class="note">Restore a flat 30 health. First sleep is free; each later sleep costs 20 more coins.</div>
-        <button class="wo-btn" id="castleRestBtn" ${RUN.health >= RUN.maxHealth ? 'disabled' : ''}>
-          Sleep ${RUN.innSleeps === 0 ? 'Free' : `(${20 * RUN.innSleeps} coins)`}
-        </button>
-      </div>
+      <div class="shopcard"><h3>Cheap Refuel</h3><div class="note">Spend 5 coins to gain 10 fuel.</div><button class="wo-btn" id="castleFuelBtn" ${RUN.fuel>=RUN.maxFuel?'disabled':''}>Refuel +10</button></div>
+      <div class="shopcard"><h3>Sleep</h3><div class="note">Restore 20 health. First sleep is free; each later sleep costs 20 more coins.</div><button class="wo-btn" id="castleRestBtn" ${RUN.health>=RUN.maxHealth?'disabled':''}>Sleep ${RUN.innSleeps===0?'Free':`(${20*RUN.innSleeps} coins)`}</button></div>
       <button class="wo-btn gray" id="backToCastleMenuBtn">Back to Compound Menu</button>
     </div>
-  </div>`; 
+  </div>`;
 }
 
-const MATCH_ICON_KEYS = ['truck','wrench','fuel','hammer','shield','star','gift','coin','fire'];
-/* ========== FLEET CARNIVAL MATCHING GAME LAYOUT ========== */
 function castleMatchScreen() {
   if (!RUN.castleState) RUN.castleState = {};
-  
-  // Set up a full 18-card grid (6 columns x 3 rows = 9 identical matching pairs)
   if (!RUN.castleState.matchCards) {
-    const symbols = ['♦', '♣', '♥', '♠', '♦', '♣', '♥', '♠', '♦']; // 9 distinct pairs
-    RUN.castleState.matchCards = shuffle(
-      symbols.flatMap((suitSymbol, i) => [
-        { id: i * 2, suit: suitSymbol, color: (suitSymbol === '♥' || suitSymbol === '♦') ? 'red' : 'blk', flipped: false, matched: false },
-        { id: i * 2 + 1, suit: suitSymbol, color: (suitSymbol === '♥' || suitSymbol === '♦') ? 'red' : 'blk', flipped: false, matched: false }
-      ])
-    );
-    RUN.castleState.matchGuesses = 6; // Fair attempt limit for a larger grid
+    const suits = shuffle([...SUITS]).slice(0,3).map(s=>s.s);
+    RUN.castleState.matchCards = shuffle(suits.flatMap((s,i)=>[{id:i*2,suit:s},{id:i*2+1,suit:s}]).map(c=>({...c,flipped:false})));
+    RUN.castleState.matchGuesses = 4;
     RUN.castleState.matchPick = [];
   }
-
-  // Uses full battle-screen sizing styles (.card) and grid mechanics
-  const cards = RUN.castleState.matchCards.map((c, i) => {
-    const isRed = c.color === 'red' ? 'red' : '';
-    const isClub = c.suit === '♣' ? 'club-card' : '';
-    const displayState = (c.flipped || c.matched) ? '' : 'back';
-    const isDisabled = (c.flipped || c.matched || RUN.castleState.matchLock) ? 'disabled' : '';
-    
-    return `<button class="card ${isRed} ${isClub} ${displayState}" data-match="${i}" ${isDisabled}>
-              <div>${(c.flipped || c.matched) ? '' : '?'}</div>
-              <div>${(c.flipped || c.matched) ? c.suit : ''}</div>
-            </button>`;
-  }).join('');
-
-  return `
-    <div class="wo">
-      <div class="wo-stripe"></div>
-      <div class="wo-body">
-        <div class="wo-eyebrow">Fleet Compound</div>
-        <h1>Fleet Carnival <em>Matching Game</em></h1>
-        <div class="wo-sub">Attempts Left: ${RUN.castleState.matchGuesses}</div>
-        
-        <!-- Arranged into a clean, easy-to-read 6-column grid using large battle-size elements -->
-        <div style="display:grid; grid-template-columns:repeat(6, 1fr); gap:10px; max-width:360px; margin:0 auto">
-          ${cards}
-        </div>
-        
-        <div class="note" style="margin:14px 0 10px; text-align:center">Match all pairs using full battle-size elements. Finding a wrong matchup will lock selections momentarily to let you look at the board.</div>
-        <button class="wo-btn gray" id="leaveMatchBtn" style="width:100%">Back to Compound Menu</button>
-      </div>
-    </div>`;
+  const cards=RUN.castleState.matchCards.map((c,i)=>`<button class="card mini ${c.flipped?'':'back'}" data-match="${i}" ${c.flipped?'disabled':''}>${c.flipped?c.suit:'?'}</button>`).join('');
+  return `<div class="wo"><div class="wo-stripe"></div><div class="wo-body">
+    <div class="wo-eyebrow">Fleet Compound</div><h1>Fleet Carnival <em>Matching Game</em></h1>
+    <div class="wo-sub">Guesses left: ${RUN.castleState.matchGuesses}</div>
+    <div class="grid" style="grid-template-columns:repeat(3,1fr);max-width:360px">${cards}</div>
+    <div class="note" style="margin:10px 0">Match a pair to win a random reward. A wrong guess uses one of your attempts.</div>
+    <button class="wo-btn gray" id="leaveMatchBtn">Back to Compound</button>
+  </div></div>`;
 }
-
 
 let BLACKSMITH_OPTIONS = null;
 let BLACKSMITH_VISIT = null; // { primary: idx|null, secondary: idx|null } — one paid upgrade, plus one optional paid add-on, per visit
@@ -1380,7 +1299,7 @@ function detonateBurn() {
   battleLog(`Detonated the burn early for ${dmg} damage, forfeiting the remaining ticks.`);
   BATTLE.opponent.burns = [];
   saveRun();
-  if (BATTLE.opponent.hpNow <= 0) { winBattle(); return; }
+  if (checkOpponentDeath()) return;
   render(battleScreen());
 }
 
@@ -1546,9 +1465,30 @@ function executePlayerAttack(itemId, index) {
       battleLog(`${item.name} [${cardsStr}] — ${condResult.label}! Cursed them for ${amount} (${breakdown}) — it lands if they fail to attack next turn.`);
     } else {
       const atkBefore = BATTLE.opponent.hpNow;
-      BATTLE.opponent.hpNow = Math.max(0, BATTLE.opponent.hpNow - amount);
-      if (amount === atkBefore && atkBefore > 0) BATTLE.exactKill = true;
-      battleLog(`${item.name} [${cardsStr}] — ${condResult.label}! ${amount} damage (${breakdown}).`);
+      let dmgToApply = amount;
+      let shieldNote = '';
+      if (BATTLE.opponent.shield > 0) {
+        const absorbed = Math.min(BATTLE.opponent.shield, dmgToApply);
+        BATTLE.opponent.shield -= absorbed;
+        dmgToApply -= absorbed;
+        shieldNote = ` (${absorbed} absorbed by its shield)`;
+      }
+      BATTLE.opponent.hpNow = Math.max(0, BATTLE.opponent.hpNow - dmgToApply);
+      if (amount === atkBefore && atkBefore > 0 && !shieldNote) BATTLE.exactKill = true;
+      battleLog(`${item.name} [${cardsStr}] — ${condResult.label}! ${amount} damage${shieldNote} (${breakdown}).`);
+      if (dmgToApply > 0 && BATTLE.opponent.discardOnHit && BATTLE.hand.length) {
+        const idx = Math.floor(Math.random() * BATTLE.hand.length);
+        const [card] = BATTLE.hand.splice(idx, 1);
+        BATTLE.discard.push(card);
+        resortHandAndRelink(RUN.handSortMode);
+        battleLog(`${BATTLE.opponent.name} knocks a card out of your hand as it's hit.`);
+      }
+      if (dmgToApply > 0 && BATTLE.opponent.drawOnHit) {
+        for (let i = 0; i < BATTLE.opponent.drawOnHit; i++) {
+          if (BATTLE.oppDeck.length) { const c = BATTLE.oppDeck.pop(); c.revealed = false; BATTLE.oppPool.push(c); }
+        }
+        battleLog(`${BATTLE.opponent.name} draws an extra card as it's hit.`);
+      }
     }
   }
 
@@ -1653,6 +1593,25 @@ function resolveOpponentAttackEffect(attack, oppDmg) {
   if (attack.effect === 'draw') {
     if(BATTLE.oppDeck.length){ const c=BATTLE.oppDeck.pop(); c.revealed=false; BATTLE.oppPool.push(c); return ' Drew an extra card.'; }
   }
+  if (attack.effect === 'cleanse') {
+    const hadStatus = (BATTLE.opponent.poisonStacks||[]).length || (BATTLE.opponent.burns||[]).length || BATTLE.opponent.curseFromPlayer;
+    BATTLE.opponent.poisonStacks = []; BATTLE.opponent.burns = []; BATTLE.opponent.curseFromPlayer = 0;
+    return hadStatus ? ' Cleared all its negative effects.' : ' Had nothing to clear.';
+  }
+  if (attack.effect === 'selfDamage') {
+    const amount = attack.selfDamageAmount || Math.max(5, Math.round(oppDmg * 0.6));
+    BATTLE.opponent.hpNow = Math.max(1, BATTLE.opponent.hpNow - amount);
+    return ` Took ${amount} damage from overheating.`;
+  }
+  if (attack.effect === 'stealCoins') {
+    const n = Math.min(RUN.chips, attack.stealCoinsAmount || 5); RUN.chips -= n;
+    return n ? ` Stole ${n} coins.` : ' Tried to steal coins, but you had none.';
+  }
+  if (attack.effect === 'shield') {
+    const amount = attack.shieldAmount || Math.max(6, Math.round(oppDmg * 0.5));
+    BATTLE.opponent.shield = (BATTLE.opponent.shield || 0) + amount;
+    return ` Raised a ${amount}-point shield against your next hit.`;
+  }
   return '';
 }
 function endTurn() {
@@ -1701,7 +1660,7 @@ function endTurn() {
   }
   selectedIdx = [];
 
-  if (BATTLE.opponent.hpNow <= 0) { winBattle(); return; }
+  if (checkOpponentDeath()) return;
 
   // Poison ticks down over time.
   if (BATTLE.opponent.poisonStacks?.length) {
@@ -1719,7 +1678,7 @@ function endTurn() {
     BATTLE.opponent.burns.forEach(b => b.stageIdx++);
     BATTLE.opponent.burns = BATTLE.opponent.burns.filter(b => b.stageIdx < b.stages.length);
   }
-  if (BATTLE.opponent.hpNow <= 0) { winBattle(); return; }
+  if (checkOpponentDeath()) return;
 
   let opponentLandedHit = false;
   if (BATTLE.opponentStunned) {
@@ -1763,10 +1722,12 @@ function endTurn() {
       // easier, and a truly empty pool means no attack at all this swing.
       let pick = null;
       for (const a of choices) {
+        if (a.usesPerCombat != null && (BATTLE.opponent.usesThisCombat?.[a.name] || 0) >= a.usesPerCombat) continue;
         const best = a.autoFire ? { cards: [], tier: 999, label: 'Auto', mult: 0 } : bestHandFromPool(BATTLE.oppPool, a.maxCards ?? maxCards);
         if (a.minTurn != null && BATTLE.turn < a.minTurn) continue;
         let viable;
         if (a.autoFire) viable = true;
+        else if (a.sumExact) viable = best.cards.length > 0 && best.cards.reduce((s,c)=>s+cardValue(c.rank),0) === a.sumExact.value;
         else if (a.sumThreshold) viable = best.cards.reduce((s,c)=>s+cardValue(c.rank),0) >= a.sumThreshold.min;
         else if (a.fewCardsThreshold) viable = best.cards.length > 0 && best.cards.length <= a.fewCardsThreshold.max;
         else if (a.perFaceCard) viable = best.cards.length > 0;
@@ -1778,9 +1739,15 @@ function endTurn() {
       const { a: attackDefPicked, best } = pick;
       attackDef = attackDefPicked;
       anyAttack = true;
+      if (attackDef.usesPerCombat != null) {
+        BATTLE.opponent.usesThisCombat = BATTLE.opponent.usesThisCombat || {};
+        BATTLE.opponent.usesThisCombat[attackDef.name] = (BATTLE.opponent.usesThisCombat[attackDef.name] || 0) + 1;
+      }
       let oppDmg;
       if (attackDef.autoFire) {
         oppDmg = Math.round(attackDef.autoFire.damage * enrageMultiplier(BATTLE.opponent, BATTLE.turn));
+      } else if (attackDef.sumExact) {
+        oppDmg = Math.round(attackDef.sumExact.damage * enrageMultiplier(BATTLE.opponent, BATTLE.turn));
       } else if (attackDef.sumThreshold) {
         oppDmg = Math.round(attackDef.sumThreshold.damage * enrageMultiplier(BATTLE.opponent, BATTLE.turn));
       } else if (attackDef.fewCardsThreshold) {
@@ -1844,7 +1811,7 @@ function endTurn() {
       battleLog(`Your curse lands for ${curseDmg} damage — ${BATTLE.opponent.name} failed to attack!`);
     }
     BATTLE.opponent.curseFromPlayer = 0;
-    if (BATTLE.opponent.hpNow <= 0) { winBattle(); return; }
+    if (checkOpponentDeath()) return;
   }
 
   if (RUN.health <= 0) { IN_BATTLE = false; clearBattleSave(); render(nodeResultScreen(false, {})); return; }
@@ -1880,10 +1847,20 @@ function winBattle(outlast) {
   let pointsReward = Math.round((5 + BATTLE.row * 3) * scale);
   const exactKillBonus = BATTLE.exactKill && !outlast;
   if (exactKillBonus) { chipReward += 25; pointsReward += 15; }
+  // Some opponents grant a bonus just for being defeated at all (their "Perfect Kill" trait,
+  // separate from the exact-damage-kill bonus above).
+  let defeatBonusNote = '';
+  if (BATTLE.opponent.defeatBonus && !outlast) {
+    const db = BATTLE.opponent.defeatBonus;
+    if (db.type === 'coins') { chipReward += db.amount; defeatBonusNote = `+${db.amount} bonus coins`; }
+    else if (db.type === 'hp') { RUN.health = Math.min(RUN.maxHealth, RUN.health + db.amount); defeatBonusNote = `+${db.amount} bonus health`; }
+    else if (db.type === 'gems') { RUN.gems = Math.min(RUN.maxGems, RUN.gems + db.amount); defeatBonusNote = `+${db.amount} bonus gems`; }
+  }
   RUN.chips += chipReward; RUN.gems = Math.min(RUN.maxGems, RUN.gems + gemReward); RUN.fuel = Math.min(RUN.maxFuel, RUN.fuel + fuelReward);
   earnPoints(pointsReward);
   battleLog(outlast ? `You outlasted the ${BATTLE.opponent.name}!` : `${BATTLE.opponent.name} is done for!`);
   if (exactKillBonus) battleLog(`Perfect Win Bonus: +25 coins, +15 Career Points!`);
+  if (defeatBonusNote) battleLog(`${BATTLE.opponent.name}'s defeat bonus: ${defeatBonusNote}!`);
   battleLog(`+${chipReward} coins, +${gemReward} gems, +${fuelReward} fuel, +${pointsReward} Career Points.`);
   render(nodeResultScreen(true, { chipReward, gemReward, fuelReward, pointsReward, exactKillBonus }));
 }
@@ -1992,9 +1969,9 @@ function mapScreen() {
   }
 
   let nodesHTML='';
-    const NODE_ICON={shop:ICON.cart,rest:ICON.wrench,blacksmith:ICON.hammer,chopshop:ICON.curse,treasure:ICON.gift,castle:ICON.castle};
-    const NODE_TITLE={shop:'Dealership',rest:'Service Station',blacksmith:'Tuning Garage',chopshop:'Chop Shop',treasure:'Supply Cache',castle:'Fleet Compound'};
-      for(let r=0;r<rows.length;r++) for(let c=0;c<rows[r].length;c++){
+  const NODE_ICON={shop:ICON.cart,rest:ICON.wrench,blacksmith:ICON.hammer,chopshop:ICON.curse,treasure:ICON.gift,castle:ICON.castle};
+  const NODE_TITLE={shop:'Dealership',rest:'Pit Stop',blacksmith:'Tuning Garage',chopshop:'Chop Shop',treasure:'Supply Cache',castle:'Fleet Compound'};
+  for(let r=0;r<rows.length;r++) for(let c=0;c<rows[r].length;c++){
     const node=rows[r][c], x=25+r*colW+colW/2, y=rowY[Math.min(c,rowY.length-1)];
     const isDone=RUN.path.some(p=>p.row===r&&p.col===c);
     const isCurrent=r===RUN.currentRow&&c===RUN.currentCol;
@@ -2041,13 +2018,16 @@ function mapScreen() {
   </div>`;
 }
 
-/* ========== RUN-SCOPED UPGRADES (paid with coins, last only for this run) ========== */
+/* ========== RUN-SCOPED UPGRADES (paid with coins, last only for this run) ==========
+   Separate from the permanent Upgrades screen (Career Points, forever). Add a 5th kind here
+   the same way health was added — the screen and buy handler are generic over this table. */
 const MAX_ITEM_CAP = 9; // 3 rows of 3 — hard ceiling regardless of how many slot upgrades stack
 const RUN_UPGRADE_DEFS = {
   itemSlots:   { label: 'Item Slot',        desc: '+1 Item slot, this run only.', baseCost: 100, mult: 2, cap: 6 },
   drawPerTurn: { label: 'Cards Drawn/Turn', desc: '+1 card drawn at the start of each turn, this run only.', baseCost: 60, mult: 2, cap: 5 },
   sightRange:  { label: 'Map Sight Range',  desc: '+1 route space visible ahead on the map, this run only.', baseCost: 40, mult: 1.8, cap: 5 },
   gemDraw:     { label: 'Gem Draw',         desc: '+1 card drawn per gem spent, this run only.', baseCost: 50, mult: 2, cap: 4 },
+  health:      { label: 'Heal Up',          desc: 'Instantly heal 25 health. Price rises each time you buy it this run.', baseCost: 25, add: 20, cap: 99, isHeal: true },
 };
 function runUpgradeCost(kind) {
   const def = RUN_UPGRADE_DEFS[kind], n = RUN.runUpgrades[kind] || 0;
@@ -2126,11 +2106,10 @@ function battleScreen() {
 
     const usesBadgeText = cap === Infinity ? '∞' : `${Math.max(0, usesLeft)}/${cap}`;
     const cooldownLeft = item.cooldown != null ? (BATTLE.itemCooldowns?.[slotKey] || 0) : 0;
-    const itemBorder = cursedAmt ? 'var(--purple)' : eKind === 'defense' ? 'var(--defense)' : 'var(--blue)';
-    return `<div class="itemCard kind-${eKind} ${ready ? 'ready' : ''}" data-assign="${slotKey}" style="border:2px dashed ${itemBorder}"
+    return `<div class="itemCard kind-${eKind} ${ready ? 'ready' : ''}" data-assign="${slotKey}" style="border:2px dashed ${cursedAmt ? 'var(--purple)' : 'var(--blue)'}"
         ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleCardDrop(event,'${slotKey}',${effectiveMaxCards(item)})">
       <div class="usesBadge ${usesLeft <= 0 ? 'depleted' : ''} hoverTip" title="Uses left this turn">${usesBadgeText}</div>
-      <div class="hdr" style="font-weight:600; color:${eKind==='defense'?'var(--defense)':eKind==='poison'?'#4d8f45':eKind==='burn'?'#c4472d':eKind==='curse'?'#7a4aa8':'var(--blue-dark)'}">${item.name}${cursedAmt ? ` <span class="vart" style="width:12px;height:12px;font-size:12px;color:var(--purple)">${ICON.curse}</span> cursed` : ''}</div>
+      <div class="hdr" style="font-weight:600; color:${eKind==='poison'?'#4d8f45':eKind==='burn'?'#c4472d':eKind==='curse'?'#7a4aa8':'var(--blue-dark)'}">${item.name}${cursedAmt ? ` <span class="vart" style="width:12px;height:12px;font-size:12px;color:var(--purple)">${ICON.curse}</span> cursed` : ''}</div>
       <div class="vcards">${cardHTML}</div>
       <div class="itemReqLine">${itemRequirementText(item, eKind)}</div>
       ${bonusLine}
@@ -2156,7 +2135,7 @@ function battleScreen() {
       <div style="margin-top:auto">
         <div style="margin-top:4px">
           ${idxs.length ? `<button class="wo-btn gray" style="padding:3px 6px;font-size:10px" data-clear="${slotKey}">Clear</button>` : ''}
-          ${ready && usesLeft > 0 && cooldownLeft <= 0 ? `<span class="attackChip ${eKind==='defense' ? 'defendChip' : ''}" data-attack="${slotKey}" style="font-size:10px; padding:3px 6px">${eKind==='defense' ? 'Defend ▶' : 'Attack ▶'}</span>` : ''}
+          ${ready && usesLeft > 0 && cooldownLeft <= 0 ? `<span class="attackChip" data-attack="${slotKey}" style="font-size:10px; padding:3px 6px">Attack ▶</span>` : ''}
         </div>
       </div>
     </div>`;
@@ -2185,7 +2164,7 @@ function battleScreen() {
         <div class="sideInfo">
           <h3 style="justify-content:flex-end">${fleetLabel()}</h3>
           <div class="bar-wrap"><div class="bar-fill bar-health" style="width:${healthPct}%"></div></div>
-          <div class="note">${RUN.health} / ${RUN.maxHealth}${BATTLE.playerArmor ? ` &middot; <span class="armorText hoverTip" title="Armor protects against incoming attacks, absorbing damage equal to the amount shown."><span class="vart" style="width:12px;height:12px;font-size:12px">${ICON.shield}</span> ${BATTLE.playerArmor} Armor</span>` : ''}</div>
+          <div class="note">${RUN.health} / ${RUN.maxHealth}${BATTLE.playerArmor ? ` &middot; <span class="vart" style="width:12px;height:12px;font-size:12px">${ICON.shield}</span> ${BATTLE.playerArmor} armor` : ''}</div>
           <div style="margin-top:4px;display:flex;justify-content:flex-end"><button class="wo-btn green" id="fuelHealBtn" title="Fuel also gets you across the map — spending it here means less for travel." style="padding:6px 10px;font-size:11px" ${RUN.fuel < FUEL_HESTORE_COST || RUN.health >= RUN.maxHealth ? 'disabled' : ''}>Heal ${FUEL_HEAL_AMOUNT} = ${FUEL_HESTORE_COST} ${ICON.fuel}</button></div>
         </div>
       </div>
@@ -2201,7 +2180,7 @@ function battleScreen() {
             </span>
           </h3>
           <div class="bar-wrap"><div class="bar-fill bar-hp" style="width:${hpPct}%"></div></div>
-          <div class="note">${opp.hpNow} / ${opp.hp}${(BATTLE.opponent.poisonStacks||[]).length ? ` &middot; <span class="status poisonStatus hoverTip" title="Poison now: ${(BATTLE.opponent.poisonStacks||[]).reduce((a,n)=>a+n,0)} damage. Next turn: ${(BATTLE.opponent.poisonStacks||[]).map(n=>Math.max(0,n-3)).reduce((a,n)=>a+n,0)} damage.">${ICON.poison} ${(BATTLE.opponent.poisonStacks||[]).reduce((a,n)=>a+n,0)} poison</span>` : ''}${BATTLE.opponent.burns?.length ? (() => { const burns=BATTLE.opponent.burns; const now=burns.reduce((a,b)=>a+(b.stages[b.stageIdx]||0),0); const future=[1,2].map(offset=>burns.reduce((a,b)=>a+(b.stages[b.stageIdx+offset]||0),0)).filter(n=>n>0); const nextText=future.length ? `Next: ${future.join(', ')}` : 'No more burn damage.'; return ` &middot; <span class="status burnStatus hoverTip" title="${nextText}">${ICON.fire} ${now} <b><u>Burn</u></b></span>`; })() : ''}${BATTLE.opponent.curseFromPlayer ? ` &middot; <span class="status curseStatus hoverTip" title="Curse: ${BATTLE.opponent.curseFromPlayer} damage if the opponent fails to attack.">${ICON.curse} cursed</span>` : ''}</div>
+          <div class="note">${opp.hpNow} / ${opp.hp}${(BATTLE.opponent.poisonStacks||[]).length ? ` &middot; <span class="status poisonStatus hoverTip" title="Poison now: ${(BATTLE.opponent.poisonStacks||[]).reduce((a,n)=>a+n,0)} damage. Next turn: ${(BATTLE.opponent.poisonStacks||[]).map(n=>Math.max(0,n-3)).reduce((a,n)=>a+n,0)} damage.">${ICON.poison} ${(BATTLE.opponent.poisonStacks||[]).reduce((a,n)=>a+n,0)} poison</span>` : ''}${BATTLE.opponent.burns?.length ? ` &middot; <span class="status burnStatus hoverTip" title="Burn now: ${BATTLE.opponent.burns.reduce((a,b)=>a+(b.stages[b.stageIdx]||0),0)} damage. Next turn: ${BATTLE.opponent.burns.reduce((a,b)=>a+(b.stages[b.stageIdx+1]||0),0)} damage.">${ICON.fire} burning</span>` : ''}${BATTLE.opponent.curseFromPlayer ? ` &middot; <span class="status curseStatus hoverTip" title="Curse: ${BATTLE.opponent.curseFromPlayer} damage if the opponent fails to attack.">${ICON.curse} cursed</span>` : ''}</div>
           ${BATTLE.opponent.burns?.length ? `<span class="attackChip" data-detonate="1" style="background:var(--amber);border-color:#c97600;font-size:10px;padding:4px 8px">Detonate for ${BATTLE.opponent.burns.reduce((a,b)=>a+(b.stages[b.stageIdx]||0),0)} now</span>` : ''}
         </div>
       </div>
@@ -2344,50 +2323,6 @@ function pickShopStock() {
   if (bags.length) stock.push(shuffle([...bags])[0]);
   return stock;
 }
-// One shared card style for the Dealership, matching the equipped-item cards used in battle
-// (same header colors, same Poison/Burn/Curse hover tags) so an item looks the same whether
-// you're buying it or using it. `opts` is either {mode:'buy', disabled, disabledLabel} or
-// {mode:'sell', sell, index}.
-function dealerItemCardHTML(item, opts) {
-  const eKind = effectiveKind(item);
-  const headerColor = eKind === 'defense' ? 'var(--defense)' : eKind === 'poison' ? '#4d8f45' : eKind === 'burn' ? '#c4472d' : eKind === 'curse' ? '#7a4aa8' : 'var(--blue-dark)';
-  const priceLabel = opts.mode === 'buy' ? `${item.cost} coins` : `${opts.sell} coins`;
-  const footer = opts.mode === 'buy'
-    ? `<button class="wo-btn amber" data-buy="${item.id}" data-cost="${item.cost}" ${opts.disabled ? 'disabled' : ''} style="width:100%;padding:7px 10px;font-size:12px;margin:4px 0 6px">${opts.disabledLabel || 'Purchase'}</button>`
-    : `<button class="wo-btn gray" data-sell="${opts.index}" style="width:100%;padding:7px 10px;font-size:12px;margin:4px 0 6px">Sell</button>`;
-  const head = `<div class="hdr" style="font-weight:700;color:${headerColor};width:100%;text-align:left">${item.name}</div>
-    <div class="price" style="text-align:left">${priceLabel}</div>
-    ${footer}
-    <div class="itemDivider"></div>`;
-
-  if (item.kind === 'storage') {
-    return `<div class="itemCard" style="min-height:auto;text-align:left;align-items:flex-start;padding:8px">
-      ${head}
-      <div class="note" style="text-align:left;margin:0">${item.note || ''}</div>
-    </div>`;
-  }
-
-  const hasKindAmount = item.flatAmount != null || (item.baseMult ?? 1) > 0;
-  const drawN = item.drawUsesCardCount ? (item.maxCards + (item.drawBonusFlat || 0)) : (item.drawAmount || 0);
-  const drawText = (item.drawAmount || item.drawUsesCardCount) ? `<span class="hoverTip" title="Draws ${drawN} card${drawN === 1 ? '' : 's'} immediately after this item is used."><b>Draw</b> ${drawN} card${drawN === 1 ? '' : 's'}</span>` : '';
-  const kindTag = eKind === 'poison' ? `<span class="effectTip poisonText" data-tip="Poison deals its damage at the end of the opponent's turn, then drops by 3 each turn until it's gone."><b>Poison</b></span>`
-    : eKind === 'burn' ? `<span class="effectTip burnText" data-tip="Burn hits for full damage, then half, then a quarter, fading out over 3 turns."><b>Burn</b></span>`
-    : eKind === 'curse' ? `<span class="effectTip curseText" data-tip="Curse goes off if this item isn't fired again before the opponent's next turn."><b>Curse</b></span>`
-    : '';
-  const amountWord = eKind === 'defense' ? 'Blocks' : 'Damage';
-  const kindLine = hasKindAmount ? `${kindTag || `<b>${amountWord}</b>`} &times;${item.baseMult ?? 1}` : '';
-  const bonusPct = item.bonus ? Math.round(item.bonus.base * 100) : 0;
-  const bonusLine = item.bonus && bonusPct > 0 ? `<div class="itemBonusLine">Bonus <b>+${bonusPct}%</b> if ${describeCondition(item.bonus.condition || item.condition)}</div>` : '';
-  const unlockLine = item.unlockThreshold != null ? `<div class="note" style="margin:2px 0 0;text-align:left"><span class="hoverTip" title="Deal ${item.unlockThreshold} total damage through this item over the run to unlock a one-time bonus draw of 4."><b>Unlocks</b> at ${item.unlockThreshold} dmg</span></div>` : '';
-
-  return `<div class="itemCard" style="min-height:auto;text-align:left;align-items:flex-start;padding:8px">
-    ${head}
-    <div class="itemReqLine" style="text-align:left">${itemRequirementText(item, eKind)}</div>
-    ${kindLine || drawText ? `<div class="note" style="margin:2px 0 0;text-align:left">${[kindLine, drawText].filter(Boolean).join(' + ')}</div>` : ''}
-    ${bonusLine}
-    ${unlockLine}
-  </div>`;
-}
 function shopScreen(fromCastle=false) {
   if (!RUN.shopStock) RUN.shopStock = pickShopStock().map(it => it.id);
   const allOptions = RUN.shopStock.map(id => ITEMS[id]).filter(Boolean);
@@ -2397,73 +2332,56 @@ function shopScreen(fromCastle=false) {
     if (cat.id !== 'all' && count === 0) return '';
     return `<button class="wo-btn ${SHOP_FILTER === cat.id ? 'amber' : 'gray'}" data-shopfilter="${cat.id}" style="padding:5px 10px;font-size:11px">${cat.label} (${count})</button>`;
   }).join('');
-  const itemRows = options.map(it => dealerItemCardHTML(it, {
-    mode: 'buy',
-    disabled: RUN.chips < it.cost || RUN.hero.items.length >= RUN.itemCap,
-    disabledLabel: RUN.hero.items.length >= RUN.itemCap ? 'No open slot' : null,
-  })).join('');
+  const itemRows = options.map(it => `<div class="shopcard" style="display:flex;flex-direction:column;height:100%;box-sizing:border-box">
+    <div class="hdr"><span>${it.name}</span><span class="price">${it.cost} coins</span></div>
+    <div class="itemReqLine">${itemRequirementText(it)}</div>
+    <div class="note" style="margin:0 0 4px">Damage: ${it.kind === 'unlock' ? 'Σ (see note below for its one-time unlock bonus)' : (it.baseMult != null ? ` × ${it.baseMult}` : 'special effect')}</div>
+    <div class="note" style="margin:0 0 4px;flex:1">${it.note || ''}</div>
+    <div style="display:flex;justify-content:flex-end">
+      <button class="wo-btn amber" data-buy="${it.id}" data-cost="${it.cost}" ${RUN.chips < it.cost || RUN.hero.items.length >= RUN.itemCap ? 'disabled' : ''} style="padding:8px 12px;font-size:13px">${RUN.hero.items.length >= RUN.itemCap ? 'No open item slot' : 'Purchase'}</button>
+    </div>
+  </div>`).join('');
   const ownedRows = RUN.hero.items.map((id,i)=>{
     const it=ITEMS[id]; if(!it) return '';
     const modCost=(itemLevel(id)>0?itemTuneCost(it,Math.max(0,itemLevel(id)-1)):0)+(itemUsesLevel(id)>0?itemUsesTuneCost(itemUsesLevel(id)-1):0)+(itemMaxCardsLevel(id)>0?itemMaxCardsTuneCost(itemMaxCardsLevel(id)-1):0)+(RUN.itemKindOverride[`${id}_${i}`] || RUN.itemKindOverride[id]?itemKindConvertCost():0);
     const sell=Math.floor((it.cost+modCost)/2);
-    return dealerItemCardHTML(it, { mode: 'sell', sell, index: i });
+    return `<div class="shopcard" style="display:flex;flex-direction:column;height:100%;box-sizing:border-box">
+      <div class="hdr"><span>${it.name}</span><span class="price">Sell: ${sell} coins</span></div>
+      <div class="note" style="flex:1">Owned Item ${i+1}. Includes 50% of its purchase price and paid run modifications.</div>
+      <div style="display:flex;justify-content:flex-end">
+        <button class="wo-btn gray" data-sell="${i}" style="padding:8px 12px;font-size:13px">Sell Item</button>
+      </div>
+    </div>`;
   }).join('');
   return `${noticeHTML()}
     <div class="wo">
       <div class="wo-stripe"></div><div class="wo-body">
-        <div class="wo-eyebrow">Fleet Compound</div><h1>Dealership</h1>${currencyBar()}
-        <div class="hdr" style="margin-top:10px"><span>Available Items (${options.length}${SHOP_FILTER!=='all'?` of ${allOptions.length}`:''})</span><span>Items: ${RUN.hero.items.length}/${RUN.itemCap}</span></div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 10px">${filterButtonsHTML}</div>
-        <div class="dealerGrid" style="margin:6px 0 12px">${itemRows || '<div class="note">No items in this category.</div>'}</div>
-        ${ownedRows ? `<div class="hdr" style="margin-top:14px"><span>Equipped Items</span></div><div class="dealerGrid">${ownedRows}</div>` : ''}
-        <div style="display:flex;gap:8px;margin-top:16px">
+        <div style="position:sticky;top:0;z-index:10;background:var(--white);padding-bottom:10px;display:flex;gap:8px">
           <button class="wo-btn gray" id="leaveShopBtn" style="flex:1">${fromCastle ? "Back to Compound" : "Back to Road"}</button>
           <button class="wo-btn gray" id="openRunUpgradeFromShopBtn" data-fromcastle="${fromCastle ? '1' : '0'}" style="flex:1">Upgrades</button>
         </div>
+        <div class="wo-eyebrow">Dealership</div><h1>Vehicle <em>Department</em></h1>${currencyBar()}
+        <div class="hdr" style="margin-top:10px"><span>Available Items (${options.length}${SHOP_FILTER!=='all'?` of ${allOptions.length}`:''})</span><span>Items: ${RUN.hero.items.length}/${RUN.itemCap}</span></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 10px">${filterButtonsHTML}</div>
+        <div class="shopGrid" style="margin:6px 0 12px">${itemRows || '<div class="note">No items in this category.</div>'}</div>
+        ${ownedRows ? `<div class="hdr" style="margin-top:14px"><span>Your Items</span><span>Sell to make room</span></div><div class="shopGrid">${ownedRows}</div>` : ''}
       </div>
     </div>`;
 }
-
-function garageScreen(message='') {
-  const missingFuel = RUN.maxFuel - RUN.fuel;
-  const maxAffordable = Math.floor(RUN.chips / 8);
-  const purchaseLimit = Math.min(missingFuel, maxAffordable);
-  const totalCost = purchaseLimit * 8;
-
+function garageScreen() {
   return `${noticeHTML()}
     <div class="wo">
       <div class="wo-stripe"></div>
       <div class="wo-body">
-        <div class="wo-eyebrow">Service Station</div>
-        <h1>Fuel &amp; <em>Repairs</em></h1>
-        <div class="wo-sub">Pull over to heal or top off your gas tank.</div>
-        ${currencyBar()}
-        ${message ? `<div class="panel"><div class="note">${message}</div></div>` : ''}
-        
-        <div class="shopcard">
-          <h3>Fuel Dispenser</h3>
-          <div class="note">Fuel costs <b>8 coins per 1 unit</b>. Fill your tank completely or buy what you can afford.</div>
-          ${purchaseLimit > 0 
-            ? `<div class="note" style="color:var(--green);font-weight:600;margin:6px 0">You can buy up to +${purchaseLimit} fuel for ${totalCost} coins.</div>`
-            : `<div class="note" style="color:var(--dim);margin:6px 0">${RUN.fuel >= RUN.maxFuel ? 'Your tank is completely full.' : 'Not enough coins to buy fuel.'}</div>`
-          }
-          <button class="wo-btn amber" id="stationFuelBtn" ${purchaseLimit <= 0 ? 'disabled' : ''}>
-            Fill Tank (+${purchaseLimit} Fuel)
-          </button>
-        </div>
-
-        <div class="shopcard">
-          <h3>Fleet Maintenance</h3>
-          <div class="note">Restores a flat 30 points of physical fleet health. Single-use per visit.</div>
-          <button class="wo-btn" id="restBtn" ${RUN.health >= RUN.maxHealth ? 'disabled' : ''}>Rest (+30 Health)</button>
-        </div>
-
-        <button class="wo-btn gray" id="leaveStationBtn" style="width:100%;margin-top:12px">Back to Route Map</button>
+        <div class="wo-eyebrow">Pit Stop</div>
+        <h1>Quick <em>Rest</em></h1>
+        <div class="wo-sub">A calm stop before the next battle.</div>
+        <button class="wo-btn" id="restBtn">Rest (+30 Health)</button>
+        <button class="wo-btn gray" id="openRunUpgradeFromRestBtn" style="margin-top:8px">Upgrades</button>
       </div>
-    </div>`;
+    </div>
+  `;
 }
-
-
 
 function blacksmithScreen() {
   const rows = BLACKSMITH_OPTIONS.map((opt, i) => {
@@ -2779,70 +2697,6 @@ function render(html) {
   if (playerNameInput) playerNameInput.onchange = () => { META.playerName = playerNameInput.value.trim().slice(0, 18); saveMeta(); };
   const viewUpgradesBtn = document.getElementById('viewUpgradesBtn'); if (viewUpgradesBtn) viewUpgradesBtn.onclick = () => render(upgradeScreen());
   const leaveChopShopBtn = document.getElementById('leaveChopShopBtn'); if (leaveChopShopBtn) leaveChopShopBtn.onclick = () => render(RETURN_TO_CASTLE_MENU ? castleMenuScreen() : mapScreen());
-    // 1. Service Station Fuel Purchase (Dynamic 8-coin math check)
-  const stationFuelBtn = document.getElementById('stationFuelBtn');
-  if (stationFuelBtn) {
-    stationFuelBtn.onclick = () => {
-      const missingFuel = RUN.maxFuel - RUN.fuel;
-      const maxAffordable = Math.floor(RUN.chips / 8);
-      const purchaseLimit = Math.min(missingFuel, maxAffordable);
-      const totalCost = purchaseLimit * 8;
-      if (purchaseLimit > 0 && RUN.chips >= totalCost) {
-        RUN.chips -= totalCost;
-        RUN.fuel += purchaseLimit;
-        saveRun();
-        render(garageScreen(`Topped off tank: Added +${purchaseLimit} fuel for ${totalCost} coins.`));
-      }
-    };
-  }
-
-  // 2. Service Station Maintenance Flat Rest Button
-  const restBtn = document.getElementById('restBtn'); 
-  if (restBtn) {
-    restBtn.onclick = () => { 
-      RUN.health = Math.min(RUN.maxHealth, RUN.health + 30); 
-      saveRun(); 
-      render(mapScreen()); 
-    };
-  }
-
-  // 3. Service Station Exit Back to Map Route
-  const leaveStationBtn = document.getElementById('leaveStationBtn');
-  if (leaveStationBtn) {
-    leaveStationBtn.onclick = () => render(mapScreen());
-  }
-
-  // 4. Compound Inn Fuel Purchase (Dynamic 8-coin math check)
-  const castleFuelBtn = document.getElementById('castleFuelBtn'); 
-  if (castleFuelBtn) {
-    castleFuelBtn.onclick = () => { 
-      const missingFuel = RUN.maxFuel - RUN.fuel;
-      const maxAffordable = Math.floor(RUN.chips / 8);
-      const purchaseLimit = Math.min(missingFuel, maxAffordable);
-      const totalCost = purchaseLimit * 8;
-      if (purchaseLimit > 0 && RUN.chips >= totalCost) { 
-        RUN.chips -= totalCost; 
-        RUN.fuel += purchaseLimit; 
-        saveRun(); 
-        render(castleInnScreen(`Topped off tank: Added +${purchaseLimit} fuel for ${totalCost} coins.`)); 
-      } 
-    };
-  }
-
-  // 5. Compound Inn Sleep Button (Flat 30 HP, scaling cost)
-  const castleRestBtn = document.getElementById('castleRestBtn'); 
-  if (castleRestBtn) {
-    castleRestBtn.onclick = () => { 
-      const cost = RUN.innSleeps === 0 ? 0 : 20 * RUN.innSleeps; 
-      if (RUN.chips < cost || RUN.health >= RUN.maxHealth) return; 
-      RUN.chips -= cost; 
-      RUN.innSleeps = (RUN.innSleeps || 0) + 1; 
-      RUN.health = Math.min(RUN.maxHealth, RUN.health + 30); 
-      saveRun(); 
-      render(castleInnScreen(`You slept and recovered 30 health${cost ? ` for ${cost} coins` : ''}.`)); 
-    };
-  }
-
   app.querySelectorAll('[data-bonusup]').forEach(el => el.onclick = () => {
     const item = ITEMS[el.dataset.bonusup];
     const cap = itemLevelCap(item);
@@ -2983,75 +2837,27 @@ function render(html) {
   const backToCastleMenuBtn = document.getElementById('backToCastleMenuBtn'); if (backToCastleMenuBtn) backToCastleMenuBtn.onclick = () => render(castleMenuScreen());
   const castleBattle1Btn = document.getElementById('castleBattle1Btn'); if (castleBattle1Btn) castleBattle1Btn.onclick = () => { if (!RUN.castleState) RUN.castleState = {}; startBattle(CASTLE_FIRST, 10, 0, 1); };
   const castleBattle2Btn = document.getElementById('castleBattle2Btn'); if (castleBattle2Btn) castleBattle2Btn.onclick = () => { if (!RUN.castleState) RUN.castleState = {}; startBattle(CASTLE_SECOND, 10, 0, 2); };
+  const castleFuelBtn = document.getElementById('castleFuelBtn'); if (castleFuelBtn) castleFuelBtn.onclick = () => { if (RUN.chips>=5) { RUN.chips-=5; RUN.fuel=Math.min(RUN.maxFuel,RUN.fuel+10); saveRun(); render(castleInnScreen('You refueled for 5 coins.')); } };
+  const castleRestBtn = document.getElementById('castleRestBtn'); if (castleRestBtn) castleRestBtn.onclick = () => { const cost=RUN.innSleeps===0?0:20*RUN.innSleeps; if(RUN.chips<cost || RUN.health>=RUN.maxHealth)return; RUN.chips-=cost; RUN.innSleeps=(RUN.innSleeps||0)+1; RUN.health=Math.min(RUN.maxHealth,RUN.health+20); saveRun(); render(castleInnScreen(`You slept and recovered 20 health${cost?` for ${cost} coins`:''}.`)); };
   const leaveCastleBtn = document.getElementById('leaveCastleBtn'); if (leaveCastleBtn) leaveCastleBtn.onclick = () => render(mapScreen());
   const leaveMatchBtn = document.getElementById('leaveMatchBtn'); if (leaveMatchBtn) leaveMatchBtn.onclick = () => render(castleMenuScreen());
-    app.querySelectorAll('[data-match]').forEach(el => {
-    el.onclick = () => {
-      const i = +el.dataset.match;
-      const st = RUN.castleState;
-      
-      // Safety gate: block clicks if input is locked out during a delay timer
-      if (!st || st.matchGuesses <= 0 || st.matchPick.includes(i) || st.matchCards[i].flipped || st.matchCards[i].matched || st.matchLock) return;
-      
-      st.matchPick.push(i); 
-      st.matchCards[i].flipped = true;
-      render(castleMatchScreen()); // Render immediately to reveal the first or second card face-up
-      
-      if (st.matchPick.length === 2) {
-        const [a, b] = st.matchPick;
-        st.matchLock = true; // Engage execution lock so they can't spam other hidden items
-        
-        if (st.matchCards[a].suit === st.matchCards[b].suit) {
-          // A MATCH IS FOUND! Set status flags
-          st.matchCards[a].matched = true;
-          st.matchCards[b].matched = true;
-          st.matchPick = [];
-          
-          // Match reward configuration
-          const reward = Math.random() < 0.5 ? { coins: 25, gems: 1 } : { coins: 15, fuel: 8 };
-          RUN.chips += reward.coins || 0; 
-          RUN.gems = Math.min(RUN.maxGems, RUN.gems + (reward.gems || 0)); 
-          RUN.fuel = Math.min(RUN.maxFuel, RUN.fuel + (reward.fuel || 0));
-          saveRun();
-
-          // 1-second celebration delay: Let them process what they matched before kicking them out
-          setTimeout(() => {
-            st.matchLock = false;
-            // Check if every card has been matched successfully
-            const boardCleared = st.matchCards.every(c => c.matched);
-            if (boardCleared) {
-              st.matchCards = null; // Clear state variables so they can play fresh on their next visit
-              render(castleMenuScreen(`Jackpot! You cleared the entire board! Bonus +50 coins applied.`));
-              RUN.chips += 50;
-              saveRun();
-            } else {
-              render(castleMatchScreen()); // Refresh the active grid layout
-            }
-          }, 1000);
-          
-        } else {
-          // MISMATCH: Deduct an attempt point
-          st.matchGuesses--;
-          
-          // 1.2-second memorization delay: Freeze cards face-up so the player can actually study the board
-          setTimeout(() => {
-            st.matchCards[a].flipped = false;
-            st.matchCards[b].flipped = false;
-            st.matchPick = [];
-            st.matchLock = false;
-            
-            if (st.matchGuesses <= 0) {
-              st.matchCards = null; // Wipe out state values on a game-over loss
-              render(castleMenuScreen('Out of attempts! The matching session is over for this visit.'));
-            } else {
-              render(castleMatchScreen());
-            }
-          }, 1200);
-        }
+  app.querySelectorAll('[data-match]').forEach(el => el.onclick = () => {
+    const i=+el.dataset.match, st=RUN.castleState;
+    if (!st || st.matchGuesses<=0 || st.matchPick.includes(i) || st.matchCards[i].flipped) return;
+    st.matchPick.push(i); st.matchCards[i].flipped=true;
+    if (st.matchPick.length===2) {
+      const [a,b]=st.matchPick;
+      if (st.matchCards[a].suit===st.matchCards[b].suit) {
+        const reward=Math.random()<0.5 ? {coins:20+Math.floor(Math.random()*21),gems:1} : {coins:15,fuel:8};
+        RUN.chips+=reward.coins||0; RUN.gems=Math.min(RUN.maxGems,RUN.gems+(reward.gems||0)); RUN.fuel=Math.min(RUN.maxFuel,RUN.fuel+(reward.fuel||0));
+        st.matchGuesses++; saveRun(); render(castleMenuScreen(`Match! You won ${reward.coins||0} coins${reward.gems?`, ${reward.gems} gem`:''}${reward.fuel?`, ${reward.fuel} fuel`:''}.`));
+      } else {
+        st.matchGuesses--;
+        setTimeout(()=>{ st.matchPick.forEach(x=>st.matchCards[x].flipped=false); st.matchPick=[]; render(st.matchGuesses>0?castleMatchScreen():castleMenuScreen('No match. The game is over for this visit.')); },350);
       }
-    };
+    }
+    else render(castleMatchScreen());
   });
-
   const leaveShopBtn = document.getElementById('leaveShopBtn'); if (leaveShopBtn) leaveShopBtn.onclick = () => render(RETURN_TO_CASTLE_MENU ? castleMenuScreen() : mapScreen());
   const leaveBlacksmithBtn = document.getElementById('leaveBlacksmithBtn'); if (leaveBlacksmithBtn) leaveBlacksmithBtn.onclick = () => { BLACKSMITH_OPTIONS = null; BLACKSMITH_VISIT = null; render(RETURN_TO_CASTLE_MENU ? castleMenuScreen() : mapScreen()); };
   const leaveTreasureBtn = document.getElementById('leaveTreasureBtn'); if (leaveTreasureBtn) leaveTreasureBtn.onclick = () => render(mapScreen());
@@ -3096,31 +2902,19 @@ function render(html) {
     render(shopScreen());
   });
 
+
+  const restBtn = document.getElementById('restBtn'); if (restBtn) restBtn.onclick = () => { RUN.health = Math.min(RUN.maxHealth, RUN.health + 30); saveRun(); render(mapScreen()); };
   const backToMetaBtn = document.getElementById('backToMetaBtn'); if (backToMetaBtn) backToMetaBtn.onclick = () => render(metaScreen());
   const startRunBtn = document.getElementById('startRunBtn'); if (startRunBtn) startRunBtn.onclick = () => { clearRunSave(); render(starterSelectScreen()); };
-  const continueRunBtn = document.getElementById('continueRunBtn'); if (continueRunBtn) continueRunBtn.onclick = () => { RUN = loadRunSave(); 
-  RUN.maxGems=10+(META.levels.gemCap||0)*2; 
-  RUN.maxFuel=20+(META.levels.fuelCap||0)*5; RUN.maxEnergy=20+(META.levels.energyCap||0)*5; 
-  RUN.handSize=7+(META.levels.handCap||0)*2; 
-  RUN.itemCap=Math.max(RUN.itemCap||0, Math.min(MAX_ITEM_CAP, 3+(META.levels.garage||0))); 
-  RUN.runUpgrades=RUN.runUpgrades||{itemSlots:0,drawPerTurn:0,sightRange:0,gemDraw:0,health:0}; 
-  RUN.drawPerTurn=2+(META.levels.draw||0)+RUN.runUpgrades.drawPerTurn; 
-  RUN.gems=Math.min(RUN.maxGems,RUN.gems||0); 
-  RUN.fuel=Math.min(RUN.maxFuel,RUN.fuel||0); 
-  RUN.energy=Math.min(RUN.maxEnergy,RUN.energy||0); 
-  RUN.itemLevels=RUN.itemLevels||{}; 
-  RUN.itemUsesLevels=RUN.itemUsesLevels||{}; 
-  RUN.itemKindOverride=RUN.itemKindOverride||{}; 
-  Object.keys(RUN.itemKindOverride).filter(k=>!k.includes('_')).forEach(k=>{ if(RUN.hero?.items?.includes(k) && !RUN.itemKindOverride[`${k}_0`]) RUN.itemKindOverride[`${k}_0`]=RUN.itemKindOverride[k]; }); 
-  RUN.itemMaxCardsLevels=RUN.itemMaxCardsLevels||{}; 
-  RUN.itemUnlockProgress=RUN.itemUnlockProgress||{}; 
- RUN.itemUnlocked=RUN.itemUnlocked||{}; RUN.itemUnlockPending=RUN.itemUnlockPending||{}; 
- RUN.castleState=RUN.castleState||{}; saveRun(); const savedBattle = loadBattleSave(); if (savedBattle) { BATTLE = savedBattle; IN_BATTLE = true; render(battleScreen()); } else { render(mapScreen()); } };
+  const continueRunBtn = document.getElementById('continueRunBtn'); if (continueRunBtn) continueRunBtn.onclick = () => { RUN = loadRunSave(); RUN.maxGems=10+(META.levels.gemCap||0)*2; RUN.maxFuel=20+(META.levels.fuelCap||0)*5; RUN.maxEnergy=20+(META.levels.energyCap||0)*5; RUN.handSize=7+(META.levels.handCap||0)*2; RUN.itemCap=Math.max(RUN.itemCap||0, Math.min(MAX_ITEM_CAP, 3+(META.levels.garage||0))); RUN.runUpgrades=RUN.runUpgrades||{itemSlots:0,drawPerTurn:0,sightRange:0,gemDraw:0,health:0}; RUN.drawPerTurn=2+(META.levels.draw||0)+RUN.runUpgrades.drawPerTurn; RUN.gems=Math.min(RUN.maxGems,RUN.gems||0); RUN.fuel=Math.min(RUN.maxFuel,RUN.fuel||0); RUN.energy=Math.min(RUN.maxEnergy,RUN.energy||0); RUN.itemLevels=RUN.itemLevels||{}; RUN.itemUsesLevels=RUN.itemUsesLevels||{}; RUN.itemKindOverride=RUN.itemKindOverride||{}; Object.keys(RUN.itemKindOverride).filter(k=>!k.includes('_')).forEach(k=>{ if(RUN.hero?.items?.includes(k) && !RUN.itemKindOverride[`${k}_0`]) RUN.itemKindOverride[`${k}_0`]=RUN.itemKindOverride[k]; }); RUN.itemMaxCardsLevels=RUN.itemMaxCardsLevels||{}; RUN.itemUnlockProgress=RUN.itemUnlockProgress||{}; RUN.itemUnlocked=RUN.itemUnlocked||{}; RUN.itemUnlockPending=RUN.itemUnlockPending||{}; RUN.castleState=RUN.castleState||{}; saveRun(); const savedBattle = loadBattleSave(); if (savedBattle) { BATTLE = savedBattle; IN_BATTLE = true; render(battleScreen()); } else { render(mapScreen()); } };
   app.querySelectorAll('[data-pick]').forEach(el => el.onclick = () => initRunWithStarter(el.dataset.pick));
 }
 
 /* ========== BOOT ========== */
 (function boot() {
+  // A saved battle only makes sense alongside a saved run — if a mid-fight refresh happens,
+  // resume straight into that exact fight instead of dropping back to the main menu or map,
+  // so nobody can peek at an opponent's hand/attacks and reroll a different path.
   const savedBattle = loadBattleSave();
   const savedRun = loadRunSave();
   if (savedBattle && savedRun) {

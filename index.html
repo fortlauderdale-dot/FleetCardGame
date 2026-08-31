@@ -358,7 +358,8 @@ function opponentAttackBoxHTML(opp) {
     const effect = a.effect || 'damage';
 
     // Line 1 — how many cards this attack uses, nothing else. Mirrors the player's itemReqLine.
-    const capLine = a.autoFire ? 'No card needed' : a.straightLen ? `Any ${a.straightLen} cards in a row` : (minTier > 0 ? `${TIERS[minTier]} to Attack` : (cap === 1 ? '1 card' : `Up to ${cap} cards`));
+    const flatCapMatch = a.fewCardsThreshold && cap === a.fewCardsThreshold.max;
+    const capLine = a.autoFire ? 'No card needed' : a.straightLen ? `Any ${a.straightLen} cards in a row` : (minTier > 0 ? `${TIERS[minTier]} to Attack` : (flatCapMatch ? (cap === 1 ? 'Any card' : `Any ${cap} cards`) : (cap === 1 ? '1 card' : `Up to ${cap} cards`)));
 
     // Line 2 — the specific condition/bonus, mirroring the player's itemBonusLine. Only one of
     // these mechanics applies per attack (they're mutually exclusive by design).
@@ -371,7 +372,7 @@ function opponentAttackBoxHTML(opp) {
       bonusLine = `Needs Σ${a.sumThreshold.min}+`;
       damageLine = `Flat ${a.sumThreshold.damage} damage if met`;
     } else if (a.fewCardsThreshold) {
-      bonusLine = `Only works using ${a.fewCardsThreshold.max} card${a.fewCardsThreshold.max > 1 ? 's' : ''} or fewer`;
+      bonusLine = cap > a.fewCardsThreshold.max ? `Only works using ${a.fewCardsThreshold.max} card${a.fewCardsThreshold.max > 1 ? 's' : ''} or fewer` : '';
       damageLine = `Flat ${a.fewCardsThreshold.damage} damage`;
     } else if (a.perFaceCard) {
       bonusLine = `Extra damage per face card (J/Q/K) played`;
@@ -831,7 +832,7 @@ const OPPONENT_TIERS = [
   [ 
     { id: 'stormSurge', name: 'Storm Surge', icon: '🌊', image: 'Hazards/storm-surge.jpg', hp: 130, minTier: 3, drawRate: 4, turnLimit: 8, attacks: [{ name: 'Tidal Slam', maxCards: 4, minTier: 3, effect: 'burn' }, { name: 'Undertow', maxCards: 3, minTier: 2, effect: 'poison' }] },
     { id: 'buildingFire', name: 'Building Fire', icon: '🔥', image: 'Hazards/building-fire.jpg', hp: 135, minTier: 4, drawRate: 4, turnLimit: 8, attacks: [{ name: 'Inferno Blast', maxCards: 4, minTier: 4, effect: 'burn' }, { name: 'Structural Collapse', maxCards: 5, minTier: 0, sumThreshold: { min: 30, damage: 26 }, effect: 'stealFuel' }] },
-    { id: 'evilMechanic2', name: 'Evil Mechanic (Repeat Offender)', icon: '🔧', image: 'Hazards/evil-mechanic-2.jpg', hp: 140, minTier: 2, drawRate: 4, turnLimit: 8, curse: { count: 2, amount: 12, chance: 0.6 }, attacks: [{ name: 'Double Sabotage', maxCards: 4, minTier: 2, effect: 'curse' }, { name: 'Total Wreckage', maxCards: 5, minTier: 0, sumThreshold: { min: 32, damage: 32 } }] },
+    { id: 'evilMechanic2', name: 'Evil Mechanic (Repeat Offender)', icon: '🔧', image: 'Hazards/evil-mechanic-2.jpg', hp: 140, minTier: 2, drawRate: 4, turnLimit: 8, curse: { count: 'all', amount: 12, chance: 0.6 }, attacks: [{ name: 'Curse All', maxCards: 4, minTier: 2, effect: 'curse' }, { name: 'Total Wreckage', maxCards: 5, minTier: 0, sumThreshold: { min: 32, damage: 32 } }] },
     { id: 'looseDog2', name: 'Loose Dog 2', icon: '🐕', image: 'Hazards/loose-dog-2.jpg', hp: 130, minTier: 0, drawRate: 3, turnLimit: 8, attacks: [{ name: 'Snap Bite', maxCards: 1, minTier: 0 }, { name: 'Cornered Snarl', maxCards: 2, minTier: 0, fewCardsThreshold: { max: 1, damage: 28 } }] },
     { id: 'gasLeak2', name: 'Major Gas Leak', icon: '⛽', image: 'Hazards/gas-leak-2.jpg', hp: 145, locked: true, lockThreshold: 75, lockAttack: 65, drawRate: 4, turnLimit: 9, releaseAttackName: 'Massive Ignition' },
     { id: 'streetlight_elite', name: 'Live Wire Street Light [Elite]', icon: '⚡', image: 'Hazards/downed-line.jpg', hp: 135, minTier: 2, drawRate: 4, turnLimit: 8, attacks: [{ name: 'High-Voltage Arc', maxCards: 3, minTier: 2, effect: 'stun' }, { name: 'Ground Crackle', maxCards: 3, minTier: 0, sumThreshold: { min: 25, damage: 26 } }] },
@@ -1352,8 +1353,11 @@ function enrageMultiplier(opp, turn) {
   return 1 + Math.min(1.0, over * 0.12);
 }
 
-// Curse: an opponent can curse 1, 2, 3, or a random number of cards currently in the player's hand.
-// If the player hasn't played a cursed card by the end of the turn it was checked, it deals its damage and clears.
+// Curse: an opponent can curse 1, 2, 3, all, or a random number of cards currently in the
+// player's hand. If the player hasn't played a cursed card by the end of the turn it was
+// checked, it deals its damage and clears. Curse never stacks — re-cursing an already-cursed
+// Item instead detonates the OLD curse for its damage right now, then the NEW curse amount
+// takes over from that point.
 function tryApplyCurse() {
   const spec = BATTLE.opponent.curse;
   if (!spec) return;
@@ -1361,15 +1365,23 @@ function tryApplyCurse() {
   // Curse targets equipped Items (never storage — cursing something that can't attack would be an unwinnable trap).
   const eligible = RUN.hero.items.map((id, i) => `${id}_${i}`).filter(key => {
     const item = ITEMS[key.replace(/_\d+$/, '')];
-    return item && item.kind !== 'storage' && !(BATTLE.itemCurses && BATTLE.itemCurses[key]);
+    return item && item.kind !== 'storage';
   });
   if (!eligible.length) return;
-  const count = spec.count === 'random' ? 1 + Math.floor(Math.random() * Math.min(3, eligible.length)) : Math.min(spec.count, eligible.length);
+  const count = spec.count === 'all' ? eligible.length : spec.count === 'random' ? 1 + Math.floor(Math.random() * Math.min(3, eligible.length)) : Math.min(spec.count, eligible.length);
   const chosen = shuffle([...eligible]).slice(0, count);
   BATTLE.itemCurses = BATTLE.itemCurses || {};
-  chosen.forEach(key => { BATTLE.itemCurses[key] = spec.amount; });
+  chosen.forEach(key => {
+    const item = ITEMS[key.replace(/_\d+$/, '')];
+    const prior = BATTLE.itemCurses[key];
+    if (prior) {
+      RUN.health = Math.max(0, RUN.health - prior);
+      battleLog(`${item.name}'s old curse goes off before the new one lands — you take ${prior} damage! Health: ${RUN.health}/${RUN.maxHealth}.`);
+    }
+    BATTLE.itemCurses[key] = spec.amount;
+  });
   const names = chosen.map(key => ITEMS[key.replace(/_\d+$/, '')].name).join(', ');
-  battleLog(`${BATTLE.opponent.name} curses your ${names} — fire it this turn or take ${spec.amount} damage.`);
+  battleLog(`${BATTLE.opponent.name} curses your ${names} — fire ${chosen.length > 1 ? 'them' : 'it'} this turn or take ${spec.amount} damage${chosen.length > 1 ? ' each' : ''}.`);
 }
 // Burn: a decaying 3-turn damage-over-time effect. The player can detonate it early for whatever
 // the current stage is worth, forfeiting the smaller remaining ticks.
@@ -2140,17 +2152,18 @@ function battleScreen() {
         const hasKindAmount = item.flatAmount != null || (item.baseMult ?? 1) > 0;
         const drawN = item.drawUsesCardCount ? (cards.length + (item.drawBonusFlat||0) + (item.drawPerLevel||0)*level) : (item.drawAmount ? item.drawAmount + (item.drawPerLevel||0)*level : 0);
         const drawText = (item.drawAmount || item.drawUsesCardCount) ? `<span class="hoverTip" title="Draws ${drawN} card${drawN===1?'':'s'} immediately after this item is used."><b>Draw</b> ${drawN} card${drawN===1?'':'s'}</span>` : '';
-        const kindTag = eKind==='poison'?`<span class="effectTip poisonText" data-tip="Poison deals damage at the end of the opponent's turn. Each poison stack is reduced by 3 after it ticks."><b>Poison</b></span>`
-          :eKind==='burn'?`<span class="effectTip burnText" data-tip="Burn deals damage at the end of the opponent's turn. Each burn application weakens on later turns."><b>Burn</b></span>`
-          :eKind==='curse'?`<span class="effectTip curseText" data-tip="Curse deals its damage if the opponent fails to attack on the next turn."><b>Curse</b></span>`
+        const kindTag = eKind==='poison'?`<span class="effectTip poisonText" data-tip="Poison deals its damage at the end of the opponent's turn, then drops by 3 each turn until it's gone."><b>Poison</b></span>`
+          :eKind==='burn'?`<span class="effectTip burnText" data-tip="Burn hits for full damage, then half, then a quarter, fading out over 3 turns."><b>Burn</b></span>`
+          :eKind==='curse'?`<span class="effectTip curseText" data-tip="Curse goes off if this item isn't fired again before the opponent's next turn."><b>Curse</b></span>`
+          :eKind==='defense'?`<span class="effectTip" style="color:var(--defense)" data-tip="Armor protects against incoming attacks, absorbing damage equal to the amount shown."><b>Armor</b></span>`
           :'';
         const unlockText = item.unlockThreshold != null ? (RUN.itemUnlocked && RUN.itemUnlocked[slotKey] ? '<span class="hoverTip" title="This item is permanently unlocked for the rest of the run."><b>Unlocked</b></span>' : `<span class="hoverTip" title="Deal ${item.unlockThreshold} total damage through this item (across any turns) to unlock a one-time bonus draw of 4.">${(RUN.itemUnlockProgress && RUN.itemUnlockProgress[slotKey]) || 0}/${item.unlockThreshold} to unlock</span>`) : '';
         if (cards.length && ready) {
-          const kindText = hasKindAmount ? `${previewCalc.breakdown} ${kindTag||effectWord}` : '';
+          const kindText = hasKindAmount ? `${previewCalc.breakdown} ${kindTag || '<b>Damage</b>'}` : '';
           return `<div class="note" style="margin:4px 0 0">${[kindText, drawText].filter(Boolean).join(' + ') || 'Requirement not met'}</div>${unlockText?`<div class="note" style="margin:2px 0 0">${unlockText}</div>`:''}`;
         }
         if (cards.length && !ready) return `<div class="note" style="margin:4px 0 0">Requirement not met</div>`;
-        const staticKindText = kindTag ? `${kindTag} attack · Damage: × ${item.baseMult ?? 1}` : '';
+        const staticKindText = hasKindAmount ? `${kindTag || '<b>Damage</b>'} &times;${item.baseMult ?? 1}` : '';
         return `<div class="note" style="margin:4px 0 0">${[staticKindText, drawText].filter(Boolean).join(' + ')}</div>${unlockText?`<div class="note" style="margin:2px 0 0">${unlockText}</div>`:''}`;
       })()}
       <div style="margin-top:auto">
@@ -2357,12 +2370,12 @@ function dealerItemCardHTML(item, opts) {
     : `<button class="wo-btn gray" data-sell="${opts.index}" style="width:100%;padding:7px 10px;font-size:12px;margin:4px 0 6px">Sell</button>`;
   const head = `<div class="hdr" style="font-weight:700;color:${headerColor};width:100%;text-align:left">${item.name}</div>
     <div class="price" style="text-align:left">${priceLabel}</div>
-    ${footer}
-    <div class="itemDivider"></div>`;
+    ${footer}`;
 
   if (item.kind === 'storage') {
     return `<div class="itemCard" style="min-height:auto;text-align:left;align-items:flex-start;padding:8px">
       ${head}
+      <div class="itemDivider"></div>
       <div class="note" style="text-align:left;margin:0">${item.note || ''}</div>
     </div>`;
   }
@@ -2373,9 +2386,9 @@ function dealerItemCardHTML(item, opts) {
   const kindTag = eKind === 'poison' ? `<span class="effectTip poisonText" data-tip="Poison deals its damage at the end of the opponent's turn, then drops by 3 each turn until it's gone."><b>Poison</b></span>`
     : eKind === 'burn' ? `<span class="effectTip burnText" data-tip="Burn hits for full damage, then half, then a quarter, fading out over 3 turns."><b>Burn</b></span>`
     : eKind === 'curse' ? `<span class="effectTip curseText" data-tip="Curse goes off if this item isn't fired again before the opponent's next turn."><b>Curse</b></span>`
+    : eKind === 'defense' ? `<span class="effectTip" style="color:var(--defense)" data-tip="Armor protects against incoming attacks, absorbing damage equal to the amount shown."><b>Armor</b></span>`
     : '';
-  const amountWord = eKind === 'defense' ? 'Blocks' : 'Damage';
-  const kindLine = hasKindAmount ? `${kindTag || `<b>${amountWord}</b>`} &times;${item.baseMult ?? 1}` : '';
+  const kindLine = hasKindAmount ? `${kindTag || '<b>Damage</b>'} &times;${item.baseMult ?? 1}` : '';
   const bonusPct = item.bonus ? Math.round(item.bonus.base * 100) : 0;
   const bonusLine = item.bonus && bonusPct > 0 ? `<div class="itemBonusLine">Bonus <b>+${bonusPct}%</b> if ${describeCondition(item.bonus.condition || item.condition)}</div>` : '';
   const unlockLine = item.unlockThreshold != null ? `<div class="note" style="margin:2px 0 0;text-align:left"><span class="hoverTip" title="Deal ${item.unlockThreshold} total damage through this item over the run to unlock a one-time bonus draw of 4."><b>Unlocks</b> at ${item.unlockThreshold} dmg</span></div>` : '';
@@ -2383,8 +2396,9 @@ function dealerItemCardHTML(item, opts) {
   return `<div class="itemCard" style="min-height:auto;text-align:left;align-items:flex-start;padding:8px">
     ${head}
     <div class="itemReqLine" style="text-align:left">${itemRequirementText(item, eKind)}</div>
-    ${kindLine || drawText ? `<div class="note" style="margin:2px 0 0;text-align:left">${[kindLine, drawText].filter(Boolean).join(' + ')}</div>` : ''}
     ${bonusLine}
+    <div class="itemDivider"></div>
+    ${kindLine || drawText ? `<div class="note" style="margin:2px 0 0;text-align:left">${[kindLine, drawText].filter(Boolean).join(' + ')}</div>` : ''}
     ${unlockLine}
   </div>`;
 }

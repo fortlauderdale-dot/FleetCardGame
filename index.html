@@ -1011,23 +1011,51 @@ const BASE_GAS_PENALTY = 15;
 function initRunWithStarter(id) {
   const L = META.levels;
   const baseHero = HEROES[id];
+  
   RUN = {
-    map: generateMap(), currentRow: -1, currentCol: null, path: [],
-    health: 100 + L.hp * 15, maxHealth: 100 + L.hp * 15,
-    chips: 40 + L.chips * 8, fuel: Math.min(20 + (L.fuelCap||0)*5, 10 + (L.fuel||0)), energy: 0,
+    worldMultiplier: 1.0, 
+    map: null,
+    currentRow: -1, 
+    currentCol: null, 
+    path: [],
+    health: 100 + L.hp * 15, 
+    maxHealth: 100 + L.hp * 15,
+    chips: 40 + L.chips * 8, 
+    fuel: Math.min(20 + (L.fuelCap||0)*5, 10 + (L.fuel||0)), 
+    energy: 0,
     hero: { heroId: id, items: [...baseHero.starterItems] },
-    itemCap: Math.min(MAX_ITEM_CAP, 3 + L.garage), handSize: 7 + (L.handCap || 0) * 2, drawPerTurn: 2 + (L.draw || 0), gems: 3, maxGems: 10 + (L.gemCap||0)*2, maxFuel: 20 + (L.fuelCap||0)*5, maxEnergy: 20 + (L.energyCap||0)*5,
-    scoreThisRun: 0, lastNotice: null, cardBoosts: [], adminTuneLvl: 0, itemLevels: {}, itemUsesLevels: {}, itemKindOverride: {}, itemMaxCardsLevels: {}, handSortMode: 'value', innSleeps: 0,
+    itemCap: Math.min(MAX_ITEM_CAP, 3 + L.garage), 
+    handSize: 7 + (L.handCap || 0) * 2, 
+    drawPerTurn: 2 + (L.draw || 0), 
+    gems: 3, 
+    maxGems: 10 + (L.gemCap||0)*2, 
+    maxFuel: 20 + (L.fuelCap||0)*5, 
+    maxEnergy: 20 + (L.energyCap||0)*5,
+    scoreThisRun: 0, 
+    lastNotice: null, 
+    cardBoosts: [], 
+    adminTuneLvl: 0, 
+    itemLevels: {}, 
+    itemUsesLevels: {}, 
+    itemKindOverride: {}, 
+    itemMaxCardsLevels: {}, 
+    handSortMode: 'value', 
+    innSleeps: 0,
     runUpgrades: { itemSlots: 0, drawPerTurn: 0, sightRange: 0, gemDraw: 0, health: 0 },
     castleState: {},
   };
+
+  RUN.map = generateMap();
+  
   saveRun();
   render(mapScreen());
 }
+
 function availableNextNodes() {
   if (RUN.currentRow === -1) return [{ row: 0, col: 0 }];
   return RUN.map.edges.filter(e => e.fromRow === RUN.currentRow && e.fromCol === RUN.currentCol).map(e => ({ row: e.toRow, col: e.toCol }));
 }
+
 function payTravelCost() {
   RUN.fuel -= FUEL_COST_PER_MOVE;
   RUN.energy = Math.min(RUN.maxEnergy, RUN.energy + ENERGY_PER_MOVE);
@@ -1041,6 +1069,7 @@ function payTravelCost() {
     RUN.lastNotice = `Ran out of fuel — lost ${loss} Career Points getting towed to the next stop.`;
   }
 }
+
 function commitNode(row, col) { RUN.currentRow = row; RUN.currentCol = col; RUN.path.push({ row, col }); saveRun(); }
 function selectNode(row, col) {
   payTravelCost();

@@ -896,12 +896,14 @@ const WORLD_COUNT = 1;
 function pickNodeType(forcedType) {
   if (forcedType) return forcedType;
   const r = Math.random();
-  if (r < 0.70) return 'battle';
-  if (r < 0.80) return 'rest';
-  if (r < 0.92) return 'blacksmith';
-  if (r < 0.95) return 'chopshop';
+  if (r < 0.65) return 'battle';
+  if (r < 0.75) return 'rest';
+  if (r < 0.84) return 'blacksmith';
+  if (r < 0.89) return 'chopshop';
+  if (r < 0.95) return 'shop'; // Added extra loose dealerships on the highway
   return 'treasure';
 }
+
 /* ========== MONSTER REPURPOSING SCALER ==========
    Pass an existing monster object from World 1 along with a world difficulty modifier 
    (e.g., 1.5 for World 2, 2.2 for World 3). Automatically rescales stats seamlessly. */
@@ -946,9 +948,12 @@ function generateMap() {
     }
     nodes.push(row);
   }
+  
+  //=====Guaranteed Stops=====
   nodes[0][0].type='battle';
   nodes[1].forEach(n=>n.type='battle');
   nodes[2][0]={type:'shop'};
+  nodes[5][0]={type:'rest'};
   nodes[castleRow][0]={type:'castle'};
 
   const eligible=[];
@@ -1059,16 +1064,24 @@ function availableNextNodes() {
 function payTravelCost() {
   RUN.fuel -= FUEL_COST_PER_MOVE;
   RUN.energy = Math.min(RUN.maxEnergy, RUN.energy + ENERGY_PER_MOVE);
+  RUN.innSleeps = 0; 
   if (RUN.fuel < 0) {
-    RUN.fuel = 0;
-    const reduction = META.levels.fuelpen * 2;
-    const loss = Math.max(3, BASE_GAS_PENALTY - reduction);
-    META.points = Math.max(0, META.points - loss);
-    RUN.scoreThisRun = Math.max(0, RUN.scoreThisRun - loss);
-    saveMeta();
-    RUN.lastNotice = `Ran out of fuel — lost ${loss} Career Points getting towed to the next stop.`;
+    RUN.fuel = 0; // Keep the tank clamped at zero
+    
+    // Out of gas: Player suffers a physical breakdown penalty instead of losing score points
+    RUN.health = Math.max(0, RUN.health - 10);
+    RUN.lastNotice = `Out of fuel! Pushing your fleet manually to the next stop cost you 10 HP.`;
+    
+    // Immediate check: If the travel toll drops them to zero, the run crashes out right here
+    if (RUN.health <= 0) {
+      RUN.lastNotice = `Out of fuel and out of health! Your fleet collapsed on the open highway.`;
+      saveRun();
+      endRun(false); // Triggers the Run Lost summary screen
+      return;
+    }
   }
 }
+
 
 function commitNode(row, col) { RUN.currentRow = row; RUN.currentCol = col; RUN.path.push({ row, col }); saveRun(); }
 function selectNode(row, col) {
@@ -1135,19 +1148,30 @@ function castleDungeonScreen(message='') {
     </div>
   </div>`;
 }
-function castleInnScreen(message='') {
+function castleInnScreen(message='') { 
   return `${noticeHTML()}
   <div class="wo">
-    <div class="wo-stripe"></div><div class="wo-body">
+    <div class="wo-stripe"></div>
+    <div class="wo-body">
       <div class="wo-eyebrow">Inn</div>
       <h1>Rest &amp; <em>Refuel</em></h1>
       ${currencyBar()}
       ${message ? `<div class="panel"><div class="note">${message}</div></div>` : ''}
-      <div class="shopcard"><h3>Cheap Refuel</h3><div class="note">Spend 5 coins to gain 10 fuel.</div><button class="wo-btn" id="castleFuelBtn" ${RUN.fuel>=RUN.maxFuel?'disabled':''}>Refuel +10</button></div>
-      <div class="shopcard"><h3>Sleep</h3><div class="note">Restore 20 health. First sleep is free; each later sleep costs 20 more coins.</div><button class="wo-btn" id="castleRestBtn" ${RUN.health>=RUN.maxHealth?'disabled':''}>Sleep ${RUN.innSleeps===0?'Free':`(${20*RUN.innSleeps} coins)`}</button></div>
+      <div class="shopcard">
+        <h3>Cheap Refuel</h3>
+        <div class="note">Spend 5 coins to gain 10 fuel.</div>
+        <button class="wo-btn" id="castleFuelBtn" ${RUN.fuel >= RUN.maxFuel ? 'disabled' : ''}>Refuel +10</button>
+      </div>
+      <div class="shopcard">
+        <h3>Sleep</h3>
+        <div class="note">Restore a flat 30 health. First sleep is free; each later sleep costs 20 more coins.</div>
+        <button class="wo-btn" id="castleRestBtn" ${RUN.health >= RUN.maxHealth ? 'disabled' : ''}>
+          Sleep ${RUN.innSleeps === 0 ? 'Free' : `(${20 * RUN.innSleeps} coins)`}
+        </button>
+      </div>
       <button class="wo-btn gray" id="backToCastleMenuBtn">Back to Compound Menu</button>
     </div>
-  </div>`;
+  </div>`; 
 }
 
 function castleMatchScreen() {
@@ -1920,9 +1944,9 @@ function mapScreen() {
   }
 
   let nodesHTML='';
-  const NODE_ICON={shop:ICON.cart,rest:ICON.wrench,blacksmith:ICON.hammer,chopshop:ICON.curse,treasure:ICON.gift,castle:ICON.castle};
-  const NODE_TITLE={shop:'Dealership',rest:'Pit Stop',blacksmith:'Tuning Garage',chopshop:'Chop Shop',treasure:'Supply Cache',castle:'Fleet Compound'};
-  for(let r=0;r<rows.length;r++) for(let c=0;c<rows[r].length;c++){
+    const NODE_ICON={shop:ICON.cart,rest:ICON.wrench,blacksmith:ICON.hammer,chopshop:ICON.curse,treasure:ICON.gift,castle:ICON.castle};
+    const NODE_TITLE={shop:'Dealership',rest:'Service Station',blacksmith:'Tuning Garage',chopshop:'Chop Shop',treasure:'Supply Cache',castle:'Fleet Compound'};
+      for(let r=0;r<rows.length;r++) for(let c=0;c<rows[r].length;c++){
     const node=rows[r][c], x=25+r*colW+colW/2, y=rowY[Math.min(c,rowY.length-1)];
     const isDone=RUN.path.some(p=>p.row===r&&p.col===c);
     const isCurrent=r===RUN.currentRow&&c===RUN.currentCol;
@@ -1970,15 +1994,12 @@ function mapScreen() {
 }
 
 /* ========== RUN-SCOPED UPGRADES (paid with coins, last only for this run) ==========
-   Separate from the permanent Upgrades screen (Career Points, forever). Add a 5th kind here
-   the same way health was added — the screen and buy handler are generic over this table. */
 const MAX_ITEM_CAP = 9; // 3 rows of 3 — hard ceiling regardless of how many slot upgrades stack
 const RUN_UPGRADE_DEFS = {
   itemSlots:   { label: 'Item Slot',        desc: '+1 Item slot, this run only.', baseCost: 100, mult: 2, cap: 6 },
   drawPerTurn: { label: 'Cards Drawn/Turn', desc: '+1 card drawn at the start of each turn, this run only.', baseCost: 60, mult: 2, cap: 5 },
   sightRange:  { label: 'Map Sight Range',  desc: '+1 route space visible ahead on the map, this run only.', baseCost: 40, mult: 1.8, cap: 5 },
   gemDraw:     { label: 'Gem Draw',         desc: '+1 card drawn per gem spent, this run only.', baseCost: 50, mult: 2, cap: 4 },
-  health:      { label: 'Heal Up',          desc: 'Instantly heal 25 health. Price rises each time you buy it this run.', baseCost: 25, add: 20, cap: 99, isHeal: true },
 };
 function runUpgradeCost(kind) {
   const def = RUN_UPGRADE_DEFS[kind], n = RUN.runUpgrades[kind] || 0;
@@ -2319,20 +2340,47 @@ function shopScreen(fromCastle=false) {
       </div>
     </div>`;
 }
-function garageScreen() {
+
+function garageScreen(message='') {
+  const missingFuel = RUN.maxFuel - RUN.fuel;
+  const maxAffordable = Math.floor(RUN.chips / 8);
+  const purchaseLimit = Math.min(missingFuel, maxAffordable);
+  const totalCost = purchaseLimit * 8;
+
   return `${noticeHTML()}
     <div class="wo">
       <div class="wo-stripe"></div>
       <div class="wo-body">
-        <div class="wo-eyebrow">Pit Stop</div>
-        <h1>Quick <em>Rest</em></h1>
-        <div class="wo-sub">A calm stop before the next battle.</div>
-        <button class="wo-btn" id="restBtn">Rest (+30 Health)</button>
-        <button class="wo-btn gray" id="openRunUpgradeFromRestBtn" style="margin-top:8px">Upgrades</button>
+        <div class="wo-eyebrow">Service Station</div>
+        <h1>Fuel &amp; <em>Repairs</em></h1>
+        <div class="wo-sub">Pull over to heal or top off your gas tank.</div>
+        ${currencyBar()}
+        ${message ? `<div class="panel"><div class="note">${message}</div></div>` : ''}
+        
+        <div class="shopcard">
+          <h3>Fuel Dispenser</h3>
+          <div class="note">Fuel costs <b>8 coins per 1 unit</b>. Fill your tank completely or buy what you can afford.</div>
+          ${purchaseLimit > 0 
+            ? `<div class="note" style="color:var(--green);font-weight:600;margin:6px 0">You can buy up to +${purchaseLimit} fuel for ${totalCost} coins.</div>`
+            : `<div class="note" style="color:var(--dim);margin:6px 0">${RUN.fuel >= RUN.maxFuel ? 'Your tank is completely full.' : 'Not enough coins to buy fuel.'}</div>`
+          }
+          <button class="wo-btn amber" id="stationFuelBtn" ${purchaseLimit <= 0 ? 'disabled' : ''}>
+            Fill Tank (+${purchaseLimit} Fuel)
+          </button>
+        </div>
+
+        <div class="shopcard">
+          <h3>Fleet Maintenance</h3>
+          <div class="note">Restores a flat 30 points of physical fleet health. Single-use per visit.</div>
+          <button class="wo-btn" id="restBtn" ${RUN.health >= RUN.maxHealth ? 'disabled' : ''}>Rest (+30 Health)</button>
+        </div>
+
+        <button class="wo-btn gray" id="leaveStationBtn" style="width:100%;margin-top:12px">Back to Route Map</button>
       </div>
-    </div>
-  `;
+    </div>`;
 }
+
+
 
 function blacksmithScreen() {
   const rows = BLACKSMITH_OPTIONS.map((opt, i) => {
@@ -2648,6 +2696,70 @@ function render(html) {
   if (playerNameInput) playerNameInput.onchange = () => { META.playerName = playerNameInput.value.trim().slice(0, 18); saveMeta(); };
   const viewUpgradesBtn = document.getElementById('viewUpgradesBtn'); if (viewUpgradesBtn) viewUpgradesBtn.onclick = () => render(upgradeScreen());
   const leaveChopShopBtn = document.getElementById('leaveChopShopBtn'); if (leaveChopShopBtn) leaveChopShopBtn.onclick = () => render(RETURN_TO_CASTLE_MENU ? castleMenuScreen() : mapScreen());
+    // 1. Service Station Fuel Purchase (Dynamic 8-coin math check)
+  const stationFuelBtn = document.getElementById('stationFuelBtn');
+  if (stationFuelBtn) {
+    stationFuelBtn.onclick = () => {
+      const missingFuel = RUN.maxFuel - RUN.fuel;
+      const maxAffordable = Math.floor(RUN.chips / 8);
+      const purchaseLimit = Math.min(missingFuel, maxAffordable);
+      const totalCost = purchaseLimit * 8;
+      if (purchaseLimit > 0 && RUN.chips >= totalCost) {
+        RUN.chips -= totalCost;
+        RUN.fuel += purchaseLimit;
+        saveRun();
+        render(garageScreen(`Topped off tank: Added +${purchaseLimit} fuel for ${totalCost} coins.`));
+      }
+    };
+  }
+
+  // 2. Service Station Maintenance Flat Rest Button
+  const restBtn = document.getElementById('restBtn'); 
+  if (restBtn) {
+    restBtn.onclick = () => { 
+      RUN.health = Math.min(RUN.maxHealth, RUN.health + 30); 
+      saveRun(); 
+      render(mapScreen()); 
+    };
+  }
+
+  // 3. Service Station Exit Back to Map Route
+  const leaveStationBtn = document.getElementById('leaveStationBtn');
+  if (leaveStationBtn) {
+    leaveStationBtn.onclick = () => render(mapScreen());
+  }
+
+  // 4. Compound Inn Fuel Purchase (Dynamic 8-coin math check)
+  const castleFuelBtn = document.getElementById('castleFuelBtn'); 
+  if (castleFuelBtn) {
+    castleFuelBtn.onclick = () => { 
+      const missingFuel = RUN.maxFuel - RUN.fuel;
+      const maxAffordable = Math.floor(RUN.chips / 8);
+      const purchaseLimit = Math.min(missingFuel, maxAffordable);
+      const totalCost = purchaseLimit * 8;
+      if (purchaseLimit > 0 && RUN.chips >= totalCost) { 
+        RUN.chips -= totalCost; 
+        RUN.fuel += purchaseLimit; 
+        saveRun(); 
+        render(castleInnScreen(`Topped off tank: Added +${purchaseLimit} fuel for ${totalCost} coins.`)); 
+      } 
+    };
+  }
+
+  // 5. Compound Inn Sleep Button (Flat 30 HP, scaling cost)
+  const castleRestBtn = document.getElementById('castleRestBtn'); 
+  if (castleRestBtn) {
+    castleRestBtn.onclick = () => { 
+      const cost = RUN.innSleeps === 0 ? 0 : 20 * RUN.innSleeps; 
+      if (RUN.chips < cost || RUN.health >= RUN.maxHealth) return; 
+      RUN.chips -= cost; 
+      RUN.innSleeps = (RUN.innSleeps || 0) + 1; 
+      RUN.health = Math.min(RUN.maxHealth, RUN.health + 30); 
+      saveRun(); 
+      render(castleInnScreen(`You slept and recovered 30 health${cost ? ` for ${cost} coins` : ''}.`)); 
+    };
+  }
+
   app.querySelectorAll('[data-bonusup]').forEach(el => el.onclick = () => {
     const item = ITEMS[el.dataset.bonusup];
     const cap = itemLevelCap(item);
@@ -2789,7 +2901,21 @@ function render(html) {
   const castleBattle1Btn = document.getElementById('castleBattle1Btn'); if (castleBattle1Btn) castleBattle1Btn.onclick = () => { if (!RUN.castleState) RUN.castleState = {}; startBattle(CASTLE_FIRST, 10, 0, 1); };
   const castleBattle2Btn = document.getElementById('castleBattle2Btn'); if (castleBattle2Btn) castleBattle2Btn.onclick = () => { if (!RUN.castleState) RUN.castleState = {}; startBattle(CASTLE_SECOND, 10, 0, 2); };
   const castleFuelBtn = document.getElementById('castleFuelBtn'); if (castleFuelBtn) castleFuelBtn.onclick = () => { if (RUN.chips>=5) { RUN.chips-=5; RUN.fuel=Math.min(RUN.maxFuel,RUN.fuel+10); saveRun(); render(castleInnScreen('You refueled for 5 coins.')); } };
-  const castleRestBtn = document.getElementById('castleRestBtn'); if (castleRestBtn) castleRestBtn.onclick = () => { const cost=RUN.innSleeps===0?0:20*RUN.innSleeps; if(RUN.chips<cost || RUN.health>=RUN.maxHealth)return; RUN.chips-=cost; RUN.innSleeps=(RUN.innSleeps||0)+1; RUN.health=Math.min(RUN.maxHealth,RUN.health+20); saveRun(); render(castleInnScreen(`You slept and recovered 20 health${cost?` for ${cost} coins`:''}.`)); };
+  const castleRestBtn = document.getElementById('castleRestBtn'); 
+    if (castleRestBtn) {
+      castleRestBtn.onclick = () => { 
+      const cost = RUN.innSleeps === 0 ? 0 : 20 * RUN.innSleeps; 
+      if (RUN.chips < cost || RUN.health >= RUN.maxHealth) return; 
+      
+      RUN.chips -= cost; 
+      RUN.innSleeps = (RUN.innSleeps || 0) + 1; 
+      RUN.health = Math.min(RUN.maxHealth, RUN.health + 30); 
+      
+      saveRun(); 
+      render(castleInnScreen(`You slept and recovered 30 health${cost ? ` for ${cost} coins` : ''}.`)); 
+      };
+    }
+
   const leaveCastleBtn = document.getElementById('leaveCastleBtn'); if (leaveCastleBtn) leaveCastleBtn.onclick = () => render(mapScreen());
   const leaveMatchBtn = document.getElementById('leaveMatchBtn'); if (leaveMatchBtn) leaveMatchBtn.onclick = () => render(castleMenuScreen());
   app.querySelectorAll('[data-match]').forEach(el => el.onclick = () => {
@@ -2853,8 +2979,6 @@ function render(html) {
     render(shopScreen());
   });
 
-
-  const restBtn = document.getElementById('restBtn'); if (restBtn) restBtn.onclick = () => { RUN.health = Math.min(RUN.maxHealth, RUN.health + 30); saveRun(); render(mapScreen()); };
   const backToMetaBtn = document.getElementById('backToMetaBtn'); if (backToMetaBtn) backToMetaBtn.onclick = () => render(metaScreen());
   const startRunBtn = document.getElementById('startRunBtn'); if (startRunBtn) startRunBtn.onclick = () => { clearRunSave(); render(starterSelectScreen()); };
   const continueRunBtn = document.getElementById('continueRunBtn'); if (continueRunBtn) continueRunBtn.onclick = () => { RUN = loadRunSave(); RUN.maxGems=10+(META.levels.gemCap||0)*2; RUN.maxFuel=20+(META.levels.fuelCap||0)*5; RUN.maxEnergy=20+(META.levels.energyCap||0)*5; RUN.handSize=7+(META.levels.handCap||0)*2; RUN.itemCap=Math.max(RUN.itemCap||0, Math.min(MAX_ITEM_CAP, 3+(META.levels.garage||0))); RUN.runUpgrades=RUN.runUpgrades||{itemSlots:0,drawPerTurn:0,sightRange:0,gemDraw:0,health:0}; RUN.drawPerTurn=2+(META.levels.draw||0)+RUN.runUpgrades.drawPerTurn; RUN.gems=Math.min(RUN.maxGems,RUN.gems||0); RUN.fuel=Math.min(RUN.maxFuel,RUN.fuel||0); RUN.energy=Math.min(RUN.maxEnergy,RUN.energy||0); RUN.itemLevels=RUN.itemLevels||{}; RUN.itemUsesLevels=RUN.itemUsesLevels||{}; RUN.itemKindOverride=RUN.itemKindOverride||{}; Object.keys(RUN.itemKindOverride).filter(k=>!k.includes('_')).forEach(k=>{ if(RUN.hero?.items?.includes(k) && !RUN.itemKindOverride[`${k}_0`]) RUN.itemKindOverride[`${k}_0`]=RUN.itemKindOverride[k]; }); RUN.itemMaxCardsLevels=RUN.itemMaxCardsLevels||{}; RUN.itemUnlockProgress=RUN.itemUnlockProgress||{}; RUN.itemUnlocked=RUN.itemUnlocked||{}; RUN.itemUnlockPending=RUN.itemUnlockPending||{}; RUN.castleState=RUN.castleState||{}; saveRun(); const savedBattle = loadBattleSave(); if (savedBattle) { BATTLE = savedBattle; IN_BATTLE = true; render(battleScreen()); } else { render(mapScreen()); } };

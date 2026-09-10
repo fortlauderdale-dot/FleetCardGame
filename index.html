@@ -763,8 +763,8 @@ const ITEMS = {
 const HEROES = {
   sidebyside: { id: 'sidebyside', name: 'Golf Cart',      icon: '🛺', image: 'vehicles/golf-cart.jpg', starterItems: ['fender_bender','pair_draw'] },
   admin:      { id: 'admin',      name: 'Admin Vehicle',   icon: '🚗', image: 'vehicles/admin-vehicle.jpg', starterItems: ['fender_bender','escort_wall'] },
-  interstate: { id: 'interstate', name: 'Pickup Truck', icon: '🏁', image: 'vehicles/interstate-racer.jpg', starterItems: ['moto_escort','card_draw'] },
-  convoy:     { id: 'convoy',     name: 'Large SUV',  icon: '🚛', image: 'vehicles/armored-convoy.jpg', starterItems: ['triple_threat','escort_wall'] },
+  interstate: { id: 'interstate', name: 'Pickup Truck', icon: '🏁', image: 'vehicles/interstate-racer.jpg', starterItems: ['bike_dash','card_draw'] },
+  convoy:     { id: 'convoy',     name: 'Large SUV',  icon: '🚛', image: 'vehicles/armored-convoy.jpg', starterItems: ['fender_bender','triple_threat'] },
 };
 const STARTERS = ['sidebyside', 'admin', 'interstate', 'convoy', 'comingsoon1', 'comingsoon2'];
 // Short, hand-written attack/bonus text for the Pick Your Vehicle screen — one entry per
@@ -777,6 +777,7 @@ const STARTER_ITEM_DISPLAY = {
   moto_escort:   { req: '4-card Straight', bonus: 'Damage scales with the straight' },
   card_draw:     { req: 'Pair', bonusPre: 'Draw ', bonusNum: '2', bonusPost: ' additional cards (no damage)', upgradeNote: UPGRADE_AT_ITEM_MASTERY },
   triple_threat: { req: 'Three of a Kind', bonusPre: '', bonusNum: '+100%', bonusPost: ' damage', upgradeNote: UPGRADE_AT_ITEM_MASTERY },
+  bike_dash:     { req: '2-card Straight', bonus: 'Damage equal to the Σ of the 2 cards' },
 };
 function heroAttacksHTML(hero) {
   return (hero.starterItems || []).map(iid => {
@@ -852,7 +853,10 @@ const OPPONENT_TIERS = [
   ],
 ];
 
-const BOSS = { id: 'wildfire', name: 'Wildfire', icon: '🔥', image: 'Hazards/wildfire.jpg', hp: 160, minTier: 3, drawRate: 4, turnLimit: 10, boss: true, usesPerTurn: 2, curse: { count: 2, amount: 12, chance: 0.55 }, attacks: [{ name: 'Firestorm Surge', maxCards: 5, minTier: 3, effect: 'burn' }, { name: 'Ashfall', maxCards: 4, minTier: 2, effect: 'poison' }, { name: 'Total Engulfment', maxCards: 5, minTier: 0, perFaceCard: { damage: 12 } }], attackInfo: 'Attack: uses its best poker hand for about 10-35 damage, depending on the hand, and can hit twice a turn. Can also curse your equipped Items — an Item that doesn\'t fire before turn end takes its curse damage.' };
+const BOSS = { id: 'wildfire', name: 'Wildfire', tier: 6, icon: '🔥', image: 'Hazards/wildfire.jpg', hp: 160, minTier: 3, drawRate: 4, turnLimit: 10, boss: true, usesPerTurn: 2, curse: { count: 2, amount: 12, chance: 0.55 }, attacks: [{ name: 'Firestorm Surge', maxCards: 5, minTier: 3, effect: 'burn' }, { name: 'Ashfall', maxCards: 4, minTier: 2, effect: 'poison' }, { name: 'Total Engulfment', maxCards: 5, minTier: 0, perFaceCard: { damage: 12 } }], attackInfo: 'Attack: uses its best poker hand for about 10-35 damage, depending on the hand, and can hit twice a turn. Can also curse your equipped Items — an Item that doesn\'t fire before turn end takes its curse damage.' };
+// Per-swing damage ceiling by opponent tier (index 0-5, tier 6 = boss) — keeps any single hit
+// from spiking into a near-kill regardless of how good a hand the opponent draws into.
+const OPPONENT_SWING_CAP = [22, 28, 34, 40, 46, 52, 60];
 
 function revealFraction(row) { return [1.0, 0.8, 0.6, 0.4, 0.25, 0.1, 0][Math.min(row, 6)]; }
 
@@ -936,9 +940,10 @@ function pickNodeType(forcedType) {
 /* ========== MONSTER REPURPOSING SCALER ==========
    Pass an existing monster object from World 1 along with a world difficulty modifier 
    (e.g., 1.5 for World 2, 2.2 for World 3). Automatically rescales stats seamlessly. */
-function scaleMonsterForNewWorld(baseMonster, worldMultiplier) {
+function scaleMonsterForNewWorld(baseMonster, worldMultiplier, tier) {
   const scaled = JSON.parse(JSON.stringify(baseMonster)); // Deep copy the blueprint
-  
+  if (tier != null) scaled.tier = tier;
+
   scaled.hp = Math.round(scaled.hp * worldMultiplier);
   // Name stays as-is; only stats scale with the world multiplier.
   
@@ -959,6 +964,10 @@ function scaleMonsterForNewWorld(baseMonster, worldMultiplier) {
 function generateMap() {
   const nodes = [], edges = [];
   const tierForRow = r => Math.min(OPPONENT_TIERS.length - 1, Math.floor(r / 3));
+  // A zero-upgrade run should be a real fight, not a formality — this ramps difficulty up
+  // smoothly across World 1's own tiers (on top of the World 2+ worldMultiplier), so late-map
+  // fights are noticeably tougher than early ones instead of only differing by hand-authored HP.
+  const tierDifficultyMult = tier => 1 + tier * 0.12;
   const castleRow = 10;
   const rowCounts = [1,2,1,2,3,1,2,3,2,2,1,2,3,2,2,3,2,2,3,2];
 
@@ -969,11 +978,12 @@ function generateMap() {
   for (let r=0;r<rowCounts.length;r++) {
     const row=[];
     // Pull the raw layout pool
-    const pool=shuffle([...(OPPONENT_TIERS[tierForRow(r)])]);
+    const tier = tierForRow(r);
+    const pool=shuffle([...(OPPONENT_TIERS[tier])]);
     for(let c=0;c<rowCounts[r];c++) {
       // Use your new scaler to smoothly modify the base stats based on the world multiplier
       const baseOpp = pool[c%pool.length];
-      row.push({type:'pending', opponent: scaleMonsterForNewWorld(baseOpp, worldMultiplier)});
+      row.push({type:'pending', opponent: scaleMonsterForNewWorld(baseOpp, worldMultiplier * tierDifficultyMult(tier), tier)});
     }
     nodes.push(row);
   }
@@ -993,22 +1003,24 @@ function generateMap() {
   // Set standard battles dynamically using the scaled versions
   const needBattles=29-3; 
   eligible.slice(0,needBattles).forEach(({r,c})=> {
-    const baseOpp = OPPONENT_TIERS[tierForRow(r)][Math.floor(Math.random()*OPPONENT_TIERS[tierForRow(r)].length)];
-    nodes[r][c]={type:'battle', opponent: scaleMonsterForNewWorld(baseOpp, worldMultiplier)};
+    const tier = tierForRow(r);
+    const baseOpp = OPPONENT_TIERS[tier][Math.floor(Math.random()*OPPONENT_TIERS[tier].length)];
+    nodes[r][c]={type:'battle', opponent: scaleMonsterForNewWorld(baseOpp, worldMultiplier * tierDifficultyMult(tier), tier)};
   });
   
   eligible.slice(needBattles).forEach(({r,c})=>{
     const t=pickNodeType();
     if (t==='battle') {
-      const baseOpp = OPPONENT_TIERS[tierForRow(r)][Math.floor(Math.random()*OPPONENT_TIERS[tierForRow(r)].length)];
-      nodes[r][c]={type:'battle', opponent: scaleMonsterForNewWorld(baseOpp, worldMultiplier)};
+      const tier = tierForRow(r);
+      const baseOpp = OPPONENT_TIERS[tier][Math.floor(Math.random()*OPPONENT_TIERS[tier].length)];
+      nodes[r][c]={type:'battle', opponent: scaleMonsterForNewWorld(baseOpp, worldMultiplier * tierDifficultyMult(tier), tier)};
     } else {
       nodes[r][c]={type:t};
     }
   });
   
-  // Scale the final world Boss object as well
-  nodes.push([{type:'battle', opponent: scaleMonsterForNewWorld(BOSS, worldMultiplier)}]);
+  // Scale the final world Boss object as well — its own fixed ramp on top of the world multiplier
+  nodes.push([{type:'battle', opponent: scaleMonsterForNewWorld(BOSS, worldMultiplier * 1.3, 6)}]);
 
   // Proximity-based connections: each node mostly links to the node(s) nearest its own
   // position in the next row, so lanes stay roughly parallel. A rare wildcard jump keeps
@@ -1041,7 +1053,8 @@ function generateMap() {
     const riskCol = nodes[riskRow].length - 1;
     const pool = OPPONENT_TIERS[tierForRow(riskRow)];
     const baseOpp = pool[Math.floor(Math.random() * pool.length)];
-    const toughOpp = scaleMonsterForNewWorld(baseOpp, worldMultiplier * 1.6);
+    const riskTier = tierForRow(riskRow);
+    const toughOpp = scaleMonsterForNewWorld(baseOpp, worldMultiplier * tierDifficultyMult(riskTier) * 1.35, riskTier);
     toughOpp.name = `${baseOpp.name} [Elite]`;
     nodes[riskRow][riskCol] = { type: 'battle', opponent: toughOpp };
     const targetEdge = edges.find(e => e.fromRow === riskRow && e.fromCol === riskCol);
@@ -1163,9 +1176,9 @@ function reenterCurrentNode(row, col) {
 }
 let RETURN_TO_CASTLE_MENU = false;
 
-const CASTLE_FIRST = { id:'castleGuard', name:'Castle Guard', icon:'🛡️', image: 'vehicles/castle-guard.jpg', hp:75, minTier:2, drawRate: 3, turnLimit:7 };
-const CASTLE_SECOND = { id:'castleChampion', name:'Castle Champion', icon:'🏰', image: 'vehicles/castle-champion.jpg', hp:105, minTier:3, drawRate: 4, turnLimit:8 };
-const CASTLE_THIRD = { id:'castleOverlord', name:'Compound Overlord', icon:'👑', image: 'vehicles/castle-overlord.jpg', hp:210, minTier:3, drawRate: 5, turnLimit:9, usesPerTurn:2 };
+const CASTLE_FIRST = { id:'castleGuard', name:'Castle Guard', tier:2, icon:'🛡️', image: 'vehicles/castle-guard.jpg', hp:75, minTier:2, drawRate: 3, turnLimit:7 };
+const CASTLE_SECOND = { id:'castleChampion', name:'Castle Champion', tier:3, icon:'🏰', image: 'vehicles/castle-champion.jpg', hp:105, minTier:3, drawRate: 4, turnLimit:8 };
+const CASTLE_THIRD = { id:'castleOverlord', name:'Compound Overlord', tier:4, icon:'👑', image: 'vehicles/castle-overlord.jpg', hp:210, minTier:3, drawRate: 5, turnLimit:9, usesPerTurn:2 };
 let DUNGEON_WIN_POPUP = null; // { reward, itemName } shown once after winning the 3rd (item) battle
 
 function castleMenuScreen(message='') {
@@ -1911,6 +1924,10 @@ function endTurn() {
       } else {
         oppDmg = Math.round(damageFor(best.cards, best.mult) * enrageMultiplier(BATTLE.opponent, BATTLE.turn));
       }
+      // Cap a single swing's damage by the opponent's tier so an unlucky hand of theirs can't
+      // spike into a near-kill out of nowhere — pressure should build up, not blindside you.
+      const swingCap = OPPONENT_SWING_CAP[BATTLE.opponent.tier ?? OPPONENT_SWING_CAP.length - 1] ?? 60;
+      oppDmg = Math.min(oppDmg, swingCap);
       const rawDmg = oppDmg;
       let armorBlocked = 0;
       if (BATTLE.playerArmor > 0) {

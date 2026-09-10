@@ -423,7 +423,7 @@ function checkCondition(cond, cards) {
   else if (cond.type === 'exactCount') result = { met: cards.length === cond.count, label: `Exactly ${cond.count} card${cond.count === 1 ? '' : 's'}` };
   else if (cond.type === 'pokerTier') {
     const ev = evaluateHand(cards);
-    result = { met: ev.tier >= cond.tier, label: ev.label, mult: ev.mult };
+    result = cond.exactTier ? { met: ev.tier === cond.tier, label: ev.label, mult: ev.mult } : { met: ev.tier >= cond.tier, label: ev.label, mult: ev.mult };
   }
   else if (cond.type === 'straightLen') {
     const ok = cards.length === cond.len && isConsecutive(cards);
@@ -542,7 +542,8 @@ function formatKindAmount(item, kindTagHTML) {
   const maxC = effectiveMaxCards(item);
   const multVal = item.baseMult ?? 1;
   const amountText = multVal !== 1 ? `&times;${multVal}` : (maxC > 1 ? 'Σ' : '');
-  return [kindTagHTML, amountText].filter(Boolean).join(' ');
+  if (!amountText) return kindTagHTML || '';
+  return kindTagHTML ? [kindTagHTML, amountText].filter(Boolean).join(' ') : `<b>Attack</b> ${amountText}`;
 }
 function computeItemAmount(item, cards, level, condResult) {
   if (item.flatAmount != null) {
@@ -580,10 +581,10 @@ function itemTuneCost(item, lvl) { return 40 * Math.pow(2, lvl); } // coins, dou
 // grows) — this returns how many levels it can take, or 0 if it doesn't scale at all.
 function itemLevelCap(item) { if (item.bonus) return item.bonus.maxLevel ?? 0; if (item.drawPerLevel) return item.levelCap || 0; return 0; }
 function itemUsesLevel(itemId) { return (RUN.itemUsesLevels && RUN.itemUsesLevels[itemId]) || 0; }
-function itemUsesTuneCost(lvl) { return 50 + lvl * 50; } // coins
+function itemUsesTuneCost(lvl) { return Math.round(50 * Math.pow(2.5, lvl)); } // coins, jumps hard after the 1st upgrade
 const ITEM_MAX_USES_LEVEL = 2; // level 0/1/2 -> 1/2/3 uses per turn
 function itemMaxCardsLevel(itemId) { return (RUN.itemMaxCardsLevels && RUN.itemMaxCardsLevels[itemId]) || 0; }
-function itemMaxCardsTuneCost(lvl) { return 60 + lvl * 60; } // coins
+function itemMaxCardsTuneCost(lvl) { return Math.round(60 * Math.pow(2.5, lvl)); } // coins, jumps hard after the 1st upgrade
 const ITEM_MAX_CARDS_BONUS_CAP = 2; // up to +2 cards beyond the Item's base maxCards
 function effectiveMaxCards(item) { return item.maxCards + itemMaxCardsLevel(item.id); }
 // An item can be converted for the rest of this run from a plain damage attack into a status
@@ -619,7 +620,7 @@ const ITEMS = {
     drawAmount: 2, drawPerLevel: 0,
     note: 'Needs a Pair. Deals damage and draws 2 cards immediately.' },
   trips_draw: { id: 'trips_draw', name: 'Triple Draw', cost: 55, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
-    condition: { type: 'pokerTier', tier: 3 }, baseMult: 1.4,
+    condition: { type: 'pokerTier', tier: 3, exactTier: true }, baseMult: 1.4,
     drawAmount: 3, drawPerLevel: 0,
     note: 'Needs Three of a Kind. Deals damage and draws 3 cards immediately.' },
   diamond_draw: { id: 'diamond_draw', name: 'Diamond Dash', cost: 45, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
@@ -646,20 +647,20 @@ const ITEMS = {
   /* -- Suit-flavored "exactly 4 cards" burn items -- */
   heart_inferno: { id: 'heart_inferno', name: 'Heart Inferno', cost: 65, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'exactCount', count: 4 }, baseMult: 1, kind: 'burn',
-    bonus: { condition: { type: 'suitCount', suit: '♥', count: 4 }, base: 1.0, perLevel: 0, maxLevel: 0 },
-    note: `Needs exactly 4 cards. Flame damage for Σ, +100% if all 4 are ${kw('Heart',"heart")}.` },
+    bonus: { condition: { type: 'suitCount', suit: '♥', count: 4 }, base: 0.5, perLevel: 0, maxLevel: 0 },
+    note: `Needs exactly 4 cards. Flame damage for Σ, +50% if all 4 are ${kw('Heart',"heart")}.` },
   diamond_inferno: { id: 'diamond_inferno', name: 'Diamond Inferno', cost: 65, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'exactCount', count: 4 }, baseMult: 1, kind: 'burn',
-    bonus: { condition: { type: 'suitCount', suit: '♦', count: 4 }, base: 1.0, perLevel: 0, maxLevel: 0 },
-    note: `Needs exactly 4 cards. Flame damage for Σ, +100% if all 4 are ${kw('Diamond')}.` },
+    bonus: { condition: { type: 'suitCount', suit: '♦', count: 4 }, base: 0.5, perLevel: 0, maxLevel: 0 },
+    note: `Needs exactly 4 cards. Flame damage for Σ, +50% if all 4 are ${kw('Diamond')}.` },
   club_inferno: { id: 'club_inferno', name: 'Club Inferno', cost: 65, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'exactCount', count: 4 }, baseMult: 1, kind: 'burn',
-    bonus: { condition: { type: 'suitCount', suit: '♣', count: 4 }, base: 1.0, perLevel: 0, maxLevel: 0 },
-    note: `Needs exactly 4 cards. Flame damage for Σ, +100% if all 4 are ${kw('Club',"club")}.` },
+    bonus: { condition: { type: 'suitCount', suit: '♣', count: 4 }, base: 0.5, perLevel: 0, maxLevel: 0 },
+    note: `Needs exactly 4 cards. Flame damage for Σ, +50% if all 4 are ${kw('Club',"club")}.` },
   spade_inferno: { id: 'spade_inferno', name: 'Spade Inferno', cost: 65, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'exactCount', count: 4 }, baseMult: 1, kind: 'burn',
-    bonus: { condition: { type: 'suitCount', suit: '♠', count: 4 }, base: 1.0, perLevel: 0, maxLevel: 0 },
-    note: `Needs exactly 4 cards. Flame damage for Σ, +100% if all 4 are ${kw('Spade')}.` },
+    bonus: { condition: { type: 'suitCount', suit: '♠', count: 4 }, base: 0.5, perLevel: 0, maxLevel: 0 },
+    note: `Needs exactly 4 cards. Flame damage for Σ, +50% if all 4 are ${kw('Spade')}.` },
 
   five_alarm_flush: { id: 'five_alarm_flush', name: 'Five-Alarm Flush', cost: 90, maxCards: 5, usesPerTurn: 2, usesPerTurnPerLevel: 1, minRow: 3,
     condition: { type: 'pokerTier', tier: 5, exactCount: 5 }, baseMult: 1.5,
@@ -687,7 +688,7 @@ const ITEMS = {
     bonus: { condition: { type: 'pokerTier', tier: 1 }, base: 0.5, perLevel: 0.25, maxLevel: 2 }, // +50% ONLY if the 2 cards are a Pair, up to +100% tuned
     note: 'Up to 2 cards. A Pair adds a bonus that grows the more you tune it.' },
   triple_threat: { id: 'triple_threat', name: 'Triple Threat', cost: 45, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
-    condition: { type: 'pokerTier', tier: 3 }, baseMult: 1,
+    condition: { type: 'pokerTier', tier: 3, exactTier: true }, baseMult: 1,
     bonus: { base: 1.0, perLevel: 1.0, maxLevel: 3 }, // Three of a Kind: +100% up to +400% tuned
     note: 'Needs Three of a Kind. A big hit that tunes even further with upgrades.' },
   bike_dash: { id: 'bike_dash', name: 'Short Fuse', cost: 30, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1,
@@ -857,13 +858,13 @@ function revealFraction(row) { return [1.0, 0.8, 0.6, 0.4, 0.25, 0.1, 0][Math.mi
 
 /* ========== LEVELED UPGRADE TREE (permanent, up to 20 levels each) ========== */
 const UPGRADE_DEFS = [
-  { id: 'draw',    label: 'Cards Drawn Per Turn', desc: '+1 card drawn at the start of each turn (also raises your opening hand).', baseCost: 20, inc: 15 },
+  { id: 'draw',    label: 'Cards Drawn Per Turn', desc: '+1 card drawn at the start of each turn (also raises your opening hand).', baseCost: 20, inc: 15, maxLevel: 5 },
   { id: 'chips',   label: 'Starting Coins',       desc: '+8 starting coins at New Playthrough.', baseCost: 10, inc: 8 },
   { id: 'hp',      label: 'Max HP',               desc: '+15 max health per level.', baseCost: 30, inc: 15 },
-  { id: 'handCap', label: 'Maximum Hand Size',    desc: '+2 cards to your maximum hand size per level.', baseCost: 15, inc: 10 },
+  { id: 'handCap', label: 'Maximum Hand Size',    desc: '+2 cards to your maximum hand size per level.', baseCost: 15, inc: 10, maxLevel: 5 },
   { id: 'fuel',    label: 'Starting Fuel',        desc: '+1 starting fuel per level.', baseCost: 10, inc: 8 },
   { id: 'fuelCap', label: 'Fuel Tank Size',       desc: '+5 max fuel you can hold per level.', baseCost: 25, inc: 15 },
-  { id: 'gem',     label: 'Gem Efficiency',       desc: '+1 card drawn per gem spent.', baseCost: 20, inc: 12 },
+  { id: 'gem',     label: 'Gem Efficiency',       desc: '+1 card drawn per gem spent.', baseCost: 20, inc: 12, maxLevel: 5 },
   { id: 'gemCap',  label: 'Gem Pouch Size',       desc: '+2 max gems you can hold per level.', baseCost: 25, inc: 15 },
   { id: 'energyCap', label: 'Energy Cell Size',   desc: '+5 max energy you can hold per level.', baseCost: 25, inc: 15 },
   { id: 'garage',  label: 'Garage Expansion',     desc: '+1 starting Item slot.', baseCost: 25, inc: 12 },
@@ -872,7 +873,7 @@ const UPGRADE_DEFS = [
   { id: 'reveal',  label: 'Battle Scan',          desc: 'Start every battle with 1 extra opponent card already revealed.', baseCost: 25, inc: 15 },
   { id: 'adminTune', label: 'Admin Vehicle Pair Bonus', desc: '+50% to the Admin Vehicle Pair bonus per level.', baseCost: 25, inc: 20 },
 ];
-const MAX_LEVEL = 20;
+const MAX_LEVEL = 10; // pre-run Career upgrade cap for most sections; a few of the most powerful ones use a lower per-item cap below
 function upgradeCost(def, atLevel) { return def.baseCost + atLevel * def.inc; } // cost to go from atLevel -> atLevel+1
 
 /* ========== META (persists forever) ========== */
@@ -1085,7 +1086,9 @@ function initRunWithStarter(id) {
     castleState: {},
   };
 
+  RUN.world = 1;
   RUN.map = generateMap();
+  RUN.bossRow = RUN.map.nodes.length - 1;
   
   saveRun();
   render(mapScreen());
@@ -1583,7 +1586,27 @@ function executePlayerAttack(itemId, index) {
     }
   }
 
+  // This Item fired — clears any curse on it, and counts against its uses-per-turn cap.
+  if (BATTLE.itemCurses && BATTLE.itemCurses[slotKey]) { delete BATTLE.itemCurses[slotKey]; battleLog(`${item.name}'s curse cleared.`); }
+  BATTLE.itemUses[slotKey] = (BATTLE.itemUses[slotKey] || 0) + 1;
+  if (item.cooldown != null) {
+    BATTLE.itemCooldowns = BATTLE.itemCooldowns || {};
+    BATTLE.itemCooldowns[slotKey] = item.cooldown;
+  }
+  idxs.forEach(i => BATTLE.usedThisTurn.add(i));
+  BATTLE.slots[slotKey] = [];
+
   if (item.drawAmount || item.drawUsesCardCount) {
+    // Discard the cards that were just played into this Item immediately, so a "draw" Item
+    // hands back fresh cards instead of leaving the played cards sitting in the hand until
+    // end of turn (which looked like the same cards coming right back).
+    const slotCardMap = {}; Object.entries(BATTLE.slots).forEach(([key, ix]) => { slotCardMap[key] = ix.map(i => BATTLE.hand[i]); });
+    const stillUsedCards = [...BATTLE.usedThisTurn].map(i => BATTLE.hand[i]).filter(c => !cards.includes(c));
+    const sortedOut = [...idxs].sort((a, b) => b - a);
+    for (const i of sortedOut) { BATTLE.discard.push(BATTLE.hand[i]); BATTLE.hand.splice(i, 1); }
+    Object.entries(slotCardMap).forEach(([key, cs]) => { BATTLE.slots[key] = cs.map(c => BATTLE.hand.indexOf(c)).filter(i => i !== -1); });
+    BATTLE.usedThisTurn = new Set(stillUsedCards.map(c => BATTLE.hand.indexOf(c)).filter(i => i !== -1));
+
     const drawN = item.drawUsesCardCount
       ? cards.length + (item.drawBonusFlat || 0) + (item.drawPerLevel || 0) * level
       : item.drawAmount + (item.drawPerLevel || 0) * level;
@@ -1592,7 +1615,7 @@ function executePlayerAttack(itemId, index) {
       if(!BATTLE.deck.length){ if(!BATTLE.discard.length) break; BATTLE.deck=shuffle(BATTLE.discard); BATTLE.discard=[]; }
       if(BATTLE.deck.length){ const c=BATTLE.deck.pop(); BATTLE.hand.push(c); drawn.push(c); }
     }
-    battleLog(`${item.name} — Drew ${drawn.map(c=>rankLabel(c.rank)+c.suit).join(' ') || 'no cards'}.`);
+    battleLog(`${item.name} — Discarded ${cardsStr}, drew ${drawn.map(c=>rankLabel(c.rank)+c.suit).join(' ') || 'no cards'}.`);
     resortHandAndRelink(RUN.handSortMode);
   }
 
@@ -1623,20 +1646,6 @@ function executePlayerAttack(itemId, index) {
   }
 
   // Resolve the Item's effect.
-  // This Item fired — clears any curse on it, and counts against its uses-per-turn cap.
-  if (BATTLE.itemCurses && BATTLE.itemCurses[slotKey]) { delete BATTLE.itemCurses[slotKey]; battleLog(`${item.name}'s curse cleared.`); }
-  BATTLE.itemUses[slotKey] = (BATTLE.itemUses[slotKey] || 0) + 1;
-  if (item.cooldown != null) {
-    BATTLE.itemCooldowns = BATTLE.itemCooldowns || {};
-    BATTLE.itemCooldowns[slotKey] = item.cooldown;
-  }
-
-  // These cards have now been used this turn.
-  idxs.forEach(i => BATTLE.usedThisTurn.add(i));
-
-  // Remove the cards from this Item's slot.
-  BATTLE.slots[slotKey] = [];
-
   saveRun();
 
   // If the attack killed the opponent, finish the battle immediately.
@@ -1894,6 +1903,14 @@ function endTurn() {
   drawOpponentCards();
   render(battleScreen());
 }
+function battleRewardsFor(opp, row) {
+  const isElite = /\[Elite\]/.test(opp.name || '');
+  const gemReward = opp.boss ? 5 : isElite ? 2 : 0;
+  const fuelReward = 2 + Math.floor(row / 5);
+  const chipReward = Math.round(22 + opp.hp / 7);
+  const pointsReward = Math.round(5 + row * 3);
+  return { chipReward, gemReward, fuelReward, pointsReward };
+}
 function winBattle(outlast) {
   IN_BATTLE = false; clearBattleSave();
   if (BATTLE.castleStage) {
@@ -1912,17 +1929,19 @@ function winBattle(outlast) {
     return;
   }
   const scale = outlast ? 0.7 : 1;
-  let chipReward = Math.round((22 + BATTLE.opponent.hp / 7) * scale);
-  const gemReward = 2 + BATTLE.row;
-  const fuelReward = 3 + BATTLE.row;
-  let pointsReward = Math.round((5 + BATTLE.row * 3) * scale);
+  const base = battleRewardsFor(BATTLE.opponent, BATTLE.row);
+  let chipReward = Math.round(base.chipReward * scale);
+  let pointsReward = Math.round(base.pointsReward * scale);
   const exactKillBonus = BATTLE.exactKill && !outlast;
   if (exactKillBonus) { chipReward += 25; pointsReward += 15; }
+  const gemReward = base.gemReward + (exactKillBonus ? 1 : 0);
+  const fuelReward = base.fuelReward;
   RUN.chips += chipReward; RUN.gems = Math.min(RUN.maxGems, RUN.gems + gemReward); RUN.fuel = Math.min(RUN.maxFuel, RUN.fuel + fuelReward);
   earnPoints(pointsReward);
   battleLog(outlast ? `You outlasted the ${BATTLE.opponent.name}!` : `${BATTLE.opponent.name} is done for!`);
-  if (exactKillBonus) battleLog(`Perfect Win Bonus: +25 coins, +15 Career Points!`);
+  if (exactKillBonus) battleLog(`Perfect Win Bonus: +25 coins, +1 gem, +15 Career Points!`);
   battleLog(`+${chipReward} coins, +${gemReward} gems, +${fuelReward} fuel, +${pointsReward} Career Points.`);
+  if (BATTLE.row === RUN.bossRow) { RUN.pendingWorldWin = true; }
   render(nodeResultScreen(true, { chipReward, gemReward, fuelReward, pointsReward, exactKillBonus }));
 }
 
@@ -1951,7 +1970,7 @@ function nodePopupContent(r, c) {
   const glyph = (svg) => `<span class="vart" style="width:64px;height:64px;font-size:64px">${svg}</span>`;
   if (node.type === 'battle') {
     const o = node.opponent;
-    const chipReward = Math.round(22 + o.hp / 7), gemReward = 2 + r, fuelReward = 3 + r, pointsReward = Math.round(5 + r * 3);
+    const { chipReward, gemReward, fuelReward, pointsReward } = battleRewardsFor(o, r);
     return {
       title: o.name, art: art(o, 64),
       rows: [
@@ -2235,8 +2254,8 @@ function battleScreen() {
           <h3 style="justify-content:space-between;gap:6px;flex-wrap:nowrap">${opp.name}${BATTLE.enrageNotified ? ` <span class="hoverTip" style="color:var(--red);font-size:13px" title="This opponent is past its turn limit and hitting harder.">Enraged</span>` : ''}
             <span class="rewardRow">
               <span class="cur chip" title="Coins earned for winning.">${ICON.coin} ${Math.round(22 + opp.hp/7)}</span>
-              <span class="cur gem" title="Gems earned for winning.">${ICON.gem} ${2 + BATTLE.row}</span>
-              <span class="cur fuel" title="Fuel earned for winning.">${ICON.fuel} ${3 + BATTLE.row}</span>
+              <span class="cur gem" title="Gems earned for winning.">${ICON.gem} ${battleRewardsFor(opp, BATTLE.row).gemReward}</span>
+              <span class="cur fuel" title="Fuel earned for winning.">${ICON.fuel} ${battleRewardsFor(opp, BATTLE.row).fuelReward}</span>
               <span class="cur pts" title="Career Points earned for winning. More for a Perfect Win.">${ICON.star} ${Math.round(5 + BATTLE.row*3)}</span>
             </span>
           </h3>
@@ -2647,6 +2666,21 @@ function treasureScreen(found) {
     </div>
   `;
 }
+function worldCompleteScreen() {
+  return `
+    <div class="treasure-modal">
+      <div class="wo">
+        <div class="wo-stripe"></div>
+        <div class="wo-body" style="text-align:center">
+          <div class="wo-eyebrow">World 1 Complete</div>
+          <h1>Route <em>Secured</em></h1>
+          <div class="wo-sub" style="margin:10px 0">The Wildfire is out and the highway's clear. Fort Lauderdale owes your fleet one. Fuel up, because World 2 is rolling in hotter.</div>
+          <button class="wo-btn amber" id="advanceWorldBtn" style="width:100%;margin-top:8px">Head Into World 2</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
 function runEndScreen(won, bonus) {
   return `
     <div class="wo">
@@ -2696,21 +2730,22 @@ function starterSelectScreen() {
 
 function upgradeScreen() {
   const rows = UPGRADE_DEFS.filter(u => u.id !== 'adminTune').map(u => {
+    const cap = u.maxLevel ?? MAX_LEVEL;
     const lvl = META.levels[u.id];
-    const maxed = lvl >= MAX_LEVEL;
+    const maxed = lvl >= cap;
     const cost = maxed ? 0 : upgradeCost(u, lvl);
     const refund = lvl > 0 ? upgradeCost(u, lvl - 1) : 0;
     const desc = u.id === 'reveal'
       ? `Start every battle with ${1 + lvl} opponent card${1 + lvl > 1 ? 's' : ''} already revealed.`
       : u.desc;
     return `<div class="shopcard">
-      <div class="hdr"><span><b>${u.label}</b> (Lv ${lvl}/${MAX_LEVEL})</span><span class="price">${maxed ? 'MAX' : cost + ' pts'}</span></div>
+      <div class="hdr"><span><b>${u.label}</b> (Lv ${lvl}/${cap})</span><span class="price">${maxed ? 'MAX' : cost + ' pts'}</span></div>
       <div class="note" style="margin:0 0 6px">${desc}</div>
       <div style="display:flex;justify-content:flex-end;gap:6px;flex-wrap:wrap">
           ${lvl > 0 ? `<button class="wo-btn gray" data-leveldown="${u.id}" style="padding:6px 10px;font-size:12px">Refund (+${refund})</button>` : ''}
           ${maxed ? '' : `<button class="wo-btn amber" data-levelup="${u.id}" style="padding:6px 10px;font-size:12px" ${META.points < cost ? 'disabled' : ''}>Level Up</button>`}
         </div>
-      <div class="levelbar"><i style="width:${(lvl / MAX_LEVEL) * 100}%"></i></div>
+      <div class="levelbar"><i style="width:${(lvl / cap) * 100}%"></i></div>
     </div>`;
   }).join('');
   return `
@@ -2817,8 +2852,27 @@ function render(html) {
   const continueBtn = document.getElementById('continueBtn');
   if (continueBtn) continueBtn.onclick = () => {
     const won = continueBtn.parentElement.querySelector('.wo-eyebrow').textContent.includes('Won');
-    if (won) { commitNode(BATTLE.row, BATTLE.col); if (BATTLE.row === ROWS) endRun(true); else render(mapScreen()); }
+    if (won) {
+      commitNode(BATTLE.row, BATTLE.col);
+      if (RUN.pendingWorldWin) {
+        RUN.pendingWorldWin = false;
+        if (RUN.world >= 2) endRun(true);
+        else render(worldCompleteScreen());
+      } else render(mapScreen());
+    }
     else endRun(false);
+  };
+  const advanceWorldBtn = document.getElementById('advanceWorldBtn');
+  if (advanceWorldBtn) advanceWorldBtn.onclick = () => {
+    RUN.world = 2;
+    RUN.worldMultiplier = 1.5;
+    RUN.map = generateMap();
+    RUN.bossRow = RUN.map.nodes.length - 1;
+    RUN.currentRow = -1;
+    RUN.currentCol = null;
+    RUN.path = [];
+    saveRun();
+    render(mapScreen());
   };
   const upgradeContinueBtn = document.getElementById('upgradeContinueBtn');
   const upgradeContinueBtn2 = document.getElementById('upgradeContinueBtn2');
@@ -3006,7 +3060,8 @@ function render(html) {
   app.querySelectorAll('[data-levelup]').forEach(el => el.onclick = () => {
     const u = UPGRADE_DEFS.find(x => x.id === el.dataset.levelup);
     const lvl = META.levels[u.id];
-    if (lvl >= MAX_LEVEL) return;
+    const cap = u.maxLevel ?? MAX_LEVEL;
+    if (lvl >= cap) return;
     const cost = upgradeCost(u, lvl);
     if (META.points < cost) return;
     META.points -= cost; META.levels[u.id]++;
@@ -3164,7 +3219,7 @@ function render(html) {
   RUN.itemMaxCardsLevels=RUN.itemMaxCardsLevels||{}; 
   RUN.itemUnlockProgress=RUN.itemUnlockProgress||{}; 
  RUN.itemUnlocked=RUN.itemUnlocked||{}; RUN.itemUnlockPending=RUN.itemUnlockPending||{}; 
- RUN.castleState=RUN.castleState||{}; saveRun(); const savedBattle = loadBattleSave(); if (savedBattle) { BATTLE = savedBattle; IN_BATTLE = true; render(battleScreen()); } else { render(mapScreen()); } };
+ RUN.castleState=RUN.castleState||{}; RUN.world=RUN.world||1; RUN.bossRow=(RUN.bossRow!=null)?RUN.bossRow:(RUN.map.nodes.length-1); saveRun(); const savedBattle = loadBattleSave(); if (savedBattle) { BATTLE = savedBattle; IN_BATTLE = true; render(battleScreen()); } else { render(mapScreen()); } };
   app.querySelectorAll('[data-pick]').forEach(el => el.onclick = () => initRunWithStarter(el.dataset.pick));
 }
 

@@ -113,6 +113,7 @@
   @media (max-width:700px){.dealerGrid{grid-template-columns:repeat(2,1fr)}}
   @media (max-width:460px){.dealerGrid{grid-template-columns:1fr}}
   .itemCard{border-radius:8px;padding:6px 4px;background:var(--bg);min-height:172px;display:flex;flex-direction:column;align-items:center;text-align:center;box-sizing:border-box;font-size:12px;position:relative}
+  .itemCard-sec{flex:1 1 0;display:flex;flex-direction:column;justify-content:center;align-items:center;width:100%;min-height:0}
   .usesBadge{position:absolute;top:4px;right:4px;font-size:9px;font-weight:800;background:var(--blue-light);color:var(--blue-dark);border-radius:5px;padding:1px 5px;line-height:1.4}
   .usesBadge.depleted{background:#eee;color:var(--dim)}
   .itemCard.ready{border-color:var(--green) !important}
@@ -515,7 +516,7 @@ function opponentAttackBoxHTML(opp) {
       bonusLine = a.minTurn ? `Kicks in on its own from turn ${a.minTurn} onward` : `Kicks in on its own`;
       damageLine = `Flat ${a.autoFire.damage} damage every turn once active`;
     } else if (a.sumThreshold) {
-      bonusLine = `Cards need to total ${a.sumThreshold.min} or higher`;
+      bonusLine = `Card(s) need to total ${a.sumThreshold.min} or higher`;
       damageLine = `Attack ${a.sumThreshold.damage}`;
     } else if (a.fewCardsThreshold) {
       bonusLine = cap > a.fewCardsThreshold.max ? `Only works using ${a.fewCardsThreshold.max} card${a.fewCardsThreshold.max > 1 ? 's' : ''} or fewer` : '';
@@ -619,6 +620,12 @@ function checkCondition(cond, cards) {
 // One shared formula for every Item's output. `level` is that Item's own upgrade level
 // (see META.itemLevels — permanent, tuned via the Upgrades screen). Items with `flatAmount` ignore card value entirely (used for
 // threshold-style poison: "any hand summing to X+ does exactly Y", not a multiplier).
+// Bonus-line phrasing: suit-count bonuses (e.g. the all-one-suit Inferno cards) read much
+// better as "4 Diamonds!" than the generic "4+ ♦" used elsewhere for open-ended suit counts.
+function bonusConditionText(cond) {
+  if (cond?.type === 'suitCount') return `${cond.count} ${suitName(cond.suit)}!`;
+  return `${describeCondition(cond)}!`;
+}
 function describeCondition(cond) {
   if (!cond || cond.type === 'any') return 'Any cards';
   if (cond.type === 'exactCount') return `exactly ${cond.count} cards`;
@@ -668,7 +675,7 @@ function itemRequirementText(item) {
   else if (cond?.type === 'parity') specific = `Up to ${max} ${cond.parity} cards`;
   else if (cond?.type === 'exactRank') specific = cond.requireAll ? `all ${rankLabel(cond.rank)}s` : `a ${rankLabel(cond.rank)}`;
   else if (cond?.type === 'straightLen') specific = `${cond.len}-card ${kw('Straight')}`;
-  else if (cond?.type === 'sumThreshold') specific = `Cards need to total ${cond.min} or higher`;
+  else if (cond?.type === 'sumThreshold') specific = `Card(s) need to total ${cond.min} or higher`;
   else if (cond?.type === 'sumExact') specific = `Σ = ${cond.value} exactly`;
   else if (cond?.type === 'exactCount') specific = `${cond.count} cards`;
   else if (cond?.type === 'pokerTier' && cond.tier > 0) specific = cond.tier === 5 ? kw('Flush') : cond.tier === 4 ? kw('Straight') : TIERS[cond.tier];
@@ -1876,11 +1883,10 @@ function executePlayerAttack(itemId, index) {
       BATTLE.opponent.poisonStacks.push(amount);
       battleLog(`${item.name} [${cardsStr}] — ${condResult.label}! Applied ${amount} poison (${breakdown}).`);
     } else if (eKind === 'burn') {
-      // Burn is meant to be the patient choice: less damage right now than a straight attack
-      // with the same cards would do, but more total if you leave it alone. Front-loading it
-      // low (0.5x this turn, building to 0.65x, tailing off to 0.45x) keeps that tradeoff real —
-      // previously the first tick matched a full direct hit with no downside at all.
-      const stages = [Math.round(amount * 0.5), Math.round(amount * 0.65), Math.round(amount * 0.45)];
+      // Burn is the patient choice: clean, easy-to-read percentages of what a straight attack
+      // with the same cards would do — 75% this turn, 50% next, 25% the turn after (150% total
+      // if left alone start to finish), versus 100% right now from a direct attack instead.
+      const stages = [Math.round(amount * 0.75), Math.round(amount * 0.5), Math.round(amount * 0.25)];
       BATTLE.opponent.burns = BATTLE.opponent.burns || [];
       BATTLE.opponent.burns.push({ stages, stageIdx: 0 });
       battleLog(`${item.name} [${cardsStr}] — ${condResult.label}! Applies burn: ${stages[0]} damage now (${breakdown}), then ${stages[1]} next turn and ${stages[2]} the turn after if left alone.`);
@@ -2588,9 +2594,15 @@ function battleScreen() {
       return `<div class="itemCard" data-assign="${slotKey}" style="border:2px dashed var(--purple)"
           ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleCardDrop(event,'${slotKey}',${effectiveMaxCards(item)})">
         <div class="usesBadge hoverTip" title="Cards currently held">${idxs.length}/${effectiveMaxCards(item)}</div>
-        <div class="hdr" style="font-weight:600;color:var(--purple)">${item.name}</div>
-        <div class="note" style="font-size:11px">${item.note}</div>
-        <div class="vcards">${cardHTML}</div>
+        <div class="itemCard-sec">
+          <div class="hdr" style="font-weight:600;color:var(--purple)">${item.name}</div>
+          <div class="note" style="font-size:11px">${item.note}</div>
+        </div>
+        <div class="itemDivider"></div>
+        <div class="itemCard-sec">
+          <div class="vcards">${cardHTML}</div>
+          ${idxs.length > 0 ? `<button class="wo-btn gray" style="padding:3px 6px;font-size:10px;margin-top:6px" data-clear="${slotKey}">Release All</button>` : ''}
+        </div>
       </div>`;
     }
 
@@ -2620,7 +2632,7 @@ function battleScreen() {
       return `<div class="card mini ${c.color === 'red' ? 'red' : ''} ${c.suit === '♣' ? 'club-card' : ''}" data-unassign="${slotKey}|${cardHandIdx}"><div>${rankLabel(c.rank)}</div><div>${c.suit}</div></div>`;
     }).join('');
     const bonusPct = item.bonus ? Math.round((item.bonus.base + item.bonus.perLevel * level) * 100) : 0;
-    const bonusLine = item.bonus && bonusPct > 0 ? `<div class="itemBonusLine">Bonus <b>+${bonusPct}%</b> if ${describeCondition(item.bonus.condition || item.condition)}</div>` : '';
+    const bonusLine = item.bonus && bonusPct > 0 ? `<div class="itemBonusLine">Bonus <b>+${bonusPct}%</b> if ${bonusConditionText(item.bonus.condition || item.condition)}</div>` : '';
 
     const usesBadgeText = cap === Infinity ? '∞' : `${Math.max(0, usesLeft)}/${cap}`;
     const cooldownLeft = item.cooldown != null ? (BATTLE.itemCooldowns?.[slotKey] || 0) : 0;
@@ -2628,13 +2640,16 @@ function battleScreen() {
     return `<div class="itemCard kind-${eKind} ${ready ? 'ready' : ''}" data-assign="${slotKey}" style="border:2px dashed ${itemBorder}"
         ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleCardDrop(event,'${slotKey}',${effectiveMaxCards(item)})">
       <div class="usesBadge ${usesLeft <= 0 ? 'depleted' : ''} hoverTip" title="Uses left this turn">${usesBadgeText}</div>
-      <div class="hdr" style="font-weight:600; color:${eKind==='defense'?'var(--defense)':eKind==='poison'?'#4d8f45':eKind==='burn'?'#c4472d':eKind==='curse'?'#7a4aa8':'var(--blue-dark)'}">${item.name}${cursedAmt ? ` <span class="vart" style="width:12px;height:12px;font-size:12px;color:var(--purple)">${ICON.curse}</span> cursed` : ''}</div>
-      <div class="itemReqLine">${itemRequirementText(item, eKind)}</div>
-      ${bonusLine}
-      ${hypPreviewHTML}
+      <div class="itemCard-sec">
+        <div class="hdr" style="font-weight:600; color:${eKind==='defense'?'var(--defense)':eKind==='poison'?'#4d8f45':eKind==='burn'?'#c4472d':eKind==='curse'?'#7a4aa8':'var(--blue-dark)'}">${item.name}${cursedAmt ? ` <span class="vart" style="width:12px;height:12px;font-size:12px;color:var(--purple)">${ICON.curse}</span> cursed` : ''}</div>
+        <div class="itemReqLine">${itemRequirementText(item, eKind)}</div>
+        ${bonusLine}
+        ${hypPreviewHTML}
+      </div>
       <div class="itemDivider"></div>
-      <div class="vcards">${cardHTML}</div>
+      <div class="itemCard-sec"><div class="vcards">${cardHTML}</div></div>
       <div class="itemDivider"></div>
+      <div class="itemCard-sec">
       ${cooldownLeft > 0 ? `<div class="note" style="margin:4px 0 0"><span class="hoverTip" title="This item can't be used again until its cooldown runs out.">On cooldown: ${cooldownLeft} turn${cooldownLeft > 1 ? 's' : ''} left</span></div>` : ''}
       ${(() => {
         const hasKindAmount = item.flatAmount != null || (item.baseMult ?? 1) > 0;
@@ -2654,11 +2669,12 @@ function battleScreen() {
         const staticKindText = formatKindAmount(item, kindTag);
         return `<div class="note" style="margin:4px 0 0">${[staticKindText, drawText].filter(Boolean).join(' + ')}</div>${unlockText?`<div class="note" style="margin:2px 0 0">${unlockText}</div>`:''}`;
       })()}
-      <div style="margin-top:auto">
+      <div>
         <div style="margin-top:4px">
           ${idxs.length ? `<button class="wo-btn gray" style="padding:3px 6px;font-size:10px" data-clear="${slotKey}">Clear</button>` : ''}
           ${ready && usesLeft > 0 && cooldownLeft <= 0 ? `<span class="attackChip ${eKind==='defense' ? 'defendChip' : ''}" data-attack="${slotKey}" style="font-size:10px; padding:3px 6px">${eKind==='defense' ? 'Defend ▶' : (item.flatAmount==null && (item.baseMult ?? 1)===0 && (item.drawAmount || item.drawUsesCardCount)) ? 'Draw ▶' : 'Attack ▶'}</span>` : ''}
         </div>
+      </div>
       </div>
     </div>`;
   }).join('');
@@ -2888,7 +2904,7 @@ function dealerItemCardHTML(item, opts) {
     : '';
   const kindLine = formatKindAmount(item, kindTag);
   const bonusPct = item.bonus ? Math.round(item.bonus.base * 100) : 0;
-  const bonusLine = item.bonus && bonusPct > 0 ? `<div class="itemBonusLine">Bonus <b>+${bonusPct}%</b> if ${describeCondition(item.bonus.condition || item.condition)}</div>` : '';
+  const bonusLine = item.bonus && bonusPct > 0 ? `<div class="itemBonusLine">Bonus <b>+${bonusPct}%</b> if ${bonusConditionText(item.bonus.condition || item.condition)}</div>` : '';
   const unlockLine = item.unlockThreshold != null ? `<div class="note" style="margin:2px 0 0;text-align:left"><span class="hoverTip" title="Deal ${item.unlockThreshold} total damage through this item over the run to unlock a one-time bonus draw of 4."><b>Unlocks</b> at ${item.unlockThreshold} dmg</span></div>` : '';
 
   return `<div class="itemCard" style="min-height:auto;text-align:left;align-items:stretch;padding:8px;flex-direction:row">

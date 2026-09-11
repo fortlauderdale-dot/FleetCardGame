@@ -657,7 +657,6 @@ function kw(text, key) {
 }
 function itemRequirementText(item) {
   const max = effectiveMaxCards(item);
-  const numHTML = `<span class="upgradeNum hoverTip" title="Card limit can be raised at the Chop Shop.">${max}</span>`;
   const cond = item.condition;
   let specific = '';
   if (cond?.type === 'suitCount') specific = `${cond.count === 1 ? '1' : `Up to ${max}`} ${cond.suit}`;
@@ -667,12 +666,12 @@ function itemRequirementText(item) {
   else if (cond?.type === 'parity') specific = `Up to ${max} ${cond.parity} cards`;
   else if (cond?.type === 'exactRank') specific = cond.requireAll ? `all ${rankLabel(cond.rank)}s` : `a ${rankLabel(cond.rank)}`;
   else if (cond?.type === 'straightLen') specific = `${cond.len}-card ${kw('Straight')}`;
-  else if (cond?.type === 'sumThreshold') specific = `Σ${cond.min}+`;
+  else if (cond?.type === 'sumThreshold') specific = `Cards totaling ${cond.min}+`;
   else if (cond?.type === 'sumExact') specific = `Σ = ${cond.value} exactly`;
   else if (cond?.type === 'exactCount') specific = `${cond.count} cards`;
   else if (cond?.type === 'pokerTier' && cond.tier > 0) specific = cond.tier === 5 ? kw('Flush') : cond.tier === 4 ? kw('Straight') : TIERS[cond.tier];
   if (cond?.exactCount != null && cond?.type !== 'exactCount') specific = `${specific} (${cond.exactCount} cards)`;
-  const base = max === 1 ? '1 card' : `Up to ${numHTML} cards`;
+  const base = max === 1 ? '1 card' : `Up to ${max} cards`;
   return specific || base;
 }
 // Shared amount formatting for the line below the divider: a plain ×1 is never shown since
@@ -1875,10 +1874,14 @@ function executePlayerAttack(itemId, index) {
       BATTLE.opponent.poisonStacks.push(amount);
       battleLog(`${item.name} [${cardsStr}] — ${condResult.label}! Applied ${amount} poison (${breakdown}).`);
     } else if (eKind === 'burn') {
-      const stages = [amount, Math.round(amount / 2), Math.round(amount / 4)];
+      // Burn is meant to be the patient choice: less damage right now than a straight attack
+      // with the same cards would do, but more total if you leave it alone. Front-loading it
+      // low (0.5x this turn, building to 0.65x, tailing off to 0.45x) keeps that tradeoff real —
+      // previously the first tick matched a full direct hit with no downside at all.
+      const stages = [Math.round(amount * 0.5), Math.round(amount * 0.65), Math.round(amount * 0.45)];
       BATTLE.opponent.burns = BATTLE.opponent.burns || [];
       BATTLE.opponent.burns.push({ stages, stageIdx: 0 });
-      battleLog(`${item.name} [${cardsStr}] — ${condResult.label}! Burn applied for ${stages.join(' + ')} damage (${breakdown}, stacks with any existing burn).`);
+      battleLog(`${item.name} [${cardsStr}] — ${condResult.label}! Applies burn: ${stages[0]} damage now (${breakdown}), then ${stages[1]} next turn and ${stages[2]} the turn after if left alone.`);
     } else if (eKind === 'curse') {
       BATTLE.opponent.curseFromPlayer = (BATTLE.opponent.curseFromPlayer || 0) + amount;
       battleLog(`${item.name} [${cardsStr}] — ${condResult.label}! Cursed them for ${amount} (${breakdown}) — it lands if they fail to attack next turn.`);
@@ -2569,19 +2572,33 @@ function battleScreen() {
       const cardHTML = idxs.map(cardHandIdx => {
         const c = BATTLE.hand[cardHandIdx];
         return `<div class="card mini ${c.color === 'red' ? 'red' : ''} ${c.suit === '♣' ? 'club-card' : ''}" data-unassign="${slotKey}|${cardHandIdx}" title="Click to take this card back"><div>${rankLabel(c.rank)}</div><div>${c.suit}</div></div>`;
-      }).join('') || `<span class="note" style="margin:0">Drag or tap cards to store them</span>`;
+      }).join('');
       return `<div class="itemCard" data-assign="${slotKey}" style="border:2px dashed var(--purple)"
           ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleCardDrop(event,'${slotKey}',${effectiveMaxCards(item)})">
-        <div class="hdr" style="font-weight:600;color:var(--purple)">${item.name} (storage)</div>
+        <div class="usesBadge hoverTip" title="Cards currently held">${idxs.length}/${effectiveMaxCards(item)}</div>
+        <div class="hdr" style="font-weight:600;color:var(--purple)">${item.name}</div>
         <div class="note" style="font-size:11px">${item.note}</div>
         <div class="vcards">${cardHTML}</div>
-        <div class="note" style="margin:4px 0 0">Holding ${idxs.length}/${effectiveMaxCards(item)}</div>
       </div>`;
     }
 
     const condResult = cards.length ? checkCondition(item.condition, cards) : { met: false, label: '' };
     const ready = condResult.met;
     const previewCalc = ready ? computeItemAmount(item, cards, level, condResult) : null;
+    // Live "what if" preview: if the slot is still empty but the player has cards selected in
+    // their hand, show what this item would do with those cards, before they've actually been
+    // dropped in — saves doing the math in your head to compare options.
+    let hypPreviewHTML = '';
+    if (!idxs.length && typeof selectedIdx !== 'undefined' && selectedIdx.length) {
+      const hypCards = selectedIdx.filter(i => !BATTLE.usedThisTurn.has(i)).slice(0, effectiveMaxCards(item)).map(i => BATTLE.hand[i]);
+      const hypCond = hypCards.length ? checkCondition(item.condition, hypCards) : { met: false };
+      if (hypCond.met) {
+        const hypCalc = computeItemAmount(item, hypCards, level, hypCond);
+        const hypKind = effectiveKind(item, index);
+        const hypWord = hypKind === 'defense' ? 'armor' : hypKind === 'poison' ? 'poison' : hypKind === 'burn' ? 'burn (1st turn)' : hypKind === 'curse' ? 'curse' : 'damage';
+        if (hypCalc.amount > 0) hypPreviewHTML = `<div class="note hoverTip" style="margin:4px 0 0;color:var(--amber);font-weight:700" title="What your selected cards would do if dropped into this Item.">With selected cards: ${hypCalc.amount} ${hypWord}</div>`;
+      }
+    }
     const eKind = effectiveKind(item, index);
     const effectWord = eKind === 'defense' ? 'armor' : eKind === 'poison' ? 'poison' : eKind === 'burn' ? 'burn' : eKind === 'curse' ? 'curse' : 'dmg';
     const cap = itemUsesCap(item, itemUsesLevel(itemId));
@@ -2591,7 +2608,7 @@ function battleScreen() {
       return `<div class="card mini ${c.color === 'red' ? 'red' : ''} ${c.suit === '♣' ? 'club-card' : ''}" data-unassign="${slotKey}|${cardHandIdx}"><div>${rankLabel(c.rank)}</div><div>${c.suit}</div></div>`;
     }).join('');
     const bonusPct = item.bonus ? Math.round((item.bonus.base + item.bonus.perLevel * level) * 100) : 0;
-    const bonusLine = item.bonus && bonusPct > 0 ? `<div class="itemBonusLine">Bonus <b class="hoverTip" title="Can be upgraded at the Tuning Garage (Item Upgrades) for the rest of this run.">+${bonusPct}%</b> if ${describeCondition(item.bonus.condition || item.condition)}</div>` : '';
+    const bonusLine = item.bonus && bonusPct > 0 ? `<div class="itemBonusLine">Bonus <b>+${bonusPct}%</b> if ${describeCondition(item.bonus.condition || item.condition)}</div>` : '';
 
     const usesBadgeText = cap === Infinity ? '∞' : `${Math.max(0, usesLeft)}/${cap}`;
     const cooldownLeft = item.cooldown != null ? (BATTLE.itemCooldowns?.[slotKey] || 0) : 0;
@@ -2602,6 +2619,7 @@ function battleScreen() {
       <div class="hdr" style="font-weight:600; color:${eKind==='defense'?'var(--defense)':eKind==='poison'?'#4d8f45':eKind==='burn'?'#c4472d':eKind==='curse'?'#7a4aa8':'var(--blue-dark)'}">${item.name}${cursedAmt ? ` <span class="vart" style="width:12px;height:12px;font-size:12px;color:var(--purple)">${ICON.curse}</span> cursed` : ''}</div>
       <div class="itemReqLine">${itemRequirementText(item, eKind)}</div>
       ${bonusLine}
+      ${hypPreviewHTML}
       <div class="itemDivider"></div>
       <div class="vcards">${cardHTML}</div>
       <div class="itemDivider"></div>

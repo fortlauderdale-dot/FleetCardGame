@@ -109,6 +109,12 @@
   .itemGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
   @media (max-width:700px){.itemGrid{grid-template-columns:repeat(2,1fr)}}
   @media (max-width:420px){.itemGrid{grid-template-columns:1fr}}
+  /* Used for opponent attack cards inside the (narrower) pre-battle popup — a plain grid here
+     would stretch a single card to the full popup width or force 3 cramped columns regardless
+     of the popup's own narrower size. Fixed-width flex items keep each card the same size it
+     is in the battle screen, however many there are. */
+  .popupItemRow{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+  .popupItemRow .itemCard{flex:0 0 140px;width:140px}
   .dealerGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
   @media (max-width:700px){.dealerGrid{grid-template-columns:repeat(2,1fr)}}
   @media (max-width:460px){.dealerGrid{grid-template-columns:1fr}}
@@ -345,8 +351,12 @@ function playSfx(kind) {
     else if (kind === 'dodge') tone(600, 1200, 0.15, 'triangle', 0.1);
     else if (kind === 'match') tone(500, 950, 0.18, 'sine', 0.11);
     else if (kind === 'win') { tone(440, 440, 0.11, 'square', 0.09); tone(660, 660, 0.11, 'square', 0.09, 0.12); tone(880, 880, 0.24, 'square', 0.1, 0.24); }
-    else if (kind === 'perfect') { tone(523, 523, 0.1, 'square', 0.1); tone(659, 659, 0.1, 'square', 0.1, 0.11); tone(784, 784, 0.1, 'square', 0.1, 0.22); tone(1047, 1047, 0.32, 'square', 0.12, 0.33); }
+    else if (kind === 'perfect') { tone(523, 523, 0.09, 'square', 0.1); tone(659, 659, 0.09, 'square', 0.1, 0.1); tone(784, 784, 0.09, 'square', 0.1, 0.2); tone(1047, 1047, 0.4, 'square', 0.13, 0.3); tone(1319, 1319, 0.25, 'sine', 0.08, 0.3); }
     else if (kind === 'lose') tone(280, 110, 0.5, 'sawtooth', 0.13);
+    else if (kind === 'buy') { tone(400, 600, 0.08, 'triangle', 0.1); tone(600, 900, 0.1, 'triangle', 0.1, 0.06); }
+    else if (kind === 'sell') { tone(500, 350, 0.12, 'triangle', 0.1); }
+    else if (kind === 'upgrade') { tone(440, 660, 0.09, 'square', 0.09); tone(660, 990, 0.16, 'square', 0.1, 0.09); }
+    else if (kind === 'open') { tone(300, 500, 0.12, 'sawtooth', 0.08); tone(700, 1000, 0.22, 'sine', 0.11, 0.1); }
   } catch (e) {}
 }
 function flashScreen(kind) {
@@ -536,26 +546,26 @@ function opponentAttackBoxHTML(opp) {
     let damageLine = '';
     if (a.autoFire) {
       bonusLine = a.minTurn ? `Kicks in on its own from turn ${a.minTurn} onward` : `Kicks in on its own`;
-      damageLine = `Flat ${a.autoFire.damage} damage every turn once active`;
+      damageLine = `Attack ${a.autoFire.damage}`;
     } else if (a.sumThreshold) {
       bonusLine = `Card(s) need to total ${a.sumThreshold.min} or higher`;
       damageLine = `Attack ${a.sumThreshold.damage}`;
     } else if (a.fewCardsThreshold) {
       bonusLine = cap > a.fewCardsThreshold.max ? `Only works using ${a.fewCardsThreshold.max} card${a.fewCardsThreshold.max > 1 ? 's' : ''} or fewer` : '';
-      damageLine = `Flat ${a.fewCardsThreshold.damage} damage`;
+      damageLine = `Attack ${a.fewCardsThreshold.damage}`;
     } else if (a.perFaceCard) {
       bonusLine = `Extra damage per face card (J/Q/K) played`;
-      damageLine = `${a.perFaceCard.damage} damage × number of face cards used`;
+      damageLine = `Attack ${a.perFaceCard.damage} × number of face cards used`;
     } else if (a.discardHand) {
       damageLine = `No damage — knocks ${a.discardHand.count} card${a.discardHand.count > 1 ? 's' : ''} out of your hand instead`;
     } else if (a.suitPunish) {
       bonusLine = `Bonus scales with ${a.suitPunish.suit} cards already in your discard pile`;
-      damageLine = `${a.suitPunish.base || 0} damage + ${a.suitPunish.perCard} per ${a.suitPunish.suit} discarded`;
+      damageLine = `Attack ${a.suitPunish.base || 0} + ${a.suitPunish.perCard} per ${a.suitPunish.suit} discarded`;
     } else if (minTier > 0) {
       bonusLine = '';
-      damageLine = a.straightLen ? `Damage: straight value × ${TIER_MULT[minTier].toFixed(1)}` : `Damage: Σ × ${TIER_MULT[minTier].toFixed(1)}`;
+      damageLine = a.straightLen ? `Attack straight value × ${TIER_MULT[minTier].toFixed(1)}` : `Attack Σ × ${TIER_MULT[minTier].toFixed(1)}`;
     } else {
-      damageLine = a.straightLen ? 'Damage: straight value' : 'Damage: Σ';
+      damageLine = a.straightLen ? 'Attack straight value' : 'Attack Σ';
     }
     const STATUS_EFFECTS = { burn: 'Burn', poison: 'Poison', curse: 'Curse' };
     const effectLabel = STATUS_EFFECTS[effect];
@@ -1299,14 +1309,22 @@ function generateMap() {
   // Set to 1.0 for World 1, can be hooked into a menu later for World 2 (1.5), World 3 (2.0), etc.
   const worldMultiplier = RUN.worldMultiplier || 1.0; 
 
+  // Every opponent in a tier gets used once before any of them repeat — a shuffled draw queue
+  // per tier, refilled only once fully drained. Previously every node picked independently at
+  // random, so a small tier could hand you the same opponent five times before moving on.
+  const tierQueues = {};
+  function pickOpponentForTier(tier) {
+    if (!tierQueues[tier] || !tierQueues[tier].length) tierQueues[tier] = shuffle([...OPPONENT_TIERS[tier]]);
+    return tierQueues[tier].pop();
+  }
+
   for (let r=0;r<rowCounts.length;r++) {
     const row=[];
     // Pull the raw layout pool
     const tier = tierForRow(r);
-    const pool=shuffle([...(OPPONENT_TIERS[tier])]);
     for(let c=0;c<rowCounts[r];c++) {
       // Use your new scaler to smoothly modify the base stats based on the world multiplier
-      const baseOpp = pool[c%pool.length];
+      const baseOpp = pickOpponentForTier(tier);
       row.push({type:'pending', opponent: scaleMonsterForNewWorld(baseOpp, worldMultiplier * tierDifficultyMult(tier), tier)});
     }
     nodes.push(row);
@@ -1328,7 +1346,7 @@ function generateMap() {
   const needBattles=29-3; 
   eligible.slice(0,needBattles).forEach(({r,c})=> {
     const tier = tierForRow(r);
-    const baseOpp = OPPONENT_TIERS[tier][Math.floor(Math.random()*OPPONENT_TIERS[tier].length)];
+    const baseOpp = pickOpponentForTier(tier);
     nodes[r][c]={type:'battle', opponent: scaleMonsterForNewWorld(baseOpp, worldMultiplier * tierDifficultyMult(tier), tier)};
   });
   
@@ -1336,7 +1354,7 @@ function generateMap() {
     const t=pickNodeType();
     if (t==='battle') {
       const tier = tierForRow(r);
-      const baseOpp = OPPONENT_TIERS[tier][Math.floor(Math.random()*OPPONENT_TIERS[tier].length)];
+      const baseOpp = pickOpponentForTier(tier);
       nodes[r][c]={type:'battle', opponent: scaleMonsterForNewWorld(baseOpp, worldMultiplier * tierDifficultyMult(tier), tier)};
     } else {
       nodes[r][c]={type:t};
@@ -1375,9 +1393,8 @@ function generateMap() {
   const riskRow = rowCounts.findIndex((n, r) => n >= 2 && r > 2 && r < castleRow - 1 && r !== 4);
   if (riskRow !== -1) {
     const riskCol = nodes[riskRow].length - 1;
-    const pool = OPPONENT_TIERS[tierForRow(riskRow)];
-    const baseOpp = pool[Math.floor(Math.random() * pool.length)];
     const riskTier = tierForRow(riskRow);
+    const baseOpp = pickOpponentForTier(riskTier);
     const toughOpp = scaleMonsterForNewWorld(baseOpp, worldMultiplier * tierDifficultyMult(riskTier) * 1.35, riskTier);
     toughOpp.name = `${baseOpp.name} [Elite]`;
     nodes[riskRow][riskCol] = { type: 'battle', opponent: toughOpp };
@@ -1486,7 +1503,7 @@ function selectNode(row, col) {
   else if (node.type === 'rest') render(garageScreen());
   else if (node.type === 'blacksmith') { RETURN_TO_CASTLE_MENU = false; BLACKSMITH_OPTIONS = pickBlacksmithOptions(); BLACKSMITH_VISIT = { primary: null, secondary: null }; render(blacksmithScreen()); }
   else if (node.type === 'chopshop') { RETURN_TO_CASTLE_MENU = false; render(chopShopScreen('map')); }
-  else if (node.type === 'treasure') { const found = rollTreasure(node.big); render(treasureScreen(found)); }
+  else if (node.type === 'treasure') { const found = rollTreasure(node.big); playSfx('open'); TREASURE_POPUP = found; render(mapScreen()); }
 }
 
 function reenterCurrentNode(row, col) {
@@ -2473,6 +2490,7 @@ function currencyBar(extraHTML = '') {
 }
 
 let MAP_POPUP = null; // {row, col} of the node currently shown in the map info popup
+let TREASURE_POPUP = null; // reward object shown as a lightweight overlay on top of the map, not a full screen change
 function tierNeedText(minTier) { return minTier > 0 ? `At least a ${TIERS[minTier]}` : 'Any card'; }
 function suitName(s) { return { '♥':'Hearts', '♦':'Diamonds', '♣':'Clubs', '♠':'Spades' }[s] || s; }
 function effectPhrase(effect) {
@@ -2518,7 +2536,7 @@ function nodePopupContent(r, c) {
         ['HP', o.hp],
         ['Draws', `${o.drawRate}/turn`],
       ],
-      extra: `${opponentAttackBoxHTML(o)}${enrageNote}${specialNote}${armorNote}${o.boss ? `<div class="note" style="color:var(--red);font-weight:700;margin-top:4px">World Boss</div>` : ''}`,
+      extra: `<div class="popupItemRow">${opponentAttackBoxHTML(o)}</div>${enrageNote}${specialNote}${armorNote}${o.boss ? `<div class="note" style="color:var(--red);font-weight:700;margin-top:4px">World Boss</div>` : ''}`,
       rewards: { chipReward, gemReward, fuelReward, pointsReward },
       actionLabel: 'Battle',
     };
@@ -2634,6 +2652,7 @@ function mapScreen() {
         ${nodesHTML}
       </div>
       ${MAP_POPUP ? nodePopupScreen(MAP_POPUP.row, MAP_POPUP.col) : ''}
+      ${TREASURE_POPUP ? treasureScreen(TREASURE_POPUP) : ''}
     </div>
   </div>`;
 }
@@ -2809,7 +2828,7 @@ function battleScreen() {
     <div class="panel duelHead">
       <div class="duelSide you">${art(PLAYER_ART, 30)}
         <div class="sideInfo">
-          <h3 style="justify-content:flex-end">${fleetLabel()}</h3>
+          <h3 style="justify-content:flex-end"><span style="color:var(--blue)">${fleetLabel()}</span></h3>
           <div class="bar-wrap"><div class="bar-fill bar-health" style="width:${healthPct}%"></div></div>
           <div class="note">${RUN.health} / ${RUN.maxHealth}${BATTLE.playerArmor ? ` &middot; <span class="armorText hoverTip" title="Armor protects against incoming attacks, absorbing damage equal to the amount shown."><span class="vart" style="width:12px;height:12px;font-size:12px">${ICON.shield}</span> ${BATTLE.playerArmor} Armor</span>` : ''}</div>
           <div style="margin-top:4px;display:flex;justify-content:flex-end"><button class="wo-btn green" id="fuelHealBtn" title="Fuel also gets you across the map — spending it here means less for travel." style="padding:6px 10px;font-size:11px" ${RUN.fuel < FUEL_HESTORE_COST || RUN.health >= RUN.maxHealth ? 'disabled' : ''}>Heal ${FUEL_HEAL_AMOUNT} = ${FUEL_HESTORE_COST} ${ICON.fuel}</button></div>
@@ -2818,7 +2837,7 @@ function battleScreen() {
       <div class="vsMark">VS</div>
       <div class="duelSide opp">${art(opp, 30)}
         <div class="sideInfo">
-          <h3 style="justify-content:space-between;gap:6px;flex-wrap:nowrap">${opp.name}${BATTLE.enrageNotified ? ` <span class="hoverTip" style="color:var(--red);font-size:13px" title="This opponent is past its turn limit and hitting harder.">Enraged</span>` : ''}${opp.boss ? ` <span class="hoverTip" style="color:var(--red);font-size:13px" title="This is a boss fight — taking too long on a turn costs extra health, so don't sit on it.">&#9201;</span>` : ''}
+          <h3 style="justify-content:space-between;gap:6px;flex-wrap:nowrap"><span style="color:var(--red)">${opp.name}</span>${BATTLE.enrageNotified ? ` <span class="hoverTip" style="color:var(--red);font-size:13px" title="This opponent is past its turn limit and hitting harder.">Enraged</span>` : ''}${opp.boss ? ` <span class="hoverTip" style="color:var(--red);font-size:13px" title="This is a boss fight — taking too long on a turn costs extra health, so don't sit on it.">&#9201;</span>` : ''}
             <span class="rewardRow">
               <span class="cur chip" title="Coins earned for winning.">${ICON.coin} ${Math.round(22 + opp.hp/7)}</span>
               ${battleRewardsFor(opp, BATTLE.row).gemReward ? `<span class="cur gem" title="Gems earned for winning.">${ICON.gem} ${battleRewardsFor(opp, BATTLE.row).gemReward}</span>` : ''}
@@ -3065,11 +3084,7 @@ function shopScreen(fromCastle=false) {
 }
 
 function garageScreen(message='') {
-  const missingFuel = RUN.maxFuel - RUN.fuel;
-  const maxAffordable = Math.floor(RUN.chips / 8);
-  const purchaseLimit = Math.min(missingFuel, maxAffordable);
-  const totalCost = purchaseLimit * 8;
-
+  const restAvailable = RUN.health < RUN.maxHealth && !(RUN.restStopUsed && RUN.restStopUsed.row === RUN.currentRow && RUN.restStopUsed.col === RUN.currentCol);
   return `${noticeHTML()}
     <div class="wo">
       <div class="wo-stripe"></div>
@@ -3079,23 +3094,16 @@ function garageScreen(message='') {
         <div class="wo-sub">Pull over to heal or top off your gas tank.</div>
         ${currencyBar()}
         ${message ? `<div class="panel"><div class="note">${message}</div></div>` : ''}
-        
-        <div class="shopcard">
-          <h3>Fuel Dispenser</h3>
-          <div class="note">Fuel costs <b>8 coins per 1 unit</b>. Fill your tank completely or buy what you can afford.</div>
-          ${purchaseLimit > 0 
-            ? `<div class="note" style="color:var(--green);font-weight:600;margin:6px 0">You can buy up to +${purchaseLimit} fuel for ${totalCost} coins.</div>`
-            : `<div class="note" style="color:var(--dim);margin:6px 0">${RUN.fuel >= RUN.maxFuel ? 'Your tank is completely full.' : 'Not enough coins to buy fuel.'}</div>`
-          }
-          <button class="wo-btn amber" id="stationFuelBtn" ${purchaseLimit <= 0 ? 'disabled' : ''}>
-            Fill Tank (+${purchaseLimit} Fuel)
-          </button>
-        </div>
 
         <div class="shopcard">
           <h3>Fleet Maintenance</h3>
-          <div class="note">Restores a flat 30 points of physical fleet health. Single-use per visit.</div>
-          <button class="wo-btn" id="restBtn" ${RUN.health >= RUN.maxHealth ? 'disabled' : ''}>Rest (+30 Health)</button>
+          <button class="wo-btn" id="restBtn" ${restAvailable ? '' : 'disabled'}>Rest (+30 Health)</button>
+          <div class="note" style="margin-top:6px">Single-use per visit.</div>
+        </div>
+
+        <div class="shopcard">
+          <h3>Fuel Dispenser</h3>
+          <button class="wo-btn amber" id="stationFuelBtn" ${RUN.chips < 8 || RUN.fuel >= RUN.maxFuel ? 'disabled' : ''}>1 Fuel = 8 Coins</button>
         </div>
 
         <button class="wo-btn gray" id="leaveStationBtn" style="width:100%;margin-top:12px">Back to Route Map</button>
@@ -3224,14 +3232,13 @@ function treasureScreen(found) {
   const curClass = { coins: 'chip', fuel: 'fuel', gems: 'gem', energy: 'energy', points: 'pts' }[found.kind] || '';
   const text = found.amount > 0 ? `You found ${found.amount} ${found.label.toLowerCase()}!` : `Your ${found.label.toLowerCase()} was already full.`;
   return `
-    <div class="treasure-modal">
-      <div class="wo">
+    <div class="map-popup-overlay">
+      <div class="wo" style="width:100%">
         <div class="wo-stripe"></div>
         <div class="wo-body">
           <div class="wo-eyebrow">Supply Cache</div>
           <h1>Treasure <em>Found</em></h1>
           <div class="treasure-prize" style="display:flex;justify-content:center"><span class="cur ${curClass}" style="font-size:22px;padding:6px 14px;display:inline-flex;align-items:center;gap:8px"><span class="vart" style="width:28px;height:28px;font-size:28px">${found.icon}</span> ${text}</span></div>
-          <div class="wo-sub" style="text-align:center">The cache contained one random reward.</div>
           <div style="text-align:center"><button class="wo-btn amber" id="leaveTreasureBtn">Continue Route</button></div>
         </div>
       </div>
@@ -3500,15 +3507,12 @@ function render(html) {
   const stationFuelBtn = document.getElementById('stationFuelBtn');
   if (stationFuelBtn) {
     stationFuelBtn.onclick = () => {
-      const missingFuel = RUN.maxFuel - RUN.fuel;
-      const maxAffordable = Math.floor(RUN.chips / 8);
-      const purchaseLimit = Math.min(missingFuel, maxAffordable);
-      const totalCost = purchaseLimit * 8;
-      if (purchaseLimit > 0 && RUN.chips >= totalCost) {
-        RUN.chips -= totalCost;
-        RUN.fuel += purchaseLimit;
+      if (RUN.chips >= 8 && RUN.fuel < RUN.maxFuel) {
+        RUN.chips -= 8;
+        RUN.fuel += 1;
+        playSfx('buy');
         saveRun();
-        render(garageScreen(`Topped off tank: Added +${purchaseLimit} fuel for ${totalCost} coins.`));
+        render(garageScreen());
       }
     };
   }
@@ -3518,8 +3522,10 @@ function render(html) {
   if (restBtn) {
     restBtn.onclick = () => { 
       RUN.health = Math.min(RUN.maxHealth, RUN.health + 30); 
+      RUN.restStopUsed = { row: RUN.currentRow, col: RUN.currentCol };
+      playSfx('heal');
       saveRun(); 
-      render(mapScreen()); 
+      render(garageScreen('Rested up: +30 Health.')); 
     };
   }
 
@@ -3657,6 +3663,7 @@ function render(html) {
     if (kind === 'itemSlots') RUN.itemCap = Math.min(MAX_ITEM_CAP, RUN.itemCap + 1);
     else if (kind === 'drawPerTurn') RUN.drawPerTurn += 1;
     else if (kind === 'health') RUN.health = Math.min(RUN.maxHealth, RUN.health + 25);
+    playSfx('upgrade');
     saveRun();
     render(runUpgradeScreen());
   });
@@ -3679,6 +3686,7 @@ function render(html) {
     const cost = upgradeCost(u, lvl);
     if (META.points < cost) return;
     META.points -= cost; META.levels[u.id]++;
+    playSfx('upgrade');
     saveMeta();
     render(upgradeScreen());
   });
@@ -3783,7 +3791,7 @@ function render(html) {
 
   const leaveShopBtn = document.getElementById('leaveShopBtn'); if (leaveShopBtn) leaveShopBtn.onclick = () => render(RETURN_TO_CASTLE_MENU ? castleMenuScreen() : mapScreen());
   const leaveBlacksmithBtn = document.getElementById('leaveBlacksmithBtn'); if (leaveBlacksmithBtn) leaveBlacksmithBtn.onclick = () => { BLACKSMITH_OPTIONS = null; BLACKSMITH_VISIT = null; render(RETURN_TO_CASTLE_MENU ? castleMenuScreen() : mapScreen()); };
-  const leaveTreasureBtn = document.getElementById('leaveTreasureBtn'); if (leaveTreasureBtn) leaveTreasureBtn.onclick = () => render(mapScreen());
+  const leaveTreasureBtn = document.getElementById('leaveTreasureBtn'); if (leaveTreasureBtn) leaveTreasureBtn.onclick = () => { TREASURE_POPUP = null; render(mapScreen()); };
   app.querySelectorAll('[data-forge]').forEach(el => el.onclick = () => {
     const i = +el.dataset.forge;
     const opt = BLACKSMITH_OPTIONS[i];
@@ -3809,6 +3817,7 @@ function render(html) {
     const sellValue = Math.floor((it.cost+modCost)/2);
     RUN.chips += sellValue;
     RUN.hero.items.splice(i, 1);
+    playSfx('sell');
     saveRun();
     render(shopScreen());
   });
@@ -3818,6 +3827,7 @@ function render(html) {
     RUN.chips -= cost;
     RUN.hero.items.push(el.dataset.buy);
     RUN.shopStock = RUN.shopStock.filter(id => id !== el.dataset.buy);
+    playSfx('buy');
     saveRun();
     render(shopScreen());
   });

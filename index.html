@@ -480,7 +480,7 @@ function opponentAttackBoxHTML(opp) {
         <span class="vart" style="width:14px;height:14px;font-size:14px;vertical-align:-2px">${ICON.lock}</span>
         Locked — ${remaining} more card value clears it
       </div>
-      <div class="note" style="margin-top:4px">Then hits for ${opp.lockAttack} damage</div>
+      <div class="note" style="margin-top:4px">Then hits for ${opp.lockAttack} damage${opp.turnLimit ? `, more the longer the fight has gone (up to +100% past turn ${opp.turnLimit})` : ''}, and locks back up</div>
     </div>`;
   }
 
@@ -730,7 +730,7 @@ const ITEM_MAX_USES_LEVEL = 2; // level 0/1/2 -> 1/2/3 uses per turn
 function itemMaxCardsLevel(itemId) { return (RUN.itemMaxCardsLevels && RUN.itemMaxCardsLevels[itemId]) || 0; }
 function itemMaxCardsTuneCost(lvl) { return Math.round(60 * Math.pow(2.5, lvl)); } // coins, jumps hard after the 1st upgrade
 const ITEM_MAX_CARDS_BONUS_CAP = 2; // up to +2 cards beyond the Item's base maxCards
-function effectiveMaxCards(item) { return item.maxCards + itemMaxCardsLevel(item.id); }
+function effectiveMaxCards(item) { return (item.maxStore ?? item.maxCards) + itemMaxCardsLevel(item.id); }
 // An item can be converted for the rest of this run from a plain damage attack into a status
 // effect (poison/burn/curse) at the Chop Shop. Only items with no fixed `kind` (i.e. "regular
 // attack") are eligible — defense and already-status items keep their identity.
@@ -2392,12 +2392,20 @@ function nodePopupContent(r, c) {
   if (node.type === 'battle') {
     const o = node.opponent;
     const { chipReward, gemReward, fuelReward, pointsReward } = battleRewardsFor(o, r);
+    const enrageNote = o.turnLimit ? `<div class="note" style="margin-top:6px"><span class="hoverTip" title="Its damage climbs +12% per turn past this limit, capped at +100% (2x).">Enrages after turn ${o.turnLimit}</span> — every attack shown below hits harder the longer the fight runs.</div>` : '';
+    const specialNote = o.special?.type === 'drawOnHit' ? `<div class="note" style="margin-top:4px">Draws +${o.special.amount || 1} card${(o.special.amount||1)>1?'s':''} into its hand every time you land a direct hit on it.</div>`
+      : o.startPoolBonus ? `<div class="note" style="margin-top:4px">Starts the fight with ${o.startPoolBonus} extra card${o.startPoolBonus>1?'s':''} already in hand.</div>`
+      : o.special?.type === 'lifesteal' ? `<div class="note" style="margin-top:4px">Heals ${Math.round((o.special.pct||0.5)*100)}% of the damage its attacks deal.</div>`
+      : '';
+    const armorNote = o.startArmor ? `<div class="note" style="margin-top:4px">Starts with ${o.startArmor} armor${o.armorRegen ? `, regenerating ${o.armorRegen}/turn up to ${o.armorRegenCap ?? o.startArmor}` : ' that only comes back if it reinforces itself'}. Armor blocks your direct hits before HP, but poison/burn/curse skip it.</div>`
+      : '';
     return {
       title: o.name, art: art(o, 64),
       rows: [
         ['HP', o.hp],
+        ['Draws', `${o.drawRate}/turn`],
       ],
-      extra: `<div class="note" style="font-weight:600">${o.attackInfo || describeOpponentAttacks(o)}</div>${opponentTraitTags(o).length ? `<div class="note" style="margin-top:6px">${opponentTraitTags(o).map(t => `&bull; ${t}`).join('<br>')}</div>` : ''}${o.boss ? `<div class="note" style="color:var(--red);font-weight:700;margin-top:4px">World Boss</div>` : ''}`,
+      extra: `${opponentAttackBoxHTML(o)}${enrageNote}${specialNote}${armorNote}${o.boss ? `<div class="note" style="color:var(--red);font-weight:700;margin-top:4px">World Boss</div>` : ''}`,
       rewards: { chipReward, gemReward, fuelReward, pointsReward },
       actionLabel: 'Battle',
     };
@@ -2694,7 +2702,7 @@ function battleScreen() {
             </span>
           </h3>
           <div class="bar-wrap"><div class="bar-fill bar-hp" style="width:${hpPct}%"></div></div>
-          <div class="note">${opp.hpNow} / ${opp.hp}${BATTLE.opponent.armor > 0 ? ` &middot; <span class="status hoverTip" style="color:#5a7fa8" title="Armor absorbs damage from your direct attacks before it reaches their health. Poison, burn, and curse damage ignore it.">${ICON.defense || '🛡️'} ${BATTLE.opponent.armor} armor</span>` : ''}${(BATTLE.opponent.poisonStacks||[]).length ? ` &middot; <span class="status poisonStatus hoverTip" title="Poison now: ${(BATTLE.opponent.poisonStacks||[]).reduce((a,n)=>a+n,0)} damage. Next turn: ${(BATTLE.opponent.poisonStacks||[]).map(n=>Math.max(0,n-3)).reduce((a,n)=>a+n,0)} damage.">${ICON.poison} ${(BATTLE.opponent.poisonStacks||[]).reduce((a,n)=>a+n,0)} poison</span>` : ''}${BATTLE.opponent.burns?.length ? (() => { const burns=BATTLE.opponent.burns; const now=burns.reduce((a,b)=>a+(b.stages[b.stageIdx]||0),0); const future=[1,2].map(offset=>burns.reduce((a,b)=>a+(b.stages[b.stageIdx+offset]||0),0)).filter(n=>n>0); const nextText=future.length ? `Next: ${future.join(', ')}` : 'No more burn damage.'; return ` &middot; <span class="status burnStatus hoverTip" title="${nextText}">${ICON.fire} ${now} <b><u>Burn Damage</u></b></span>`; })() : ''}${BATTLE.opponent.curseFromPlayer ? ` &middot; <span class="status curseStatus hoverTip" title="Curse: ${BATTLE.opponent.curseFromPlayer} damage if the opponent fails to attack.">${ICON.curse} cursed</span>` : ''}</div>
+          <div class="note">${opp.hpNow} / ${opp.hp} <span class="hoverTip" style="color:var(--dim)" title="Cards this opponent draws into its pool at the start of each of its turns.">&middot; Draws ${BATTLE.opponent.drawRate}/turn</span>${BATTLE.opponent.armor > 0 ? ` &middot; <span class="status hoverTip" style="color:#5a7fa8" title="Armor absorbs damage from your direct attacks before it reaches their health. Poison, burn, and curse damage ignore it.">${ICON.defense || '🛡️'} ${BATTLE.opponent.armor} armor</span>` : ''}${(BATTLE.opponent.poisonStacks||[]).length ? ` &middot; <span class="status poisonStatus hoverTip" title="Poison now: ${(BATTLE.opponent.poisonStacks||[]).reduce((a,n)=>a+n,0)} damage. Next turn: ${(BATTLE.opponent.poisonStacks||[]).map(n=>Math.max(0,n-3)).reduce((a,n)=>a+n,0)} damage.">${ICON.poison} ${(BATTLE.opponent.poisonStacks||[]).reduce((a,n)=>a+n,0)} poison</span>` : ''}${BATTLE.opponent.burns?.length ? (() => { const burns=BATTLE.opponent.burns; const now=burns.reduce((a,b)=>a+(b.stages[b.stageIdx]||0),0); const future=[1,2].map(offset=>burns.reduce((a,b)=>a+(b.stages[b.stageIdx+offset]||0),0)).filter(n=>n>0); const nextText=future.length ? `Next: ${future.join(', ')}` : 'No more burn damage.'; return ` &middot; <span class="status burnStatus hoverTip" title="${nextText}">${ICON.fire} ${now} <b><u>Burn Damage</u></b></span>`; })() : ''}${BATTLE.opponent.curseFromPlayer ? ` &middot; <span class="status curseStatus hoverTip" title="Curse: ${BATTLE.opponent.curseFromPlayer} damage if the opponent fails to attack.">${ICON.curse} cursed</span>` : ''}</div>
           ${BATTLE.opponent.burns?.length ? `<span class="attackChip" data-detonate="1" style="background:var(--amber);border-color:#c97600;font-size:10px;padding:4px 8px">Detonate for ${BATTLE.opponent.burns.reduce((a,b)=>a+(b.stages[b.stageIdx]||0),0)} now</span>` : ''}
         </div>
       </div>

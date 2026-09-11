@@ -107,6 +107,8 @@
   .vslot .vcards{display:flex;gap:3px;flex-wrap:wrap;min-height:30px;margin-top:6px}
 
   .itemGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+  @media (max-width:700px){.itemGrid{grid-template-columns:repeat(2,1fr)}}
+  @media (max-width:420px){.itemGrid{grid-template-columns:1fr}}
   .dealerGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
   @media (max-width:700px){.dealerGrid{grid-template-columns:repeat(2,1fr)}}
   @media (max-width:460px){.dealerGrid{grid-template-columns:1fr}}
@@ -139,10 +141,6 @@
   .kv{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px dashed var(--blue-light);font-family:var(--mono);font-size:12.5px}
   .kv b{color:var(--blue-dark)}
   .price{color:var(--amber);font-weight:700}
-  .log{font-family:var(--mono);font-size:11.5px;color:var(--dim);max-height:110px;overflow-y:auto;
-    border-top:1px dashed var(--blue-light);padding-top:8px;margin-top:8px}
-  .log div{padding:2px 0}
-
   .mapwrap{position:relative;margin:0 auto;overflow-x:auto;overflow-y:visible;background:linear-gradient(180deg,#dfead7,#edf4e8);border:2px solid #c8d8bf;border-radius:12px;padding:10px}.mapnode-wrap{position:absolute;transform:translate(-50%,-50%)}
   .mapnode-wrap{position:absolute;transform:translate(-50%,-50%)}
   .mapnode-wrap:hover .tooltip{display:block}.mapnode-wrap .tooltip{top:120%;bottom:auto}
@@ -206,9 +204,22 @@
   .effectTip:hover::after{content:attr(data-tip);position:absolute;z-index:60;left:50%;transform:translateX(-50%);top:calc(100% + 5px);width:230px;background:#12163a;color:#fff;padding:8px;border-radius:6px;font:11px var(--disp);text-align:left;box-shadow:3px 3px 0 #173aa8}
   .log{font-family:var(--mono);font-size:11.5px;color:var(--dim);height:240px;max-height:240px;overflow-y:auto;
     border-top:1px dashed var(--blue-light);padding:8px 6px;margin-top:8px}
-  .log div{padding:4px 0;border-bottom:1px solid #edf0f8}
+  .log div{padding:4px 0;border-bottom:1px solid #edf0f8;word-break:break-word;line-height:1.4}
+  @media (max-width:600px){
+    .log{height:120px;max-height:120px;font-size:11px}
+    /* Battle hand cards were rendering visually much taller than the item cards next to them,
+       which made it unclear which was which to tap — shrink the hand cards specifically on
+       narrow screens without touching the desktop card size used everywhere else. */
+    .hand .card:not(.mini){width:40px;height:54px;font-size:14px}
+    .hand .card:not(.mini) div:last-child{font-size:19px}
+    .itemCard{min-height:150px;font-size:11.5px}
+    .currencies{gap:6px}
+    .cur{font-size:11px}
+  }
   .status{font-weight:800}.poisonText{color:#3f8f4f}.burnText{color:#c53d2f}.curseText{color:#7a45b5}.poisonStatus{color:#3f8f4f}.burnStatus{color:#c53d2f}.curseStatus{color:#7a45b5}
   .club-card{color:#0b6b3a !important;border:3px solid #16834a !important;background:#e8f7ee;box-shadow:inset 0 0 0 1px #8bd0a8}
+  @keyframes screenShakeKf{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(5px)}60%{transform:translateX(-4px)}80%{transform:translateX(3px)}}
+  body.screen-shake{animation:screenShakeKf .22s ease-in-out}
   .mapnode.type-battle{background:#fff1f1;border-color:#e5484d;color:#a52328}
   .mapnode.type-shop{background:#fff9df;border-color:#e1b400}
   .mapnode.type-treasure{background:#effbf1;border-color:#4cae68}
@@ -283,6 +294,138 @@ function bestHandFromPool(pool, maxCards) {
 }
 function bestFiveFromPool(pool) { return bestHandFromPool(pool, 5); } // kept for anything still calling the old name
 function damageFor(cards, mult) { return Math.round(cards.reduce((a, c) => a + cardValue(c.rank) + (c.bonus || 0), 0) * mult); }
+// Formats a reward object as "+X coins, +Y gems, ..." but only for the parts that are actually
+// nonzero — a run of "+0 gems, +0 fuel" just adds noise, so those parts are omitted entirely.
+function formatRewardParts(reward, labels = { coins: 'coins', gems: 'gems', fuel: 'fuel', points: 'Career Points' }) {
+  return Object.entries(labels)
+    .filter(([key]) => reward[key])
+    .map(([key, label]) => `+${reward[key]} ${label}`)
+    .join(', ');
+}
+// ===== AUDIO/VISUAL DAMAGE TELLS — a quick synthesized cue plus a screen flash (and a shake
+// for taking damage) so it's obvious something happened, without needing external sound files.
+let AUDIO_CTX = null;
+function getAudioCtx() {
+  if (AUDIO_CTX) return AUDIO_CTX;
+  try { AUDIO_CTX = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return null; }
+  return AUDIO_CTX;
+}
+function playSfx(kind) {
+  const ctx = getAudioCtx();
+  if (!ctx) return;
+  try {
+    if (ctx.state === 'suspended') ctx.resume();
+    const now = ctx.currentTime;
+    const tone = (freqStart, freqEnd, dur, type = 'sine', vol = 0.13, delay = 0) => {
+      const osc = ctx.createOscillator(), g = ctx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freqStart, now + delay);
+      osc.frequency.exponentialRampToValueAtTime(Math.max(freqEnd, 1), now + delay + dur);
+      g.gain.setValueAtTime(vol, now + delay);
+      g.gain.exponentialRampToValueAtTime(0.001, now + delay + dur);
+      osc.connect(g); g.connect(ctx.destination);
+      osc.start(now + delay); osc.stop(now + delay + dur + 0.02);
+    };
+    if (kind === 'hit') tone(220, 90, 0.16, 'sawtooth', 0.11);
+    else if (kind === 'hurt') { tone(150, 55, 0.26, 'square', 0.15); tone(70, 35, 0.3, 'sine', 0.09, 0.02); }
+    else if (kind === 'heal') tone(440, 880, 0.25, 'sine', 0.11);
+    else if (kind === 'shield') tone(300, 520, 0.2, 'triangle', 0.11);
+    else if (kind === 'dodge') tone(600, 1200, 0.15, 'triangle', 0.1);
+    else if (kind === 'match') tone(500, 950, 0.18, 'sine', 0.11);
+    else if (kind === 'win') { tone(440, 440, 0.11, 'square', 0.09); tone(660, 660, 0.11, 'square', 0.09, 0.12); tone(880, 880, 0.24, 'square', 0.1, 0.24); }
+    else if (kind === 'lose') tone(280, 110, 0.5, 'sawtooth', 0.13);
+  } catch (e) {}
+}
+function flashScreen(kind) {
+  try {
+    let el = document.getElementById('screenFlash');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'screenFlash';
+      el.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:9999;opacity:0;transition:opacity .09s ease-out;';
+      document.body.appendChild(el);
+    }
+    const colors = { hurt: 'rgba(220,40,40,.32)', 'hit-opponent': 'rgba(255,255,255,.16)', heal: 'rgba(60,200,90,.22)', dodge: 'rgba(90,160,255,.22)', shield: 'rgba(90,160,255,.18)' };
+    el.style.background = colors[kind] || 'rgba(255,255,255,.14)';
+    el.style.opacity = '1';
+    if (kind === 'hurt') { document.body.classList.add('screen-shake'); setTimeout(() => document.body.classList.remove('screen-shake'), 220); }
+    setTimeout(() => { el.style.opacity = '0'; }, 90);
+  } catch (e) {}
+}
+
+// ===== POWER SCORE — a rough, comparable "how hard does this actually hit" number, driven by
+// draw resources (cards drawn per turn, pool/hand size, swings per turn) instead of the flat
+// damage numbers themselves. The idea: two attacks with the same nominal "mult" hit very
+// differently if one only ever sees 2 cards and the other regularly sees 5, so scoring by the
+// resources behind the hand gives a fairer way to compare opponents and items, and a lever
+// (draw rate, pool size, uses/turn) to tune difficulty with instead of only hp/dmg edits.
+// Not shown to players — a tuning aid for balancing the roster.
+function avgCardValue() { let total = 0; for (let r = 2; r <= 14; r++) total += cardValue(r); return total / 13; }
+const AVG_CARD_VALUE = avgCardValue(); // ~7.85 — average value of a random card
+
+// Coarse estimate of the average poker-hand multiplier once a pool/hand of a given size is
+// available to pick from — bigger pools make pairs/trips/straights easier to assemble. This is
+// a lookup table tuned to feel right, not a full combinatorial probability calculation.
+function expectedMultForPoolSize(poolSize) {
+  if (poolSize <= 1) return 1.0;
+  if (poolSize <= 2) return 1.1;
+  if (poolSize <= 3) return 1.25;
+  if (poolSize <= 4) return 1.4;
+  return 1.55;
+}
+// Expected damage per swing for an opponent, driven by its draw resources rather than a flat
+// number: how many cards it typically has to pick an attack from (drawRate, capped by how many
+// turns have passed and by the attack's own maxCards), how many swings it gets per turn, and
+// the average card value. Multiply by usesPerTurn for an expected-damage-per-turn figure.
+function opponentPowerScore(opp, turn = 3) {
+  const attacks = (opp.attacks && opp.attacks.length) ? opp.attacks : [{ maxCards: 3 }];
+  const avgMaxCards = attacks.reduce((a, x) => a + (x.maxCards || 3), 0) / attacks.length;
+  const poolAvailable = Math.min(avgMaxCards, (opp.drawRate || 2) * turn + (opp.startPoolBonus || 0));
+  const mult = expectedMultForPoolSize(poolAvailable);
+  const usesPerTurn = opp.usesPerTurn || 1;
+  return Math.round(usesPerTurn * avgMaxCards * AVG_CARD_VALUE * mult);
+}
+// Same idea for a player Item: how hard it swings given its own maxCards/usesPerTurn and
+// condition bonus, assuming the player can actually assemble the cards it wants (a fair
+// assumption once RUN.drawPerTurn and hand size are high enough — this scores the item's
+// ceiling, not how easy it is to reach that ceiling).
+function itemPowerScore(item) {
+  if (item.kind === 'defense' || item.kind === 'storage' || item.kind === 'poison' || item.kind === 'burn') return 0;
+  const maxCards = item.maxCards || 1;
+  const usesPerTurn = item.usesPerTurn || 1;
+  const bonusMult = 1 + (item.bonus ? (item.bonus.base || 0) : 0);
+  return Math.round(usesPerTurn * maxCards * AVG_CARD_VALUE * (item.baseMult ?? 1) * bonusMult);
+}
+// Plain-language "what this opponent does" tags, generated from its actual data instead of
+// hand-written per-opponent — so the pre-battle popup can tell you its play pattern (armored,
+// grows when hit, enrages, etc.) without you needing to guess or remember from past fights.
+// Deliberately doesn't mention exact numbers (hp/damage/draw rate) — just the shape of the fight.
+function opponentTraitTags(opp) {
+  const tags = [];
+  if (opp.boss) tags.push('Boss — multiple attacks per turn, can curse your Items');
+  if (opp.startArmor && opp.armorRegen) tags.push('Starts armored and regenerates some each turn');
+  else if (opp.startArmor) tags.push('Starts armored — armor only comes back if it reinforces itself');
+  if (opp.special?.type === 'drawOnHit') tags.push('Grows stronger the more you hit it');
+  if (opp.startPoolBonus) tags.push('Comes out swinging with extra cards from turn one');
+  if (opp.discardPoolEachTurn) tags.push('Discards its whole hand every turn, win or lose');
+  if (opp.special?.type === 'lifesteal') tags.push('Heals off its own attacks');
+  if (opp.special?.type === 'redSteal') tags.push('Punishes you for discarding red cards');
+  if (opp.locked) tags.push('Builds toward one big hit instead of attacking normally');
+  if (opp.turnLimit) tags.push('Hits harder the longer the fight drags on');
+  if (opp.usesPerTurn > 1) tags.push(`Attacks ${opp.usesPerTurn} times per turn`);
+  const effects = new Set((opp.attacks || []).map(a => a.effect).filter(Boolean));
+  if (effects.has('heal')) tags.push('Can heal itself mid-fight');
+  if (effects.has('curse')) tags.push('Can curse one of your Items');
+  if (effects.has('poison')) tags.push('Can poison you');
+  if (effects.has('burn')) tags.push('Can burn you');
+  if (effects.has('stun')) tags.push('Can stun your counter-attack');
+  if (effects.has('stealFuel')) tags.push('Can steal fuel');
+  if ((opp.attacks || []).some(a => a.discardHand)) tags.push('Can knock cards out of your hand');
+  if ((opp.attacks || []).some(a => a.colorPunish)) tags.push('Rewards it for you holding one card color');
+  if ((opp.attacks || []).some(a => a.exactSuitCount)) tags.push('Its attack strength depends on one suit in its hand');
+  if ((opp.attacks || []).some(a => a.effect === 'reinforceArmor')) tags.push('Can reinforce its own armor');
+  return tags;
+}
 function isConsecutive(cards) {
   if (cards.length < 2) return false;
   const ranks = [...new Set(cards.map(c => c.rank))].sort((a, b) => a - b);
@@ -766,6 +909,59 @@ const HEROES = {
   interstate: { id: 'interstate', name: 'Pickup Truck', icon: '🏁', image: 'vehicles/interstate-racer.jpg', starterItems: ['bike_dash','card_draw'] },
   convoy:     { id: 'convoy',     name: 'Large SUV',  icon: '🚛', image: 'vehicles/armored-convoy.jpg', starterItems: ['fender_bender','triple_threat'] },
 };
+// Vehicle special abilities — the use for Energy (previously it had no real purpose). Each
+// hero gets one battle ability, usable any turn, that spends Energy for a survival effect.
+// 'shield' and 'heal' types scale with however much Energy you commit at once (Math.floor to
+// the nearest whole unit); 'dodge' is a flat cost for a single upcoming-hit coin flip.
+const VEHICLE_SPECIALS = {
+  sidebyside: { name: 'Quick Shield', type: 'shield', energyPerUnit: 4, amountPerUnit: 20, desc: 'Spend Energy for armor — every 4 Energy grants +20 armor. Spend as much as you have at once.' },
+  admin:      { name: 'Roadside Patch', type: 'heal', energyPerUnit: 5, amountPerUnit: 15, desc: 'Spend Energy to heal — every 5 Energy restores 15 health. Spend as much as you have at once.' },
+  interstate: { name: 'Evasive Maneuver', type: 'dodge', energyCost: 6, chance: 0.5, desc: 'Spend 6 Energy for a 50% chance to dodge the opponent\'s next attack entirely.' },
+  convoy:     { name: 'Brace for Impact', type: 'shield', energyPerUnit: 3, amountPerUnit: 20, desc: 'Spend Energy for armor — every 3 Energy grants +20 armor. Spend as much as you have at once.' },
+};
+function useVehicleSpecial() {
+  if (!IN_BATTLE || !BATTLE) return;
+  const special = VEHICLE_SPECIALS[RUN.hero.id];
+  if (!special) return;
+  if (special.type === 'dodge') {
+    if (RUN.energy < special.energyCost) { battleLog(`Not enough Energy for ${special.name} (needs ${special.energyCost}).`); render(battleScreen()); return; }
+    RUN.energy -= special.energyCost;
+    BATTLE.dodgeChance = special.chance;
+    battleLog(`${special.name}! ${Math.round(special.chance * 100)}% chance to dodge the opponent's next attack.`);
+    playSfx('shield'); flashScreen('shield');
+  } else {
+    const units = Math.floor(RUN.energy / special.energyPerUnit);
+    if (units < 1) { battleLog(`Not enough Energy for ${special.name} (needs ${special.energyPerUnit} per use).`); render(battleScreen()); return; }
+    const cost = units * special.energyPerUnit;
+    const amount = units * special.amountPerUnit;
+    RUN.energy -= cost;
+    if (special.type === 'shield') {
+      BATTLE.playerArmor += amount;
+      battleLog(`${special.name}! Spent ${cost} Energy for +${amount} armor.`);
+      playSfx('shield'); flashScreen('shield');
+    } else if (special.type === 'heal') {
+      const before = RUN.health;
+      RUN.health = Math.min(RUN.maxHealth, RUN.health + amount);
+      battleLog(`${special.name}! Spent ${cost} Energy to heal ${RUN.health - before} health.`);
+      playSfx('heal'); flashScreen('heal');
+    }
+  }
+  saveRun();
+  render(battleScreen());
+}
+// Consumes an active dodge chance (from a vehicle special) against the next incoming hit,
+// win or lose — it's spent on being used, not on succeeding. Returns the (possibly zeroed) dmg.
+function applyDodgeIfActive(oppDmg) {
+  if (!BATTLE.dodgeChance) return oppDmg;
+  const chance = BATTLE.dodgeChance;
+  BATTLE.dodgeChance = 0;
+  if (Math.random() < chance) {
+    battleLog(`Evasive Maneuver pays off — you dodge the hit entirely!`);
+    playSfx('dodge'); flashScreen('dodge');
+    return 0;
+  }
+  return oppDmg;
+}
 const STARTERS = ['sidebyside', 'admin', 'interstate', 'convoy', 'comingsoon1', 'comingsoon2'];
 // Short, hand-written attack/bonus text for the Pick Your Vehicle screen — one entry per
 // starter item currently in use. Add an entry here whenever a new starter item is introduced.
@@ -809,21 +1005,29 @@ const OPPONENT_TIERS = [
   [ 
     { id: 'trashfire', name: 'Trash Can Fire', icon: '🔥', image: 'Hazards/trash-fire.jpg', hp: 35, minTier: 0, drawRate: 2, turnLimit: 6, attacks: [{ name: 'Ember Flare', maxCards: 1, minTier: 0 }] },
     { id: 'pothole', name: 'Nasty Pothole', icon: '🕳️', image: 'Hazards/pothole.jpg', hp: 42, minTier: 0, drawRate: 2, turnLimit: 6, attacks: [{ name: 'Axle Buster', maxCards: 1, minTier: 0, fewCardsThreshold: { max: 1, damage: 14 } }] },
-    { id: 'flickerlight', name: 'Flickering Street Light', icon: '💡', image: 'Hazards/flicker-light.jpg', hp: 45, minTier: 0, drawRate: 2, turnLimit: 6, attacks: [{ name: 'Static Discharge', maxCards: 2, minTier: 0 }] } 
+    { id: 'flickerlight', name: 'Flickering Street Light', icon: '💡', image: 'Hazards/flicker-light.jpg', hp: 45, minTier: 0, drawRate: 2, turnLimit: 6, attacks: [{ name: 'Static Discharge', maxCards: 2, minTier: 0 }] },
+    { id: 'potholeAmbush', name: 'Ambush Pothole Cluster', icon: '⚡', image: 'Hazards/pothole.jpg', hp: 40, minTier: 0, drawRate: 2, turnLimit: 6, startPoolBonus: 2, attacks: [{ name: 'Multi-Axle Buster', maxCards: 2, minTier: 0 }] }
   ],
 
   // --- TIER 2: Active Road Obstacles & Complex Rules ---
   [ 
     { id: 'jaywalker', name: 'Jaywalker', icon: '🚶', image: 'Hazards/jaywalker.jpg', hp: 55, minTier: 1, drawRate: 2, attacks: [{ name: 'Sudden Dash', maxCards: 2, minTier: 1 }, { name: 'Enrage', minTurn: 6, autoFire: { damage: 15 } }] },
     { id: 'grumpyMeter', name: 'Broken Meter', icon: '🅿️', image: 'Hazards/broken-meter.jpg', hp: 60, minTier: 1, drawRate: 2, turnLimit: 6, attacks: [{ name: 'Coin Jam', maxCards: 2, minTier: 1, effect: 'stealFuel' }, { name: 'Repo Notice', maxCards: 2, minTier: 1, effect: 'curse' }, { name: 'Ticket Slip', maxCards: 2, minTier: 0, discardHand: { count: 1 } }] },
-    { id: 'looseWire', name: 'Downed Power Line', icon: '⚡', image: 'Hazards/downed-line.jpg', hp: 65, minTier: 0, drawRate: 2, turnLimit: 6, attacks: [{ name: 'Live Wire Shock', maxCards: 2, minTier: 0, effect: 'stun' }] } 
+    { id: 'looseWire', name: 'Downed Power Line', icon: '⚡', image: 'Hazards/downed-line.jpg', hp: 65, minTier: 0, drawRate: 2, turnLimit: 6, attacks: [{ name: 'Live Wire Shock', maxCards: 2, minTier: 0, effect: 'stun' }] },
+    { id: 'meterBox', name: 'Reinforced Meter Box', icon: '🛡️', image: 'Hazards/broken-meter.jpg', hp: 60, minTier: 1, drawRate: 2, turnLimit: 7, startArmor: 15, armorRegen: 5, armorRegenCap: 15, attacks: [{ name: 'Slot Jam', maxCards: 2, minTier: 1 }] }
   ],
 
   // --- TIER 3: The Mid-Way Drain (High pressure threshold math) ---
   [ 
     { id: 'angryCitizen', name: 'Angry Citizen', icon: '😠', image: 'Hazards/angry-citizen.jpg', hp: 75, minTier: 1, drawRate: 3, turnLimit: 6, attacks: [{ name: 'Shouting Match', maxCards: 3, minTier: 1 }, { name: 'Harassment', maxCards: 2, minTier: 1, effect: 'curse' }, { name: 'Grudge Match', maxCards: 3, minTier: 0, suitPunish: { suit: '♥', perCard: 4, base: 6 } }] },
     { id: 'hydrant', name: 'Burst Hydrant', icon: '💦', image: 'Hazards/burst-hydrant.jpg', hp: 80, minTier: 0, drawRate: 3, turnLimit: 6, attacks: [{ name: 'Pressure Blast Explosion', maxCards: 4, minTier: 0, sumThreshold: { min: 25, damage: 24 } }] },
-    { id: 'dumpsterFire', name: 'Dumpster Fire', icon: '🔥', image: 'Hazards/dumpster-fire.jpg', hp: 85, minTier: 2, drawRate: 3, turnLimit: 7, special: { type: 'redSteal', redThreshold: 3, fuelSteal: 1, extraDraw: 1 }, attacks: [{ name: 'Rancid Blaze', maxCards: 3, minTier: 2, effect: 'burn' }] } 
+    { id: 'dumpsterFire', name: 'Dumpster Fire', icon: '🔥', image: 'Hazards/dumpster-fire.jpg', hp: 85, minTier: 2, drawRate: 3, turnLimit: 7, special: { type: 'redSteal', redThreshold: 3, fuelSteal: 1, extraDraw: 1 }, attacks: [{ name: 'Rancid Blaze', maxCards: 3, minTier: 2, effect: 'burn' }] },
+    { id: 'scrapHeap', name: 'Shifting Scrap Heap', icon: '🗑️', image: 'Hazards/scrap-heap.jpg', hp: 90, minTier: 1, drawRate: 2, turnLimit: 7, special: { type: 'drawOnHit', amount: 1 }, attacks: [{ name: 'Debris Slam', maxCards: 3, minTier: 1 }] },
+    { id: 'twoToneHauler', name: 'Two-Tone Hauler', icon: '🚚', image: 'Hazards/dumpster-fire.jpg', hp: 95, minTier: 1, drawRate: 4, turnLimit: 8, attacks: [
+      { name: 'Red Alert', maxCards: 4, minTier: 0, colorPunish: { color: 'red', perCard: 5, base: 6 } },
+      { name: 'Black Ice', maxCards: 4, minTier: 0, colorPunish: { color: 'black', perCard: 5, base: 6 } },
+      { name: 'Patch Job', maxCards: 2, minTier: 1, effect: 'heal' }
+    ] }
   ],
 
   // --- TIER 4: The Halfway Gatekeeper (The soft progression wall) ---
@@ -831,14 +1035,26 @@ const OPPONENT_TIERS = [
     { id: 'evilMechanic1', name: 'Evil Mechanic', icon: '🔧', image: 'Hazards/evil-mechanic.jpg', hp: 95, minTier: 2, drawRate: 3, turnLimit: 7, curse: { count: 1, amount: 10, chance: 0.6 }, attacks: [{ name: 'Sabotage Engine', maxCards: 3, minTier: 2, effect: 'curse' }] },
     { id: 'streetFire', name: 'Street Fire', icon: '🔥', image: 'Hazards/street-fire.jpg', hp: 100, minTier: 3, drawRate: 3, turnLimit: 7, special: { type: 'lifesteal', pct: 0.5 }, attacks: [{ name: 'Scorching Wave', maxCards: 3, minTier: 3, effect: 'burn' }] },
     { id: 'sinkhole', name: 'Sinkhole', icon: '🕳️', image: 'Hazards/sinkhole.jpg', hp: 105, minTier: 1, drawRate: 3, turnLimit: 7, attacks: [{ name: 'All-Points Bulletin', maxCards: 4, minTier: 2 }, { name: 'Ground Collapse', maxCards: 3, minTier: 1 }, { name: 'Aftershock', maxCards: 2, minTier: 1, effect: 'poison' }] },
-    { id: 'gasLeak1', name: 'Gas Leak', icon: '⛽', image: 'Hazards/gas-leak.jpg', hp: 110, locked: true, lockThreshold: 55, lockAttack: 42, drawRate: 3, turnLimit: 7, releaseAttackName: 'Ignition Explosion' } 
+    { id: 'gasLeak1', name: 'Gas Leak', icon: '⛽', image: 'Hazards/gas-leak.jpg', hp: 110, locked: true, lockThreshold: 55, lockAttack: 42, drawRate: 3, turnLimit: 7, releaseAttackName: 'Ignition Explosion' },
+    { id: 'kingOfHearts', name: 'King of Hearts', icon: '🃏', image: 'Hazards/angry-citizen.jpg', hp: 100, minTier: 0, drawRate: 3, turnLimit: 8, discardPoolEachTurn: true, attacks: [
+      { name: 'Royal Flush Strike', maxCards: 3, minTier: 0, exactSuitCount: { suit: '♥', count: 3, damage: 32 } },
+      { name: 'Twin Hearts', maxCards: 3, minTier: 0, exactSuitCount: { suit: '♥', count: 2, damage: 16 } },
+      { name: 'Lonely Heart', maxCards: 3, minTier: 0, exactSuitCount: { suit: '♥', count: 1, damage: 4 }, effect: 'heal' },
+      { name: 'Empty Hand', maxCards: 3, minTier: 0, exactSuitCount: { suit: '♥', count: 0, damage: 6 } }
+    ] },
+    { id: 'roadblockSurge', name: 'Surge Roadblock', icon: '⚡', image: 'Hazards/sinkhole.jpg', hp: 105, minTier: 1, drawRate: 3, turnLimit: 7, startPoolBonus: 2, attacks: [{ name: 'Barrier Slam', maxCards: 3, minTier: 1 }] }
   ],
 
   // --- TIER 5: Large Scale Grid Disruption ---
   [ 
     { id: 'flashFlood', name: 'Flash Flood', icon: '🌊', image: 'Hazards/flash-flood.jpg', hp: 115, minTier: 3, drawRate: 4, turnLimit: 8, attacks: [ { name: 'Flash Deluge', maxCards: 4, minTier: 3 }, { name: 'Toxic Spray', maxCards: 3, minTier: 2, effect: 'poison' }, { name: 'Rising Waters', maxCards: 4, minTier: 0, minTurn: 4, sumThreshold: { min: 20, damage: 28 } }] },
     { id: 'riot', name: 'Angry Mob', icon: '📢', image: 'Hazards/angry-mob.jpg', hp: 120, minTier: 2, drawRate: 4, turnLimit: 8, usesPerTurn: 2, attacks: [{ name: 'Crowd Surge', maxCards: 4, minTier: 2 }, { name: 'Crowd Pressure', maxCards: 3, minTier: 2, effect: 'curse' }, { name: 'Mob Pile-On', maxCards: 4, minTier: 0, perFaceCard: { damage: 8 } }] },
-    { id: 'blackout', name: 'Blackout', icon: '🌑', image: 'Hazards/blackout.jpg', hp: 125, minTier: 1, drawRate: 3, turnLimit: 8, attacks: [{ name: 'Blackout Surge', maxCards: 2, minTier: 2 }, { name: 'Total Shutdown', maxCards: 3, minTier: 1, effect: 'stealFuel' }] } 
+    { id: 'blackout', name: 'Blackout', icon: '🌑', image: 'Hazards/blackout.jpg', hp: 125, minTier: 1, drawRate: 3, turnLimit: 8, attacks: [{ name: 'Blackout Surge', maxCards: 2, minTier: 2 }, { name: 'Total Shutdown', maxCards: 3, minTier: 1, effect: 'stealFuel' }] },
+    { id: 'hardenedBarricade', name: 'Hardened Barricade', icon: '🛡️', image: 'Hazards/sinkhole.jpg', hp: 130, minTier: 1, drawRate: 3, turnLimit: 8, startArmor: 35, attacks: [
+      { name: 'Ram Plate', maxCards: 3, minTier: 1 },
+      { name: 'Weld A Patch', maxCards: 2, minTier: 0, effect: 'reinforceArmor', reinforceAmount: 15 }
+    ] },
+    { id: 'compactingWreckage', name: 'Compacting Wreckage', icon: '🗑️', image: 'Hazards/scrap-heap.jpg', hp: 135, minTier: 2, drawRate: 3, turnLimit: 8, special: { type: 'drawOnHit', amount: 1 }, attacks: [{ name: 'Crush Cycle', maxCards: 4, minTier: 2 }] }
   ],
 
   // --- TIER 6: Advanced Route Hazards & Elite Evolutions ---
@@ -877,8 +1093,19 @@ const UPGRADE_DEFS = [
   { id: 'reveal',  label: 'Battle Scan',          desc: 'Start every battle with 1 extra opponent card already revealed.', baseCost: 25, inc: 15 },
   { id: 'adminTune', label: 'Admin Vehicle Pair Bonus', desc: '+50% to the Admin Vehicle Pair bonus per level.', baseCost: 25, inc: 20 },
 ];
-const MAX_LEVEL = 10; // pre-run Career upgrade cap for most sections; a few of the most powerful ones use a lower per-item cap below
-function upgradeCost(def, atLevel) { return def.baseCost + atLevel * def.inc; } // cost to go from atLevel -> atLevel+1
+const MAX_LEVEL = 10; // the ceiling every Career upgrade can reach, in theory
+const SOFT_CAP_LEVEL = 5; // levels 0-5 cost the normal linear amount; levels past this get punishing
+// Levels 0-5 cost the plain baseCost+level*inc amount (a handful of runs). Past that, the cost
+// jumps hard and then keeps doubling — level 6 alone should run in the neighborhood of what
+// ~20 full winning runs earn, and each level after that roughly doubles again. So level 5 is
+// the level most players will actually reach; 6-10 exist for the truly dedicated grinder.
+const POST_CAP_JUMP_MULT = 190;
+const POST_CAP_GROWTH = 2;
+function upgradeCost(def, atLevel) {
+  if (atLevel < SOFT_CAP_LEVEL) return def.baseCost + atLevel * def.inc;
+  const softCapCost = def.baseCost + SOFT_CAP_LEVEL * def.inc; // cost of the last "normal" level
+  return Math.round(softCapCost * POST_CAP_JUMP_MULT * Math.pow(POST_CAP_GROWTH, atLevel - SOFT_CAP_LEVEL));
+} // cost to go from atLevel -> atLevel+1
 
 /* ========== META (persists forever) ========== */
 const META_KEY = 'fleetduel-meta-v7';
@@ -1210,7 +1437,7 @@ function castleDungeonScreen(message='') {
         <div class="wo-eyebrow">Dungeon Cleared</div>
         <h1>You <em>Won</em>!</h1>
         <div class="treasure-prize">${p.itemName}</div>
-        <div class="note">New Item Card added to your Fleet, plus +${p.reward.coins} coins, +${p.reward.gems} gems, +${p.reward.fuel} fuel.</div>
+        <div class="note">New Item Card added to your Fleet, plus ${formatRewardParts({ coins: p.reward.coins, gems: p.reward.gems, fuel: p.reward.fuel })}.</div>
         <button class="wo-btn amber" id="dungeonWinContinueBtn" style="width:100%;margin-top:10px">Nice!</button>
       </div>
     </div></div>`;
@@ -1259,9 +1486,8 @@ function castleInnScreen(message='') {
 }
 
 const MATCH_REWARD_TIERS = [
-  { coins: 15, label: '+15 coins' },
-  { coins: 25, gems: 1, label: '+25 coins, +1 gem' },
-  { coins: 20, fuel: 8, label: '+20 coins, +8 fuel' },
+  { coins: 20, gems: 1, label: '+20 coins, +1 gem' },
+  { coins: 35, gems: 2, label: '+35 coins, +2 gems' },
 ];
 let MATCH_POPUP = null; // { suitLabel, rewardLabel, boardCleared }
 function castleMatchScreen() {
@@ -1287,7 +1513,7 @@ function castleMatchScreen() {
         { id: i * 2 + 1, suit: suitSymbol, color: (suitSymbol === '\u2665' || suitSymbol === '\u2666') ? 'red' : 'blk', flipped: false, matched: false }
       ])
     );
-    st.matchGuesses = 8;
+    st.matchGuesses = 3;
     st.matchPick = [];
     st.matchSuitClears = st.matchSuitClears || {};
   }
@@ -1391,7 +1617,7 @@ function endRun(won) {
 function startBattle(opponentDef, row, col, castleStage=0) {
   IN_BATTLE = true;
   BATTLE = {
-    opponent: { ...opponentDef, hpNow: opponentDef.hp, poisonStacks: [], lockProgress: 0 }, row, col, castleStage,
+    opponent: { ...opponentDef, hpNow: opponentDef.hp, poisonStacks: [], lockProgress: 0, armor: opponentDef.startArmor || 0 }, row, col, castleStage,
     deck: shuffle(freshDeck()), discard: [],
     oppDeck: shuffle(freshDeck()), oppDiscard: [],
     hand: [], oppPool: [], usedThisTurn: new Set(), scoutedThisTurn: false, abilityUsedThisTurn: false, opponentStunned: false, itemCooldowns: {},
@@ -1409,6 +1635,14 @@ function startBattle(opponentDef, row, col, castleStage=0) {
   drawCards(Math.min(5 + (RUN.drawPerTurn - 2), RUN.handSize));
   resortHandAndRelink(RUN.handSortMode);
   drawOpponentCards();
+  // Optional: some opponents start with extra cards already in their pool on top of their
+  // normal drawRate, for a "comes out swinging" feel without changing their per-turn draw.
+  if (opponentDef.startPoolBonus) {
+    for (let i = 0; i < opponentDef.startPoolBonus; i++) {
+      if (!BATTLE.oppDeck.length) { if (!BATTLE.oppDiscard.length) break; BATTLE.oppDeck = shuffle(BATTLE.oppDiscard); BATTLE.oppDiscard = []; }
+      if (BATTLE.oppDeck.length) { const c = BATTLE.oppDeck.pop(); c.revealed = Math.random() < revealFraction(BATTLE.row); BATTLE.oppPool.push(c); }
+    }
+  }
   for (let i = 0; i < 1 + META.levels.reveal; i++) {
     const hidden = BATTLE.oppPool.filter(c => !c.revealed);
     if (!hidden.length) break;
@@ -1650,9 +1884,30 @@ function executePlayerAttack(itemId, index) {
       battleLog(`${item.name} [${cardsStr}] — ${condResult.label}! Cursed them for ${amount} (${breakdown}) — it lands if they fail to attack next turn.`);
     } else {
       const atkBefore = BATTLE.opponent.hpNow;
-      BATTLE.opponent.hpNow = Math.max(0, BATTLE.opponent.hpNow - amount);
-      if (amount === atkBefore && atkBefore > 0) BATTLE.exactKill = true;
-      battleLog(`${item.name} [${cardsStr}] — ${condResult.label}! ${amount} damage (${breakdown}).`);
+      let dmgToApply = amount;
+      let armorAbsorbed = 0;
+      if (BATTLE.opponent.armor > 0) {
+        armorAbsorbed = Math.min(BATTLE.opponent.armor, dmgToApply);
+        BATTLE.opponent.armor -= armorAbsorbed;
+        dmgToApply -= armorAbsorbed;
+      }
+      BATTLE.opponent.hpNow = Math.max(0, BATTLE.opponent.hpNow - dmgToApply);
+      if (dmgToApply === atkBefore && atkBefore > 0) BATTLE.exactKill = true;
+      const armorNote = armorAbsorbed > 0 ? ` (${armorAbsorbed} blocked by their armor${BATTLE.opponent.armor > 0 ? `, ${BATTLE.opponent.armor} left` : ''})` : '';
+      battleLog(`${item.name} [${cardsStr}] — ${condResult.label}! ${amount} damage${armorNote} (${breakdown}).`);
+      playSfx('hit');
+      flashScreen('hit-opponent');
+      // New opponent effect: some opponents get sturdier the more you hit them, drawing an
+      // extra card into their pool every time you land a direct attack (not on defense/poison/
+      // burn/curse — only real damage triggers it).
+      if (BATTLE.opponent.special?.type === 'drawOnHit' && BATTLE.opponent.hpNow > 0) {
+        const drawAmt = BATTLE.opponent.special.amount || 1;
+        for (let i = 0; i < drawAmt; i++) {
+          if (!BATTLE.oppDeck.length) { if (!BATTLE.oppDiscard.length) break; BATTLE.oppDeck = shuffle(BATTLE.oppDiscard); BATTLE.oppDiscard = []; }
+          if (BATTLE.oppDeck.length) { const c = BATTLE.oppDeck.pop(); c.revealed = Math.random() < revealFraction(BATTLE.row); BATTLE.oppPool.push(c); }
+        }
+        battleLog(`${BATTLE.opponent.name} recoils and draws ${drawAmt === 1 ? 'a card' : drawAmt + ' cards'} for its next attack.`);
+      }
     }
   }
 
@@ -1757,6 +2012,11 @@ function resolveOpponentAttackEffect(attack, oppDmg) {
   if (attack.effect === 'heal') {
     const heal=Math.max(3,Math.round(oppDmg*0.4)); BATTLE.opponent.hpNow=Math.min(BATTLE.opponent.hp,BATTLE.opponent.hpNow+heal); return ` Recovered ${heal} HP.`;
   }
+  if (attack.effect === 'reinforceArmor') {
+    const amt = attack.reinforceAmount || 15;
+    BATTLE.opponent.armor = (BATTLE.opponent.armor || 0) + amt;
+    return ` Reinforces itself with ${amt} armor (${BATTLE.opponent.armor} total).`;
+  }
   if (attack.effect === 'stealFuel') {
     const n=Math.min(RUN.fuel,1); RUN.fuel-=n; return n?` Stole ${n} fuel.`:' Tried to steal fuel, but you had none.';
   }
@@ -1855,6 +2115,7 @@ function endTurn() {
     }
     if (BATTLE.opponent.lockProgress >= BATTLE.opponent.lockThreshold) {
       let oppDmg = Math.round(BATTLE.opponent.lockAttack * enrageMultiplier(BATTLE.opponent, BATTLE.turn));
+      oppDmg = applyDodgeIfActive(oppDmg);
       const rawDmg = oppDmg;
       let armorBlocked = 0;
       if (BATTLE.playerArmor > 0) {
@@ -1862,6 +2123,7 @@ function endTurn() {
         BATTLE.playerArmor -= armorBlocked; oppDmg -= armorBlocked;
       }
       RUN.health = Math.max(0, RUN.health - oppDmg);
+      if (oppDmg > 0) { playSfx('hurt'); flashScreen('hurt'); }
       const dmgPhrase = armorBlocked > 0
         ? `${rawDmg} damage, but your armor absorbed ${armorBlocked}${oppDmg > 0 ? ` (${oppDmg} got through)` : ''}${BATTLE.playerArmor > 0 ? ` and you have ${BATTLE.playerArmor} armor remaining` : ', and your armor is gone'}`
         : `a flat ${oppDmg}`;
@@ -1898,6 +2160,8 @@ function endTurn() {
         else if (a.fewCardsThreshold) viable = best.cards.length > 0 && best.cards.length <= a.fewCardsThreshold.max;
         else if (a.perFaceCard) viable = best.cards.length > 0;
         else if (a.discardHand) viable = best.cards.length > 0;
+        else if (a.colorPunish) viable = true; // always available as a fallback-style attack; damage may be 0 if the pool is empty
+        else if (a.exactSuitCount) viable = BATTLE.oppPool.filter(c => c.suit === a.exactSuitCount.suit).length === a.exactSuitCount.count;
         else viable = best.tier >= (a.minTier ?? BATTLE.opponent.minTier);
         if (viable) { pick = { a, best }; break; }
       }
@@ -1921,6 +2185,13 @@ function endTurn() {
         const suitCount = BATTLE.discard.filter(c => c.suit === attackDef.suitPunish.suit).length;
         const base = attackDef.suitPunish.base || 0;
         oppDmg = Math.round((base + suitCount * attackDef.suitPunish.perCard) * enrageMultiplier(BATTLE.opponent, BATTLE.turn));
+      } else if (attackDef.colorPunish) {
+        const isRed = c => c.suit === '♥' || c.suit === '♦';
+        const count = BATTLE.oppPool.filter(c => (attackDef.colorPunish.color === 'red') === isRed(c)).length;
+        const base = attackDef.colorPunish.base || 0;
+        oppDmg = Math.round((base + count * attackDef.colorPunish.perCard) * enrageMultiplier(BATTLE.opponent, BATTLE.turn));
+      } else if (attackDef.exactSuitCount) {
+        oppDmg = Math.round(attackDef.exactSuitCount.damage * enrageMultiplier(BATTLE.opponent, BATTLE.turn));
       } else {
         oppDmg = Math.round(damageFor(best.cards, best.mult) * enrageMultiplier(BATTLE.opponent, BATTLE.turn));
       }
@@ -1928,6 +2199,7 @@ function endTurn() {
       // spike into a near-kill out of nowhere — pressure should build up, not blindside you.
       const swingCap = OPPONENT_SWING_CAP[BATTLE.opponent.tier ?? OPPONENT_SWING_CAP.length - 1] ?? 60;
       oppDmg = Math.min(oppDmg, swingCap);
+      oppDmg = applyDodgeIfActive(oppDmg);
       const rawDmg = oppDmg;
       let armorBlocked = 0;
       if (BATTLE.playerArmor > 0) {
@@ -1935,6 +2207,7 @@ function endTurn() {
         BATTLE.playerArmor -= armorBlocked; oppDmg -= armorBlocked;
       }
       RUN.health = Math.max(0, RUN.health - oppDmg);
+      if (oppDmg > 0) { playSfx('hurt'); flashScreen('hurt'); }
       const usedText = best.cards.map(c => `${rankLabel(c.rank)}${c.suit}`).join(' ');
       let specialLog = resolveOpponentAttackEffect(attackDef, oppDmg);
       const spec = BATTLE.opponent.special;
@@ -1987,7 +2260,19 @@ function endTurn() {
   BATTLE.turn++;
   drawCards(RUN.drawPerTurn);
   resortHandAndRelink(RUN.handSortMode);
+  // Some opponents discard their whole pool at the end of every turn instead of carrying cards
+  // forward — they draw a fresh, fixed-size hand each time regardless of what they used.
+  if (BATTLE.opponent.discardPoolEachTurn && BATTLE.oppPool.length) {
+    BATTLE.oppDiscard.push(...BATTLE.oppPool);
+    BATTLE.oppPool = [];
+  }
   drawOpponentCards();
+  // Armor regen ticks at the start of the opponent's new turn, capped so it can't compound
+  // past whatever the opponent's def specifies.
+  if (BATTLE.opponent.armorRegen) {
+    const cap = BATTLE.opponent.armorRegenCap ?? BATTLE.opponent.startArmor ?? 999;
+    BATTLE.opponent.armor = Math.min(cap, (BATTLE.opponent.armor || 0) + BATTLE.opponent.armorRegen);
+  }
   BATTLE.turnStartedAt = Date.now();
   render(battleScreen());
 }
@@ -2026,7 +2311,7 @@ function winBattle(outlast) {
       return;
     }
     saveRun();
-    render(castleDungeonScreen(`You won Battle ${stage}. Reward: +${reward.coins} coins, +${reward.gems} gems, +${reward.fuel} fuel.`));
+    render(castleDungeonScreen(`You won Battle ${stage}. Reward: ${formatRewardParts({ coins: reward.coins, gems: reward.gems, fuel: reward.fuel })}.`));
     return;
   }
   const scale = outlast ? 0.7 : 1;
@@ -2041,7 +2326,7 @@ function winBattle(outlast) {
   earnPoints(pointsReward);
   battleLog(outlast ? `You outlasted the ${BATTLE.opponent.name}!` : `${BATTLE.opponent.name} is done for!`);
   if (exactKillBonus) battleLog(`Perfect Win Bonus: +25 coins, +1 gem, +15 Career Points!`);
-  battleLog(`+${chipReward} coins, +${gemReward} gems, +${fuelReward} fuel, +${pointsReward} Career Points.`);
+  battleLog(formatRewardParts({ coins: chipReward, gems: gemReward, fuel: fuelReward, points: pointsReward }) + '.');
   if (BATTLE.row === RUN.bossRow) { RUN.pendingWorldWin = true; }
   render(nodeResultScreen(true, { chipReward, gemReward, fuelReward, pointsReward, exactKillBonus }));
 }
@@ -2066,6 +2351,31 @@ function currencyBar(extraHTML = '') {
 
 let MAP_POPUP = null; // {row, col} of the node currently shown in the map info popup
 function tierNeedText(minTier) { return minTier > 0 ? `At least a ${TIERS[minTier]}` : 'Any card'; }
+function suitName(s) { return { '♥':'Hearts', '♦':'Diamonds', '♣':'Clubs', '♠':'Spades' }[s] || s; }
+function effectPhrase(effect) {
+  return { burn:'applies burn', poison:'applies poison', curse:'curses one of your Items', stun:'stuns your next counter-attack', heal:'heals itself', stealFuel:'steals fuel', reinforceArmor:'reinforces its own armor', draw:'draws an extra card' }[effect] || effect;
+}
+// Generates a real, accurate description of what an opponent's attacks actually do, from its
+// own data — so the pre-battle popup can never drift out of sync with what it does in a fight
+// the way a hand-written blurb eventually would.
+function describeOpponentAttacks(opp) {
+  if (!opp.attacks || !opp.attacks.length) return opp.locked ? 'Builds up turn by turn, then unleashes one big hit once it reaches its threshold.' : 'Attacks using whatever hand it can draw from its pool.';
+  const parts = opp.attacks.map(a => {
+    let base;
+    if (a.autoFire) base = `${a.name}: a fixed hit once the fight drags on`;
+    else if (a.sumThreshold) base = `${a.name}: needs a strong enough hand, then hits hard`;
+    else if (a.fewCardsThreshold) base = `${a.name}: a surprisingly strong hit off very few cards`;
+    else if (a.perFaceCard) base = `${a.name}: hits harder the more face cards it's holding`;
+    else if (a.discardHand) base = `${a.name}: knocks cards out of your hand instead of dealing damage`;
+    else if (a.suitPunish) base = `${a.name}: hits harder based on ${suitName(a.suitPunish.suit)} you've discarded`;
+    else if (a.colorPunish) base = `${a.name}: hits harder based on how many ${a.colorPunish.color} cards it's holding`;
+    else if (a.exactSuitCount) base = `${a.name}: strength depends on exactly how many ${suitName(a.exactSuitCount.suit)} it drew this turn`;
+    else base = `${a.name}: a standard poker-hand attack`;
+    if (a.effect && a.effect !== 'damage') base += ` (also ${effectPhrase(a.effect)})`;
+    return base;
+  });
+  return parts.join('. ') + '.';
+}
 function nodePopupContent(r, c) {
   const node = RUN.map.nodes[r][c];
   const glyph = (svg) => `<span class="vart" style="width:64px;height:64px;font-size:64px">${svg}</span>`;
@@ -2079,7 +2389,7 @@ function nodePopupContent(r, c) {
         ['Requirement', o.locked ? `Locked — clears at ${o.lockThreshold}, then hits for a flat ${o.lockAttack}` : `${tierNeedText(o.minTier)} needed to attack`],
         ['Draws', `${o.drawRate}/turn`],
       ],
-      extra: `${o.attackInfo ? `<div class="note">${o.attackInfo}</div>` : ''}${o.boss ? `<div class="note" style="color:var(--red);font-weight:700">World Boss</div>` : ''}`,
+      extra: `<div class="note">${o.attackInfo || describeOpponentAttacks(o)}</div>${opponentTraitTags(o).length ? `<div class="note" style="margin-top:4px">${opponentTraitTags(o).map(t => `&bull; ${t}`).join('<br>')}</div>` : ''}${o.boss ? `<div class="note" style="color:var(--red);font-weight:700">World Boss</div>` : ''}`,
       rewards: { chipReward, gemReward, fuelReward, pointsReward },
       actionLabel: 'Battle',
     };
@@ -2100,14 +2410,15 @@ function nodePopupScreen(r, c) {
   const rewardsHTML = info.rewards ? `
     <div class="hdr" style="margin-top:10px"><span>Rewards for winning</span><span></span></div>
     <div class="currencies">
-      <div class="cur chip">${ICON.coin} ${info.rewards.chipReward} coins</div>
-      <div class="cur gem">${ICON.gem} ${info.rewards.gemReward} gems</div>
-      <div class="cur fuel">${ICON.fuel} ${info.rewards.fuelReward} fuel</div>
-      <div class="cur pts">${ICON.star} ${info.rewards.pointsReward} Career Points</div>
+      ${info.rewards.chipReward ? `<div class="cur chip">${ICON.coin} ${info.rewards.chipReward} coins</div>` : ''}
+      ${info.rewards.gemReward ? `<div class="cur gem">${ICON.gem} ${info.rewards.gemReward} gems</div>` : ''}
+      ${info.rewards.fuelReward ? `<div class="cur fuel">${ICON.fuel} ${info.rewards.fuelReward} fuel</div>` : ''}
+      ${info.rewards.pointsReward ? `<div class="cur pts">${ICON.star} ${info.rewards.pointsReward} Career Points</div>` : ''}
     </div>
     <div class="hdr" style="margin-top:8px"><span>Perfect Win Bonus:</span><span></span></div>
     <div class="currencies">
       <div class="cur chip">${ICON.coin} +25 coins</div>
+      <div class="cur gem">${ICON.gem} +1 gem</div>
       <div class="cur pts">${ICON.star} +15 Career Points</div>
     </div>
     <div class="note" style="margin-top:4px">Awarded when your final hit exactly matches their remaining HP.</div>` : '';
@@ -2355,13 +2666,13 @@ function battleScreen() {
           <h3 style="justify-content:space-between;gap:6px;flex-wrap:nowrap">${opp.name}${BATTLE.enrageNotified ? ` <span class="hoverTip" style="color:var(--red);font-size:13px" title="This opponent is past its turn limit and hitting harder.">Enraged</span>` : ''}${opp.boss ? ` <span class="hoverTip" style="color:var(--red);font-size:13px" title="This is a boss fight — taking too long on a turn costs extra health, so don't sit on it.">&#9201;</span>` : ''}
             <span class="rewardRow">
               <span class="cur chip" title="Coins earned for winning.">${ICON.coin} ${Math.round(22 + opp.hp/7)}</span>
-              <span class="cur gem" title="Gems earned for winning.">${ICON.gem} ${battleRewardsFor(opp, BATTLE.row).gemReward}</span>
-              <span class="cur fuel" title="Fuel earned for winning.">${ICON.fuel} ${battleRewardsFor(opp, BATTLE.row).fuelReward}</span>
+              ${battleRewardsFor(opp, BATTLE.row).gemReward ? `<span class="cur gem" title="Gems earned for winning.">${ICON.gem} ${battleRewardsFor(opp, BATTLE.row).gemReward}</span>` : ''}
+              ${battleRewardsFor(opp, BATTLE.row).fuelReward ? `<span class="cur fuel" title="Fuel earned for winning.">${ICON.fuel} ${battleRewardsFor(opp, BATTLE.row).fuelReward}</span>` : ''}
               <span class="cur pts" title="Career Points earned for winning. More for a Perfect Win.">${ICON.star} ${Math.round(5 + BATTLE.row*3)}</span>
             </span>
           </h3>
           <div class="bar-wrap"><div class="bar-fill bar-hp" style="width:${hpPct}%"></div></div>
-          <div class="note">${opp.hpNow} / ${opp.hp}${(BATTLE.opponent.poisonStacks||[]).length ? ` &middot; <span class="status poisonStatus hoverTip" title="Poison now: ${(BATTLE.opponent.poisonStacks||[]).reduce((a,n)=>a+n,0)} damage. Next turn: ${(BATTLE.opponent.poisonStacks||[]).map(n=>Math.max(0,n-3)).reduce((a,n)=>a+n,0)} damage.">${ICON.poison} ${(BATTLE.opponent.poisonStacks||[]).reduce((a,n)=>a+n,0)} poison</span>` : ''}${BATTLE.opponent.burns?.length ? (() => { const burns=BATTLE.opponent.burns; const now=burns.reduce((a,b)=>a+(b.stages[b.stageIdx]||0),0); const future=[1,2].map(offset=>burns.reduce((a,b)=>a+(b.stages[b.stageIdx+offset]||0),0)).filter(n=>n>0); const nextText=future.length ? `Next: ${future.join(', ')}` : 'No more burn damage.'; return ` &middot; <span class="status burnStatus hoverTip" title="${nextText}">${ICON.fire} ${now} <b><u>Burn Damage</u></b></span>`; })() : ''}${BATTLE.opponent.curseFromPlayer ? ` &middot; <span class="status curseStatus hoverTip" title="Curse: ${BATTLE.opponent.curseFromPlayer} damage if the opponent fails to attack.">${ICON.curse} cursed</span>` : ''}</div>
+          <div class="note">${opp.hpNow} / ${opp.hp}${BATTLE.opponent.armor > 0 ? ` &middot; <span class="status hoverTip" style="color:#5a7fa8" title="Armor absorbs damage from your direct attacks before it reaches their health. Poison, burn, and curse damage ignore it.">${ICON.defense || '🛡️'} ${BATTLE.opponent.armor} armor</span>` : ''}${(BATTLE.opponent.poisonStacks||[]).length ? ` &middot; <span class="status poisonStatus hoverTip" title="Poison now: ${(BATTLE.opponent.poisonStacks||[]).reduce((a,n)=>a+n,0)} damage. Next turn: ${(BATTLE.opponent.poisonStacks||[]).map(n=>Math.max(0,n-3)).reduce((a,n)=>a+n,0)} damage.">${ICON.poison} ${(BATTLE.opponent.poisonStacks||[]).reduce((a,n)=>a+n,0)} poison</span>` : ''}${BATTLE.opponent.burns?.length ? (() => { const burns=BATTLE.opponent.burns; const now=burns.reduce((a,b)=>a+(b.stages[b.stageIdx]||0),0); const future=[1,2].map(offset=>burns.reduce((a,b)=>a+(b.stages[b.stageIdx+offset]||0),0)).filter(n=>n>0); const nextText=future.length ? `Next: ${future.join(', ')}` : 'No more burn damage.'; return ` &middot; <span class="status burnStatus hoverTip" title="${nextText}">${ICON.fire} ${now} <b><u>Burn Damage</u></b></span>`; })() : ''}${BATTLE.opponent.curseFromPlayer ? ` &middot; <span class="status curseStatus hoverTip" title="Curse: ${BATTLE.opponent.curseFromPlayer} damage if the opponent fails to attack.">${ICON.curse} cursed</span>` : ''}</div>
           ${BATTLE.opponent.burns?.length ? `<span class="attackChip" data-detonate="1" style="background:var(--amber);border-color:#c97600;font-size:10px;padding:4px 8px">Detonate for ${BATTLE.opponent.burns.reduce((a,b)=>a+(b.stages[b.stageIdx]||0),0)} now</span>` : ''}
         </div>
       </div>
@@ -2373,6 +2684,7 @@ function battleScreen() {
           <button class="wo-btn gray" id="sortToggleBtn" style="padding:8px 12px;font-size:12px;width:110px;text-align:center;white-space:nowrap">Sort: ${(RUN.handSortMode || 'value') === 'value' ? 'Value' : 'Suit'}</button>
           <button class="wo-btn gray" id="discardSelectedBtn" style="padding:8px 12px;font-size:12px" title="Fold selected cards face-down instead of playing them." ${!selectedIdx.length ? 'disabled' : ''}>Discard Selected</button>
           <button class="wo-btn purple" id="gemDrawBtn" style="padding:8px 12px;font-size:12px" ${RUN.gems < 1 ? 'disabled' : ''}>Draw ${1 + META.levels.gem + (RUN.runUpgrades?.gemDraw||0)} card${(1 + META.levels.gem + (RUN.runUpgrades?.gemDraw||0)) > 1 ? 's' : ''} = ${GEM_DRAW_COST} ${ICON.gem}</button>
+          ${(() => { const sp = VEHICLE_SPECIALS[RUN.hero.id]; if (!sp) return ''; const minNeed = sp.energyCost ?? sp.energyPerUnit; return `<button class="wo-btn amber hoverTip" id="vehicleSpecialBtn" style="padding:8px 12px;font-size:12px" title="${sp.desc}" ${RUN.energy < minNeed ? 'disabled' : ''}>${sp.name} (${ICON.energy} ${minNeed}${sp.type==='dodge' ? '' : '+'})</button>`; })()}
     </div>
         ${BATTLE.turnDiscard.length ? `<div class="note" style="margin-top:8px">Discarding this turn (tap to undo):</div><div class="hand">${discardStagedHTML}</div>` : ''}
       </div>
@@ -2450,15 +2762,16 @@ function nodeResultScreen(won, rewards) {
   const rewardsHTML = won ? `
     <div class="hdr" style="margin-top:10px"><span>Rewards</span><span></span></div>
     <div class="currencies">
-      <div class="cur chip">${ICON.coin} ${rewards.chipReward} coins</div>
-      <div class="cur gem">${ICON.gem} ${rewards.gemReward} gems</div>
-      <div class="cur fuel">${ICON.fuel} ${rewards.fuelReward} fuel</div>
-      <div class="cur pts">${ICON.star} ${rewards.pointsReward} Career Points</div>
+      ${rewards.chipReward ? `<div class="cur chip">${ICON.coin} ${rewards.chipReward} coins</div>` : ''}
+      ${rewards.gemReward ? `<div class="cur gem">${ICON.gem} ${rewards.gemReward} gems</div>` : ''}
+      ${rewards.fuelReward ? `<div class="cur fuel">${ICON.fuel} ${rewards.fuelReward} fuel</div>` : ''}
+      ${rewards.pointsReward ? `<div class="cur pts">${ICON.star} ${rewards.pointsReward} Career Points</div>` : ''}
     </div>
     ${rewards.exactKillBonus ? `
     <div class="hdr" style="margin-top:8px"><span>Perfect Win Bonus</span><span></span></div>
     <div class="currencies">
       <div class="cur chip">${ICON.coin} +25 coins</div>
+      <div class="cur gem">${ICON.gem} +1 gem</div>
       <div class="cur pts">${ICON.star} +15 Career Points</div>
     </div>
     <div class="note" style="margin-top:4px">Your final hit exactly matched their remaining HP.</div>` : ''}
@@ -2518,6 +2831,7 @@ function dealerItemCardHTML(item, opts) {
     : `<button class="wo-btn gray" data-sell="${opts.index}" style="padding:5px 8px;font-size:11px;white-space:nowrap;margin-top:4px">Sell</button>`;
   const priceCol = `<div style="display:flex;flex-direction:column;align-items:flex-end;flex-shrink:0;margin-left:8px">
     <div class="price" style="white-space:nowrap">${priceLabel}</div>
+    ${item.kind !== 'storage' ? `<div class="hoverTip note" style="margin:2px 0 0;font-size:10px;white-space:nowrap" title="A rough gauge of how hard this item can hit at full setup, based on its cards, uses per turn, and bonus — not how easy it is to trigger. Use it to compare items, not to predict exact damage.">Power ${itemPowerScore(item)}</div>` : ''}
     ${footer}
   </div>`;
   const nameHTML = `<div class="hdr" style="font-weight:700;color:${headerColor};width:100%;text-align:left">${item.name}</div>`;
@@ -2930,6 +3244,7 @@ function render(html) {
 });
   const forfeitRunBtn = document.getElementById('forfeitRunBtn'); if (forfeitRunBtn) forfeitRunBtn.onclick = () => { if (confirm('Forfeit this run? This will count as a loss.')) { IN_BATTLE = false; clearBattleSave(); endRun(false); } };
   const endTurnBtn = document.getElementById('endTurnBtn'); if (endTurnBtn) endTurnBtn.onclick = () => { endTurn(); };
+  const vehicleSpecialBtn = document.getElementById('vehicleSpecialBtn'); if (vehicleSpecialBtn) vehicleSpecialBtn.onclick = () => useVehicleSpecial();
   app.querySelectorAll('[data-detonate]').forEach(el => el.onclick = (e) => { e.stopPropagation(); detonateBurn(); });
   const sortToggleBtn = document.getElementById('sortToggleBtn'); if (sortToggleBtn) sortToggleBtn.onclick = toggleHandSort;
   const scoutBtn = document.getElementById('scoutBtn'); if (scoutBtn) scoutBtn.onclick = scoutOpponent;

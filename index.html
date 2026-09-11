@@ -141,10 +141,11 @@
   .kv{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px dashed var(--blue-light);font-family:var(--mono);font-size:12.5px}
   .kv b{color:var(--blue-dark)}
   .price{color:var(--amber);font-weight:700}
-  .mapwrap{position:relative;margin:0 auto;overflow-x:auto;overflow-y:visible;background:linear-gradient(180deg,#dfead7,#edf4e8);border:2px solid #c8d8bf;border-radius:12px;padding:10px}.mapnode-wrap{position:absolute;transform:translate(-50%,-50%)}
-  .mapnode-wrap{position:absolute;transform:translate(-50%,-50%)}
+  .mapwrap{position:relative;margin:0 auto;overflow-x:auto;overflow-y:visible;background:linear-gradient(180deg,#dfead7,#edf4e8);border:2px solid #c8d8bf;border-radius:12px;padding:10px}.mapnode-wrap{position:absolute;transform:translate(-50%,-50%);z-index:1}
+  .mapnode-wrap{position:absolute;transform:translate(-50%,-50%);z-index:1}
+  .mapnode-wrap:hover{z-index:80}
   .mapnode-wrap:hover .tooltip{display:block}.mapnode-wrap .tooltip{top:120%;bottom:auto}
-  .tooltip{display:none;position:absolute;bottom:120%;left:50%;transform:translateX(-50%);
+  .tooltip{display:none;position:absolute;bottom:120%;left:50%;transform:translateX(-50%);z-index:90;
     background:var(--ink);color:#fff;font-family:var(--mono);font-size:10.5px;line-height:1.5;
     padding:7px 10px;border-radius:6px;white-space:nowrap;z-index:5;box-shadow:2px 3px 6px #0004;text-align:left}
   .mapnode{position:relative;width:40px;height:40px;border-radius:50%;
@@ -333,6 +334,7 @@ function playSfx(kind) {
     else if (kind === 'dodge') tone(600, 1200, 0.15, 'triangle', 0.1);
     else if (kind === 'match') tone(500, 950, 0.18, 'sine', 0.11);
     else if (kind === 'win') { tone(440, 440, 0.11, 'square', 0.09); tone(660, 660, 0.11, 'square', 0.09, 0.12); tone(880, 880, 0.24, 'square', 0.1, 0.24); }
+    else if (kind === 'perfect') { tone(523, 523, 0.1, 'square', 0.1); tone(659, 659, 0.1, 'square', 0.1, 0.11); tone(784, 784, 0.1, 'square', 0.1, 0.22); tone(1047, 1047, 0.32, 'square', 0.12, 0.33); }
     else if (kind === 'lose') tone(280, 110, 0.5, 'sawtooth', 0.13);
   } catch (e) {}
 }
@@ -2039,6 +2041,8 @@ function endTurn() {
       if (slowDmg > 0) {
         RUN.health = Math.max(0, RUN.health - slowDmg);
         battleLog(`Took too long this turn — ${BATTLE.opponent.name} punishes the hesitation for ${slowDmg} damage! Health: ${RUN.health}/${RUN.maxHealth}.`);
+        BATTLE.lastHit = { amount: slowDmg, source: `${BATTLE.opponent.name} (slow turn)` };
+        playSfx('hurt'); flashScreen('hurt');
       }
     }
   }
@@ -2050,6 +2054,8 @@ function endTurn() {
       const item = ITEMS[itemId];
       RUN.health = Math.max(0, RUN.health - amount);
       battleLog(`${item ? item.name : 'Cursed item'} never fired — you take ${amount} damage! Health: ${RUN.health}/${RUN.maxHealth}.`);
+      BATTLE.lastHit = { amount, source: `${item ? item.name : 'a cursed Item'} not firing` };
+      playSfx('hurt'); flashScreen('hurt');
     });
     BATTLE.itemCurses = {};
   }
@@ -2126,7 +2132,7 @@ function endTurn() {
         BATTLE.playerArmor -= armorBlocked; oppDmg -= armorBlocked;
       }
       RUN.health = Math.max(0, RUN.health - oppDmg);
-      if (oppDmg > 0) { playSfx('hurt'); flashScreen('hurt'); }
+      if (oppDmg > 0) { playSfx('hurt'); flashScreen('hurt'); BATTLE.lastHit = { amount: oppDmg, source: BATTLE.opponent.name }; }
       const dmgPhrase = armorBlocked > 0
         ? `${rawDmg} damage, but your armor absorbed ${armorBlocked}${oppDmg > 0 ? ` (${oppDmg} got through)` : ''}${BATTLE.playerArmor > 0 ? ` and you have ${BATTLE.playerArmor} armor remaining` : ', and your armor is gone'}`
         : `a flat ${oppDmg}`;
@@ -2210,7 +2216,7 @@ function endTurn() {
         BATTLE.playerArmor -= armorBlocked; oppDmg -= armorBlocked;
       }
       RUN.health = Math.max(0, RUN.health - oppDmg);
-      if (oppDmg > 0) { playSfx('hurt'); flashScreen('hurt'); }
+      if (oppDmg > 0) { playSfx('hurt'); flashScreen('hurt'); BATTLE.lastHit = { amount: oppDmg, source: BATTLE.opponent.name }; }
       const usedText = best.cards.map(c => `${rankLabel(c.rank)}${c.suit}`).join(' ');
       let specialLog = resolveOpponentAttackEffect(attackDef, oppDmg);
       const spec = BATTLE.opponent.special;
@@ -2258,7 +2264,7 @@ function endTurn() {
     if (BATTLE.opponent.hpNow <= 0) { winBattle(); return; }
   }
 
-  if (RUN.health <= 0) { IN_BATTLE = false; clearBattleSave(); render(nodeResultScreen(false, {})); return; }
+  if (RUN.health <= 0) { IN_BATTLE = false; clearBattleSave(); playSfx('lose'); render(nodeResultScreen(false, { lastHit: BATTLE.lastHit })); return; }
 
   BATTLE.turn++;
   drawCards(RUN.drawPerTurn);
@@ -2331,6 +2337,7 @@ function winBattle(outlast) {
   if (exactKillBonus) battleLog(`Perfect Win Bonus: +25 coins, +1 gem, +15 Career Points!`);
   battleLog(formatRewardParts({ coins: chipReward, gems: gemReward, fuel: fuelReward, points: pointsReward }) + '.');
   if (BATTLE.row === RUN.bossRow) { RUN.pendingWorldWin = true; }
+  playSfx(exactKillBonus ? 'perfect' : 'win');
   render(nodeResultScreen(true, { chipReward, gemReward, fuelReward, pointsReward, exactKillBonus }));
 }
 
@@ -2389,10 +2396,8 @@ function nodePopupContent(r, c) {
       title: o.name, art: art(o, 64),
       rows: [
         ['HP', o.hp],
-        ['Requirement', o.locked ? `Locked — clears at ${o.lockThreshold}, then hits for a flat ${o.lockAttack}` : `${tierNeedText(o.minTier)} needed to attack`],
-        ['Draws', `${o.drawRate}/turn`],
       ],
-      extra: `<div class="note">${o.attackInfo || describeOpponentAttacks(o)}</div>${opponentTraitTags(o).length ? `<div class="note" style="margin-top:4px">${opponentTraitTags(o).map(t => `&bull; ${t}`).join('<br>')}</div>` : ''}${o.boss ? `<div class="note" style="color:var(--red);font-weight:700">World Boss</div>` : ''}`,
+      extra: `<div class="note" style="font-weight:600">${o.attackInfo || describeOpponentAttacks(o)}</div>${opponentTraitTags(o).length ? `<div class="note" style="margin-top:6px">${opponentTraitTags(o).map(t => `&bull; ${t}`).join('<br>')}</div>` : ''}${o.boss ? `<div class="note" style="color:var(--red);font-weight:700;margin-top:4px">World Boss</div>` : ''}`,
       rewards: { chipReward, gemReward, fuelReward, pointsReward },
       actionLabel: 'Battle',
     };
@@ -2418,13 +2423,12 @@ function nodePopupScreen(r, c) {
       ${info.rewards.fuelReward ? `<div class="cur fuel">${ICON.fuel} ${info.rewards.fuelReward} fuel</div>` : ''}
       ${info.rewards.pointsReward ? `<div class="cur pts">${ICON.star} ${info.rewards.pointsReward} Career Points</div>` : ''}
     </div>
-    <div class="hdr" style="margin-top:8px"><span>Perfect Win Bonus:</span><span></span></div>
+    <div class="hdr" style="margin-top:8px"><span class="hoverTip" title="Awarded when your final hit exactly matches their remaining HP.">Perfect Win Bonus:</span><span></span></div>
     <div class="currencies">
       <div class="cur chip">${ICON.coin} +25 coins</div>
       <div class="cur gem">${ICON.gem} +1 gem</div>
       <div class="cur pts">${ICON.star} +15 Career Points</div>
-    </div>
-    <div class="note" style="margin-top:4px">Awarded when your final hit exactly matches their remaining HP.</div>` : '';
+    </div>` : '';
   return `<div class="map-popup-overlay">
     <div class="wo" style="width:100%">
       <div class="wo-stripe"></div>
@@ -2746,7 +2750,10 @@ function battleScreen() {
     </div>
     <div class="panel">
       <div class="hdr" style="margin-bottom:0">Turn ${BATTLE.turn}</div>
-      <div class="log">${BATTLE.logLines.filter(l => l.turn === BATTLE.turn).map(l => `<div>${l.msg}</div>`).join('')}</div>
+      <div class="log" id="battleLogEl">${(() => {
+        const turns = [...new Set(BATTLE.logLines.map(l => l.turn))];
+        return turns.map(t => `<div class="note" style="margin:6px 0 2px;color:var(--blue-dark);font-weight:700">Turn ${t}</div>${BATTLE.logLines.filter(l => l.turn === t).map(l => `<div>${l.msg}</div>`).join('')}`).join('');
+      })()}</div>
     </div>
   `;
 }
@@ -2786,14 +2793,13 @@ function nodeResultScreen(won, rewards) {
       ${rewards.pointsReward ? `<div class="cur pts">${ICON.star} ${rewards.pointsReward} Career Points</div>` : ''}
     </div>
     ${rewards.exactKillBonus ? `
-    <div class="hdr" style="margin-top:8px"><span>Perfect Win Bonus</span><span></span></div>
+    <div class="hdr" style="margin-top:8px"><span class="hoverTip" title="Your final hit exactly matched their remaining HP.">Perfect Win Bonus</span><span></span></div>
     <div class="currencies">
       <div class="cur chip">${ICON.coin} +25 coins</div>
       <div class="cur gem">${ICON.gem} +1 gem</div>
       <div class="cur pts">${ICON.star} +15 Career Points</div>
-    </div>
-    <div class="note" style="margin-top:4px">Your final hit exactly matched their remaining HP.</div>` : ''}
-  ` : `<div class="wo-sub">Your health ran out. Run ends here.</div>`;
+    </div>` : ''}
+  ` : `<div class="wo-sub">Your health ran out${rewards.lastHit ? ` after taking ${rewards.lastHit.amount} damage from ${rewards.lastHit.source}` : ''}. Run ends here.</div>`;
   return `
     <div class="wo">
       <div class="wo-stripe"></div>
@@ -3242,7 +3248,7 @@ function render(html) {
   app.innerHTML = `<div class="game-stage">${html}</div>`;
   if (IN_BATTLE) saveBattleState();
   const mw = app.querySelector('.mapwrap');
-  if (mw) { mw.scrollLeft = MAP_SCROLL_X; mw.onscroll = () => { MAP_SCROLL_X = mw.scrollLeft; }; if (RUN && mw.querySelector('.mapnode-wrap')) { requestAnimationFrame(()=>{ const row = Math.max(0,RUN.currentRow); const colW = 94; const target = Math.max(0, row*colW - mw.clientWidth*0.38); mw.scrollLeft = target; MAP_SCROLL_X = target; }); } }
+  if (mw) { mw.scrollLeft = MAP_SCROLL_X; mw.onscroll = () => { MAP_SCROLL_X = mw.scrollLeft; }; if (RUN && mw.querySelector('.mapnode-wrap')) { requestAnimationFrame(()=>{ const row = Math.max(0,RUN.currentRow); const colW = 94; const target = Math.max(0, row*colW - mw.clientWidth*0.15); mw.scrollLeft = target; MAP_SCROLL_X = target; }); } }
 
   app.querySelectorAll('[data-card]').forEach(el => el.onclick = () => toggleCardSelect(+el.dataset.card));
   app.querySelectorAll('[data-assign]').forEach(el => el.onclick = (e) => {

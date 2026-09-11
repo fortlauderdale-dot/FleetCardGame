@@ -167,9 +167,12 @@
   .shopGrid .shopcard{margin-bottom:0}
   @media (max-width:600px){.shopGrid{grid-template-columns:1fr}}
   .pickcard{border:2px solid var(--blue-light);background:var(--bg);border-radius:10px;padding:16px;width:160px;text-align:center}
+  .pickrow{border:2px solid var(--blue-light);background:var(--bg);border-radius:10px}
+  .pickrow.locked{opacity:.55}
   .pickcard .picon{font-size:46px;display:flex;align-items:center;justify-content:center}
   .pname{font-weight:700;font-size:17px;letter-spacing:.01em;color:var(--blue-dark)}
-  .pickcard .ptag{font-family:var(--mono);font-size:11px;color:var(--dim);margin:4px 0 10px}
+  .ptag{font-family:var(--mono);font-size:11px;color:var(--dim);margin:4px 0 0}
+  .pickcard .ptag{margin:4px 0 10px}
   .pickcard.locked{opacity:.55}
   .pickcard.locked .picon{filter:grayscale(1)}
   .levelbar{height:8px;background:var(--blue-light);border-radius:4px;overflow:hidden;margin:6px 0}
@@ -714,6 +717,9 @@ function computeItemAmount(item, cards, level, condResult) {
     }
   }
   if (item.perCardBonus && cards.length > 1) mult += item.perCardBonus * (cards.length - 1);
+  // Admin Vehicle's Career upgrade: a small extra multiplier on One-Two Punch, only for the
+  // Admin Vehicle hero, so leveling this stat is specifically a reason to run that vehicle.
+  if (item.id === 'fender_bender' && RUN.hero?.heroId === 'admin' && META.levels.adminTune) mult += 0.1 * META.levels.adminTune;
   const rawSum = cards.reduce((a, c) => a + cardValue(c.rank) + (c.bonus || 0), 0);
   // flatBonus adds a flat amount on top of sum*mult — for "sum + N" items like Jinxed Duo
   // (sum + 16 poison), as opposed to flatAmount above which replaces the sum entirely.
@@ -726,7 +732,7 @@ function computeItemAmount(item, cards, level, condResult) {
 // RUN, not META — these are Chop Shop purchases paid with coins, and wipe with the rest of
 // the run's coins and tuning when the run ends. Career Points and the permanent Upgrades
 // screen never touch any of this.
-function itemLevel(itemId) { return (RUN.itemLevels && RUN.itemLevels[itemId]) || 0; }
+function itemLevel(itemId) { return (RUN && RUN.itemLevels && RUN.itemLevels[itemId]) || 0; }
 function itemTuneCost(item, lvl) { return 40 * Math.pow(2, lvl); } // coins, doubles each level like card tuning
 // An item can level up if it has a damage `bonus` (mult grows) or a `drawPerLevel` (draw count
 // grows) — this returns how many levels it can take, or 0 if it doesn't scale at all.
@@ -734,7 +740,7 @@ function itemLevelCap(item) { if (item.bonus) return item.bonus.maxLevel ?? 0; i
 function itemUsesLevel(itemId) { return (RUN.itemUsesLevels && RUN.itemUsesLevels[itemId]) || 0; }
 function itemUsesTuneCost(lvl) { return Math.round(50 * Math.pow(2.5, lvl)); } // coins, jumps hard after the 1st upgrade
 const ITEM_MAX_USES_LEVEL = 2; // level 0/1/2 -> 1/2/3 uses per turn
-function itemMaxCardsLevel(itemId) { return (RUN.itemMaxCardsLevels && RUN.itemMaxCardsLevels[itemId]) || 0; }
+function itemMaxCardsLevel(itemId) { return (RUN && RUN.itemMaxCardsLevels && RUN.itemMaxCardsLevels[itemId]) || 0; }
 function itemMaxCardsTuneCost(lvl) { return Math.round(60 * Math.pow(2.5, lvl)); } // coins, jumps hard after the 1st upgrade
 const ITEM_MAX_CARDS_BONUS_CAP = 2; // up to +2 cards beyond the Item's base maxCards
 function effectiveMaxCards(item) { return (item.maxStore ?? item.maxCards) + itemMaxCardsLevel(item.id); }
@@ -748,7 +754,7 @@ function normalizeItemKind(kind) {
 function effectiveKind(item, instanceIndex = null) {
   const key = instanceIndex == null ? item.id : `${item.id}_${instanceIndex}`;
   const baseKind = normalizeItemKind(item.kind || item.itemType || 'damage');
-  const override = RUN.itemKindOverride && (RUN.itemKindOverride[key] || RUN.itemKindOverride[item.id]);
+  const override = RUN && RUN.itemKindOverride && (RUN.itemKindOverride[key] || RUN.itemKindOverride[item.id]);
   // Defensive Items keep their defensive identity even if an old run contains a stale kind override.
   return baseKind === 'defense' ? 'defense' : normalizeItemKind(override || baseKind);
 }
@@ -916,20 +922,24 @@ const HEROES = {
   admin:      { id: 'admin',      name: 'Admin Vehicle',   icon: '🚗', image: 'vehicles/admin-vehicle.jpg', starterItems: ['fender_bender','escort_wall'] },
   interstate: { id: 'interstate', name: 'Pickup Truck', icon: '🏁', image: 'vehicles/interstate-racer.jpg', starterItems: ['bike_dash','card_draw'] },
   convoy:     { id: 'convoy',     name: 'Large SUV',  icon: '🚛', image: 'vehicles/armored-convoy.jpg', starterItems: ['fender_bender','triple_threat'] },
+  towtruck:   { id: 'towtruck',   name: 'Tow Truck',  icon: '🚨', image: 'vehicles/tow-truck.jpg', starterItems: ['escort_wall','toxic_spill'] },
+  tanker:     { id: 'tanker',     name: 'Fuel Tanker', icon: '⛽', image: 'vehicles/fuel-tanker.jpg', starterItems: ['fender_bender','drawstone'] },
 };
 // Vehicle special abilities — the use for Energy (previously it had no real purpose). Each
 // hero gets one battle ability, usable any turn, that spends Energy for a survival effect.
-// 'shield' and 'heal' types scale with however much Energy you commit at once (Math.floor to
-// the nearest whole unit); 'dodge' is a flat cost for a single upcoming-hit coin flip.
+// 'shield', 'heal', and 'draw' types scale with however much Energy you commit at once (Math.floor
+// to the nearest whole unit); 'dodge' and 'refuel' are flat-cost, single-use-per-press effects.
 const VEHICLE_SPECIALS = {
   sidebyside: { name: 'Quick Shield', type: 'shield', energyPerUnit: 4, amountPerUnit: 20, desc: 'Spend Energy for armor — every 4 Energy grants +20 armor. Spend as much as you have at once.' },
   admin:      { name: 'Roadside Patch', type: 'heal', energyPerUnit: 5, amountPerUnit: 15, desc: 'Spend Energy to heal — every 5 Energy restores 15 health. Spend as much as you have at once.' },
   interstate: { name: 'Evasive Maneuver', type: 'dodge', energyCost: 6, chance: 0.5, desc: 'Spend 6 Energy for a 50% chance to dodge the opponent\'s next attack entirely.' },
   convoy:     { name: 'Brace for Impact', type: 'shield', energyPerUnit: 3, amountPerUnit: 20, desc: 'Spend Energy for armor — every 3 Energy grants +20 armor. Spend as much as you have at once.' },
+  towtruck:   { name: 'Winch Pull', type: 'draw', energyPerUnit: 5, amountPerUnit: 1, desc: 'Spend Energy to draw cards — every 5 Energy draws 1 card. Spend as much as you have at once.' },
+  tanker:     { name: 'Siphon Reserve', type: 'refuel', energyCost: 8, amountPerUnit: 10, desc: 'Spend 8 Energy to refill 10 Fuel.' },
 };
 function useVehicleSpecial() {
   if (!IN_BATTLE || !BATTLE) return;
-  const special = VEHICLE_SPECIALS[RUN.hero.id];
+  const special = VEHICLE_SPECIALS[RUN.hero.heroId];
   if (!special) return;
   if (special.type === 'dodge') {
     if (RUN.energy < special.energyCost) { battleLog(`Not enough Energy for ${special.name} (needs ${special.energyCost}).`); render(battleScreen()); return; }
@@ -937,6 +947,13 @@ function useVehicleSpecial() {
     BATTLE.dodgeChance = special.chance;
     battleLog(`${special.name}! ${Math.round(special.chance * 100)}% chance to dodge the opponent's next attack.`);
     playSfx('shield'); flashScreen('shield');
+  } else if (special.type === 'refuel') {
+    if (RUN.energy < special.energyCost) { battleLog(`Not enough Energy for ${special.name} (needs ${special.energyCost}).`); render(battleScreen()); return; }
+    RUN.energy -= special.energyCost;
+    const before = RUN.fuel;
+    RUN.fuel = Math.min(RUN.maxFuel, RUN.fuel + special.amountPerUnit);
+    battleLog(`${special.name}! Spent ${special.energyCost} Energy to refill ${RUN.fuel - before} fuel.`);
+    playSfx('heal'); flashScreen('heal');
   } else {
     const units = Math.floor(RUN.energy / special.energyPerUnit);
     if (units < 1) { battleLog(`Not enough Energy for ${special.name} (needs ${special.energyPerUnit} per use).`); render(battleScreen()); return; }
@@ -952,6 +969,11 @@ function useVehicleSpecial() {
       RUN.health = Math.min(RUN.maxHealth, RUN.health + amount);
       battleLog(`${special.name}! Spent ${cost} Energy to heal ${RUN.health - before} health.`);
       playSfx('heal'); flashScreen('heal');
+    } else if (special.type === 'draw') {
+      drawCards(amount);
+      resortHandAndRelink(RUN.handSortMode);
+      battleLog(`${special.name}! Spent ${cost} Energy to draw ${amount} card${amount > 1 ? 's' : ''}.`);
+      playSfx('shield'); flashScreen('shield');
     }
   }
   saveRun();
@@ -970,38 +992,60 @@ function applyDodgeIfActive(oppDmg) {
   }
   return oppDmg;
 }
-const STARTERS = ['sidebyside', 'admin', 'interstate', 'convoy', 'comingsoon1', 'comingsoon2'];
-// Short, hand-written attack/bonus text for the Pick Your Vehicle screen — one entry per
-// starter item currently in use. Add an entry here whenever a new starter item is introduced.
-const UPGRADE_AT_ITEM_MASTERY = 'Can be upgraded at the Tuning Garage (Item Upgrades) for the rest of that run.';
-const STARTER_ITEM_DISPLAY = {
-  fender_bender: { req: 'Up to 2 cards', bonusPre: '', bonusNum: '+50%', bonusPost: ' bonus if Pair', upgradeNote: UPGRADE_AT_ITEM_MASTERY },
-  pair_draw:     { req: 'Pair', bonusPre: 'Draw ', bonusNum: '2', bonusPost: ' cards immediately', upgradeNote: null },
-  escort_wall:   { req: 'Pair', bonus: 'Blocks damage equal to Σ of cards played (Defense)' },
-  moto_escort:   { req: '4-card Straight', bonus: 'Damage scales with the straight' },
-  card_draw:     { req: 'Pair', bonusPre: 'Draw ', bonusNum: '2', bonusPost: ' additional cards (no damage)', upgradeNote: UPGRADE_AT_ITEM_MASTERY },
-  triple_threat: { req: 'Three of a Kind', bonusPre: '', bonusNum: '+100%', bonusPost: ' damage', upgradeNote: UPGRADE_AT_ITEM_MASTERY },
-  bike_dash:     { req: '2-card Straight', bonus: 'Damage equal to the Σ of the 2 cards' },
-};
-function heroAttacksHTML(hero) {
-  return (hero.starterItems || []).map(iid => {
-    const item = ITEMS[iid];
-    const d = STARTER_ITEM_DISPLAY[iid];
-    if (!item || !d) return '';
-    const numHTML = d.bonusNum ? (d.upgradeNote ? `<b class="hoverTip" title="${d.upgradeNote}">${d.bonusNum}</b>` : `<b>${d.bonusNum}</b>`) : '';
-    const bonusHTML = d.bonusNum ? `${d.bonusPre || ''}${numHTML}${d.bonusPost || ''}` : (d.bonus || '');
-    return `<div style="margin:6px 0"><b>${item.name}</b><div class="note" style="margin:2px 0 0">${d.req}</div><div class="note" style="margin:2px 0 0">${bonusHTML}</div></div>`;
-  }).join('');
+const STARTERS = ['sidebyside', 'admin', 'interstate', 'convoy', 'towtruck', 'tanker', 'comingsoon1', 'comingsoon2'];
+// Real, accurate item-card preview for the Pick Your Vehicle screen — built from the same
+// ITEMS data and the same visual language as the in-battle card, instead of hand-written text
+// that can drift out of sync with what the item actually does.
+function heroItemCardPreviewHTML(itemId) {
+  const item = ITEMS[itemId];
+  if (!item) return '';
+  const eKind = effectiveKind(item);
+  const bonusPct = item.bonus ? Math.round(item.bonus.base * 100) : 0;
+  const bonusLine = item.bonus && bonusPct > 0 ? `<div class="itemBonusLine">Bonus <b>+${bonusPct}%</b> if ${bonusConditionText(item.bonus.condition || item.condition)}</div>` : '';
+  const kindTag = eKind === 'poison' ? `<span class="effectTip poisonText" data-tip="Poison deals its damage at the end of the opponent's turn, then drops by 3 each turn until it's gone."><b>Poison</b></span>`
+    : eKind === 'burn' ? `<span class="effectTip burnText" data-tip="Burn hits for full damage, then half, then a quarter, fading out over 3 turns."><b>Burn</b></span>`
+    : eKind === 'curse' ? `<span class="effectTip curseText" data-tip="Curse goes off if this item isn't fired again before the opponent's next turn."><b>Curse</b></span>`
+    : eKind === 'defense' ? `<span class="effectTip" style="color:var(--defense)" data-tip="Armor protects against incoming attacks, absorbing damage equal to the amount shown."><b>Armor</b></span>`
+    : '';
+  const drawN = item.drawUsesCardCount ? item.maxCards + (item.drawBonusFlat || 0) : (item.drawAmount || 0);
+  const drawText = (item.drawAmount || item.drawUsesCardCount) ? `<b>Draw</b> ${drawN} card${drawN === 1 ? '' : 's'}` : '';
+  const kindLine = formatKindAmount(item, kindTag);
+  return `<div class="itemCard" style="cursor:default">
+    <div class="itemCard-sec">
+      <div class="hdr" style="font-weight:600;color:var(--blue-dark)">${item.name}</div>
+      <div class="itemReqLine">${itemRequirementText(item)}</div>
+      ${bonusLine}
+    </div>
+    <div class="itemDivider"></div>
+    <div class="itemCard-sec"><div class="note">${[kindLine, drawText].filter(Boolean).join(' + ')}</div></div>
+  </div>`;
+}
+function heroAbilityCardHTML(heroId) {
+  const sp = VEHICLE_SPECIALS[heroId];
+  if (!sp) return '';
+  const cost = sp.energyCost ?? sp.energyPerUnit;
+  return `<div class="itemCard" style="cursor:default;border-color:var(--amber)">
+    <div class="itemCard-sec">
+      <div class="hdr" style="font-weight:600;color:var(--amber)">${sp.name}</div>
+      <div class="itemReqLine">${ICON.energy} ${cost}${sp.type === 'dodge' || sp.type === 'refuel' ? '' : '+'} Energy</div>
+    </div>
+    <div class="itemDivider"></div>
+    <div class="itemCard-sec"><div class="note">${sp.desc}</div></div>
+  </div>`;
 }
 function isStarterUnlocked(id) {
   if (id === 'sidebyside' || id === 'admin') return true;
   if (id === 'interstate') return META.lifetimePoints >= 150;
   if (id === 'convoy') return META.bestRun >= ROWS + 1;
+  if (id === 'towtruck') return !!META.world2Cleared;
+  if (id === 'tanker') return (META.runsPlayed || 0) >= 5;
   return false;
 }
 function starterLockNote(id) {
   if (id === 'interstate') return `Unlocks at 150 lifetime Career Points (${Math.min(META.lifetimePoints, 150)}/150)`;
   if (id === 'convoy') return `Unlocks after clearing a full route`;
+  if (id === 'towtruck') return `Unlocks after beating World 2`;
+  if (id === 'tanker') return `Unlocks after completing 5 runs (${Math.min(META.runsPlayed || 0, 5)}/5)`;
   if (id === 'comingsoon1' || id === 'comingsoon2') return `Coming soon`;
   return '';
 }
@@ -1085,35 +1129,57 @@ const OPPONENT_SWING_CAP = [22, 28, 34, 40, 46, 52, 60];
 function revealFraction(row) { return [1.0, 0.8, 0.6, 0.4, 0.25, 0.1, 0][Math.min(row, 6)]; }
 
 /* ========== LEVELED UPGRADE TREE (permanent, up to 20 levels each) ========== */
+// Impact tiers set both the starting cost and how fast each level grows — stats that matter a
+// lot in every run (draw, HP, hand size) cost noticeably more per level than situational ones
+// (energy cap, fuel efficiency), so the price reflects how much a level actually helps you.
+const UPGRADE_TIERS = {
+  high:   { baseCost: 50, growth: 1.55 },
+  medium: { baseCost: 30, growth: 1.5 },
+  low:    { baseCost: 18, growth: 1.45 },
+};
 const UPGRADE_DEFS = [
-  { id: 'draw',    label: 'Cards Drawn Per Turn', desc: '+1 card drawn at the start of each turn (also raises your opening hand).', baseCost: 20, inc: 15, maxLevel: 5 },
-  { id: 'chips',   label: 'Starting Coins',       desc: '+8 starting coins at New Playthrough.', baseCost: 10, inc: 8 },
-  { id: 'hp',      label: 'Max HP',               desc: '+15 max health per level.', baseCost: 30, inc: 15 },
-  { id: 'handCap', label: 'Maximum Hand Size',    desc: '+2 cards to your maximum hand size per level.', baseCost: 15, inc: 10, maxLevel: 5 },
-  { id: 'fuel',    label: 'Starting Fuel',        desc: '+1 starting fuel per level.', baseCost: 10, inc: 8 },
-  { id: 'fuelCap', label: 'Fuel Tank Size',       desc: '+5 max fuel you can hold per level.', baseCost: 25, inc: 15 },
-  { id: 'gem',     label: 'Gem Efficiency',       desc: '+1 card drawn per gem spent.', baseCost: 20, inc: 12, maxLevel: 5 },
-  { id: 'gemCap',  label: 'Gem Pouch Size',       desc: '+2 max gems you can hold per level.', baseCost: 25, inc: 15 },
-  { id: 'energyCap', label: 'Energy Cell Size',   desc: '+5 max energy you can hold per level.', baseCost: 25, inc: 15 },
-  { id: 'garage',  label: 'Garage Expansion',     desc: '+1 starting Item slot.', baseCost: 25, inc: 12 },
-  { id: 'range',   label: 'Scout Range',          desc: 'See one additional route space farther ahead.', baseCost: 20, inc: 10 },
-  { id: 'fuelpen', label: 'Fuel Efficiency',      desc: 'Running out of fuel costs less score when it happens.', baseCost: 40, inc: 15 },
-  { id: 'reveal',  label: 'Battle Scan',          desc: 'Start every battle with 1 extra opponent card already revealed.', baseCost: 25, inc: 15 },
-  { id: 'adminTune', label: 'Admin Vehicle Pair Bonus', desc: '+50% to the Admin Vehicle Pair bonus per level.', baseCost: 25, inc: 20 },
+  { id: 'draw',    label: 'Cards Drawn Per Turn', desc: '+1 card drawn at the start of each turn (also raises your opening hand).', tier: 'high',
+    currentValue: lvl => `${2 + lvl} cards/turn` },
+  { id: 'chips',   label: 'Starting Coins',       desc: '+8 starting coins at New Playthrough.', tier: 'low',
+    currentValue: lvl => `${40 + lvl * 8} coins` },
+  { id: 'hp',      label: 'Max HP',               desc: '+15 max health per level.', tier: 'high',
+    currentValue: lvl => `${100 + lvl * 15} HP` },
+  { id: 'handCap', label: 'Maximum Hand Size',    desc: '+2 cards to your maximum hand size per level.', tier: 'high',
+    currentValue: lvl => `${7 + lvl * 2} cards`,
+    unlock: { desc: 'Beat 50 opponents (lifetime)', check: () => (META.enemiesBeaten || 0) >= 50 } },
+  { id: 'fuel',    label: 'Starting Fuel',        desc: '+1 starting fuel per level.', tier: 'low',
+    currentValue: lvl => `${10 + lvl} fuel` },
+  { id: 'fuelCap', label: 'Fuel Tank Size',       desc: '+5 max fuel you can hold per level.', tier: 'medium',
+    currentValue: lvl => `${20 + lvl * 5} fuel` },
+  { id: 'gem',     label: 'Gem Efficiency',       desc: '+1 card drawn per gem spent.', tier: 'medium',
+    currentValue: lvl => `${1 + lvl} card${1 + lvl > 1 ? 's' : ''}/gem`,
+    unlock: { desc: 'Reach World 2', check: () => (META.bestWorld || 1) >= 2 } },
+  { id: 'gemCap',  label: 'Gem Pouch Size',       desc: '+2 max gems you can hold per level.', tier: 'medium',
+    currentValue: lvl => `${10 + lvl * 2} gems` },
+  { id: 'energyCap', label: 'Energy Cell Size',   desc: '+5 max energy you can hold per level.', tier: 'medium',
+    currentValue: lvl => `${20 + lvl * 5} energy` },
+  { id: 'garage',  label: 'Garage Expansion',     desc: '+1 starting Item slot.', tier: 'medium',
+    currentValue: lvl => `${3 + lvl} slots`,
+    unlock: { desc: 'Complete 3 runs', check: () => (META.runsPlayed || 0) >= 3 } },
+  { id: 'range',   label: 'Scout Range',          desc: 'See one additional route space farther ahead.', tier: 'low',
+    currentValue: lvl => `${3 + lvl} spaces ahead`,
+    unlock: { desc: 'Land 5 Perfect Wins', check: () => (META.perfectWins || 0) >= 5 } },
+  { id: 'fuelpen', label: 'Fuel Efficiency',      desc: 'Running out of fuel costs less health when it happens.', tier: 'low',
+    currentValue: lvl => `${Math.max(0, 10 - lvl * 2)} HP lost (was 10)` },
+  { id: 'reveal',  label: 'Battle Scan',          desc: 'Start every battle with 1 extra opponent card already revealed.', tier: 'low',
+    currentValue: lvl => `${1 + lvl} card${1 + lvl > 1 ? 's' : ''} revealed` },
+  { id: 'adminTune', label: 'Admin Vehicle Pair Bonus', desc: '+10% to the Admin Vehicle\'s One-Two Punch Pair bonus per level.', tier: 'low',
+    currentValue: lvl => `+${lvl * 10}%` },
 ];
-const MAX_LEVEL = 10; // the ceiling every Career upgrade can reach, in theory
-const SOFT_CAP_LEVEL = 5; // levels 0-5 cost the normal linear amount; levels past this get punishing
-// Levels 0-5 cost the plain baseCost+level*inc amount (a handful of runs). Past that, the cost
-// jumps hard and then keeps doubling — level 6 alone should run in the neighborhood of what
-// ~20 full winning runs earn, and each level after that roughly doubles again. So level 5 is
-// the level most players will actually reach; 6-10 exist for the truly dedicated grinder.
-const POST_CAP_JUMP_MULT = 190;
-const POST_CAP_GROWTH = 2;
+const MAX_LEVEL = 10; // the ceiling every Career upgrade can reach
+// A single smooth exponential per tier — no cliff, no special-cased "soft cap" jump. Each level
+// costs roughly 1.5x the one before it, so the climb from level 0 to 10 feels continuous: cheap
+// and fast early on, a real commitment by level 10, never a shocking one-level price spike.
 function upgradeCost(def, atLevel) {
-  if (atLevel < SOFT_CAP_LEVEL) return def.baseCost + atLevel * def.inc;
-  const softCapCost = def.baseCost + SOFT_CAP_LEVEL * def.inc; // cost of the last "normal" level
-  return Math.round(softCapCost * POST_CAP_JUMP_MULT * Math.pow(POST_CAP_GROWTH, atLevel - SOFT_CAP_LEVEL));
-} // cost to go from atLevel -> atLevel+1
+  const t = UPGRADE_TIERS[def.tier] || UPGRADE_TIERS.medium;
+  return Math.round(t.baseCost * Math.pow(t.growth, atLevel));
+}
+function upgradeUnlocked(def) { return !def.unlock || def.unlock.check(); }
 
 /* ========== META (persists forever) ========== */
 const META_KEY = 'fleetduel-meta-v7';
@@ -1124,11 +1190,15 @@ function loadMeta() {
       const parsed = JSON.parse(raw);
       parsed.levels = parsed.levels || {};
       UPGRADE_DEFS.forEach(u => { if (parsed.levels[u.id] == null) parsed.levels[u.id] = 0; });
+      if (parsed.enemiesBeaten == null) parsed.enemiesBeaten = 0;
+      if (parsed.bestWorld == null) parsed.bestWorld = 1;
+      if (parsed.perfectWins == null) parsed.perfectWins = 0;
+      if (parsed.world2Cleared == null) parsed.world2Cleared = false;
       return parsed;
     }
   } catch (e) {}
   const levels = {}; UPGRADE_DEFS.forEach(u => levels[u.id] = 0);
-  return { points: 0, lifetimePoints: 0, highScore: 0, bestRun: 0, runsPlayed: 0, levels };
+  return { points: 0, lifetimePoints: 0, highScore: 0, bestRun: 0, runsPlayed: 0, enemiesBeaten: 0, bestWorld: 1, perfectWins: 0, world2Cleared: false, levels };
 }
 let META = loadMeta();
 function saveMeta() { try { localStorage.setItem(META_KEY, JSON.stringify(META)); } catch (e) {} }
@@ -1331,7 +1401,7 @@ function initRunWithStarter(id) {
     hero: { heroId: id, items: [...baseHero.starterItems] },
     itemCap: Math.min(MAX_ITEM_CAP, 3 + L.garage), 
     handSize: 7 + (L.handCap || 0) * 2, 
-    drawPerTurn: 2 + (L.draw || 0), 
+    drawPerTurn: Math.max(1, 2 + (L.draw || 0)), 
     gems: 3, 
     maxGems: 10 + (L.gemCap||0)*2, 
     maxFuel: 20 + (L.fuelCap||0)*5, 
@@ -1371,8 +1441,9 @@ function payTravelCost() {
     RUN.fuel = 0; // Keep the tank clamped at zero
     
     // Out of gas: Player suffers a physical breakdown penalty instead of losing score points
-    RUN.health = Math.max(0, RUN.health - 10);
-    RUN.lastNotice = `Out of fuel! Pushing your fleet manually to the next stop cost you 10 HP.`;
+    const fuelPenalty = Math.max(0, 10 - (META.levels.fuelpen || 0) * 2);
+    RUN.health = Math.max(0, RUN.health - fuelPenalty);
+    RUN.lastNotice = fuelPenalty > 0 ? `Out of fuel! Pushing your fleet manually to the next stop cost you ${fuelPenalty} HP.` : `Out of fuel! Your Fuel Efficiency training kept the walk from costing you any health this time.`;
     
     // Immediate check: If the travel toll drops them to zero, the run crashes out right here
     if (RUN.health <= 0) {
@@ -1611,6 +1682,7 @@ function rollTreasure(big=false) {
 }
 function endRun(won) {
   IN_BATTLE = false; clearBattleSave();
+  playSfx(won ? 'win' : 'lose');
   const bonus = Math.round(RUN.path.length * (won ? 5 : 2) + (won ? 40 : 0));
   earnPoints(bonus);
   META.bestRun = Math.max(META.bestRun, RUN.path.length);
@@ -2343,6 +2415,11 @@ function winBattle(outlast) {
   if (exactKillBonus) battleLog(`Perfect Win Bonus: +25 coins, +1 gem, +15 Career Points!`);
   battleLog(formatRewardParts({ coins: chipReward, gems: gemReward, fuel: fuelReward, points: pointsReward }) + '.');
   if (BATTLE.row === RUN.bossRow) { RUN.pendingWorldWin = true; }
+  if (!BATTLE.castleStage) {
+    META.enemiesBeaten = (META.enemiesBeaten || 0) + 1;
+    if (exactKillBonus) META.perfectWins = (META.perfectWins || 0) + 1;
+    saveMeta();
+  }
   playSfx(exactKillBonus ? 'perfect' : 'win');
   render(nodeResultScreen(true, { chipReward, gemReward, fuelReward, pointsReward, exactKillBonus }));
 }
@@ -2552,10 +2629,12 @@ function runUpgradeScreen() {
     const full = kind === 'health' && RUN.health >= RUN.maxHealth;
     const cost = runUpgradeCost(kind);
     const canAfford = RUN.chips >= cost && !maxed && !full;
-    return `<div class="shopcard"><div class="hdr"><span>${def.label}</span><span class="price">${maxed ? 'MAXED' : cost + ' coins'}</span></div>
-      <div class="note" style="margin:0 0 6px">${def.desc}</div>
-      <div class="note" style="margin:0 0 6px">Current: ${def.isHeal ? `${RUN.health}/${RUN.maxHealth} HP` : `+${n}`}</div>
-      <button class="wo-btn amber" data-runupgrade="${kind}" ${canAfford ? '' : 'disabled'} style="padding:8px 12px;font-size:13px">${maxed ? 'Maxed for this run' : full ? 'Full health' : 'Buy'}</button>
+    return `<div class="shopcard"><div class="hdr"><span>${def.label}</span><span class="note" style="margin:0">Current: ${def.isHeal ? `${RUN.health}/${RUN.maxHealth} HP` : `+${n}`}</span></div>
+      <div class="note" style="margin:0 0 8px">${def.desc}</div>
+      <div style="display:flex;justify-content:flex-end;align-items:center;gap:10px">
+        <span class="price" style="white-space:nowrap">${maxed ? 'MAXED' : cost + ' coins'}</span>
+        <button class="wo-btn amber" data-runupgrade="${kind}" ${canAfford ? '' : 'disabled'} style="padding:8px 12px;font-size:13px;white-space:nowrap">${maxed ? 'Maxed for this run' : full ? 'Full health' : 'Buy'}</button>
+      </div>
     </div>`;
   }).join('');
   return `${noticeHTML()}<div class="wo"><div class="wo-stripe"></div><div class="wo-body">
@@ -2730,7 +2809,7 @@ function battleScreen() {
           <button class="wo-btn gray" id="sortToggleBtn" style="padding:8px 12px;font-size:12px;width:110px;text-align:center;white-space:nowrap">Sort: ${(RUN.handSortMode || 'value') === 'value' ? 'Value' : 'Suit'}</button>
           <button class="wo-btn gray" id="discardSelectedBtn" style="padding:8px 12px;font-size:12px" title="Fold selected cards face-down instead of playing them." ${!selectedIdx.length ? 'disabled' : ''}>Discard Selected</button>
           <button class="wo-btn purple" id="gemDrawBtn" style="padding:8px 12px;font-size:12px" ${RUN.gems < 1 ? 'disabled' : ''}>Draw ${1 + META.levels.gem + (RUN.runUpgrades?.gemDraw||0)} card${(1 + META.levels.gem + (RUN.runUpgrades?.gemDraw||0)) > 1 ? 's' : ''} = ${GEM_DRAW_COST} ${ICON.gem}</button>
-          ${(() => { const sp = VEHICLE_SPECIALS[RUN.hero.id]; if (!sp) return ''; const minNeed = sp.energyCost ?? sp.energyPerUnit; return `<button class="wo-btn amber hoverTip" id="vehicleSpecialBtn" style="padding:8px 12px;font-size:12px" title="${sp.desc}" ${RUN.energy < minNeed ? 'disabled' : ''}>${sp.name} (${ICON.energy} ${minNeed}${sp.type==='dodge' ? '' : '+'})</button>`; })()}
+          ${(() => { const sp = VEHICLE_SPECIALS[RUN.hero.heroId]; if (!sp) return ''; const minNeed = sp.energyCost ?? sp.energyPerUnit; return `<button class="wo-btn amber hoverTip" id="vehicleSpecialBtn" style="padding:8px 12px;font-size:12px" title="${sp.desc}" ${RUN.energy < minNeed ? 'disabled' : ''}>${sp.name} (${ICON.energy} ${minNeed}${sp.type==='dodge' ? '' : '+'})</button>`; })()}
     </div>
         ${BATTLE.turnDiscard.length ? `<div class="note" style="margin-top:8px">Discarding this turn (tap to undo):</div><div class="hand">${discardStagedHTML}</div>` : ''}
       </div>
@@ -3159,11 +3238,11 @@ function runEndScreen(won, bonus) {
 }
 
 function starterSelectScreen() {
-  const cards = STARTERS.map(id => {
+  const rows = STARTERS.map(id => {
     if (id === 'comingsoon1' || id === 'comingsoon2') {
-      return `<div style="width:160px;display:flex;flex-direction:column">
-        <div style="height:20px;margin-bottom:6px"></div>
-        <div class="pickcard locked" style="display:flex;flex-direction:column;flex:1;justify-content:center;align-items:center;text-align:center;padding:12px;box-sizing:border-box">
+      return `<div class="pickrow locked" style="display:flex;align-items:center;gap:14px;padding:14px;margin-bottom:10px">
+        <div style="width:60px;text-align:center;flex-shrink:0"><span class="vart" style="width:46px;height:46px;font-size:46px">${ICON.lock}</span></div>
+        <div style="flex:1">
           <div class="pname">Coming Soon</div>
           <div class="ptag">A new vehicle is on the way.</div>
         </div>
@@ -3171,12 +3250,30 @@ function starterSelectScreen() {
     }
     const hero = HEROES[id];
     const unlocked = isStarterUnlocked(id);
-    return `<div style="width:160px;display:flex;flex-direction:column">
-      <div class="pname" style="text-align:center;height:20px;margin-bottom:6px;overflow:hidden">${hero.name}</div>
-      <div class="pickcard ${unlocked ? '' : 'locked'}" style="display:flex;flex-direction:column;flex:1;padding:8px 12px 12px;box-sizing:border-box${unlocked ? '' : ';justify-content:center;align-items:center;text-align:center'}">
-        <div class="picon" style="margin:0 0 6px">${unlocked ? art(hero, 46) : `<span class="vart" style="width:46px;height:46px;font-size:46px">${ICON.lock}</span>`}</div>
-        ${unlocked ? heroAttacksHTML(hero) : `<div class="ptag">${starterLockNote(id)}</div>`}
-        ${unlocked ? `<div style="flex:1"></div><button class="wo-btn amber" data-pick="${hero.id}" style="padding:8px 12px;font-size:13px;width:100%;margin-top:10px">Choose</button>` : ''}
+    if (!unlocked) {
+      return `<div class="pickrow locked" style="display:flex;align-items:center;gap:14px;padding:14px;margin-bottom:10px">
+        <div style="width:60px;text-align:center;flex-shrink:0"><span class="vart" style="width:46px;height:46px;font-size:46px">${ICON.lock}</span></div>
+        <div style="flex:1">
+          <div class="pname">${hero.name}</div>
+          <div class="ptag">${starterLockNote(id)}</div>
+        </div>
+      </div>`;
+    }
+    const itemCards = (hero.starterItems || []).map(heroItemCardPreviewHTML).join('');
+    const abilityCard = heroAbilityCardHTML(id);
+    return `<div class="pickrow" style="padding:14px;margin-bottom:10px">
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:10px">
+        <div style="width:60px;text-align:center;flex-shrink:0">${art(hero, 46)}</div>
+        <div class="pname" style="flex:1">${hero.name}</div>
+        <button class="wo-btn amber" data-pick="${hero.id}" style="padding:8px 14px;font-size:13px;white-space:nowrap">Choose</button>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <div class="hdr" style="width:100%;margin:0"><span>Starting Items</span></div>
+        <div class="itemGrid" style="flex:1;min-width:220px">${itemCards}</div>
+        <div style="flex:1;min-width:220px">
+          <div class="hdr" style="margin:0"><span>Vehicle Ability</span></div>
+          <div class="itemGrid" style="margin-top:8px">${abilityCard}</div>
+        </div>
       </div>
     </div>`;
   }).join('');
@@ -3185,32 +3282,53 @@ function starterSelectScreen() {
       <div class="wo-stripe"></div>
       <div class="wo-body">
         <h1>Pick Your <em>Vehicle</em></h1>
-        <div class="grid" style="margin:12px 0">${cards}</div>
+        <div style="margin:12px 0">${rows}</div>
       </div>
     </div>
   `;
 }
 
 function upgradeScreen() {
-  const rows = UPGRADE_DEFS.filter(u => u.id !== 'adminTune').map(u => {
-    const cap = u.maxLevel ?? MAX_LEVEL;
+  const TIER_LABEL = { high: 'Core Stats — Matters Every Run', medium: 'Resource Capacity', low: 'Situational & Utility' };
+  const TIER_COLOR = { high: 'var(--red)', medium: 'var(--amber)', low: 'var(--blue-dark)' };
+  const groups = { high: [], medium: [], low: [] };
+  UPGRADE_DEFS.forEach(u => groups[u.tier || 'medium'].push(u));
+
+  const cardFor = u => {
     const lvl = META.levels[u.id];
-    const maxed = lvl >= cap;
+    const maxed = lvl >= MAX_LEVEL;
+    const unlocked = upgradeUnlocked(u);
     const cost = maxed ? 0 : upgradeCost(u, lvl);
     const refund = lvl > 0 ? upgradeCost(u, lvl - 1) : 0;
-    const desc = u.id === 'reveal'
-      ? `Start every battle with ${1 + lvl} opponent card${1 + lvl > 1 ? 's' : ''} already revealed.`
-      : u.desc;
+    if (!unlocked) {
+      return `<div class="shopcard" style="opacity:0.6">
+        <div class="hdr"><span><b>${u.label}</b></span><span class="price">${ICON.lock || '🔒'} Locked</span></div>
+        <div class="note" style="margin:0">${u.desc}</div>
+        <div class="note" style="margin:4px 0 0;color:var(--red)">Unlock: ${u.unlock.desc}</div>
+      </div>`;
+    }
     return `<div class="shopcard">
-      <div class="hdr"><span><b>${u.label}</b> (Lv ${lvl}/${cap})</span><span class="price">${maxed ? 'MAX' : cost + ' pts'}</span></div>
-      <div class="note" style="margin:0 0 6px">${desc}</div>
-      <div style="display:flex;justify-content:flex-end;gap:6px;flex-wrap:wrap">
-          ${lvl > 0 ? `<button class="wo-btn gray" data-leveldown="${u.id}" style="padding:6px 10px;font-size:12px">Refund (+${refund})</button>` : ''}
-          ${maxed ? '' : `<button class="wo-btn amber" data-levelup="${u.id}" style="padding:6px 10px;font-size:12px" ${META.points < cost ? 'disabled' : ''}>Level Up</button>`}
+      <div class="hdr"><span><b>${u.label}</b> (Lv ${lvl}/${MAX_LEVEL})</span></div>
+      <div class="note" style="margin:2px 0 6px">${u.desc}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+        <div class="note hoverTip" style="margin:0;font-weight:700;color:var(--ink)" title="What you actually have right now at this level.">Currently: ${u.currentValue(lvl)}</div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+          <span class="price" style="white-space:nowrap">${maxed ? 'MAX' : cost + ' pts'}</span>
+          <div style="display:flex;gap:6px;flex-wrap:nowrap">
+            ${lvl > 0 ? `<button class="wo-btn gray" data-leveldown="${u.id}" style="padding:6px 10px;font-size:12px;white-space:nowrap">Refund (+${refund})</button>` : ''}
+            ${maxed ? '' : `<button class="wo-btn amber" data-levelup="${u.id}" style="padding:6px 10px;font-size:12px;white-space:nowrap" ${META.points < cost ? 'disabled' : ''}>Level Up</button>`}
+          </div>
         </div>
-      <div class="levelbar"><i style="width:${(lvl / cap) * 100}%"></i></div>
+      </div>
+      <div class="levelbar"><i style="width:${(lvl / MAX_LEVEL) * 100}%"></i></div>
     </div>`;
-  }).join('');
+  };
+
+  const sections = ['high', 'medium', 'low'].map(tier => `
+    <div class="hdr" style="margin-top:16px"><span style="color:${TIER_COLOR[tier]}">${TIER_LABEL[tier]}</span></div>
+    <div style="margin:8px 0">${groups[tier].map(cardFor).join('')}</div>
+  `).join('');
+
   return `
     <div class="wo">
       <div class="wo-stripe"></div>
@@ -3218,9 +3336,9 @@ function upgradeScreen() {
         <h1>Spend Your <em>Career Points</em></h1>
         <div class="wo-sub">Career Points: ${META.points} &middot; Lifetime: ${META.lifetimePoints} &middot; High score: ${META.highScore}</div>
         <div class="note" style="margin:-4px 0 6px">These carry over between playthroughs and can only be spent before a run begins. Item modifications (bonus, uses per turn, card limit, converting to poison/burn/curse) are done in-run at the Chop Shop using coins, and reset every run.</div>
-        <button class="wo-btn" id="upgradeContinueBtn" style="width:100%;margin-bottom:10px">Back</button>
-        <div style="margin:12px 0">${rows}</div>
-        <button class="wo-btn" id="upgradeContinueBtn2" style="width:100%">Back</button>
+        <button class="wo-btn" id="upgradeContinueBtn" style="width:100%;margin-bottom:6px">Back</button>
+        ${sections}
+        <button class="wo-btn" id="upgradeContinueBtn2" style="width:100%;margin-top:12px">Back</button>
       </div>
     </div>
   `;
@@ -3320,7 +3438,7 @@ function render(html) {
       commitNode(BATTLE.row, BATTLE.col);
       if (RUN.pendingWorldWin) {
         RUN.pendingWorldWin = false;
-        if (RUN.world >= 2) endRun(true);
+        if (RUN.world >= 2) { META.world2Cleared = true; saveMeta(); endRun(true); }
         else render(worldCompleteScreen());
       } else render(mapScreen());
     }
@@ -3335,6 +3453,8 @@ function render(html) {
     RUN.currentRow = -1;
     RUN.currentCol = null;
     RUN.path = [];
+    META.bestWorld = Math.max(META.bestWorld || 1, 2);
+    saveMeta();
     saveRun();
     render(mapScreen());
   };
@@ -3523,9 +3643,9 @@ function render(html) {
   const openRunUpgradeFromRestBtn = document.getElementById('openRunUpgradeFromRestBtn'); if (openRunUpgradeFromRestBtn) openRunUpgradeFromRestBtn.onclick = () => { RUN_UPGRADE_RETURN = 'rest'; render(runUpgradeScreen()); };
   app.querySelectorAll('[data-levelup]').forEach(el => el.onclick = () => {
     const u = UPGRADE_DEFS.find(x => x.id === el.dataset.levelup);
+    if (!upgradeUnlocked(u)) return;
     const lvl = META.levels[u.id];
-    const cap = u.maxLevel ?? MAX_LEVEL;
-    if (lvl >= cap) return;
+    if (lvl >= MAX_LEVEL) return;
     const cost = upgradeCost(u, lvl);
     if (META.points < cost) return;
     META.points -= cost; META.levels[u.id]++;

@@ -116,7 +116,7 @@
      is in the battle screen, however many there are. */
   .popupItemRow{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
   .popupItemRow .itemCard{flex:0 0 140px;width:140px}
-  .pickItemRow{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+  .pickItemRow{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-start}
   .pickItemRow .itemCard{flex:0 0 140px;width:140px;min-height:150px}
   .dealerGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
   @media (max-width:700px){.dealerGrid{grid-template-columns:repeat(2,1fr)}}
@@ -1043,7 +1043,7 @@ function heroItemCardPreviewHTML(itemId) {
   const drawN = item.drawUsesCardCount ? item.maxCards + (item.drawBonusFlat || 0) : (item.drawAmount || 0);
   const drawText = (item.drawAmount || item.drawUsesCardCount) ? `<b>Draw</b> ${drawN} card${drawN === 1 ? '' : 's'}` : '';
   const kindLine = formatKindAmount(item, kindTag);
-  return `<div class="itemCard" style="cursor:default">
+  return `<div class="itemCard" style="cursor:default;border:1px solid var(--blue-light)">
     <div class="itemCard-sec">
       <div class="hdr" style="font-weight:600;color:var(--blue-dark)">${item.name}</div>
       <div class="itemReqLine">${itemRequirementText(item)}</div>
@@ -1058,7 +1058,7 @@ function heroAbilityCardHTML(heroId) {
   const sp = VEHICLE_SPECIALS[heroId];
   if (!sp) return '';
   const cost = sp.energyCost ?? sp.energyPerUnit;
-  return `<div class="itemCard" style="cursor:default;border-color:var(--amber)">
+  return `<div class="itemCard" style="cursor:default;border:1px solid var(--amber)">
     <div class="itemCard-sec">
       <div class="hdr" style="font-weight:600;color:var(--amber)">${sp.name}</div>
       <div class="itemReqLine">${ICON.energy} ${cost}${sp.type === 'dodge' || sp.type === 'refuel' ? '' : '+'} Energy</div>
@@ -3287,7 +3287,7 @@ function starterSelectScreen() {
   const rows = STARTERS.map(id => {
     if (id === 'comingsoon1' || id === 'comingsoon2') {
       return `<div class="pickrow locked" style="display:flex;align-items:center;gap:14px;padding:14px;margin-bottom:10px">
-        <div style="width:60px;text-align:center;flex-shrink:0"><span class="vart" style="width:46px;height:46px;font-size:46px">${ICON.lock}</span></div>
+        <div style="width:44px;text-align:center;flex-shrink:0"><span class="vart" style="width:36px;height:36px;font-size:36px">${ICON.lock}</span></div>
         <div style="flex:1">
           <div class="pname">Coming Soon</div>
           <div class="ptag">A new vehicle is on the way.</div>
@@ -3298,7 +3298,7 @@ function starterSelectScreen() {
     const unlocked = isStarterUnlocked(id);
     if (!unlocked) {
       return `<div class="pickrow locked" style="display:flex;align-items:center;gap:14px;padding:14px;margin-bottom:10px">
-        <div style="width:60px;text-align:center;flex-shrink:0"><span class="vart" style="width:46px;height:46px;font-size:46px">${ICON.lock}</span></div>
+        <div style="width:44px;text-align:center;flex-shrink:0"><span class="vart" style="width:36px;height:36px;font-size:36px">${ICON.lock}</span></div>
         <div style="flex:1">
           <div class="pname">${hero.name}</div>
           <div class="ptag">${starterLockNote(id)}</div>
@@ -3307,17 +3307,17 @@ function starterSelectScreen() {
     }
     const itemCards = (hero.starterItems || []).map(heroItemCardPreviewHTML).join('');
     const abilityCard = heroAbilityCardHTML(id);
-    return `<div class="pickrow" style="padding:14px;margin-bottom:10px">
+    return `<div class="pickrow" style="padding:12px;margin-bottom:10px">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-        <div style="width:44px;text-align:center;flex-shrink:0">${art(hero, 36)}</div>
+        <div style="width:36px;text-align:center;flex-shrink:0">${art(hero, 30)}</div>
         <div class="pname" style="flex:1">${hero.name}</div>
+        <button class="wo-btn amber" data-pick="${hero.id}" style="padding:6px 14px;font-size:12px;white-space:nowrap">Choose</button>
       </div>
       <div class="pickItemRow">${itemCards}${abilityCard}</div>
-      <button class="wo-btn amber" data-pick="${hero.id}" style="width:100%;margin-top:10px">Choose ${hero.name}</button>
     </div>`;
   }).join('');
   return `
-    <div class="wo">
+    <div class="wo" style="max-width:600px;margin:0 auto">
       <div class="wo-stripe"></div>
       <div class="wo-body">
         <h1>Pick Your <em>Vehicle</em></h1>

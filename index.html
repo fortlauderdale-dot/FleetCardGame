@@ -511,7 +511,7 @@ function fleetLabel() { return META.playerName ? `${META.playerName}'s Fleet` : 
 function opponentAttackBoxHTML(opp) {
   if (opp.locked) {
     const remaining = Math.max(0, opp.lockThreshold - opp.lockProgress);
-    return `<div class="itemCard" style="cursor:default">
+    return `<div class="itemCard" style="cursor:default;border:2px solid var(--blue)">
       <div class="hdr" style="font-weight:600; color:var(--blue-dark)">${opp.releaseAttackName || 'Release Blast'}</div>
       <div class="itemReqLine">
         <span class="vart" style="width:14px;height:14px;font-size:14px;vertical-align:-2px">${ICON.lock}</span>
@@ -582,7 +582,7 @@ function opponentAttackBoxHTML(opp) {
       : effect === 'stun' ? `<span class="hoverTip" title="${EFFECT_TIP.stun}"><b>Stuns</b></span> your next counter-attack`
       : '';
 
-    return `<div class="itemCard ${kindClass(effect)}" style="cursor:default">
+    return `<div class="itemCard ${kindClass(effect)}" style="cursor:default;border:2px solid ${effect==='poison'?'#4d8f45':effect==='burn'?'#c4472d':effect==='curse'?'#7a4aa8':'var(--blue)'}">
       <div class="usesBadge hoverTip" title="Attacks per turn">${swings === Infinity ? '∞' : swings}</div>
       <div class="hdr" style="font-weight:600; color:var(--blue-dark)">${name}</div>
       <div class="itemReqLine">${capLine}</div>
@@ -2577,10 +2577,14 @@ function nodePopupScreen(r, c) {
     <div class="wo" style="width:100%">
       <div class="wo-stripe"></div>
       <div class="wo-body">
-        <div class="wo-eyebrow">${info.title}</div>
-        <h1>Stop <em>Details</em></h1>
-        <div style="text-align:center;margin:8px 0">${info.art}</div>
-        ${info.rows.map(([k, v]) => `<div class="kv"><span>${k}</span><b>${v}</b></div>`).join('')}
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+          <div style="flex:1;min-width:0">
+            <div class="wo-eyebrow">Stop Details</div>
+            <h1 style="margin:2px 0 0">${info.title}</h1>
+          </div>
+          <div style="flex-shrink:0">${info.art}</div>
+        </div>
+        ${info.rows.length ? `<div class="note" style="margin:8px 0;font-weight:700;color:var(--ink);font-size:13px">${info.rows.map(([k,v])=>`${k}: ${v}`).join(' &nbsp;&middot;&nbsp; ')}</div>` : ''}
         ${info.extra || ''}
         ${rewardsHTML}
         <div style="display:flex;gap:8px;margin-top:14px">
@@ -2629,7 +2633,7 @@ function mapScreen() {
     if(!showReal) tip='Move closer to scout this stop.';
     else if(node.type==='battle'){
       const o=node.opponent;
-      tip=`${o.name}<br>HP: ${o.hp}<br>${tierNeedText(o.minTier)} needed to attack<br>Draws ${o.drawRate}/turn${o.turnLimit?`<br>Enrages after turn ${o.turnLimit}`:''}${o.attackInfo?`<br>${o.attackInfo}`:''}${o.boss?'<br><b>World Boss</b>':''}`;
+      tip=`HP: ${o.hp}<br>${tierNeedText(o.minTier)} needed to attack${o.turnLimit?`<br>Gets stronger the longer the fight runs`:''}${o.boss?'<br><b>World Boss</b>':''}`;
     } else if(node.type==='shop') tip='Dealership — buy and sell Items.';
     else if(node.type==='rest') tip='Restore 30 health.';
     else if(node.type==='blacksmith') tip='Spend coins to permanently boost a card, rank, or suit for this run.';

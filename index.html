@@ -46,9 +46,10 @@
   .panel{background:var(--white);border:2px solid var(--blue-light);border-radius:10px;padding:14px;margin-bottom:12px}
   .hdr{display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-size:12px;
     letter-spacing:.02em;color:var(--dim);margin-bottom:8px}
-  .bar-wrap{height:14px;background:var(--blue-light);border-radius:7px;overflow:hidden;border:1px solid var(--blue-light)}
+  .bar-wrap{height:20px;background:var(--blue-light);border-radius:7px;overflow:hidden;border:1px solid var(--blue-light);position:relative}
   .bar-fill{height:100%;transition:width .25s}
   .bar-hp{background:var(--red)} .bar-health{background:var(--blue)}
+  .bar-text{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.7);font-family:var(--mono);pointer-events:none}
 
   .grid{display:flex;flex-wrap:wrap;gap:10px}
   .currencies{display:flex;gap:10px;flex-wrap:wrap;align-items:center;font-family:var(--mono);font-size:11.5px}
@@ -115,13 +116,16 @@
      is in the battle screen, however many there are. */
   .popupItemRow{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
   .popupItemRow .itemCard{flex:0 0 140px;width:140px}
+  .pickItemRow{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+  .pickItemRow .itemCard{flex:0 0 140px;width:140px;min-height:150px}
   .dealerGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
   @media (max-width:700px){.dealerGrid{grid-template-columns:repeat(2,1fr)}}
   @media (max-width:460px){.dealerGrid{grid-template-columns:1fr}}
   .dealerGrid2col{grid-template-columns:repeat(2,1fr) !important}
   @media (max-width:460px){.dealerGrid2col{grid-template-columns:1fr !important}}
   .itemCard{border-radius:8px;padding:6px 4px;background:var(--bg);min-height:172px;display:flex;flex-direction:column;align-items:center;text-align:center;box-sizing:border-box;font-size:12px;position:relative}
-  .itemCard-sec{flex:1 1 0;display:flex;flex-direction:column;justify-content:center;align-items:center;width:100%;min-height:0}
+  .itemCard-sec{width:100%;flex:0 0 auto}
+  .itemCard-cards-sec{flex:1 1 auto;display:flex;flex-direction:column;justify-content:center;align-items:center;width:100%;min-height:24px}
   .usesBadge{position:absolute;top:4px;right:4px;font-size:9px;font-weight:800;background:var(--blue-light);color:var(--blue-dark);border-radius:5px;padding:1px 5px;line-height:1.4}
   .usesBadge.depleted{background:#eee;color:var(--dim)}
   .itemCard.ready{border-color:var(--green) !important}
@@ -1043,8 +1047,9 @@ function heroItemCardPreviewHTML(itemId) {
     <div class="itemCard-sec">
       <div class="hdr" style="font-weight:600;color:var(--blue-dark)">${item.name}</div>
       <div class="itemReqLine">${itemRequirementText(item)}</div>
-      ${bonusLine}
     </div>
+    <div class="itemDivider"></div>
+    <div class="itemCard-cards-sec">${bonusLine || '<div class="note" style="margin:0">No bonus</div>'}</div>
     <div class="itemDivider"></div>
     <div class="itemCard-sec"><div class="note">${[kindLine, drawText].filter(Boolean).join(' + ')}</div></div>
   </div>`;
@@ -1143,7 +1148,7 @@ const OPPONENT_TIERS = [
     { id: 'stormSurge', name: 'Storm Surge', icon: '🌊', image: 'Hazards/storm-surge.jpg', hp: 130, minTier: 3, drawRate: 4, turnLimit: 8, attacks: [{ name: 'Tidal Slam', maxCards: 4, minTier: 3, effect: 'burn' }, { name: 'Undertow', maxCards: 3, minTier: 2, effect: 'poison' }] },
     { id: 'buildingFire', name: 'Building Fire', icon: '🔥', image: 'Hazards/building-fire.jpg', hp: 135, minTier: 4, drawRate: 4, turnLimit: 8, attacks: [{ name: 'Inferno Blast', maxCards: 4, minTier: 4, effect: 'burn' }, { name: 'Structural Collapse', maxCards: 5, minTier: 0, sumThreshold: { min: 30, damage: 26 }, effect: 'stealFuel' }] },
     { id: 'evilMechanic2', name: 'Evil Mechanic (Repeat Offender)', icon: '🔧', image: 'Hazards/evil-mechanic-2.jpg', hp: 140, minTier: 2, drawRate: 4, turnLimit: 8, curse: { count: 'all', amount: 12, chance: 0.6 }, attacks: [{ name: 'Curse All', maxCards: 4, minTier: 2, effect: 'curse' }, { name: 'Total Wreckage', maxCards: 5, minTier: 0, sumThreshold: { min: 32, damage: 32 } }] },
-    { id: 'looseDog2', name: 'Loose Dog 2', icon: '🐕', image: 'Hazards/loose-dog-2.jpg', hp: 130, minTier: 0, drawRate: 3, turnLimit: 8, attacks: [{ name: 'Snap Bite', maxCards: 1, minTier: 0 }, { name: 'Cornered Snarl', maxCards: 2, minTier: 0, fewCardsThreshold: { max: 1, damage: 28 } }] },
+    { id: 'looseDog2', name: 'Loose Dog 2', icon: '🐕', image: 'Hazards/loose-dog-2.jpg', hp: 130, minTier: 0, drawRate: 2, turnLimit: 8, attacks: [{ name: 'Snap Bite', maxCards: 1, minTier: 0 }, { name: 'Cornered Snarl', maxCards: 2, minTier: 0, fewCardsThreshold: { max: 1, damage: 28 } }] },
     { id: 'gasLeak2', name: 'Major Gas Leak', icon: '⛽', image: 'Hazards/gas-leak-2.jpg', hp: 145, locked: true, lockThreshold: 75, lockAttack: 65, drawRate: 4, turnLimit: 9, releaseAttackName: 'Massive Ignition' },
     { id: 'streetlight_elite', name: 'Live Wire Street Light [Elite]', icon: '⚡', image: 'Hazards/downed-line.jpg', hp: 135, minTier: 2, drawRate: 4, turnLimit: 8, attacks: [{ name: 'High-Voltage Arc', maxCards: 3, minTier: 2, effect: 'stun' }, { name: 'Ground Crackle', maxCards: 3, minTier: 0, sumThreshold: { min: 25, damage: 26 } }] },
     { id: 'sinkhole_elite', name: 'Crumbling Sinkhole [Elite]', icon: '🕳️', image: 'Hazards/sinkhole.jpg', hp: 140, minTier: 1, drawRate: 4, turnLimit: 8, attacks: [{ name: 'Chasm Collapse', maxCards: 5, minTier: 0, sumThreshold: { min: 35, damage: 45 } }, { name: 'Corrosive Mud', maxCards: 2, minTier: 1, effect: 'poison' }] }
@@ -2727,7 +2732,7 @@ function battleScreen() {
           <div class="note" style="font-size:11px">${item.note}</div>
         </div>
         <div class="itemDivider"></div>
-        <div class="itemCard-sec">
+        <div class="itemCard-cards-sec">
           <div class="vcards">${cardHTML}</div>
           ${idxs.length > 0 ? `<button class="wo-btn gray" style="padding:3px 6px;font-size:10px;margin-top:6px" data-clear="${slotKey}">Release All</button>` : ''}
         </div>
@@ -2771,11 +2776,13 @@ function battleScreen() {
       <div class="itemCard-sec">
         <div class="hdr" style="font-weight:600; color:${eKind==='defense'?'var(--defense)':eKind==='poison'?'#4d8f45':eKind==='burn'?'#c4472d':eKind==='curse'?'#7a4aa8':'var(--blue-dark)'}">${item.name}${cursedAmt ? ` <span class="vart" style="width:12px;height:12px;font-size:12px;color:var(--purple)">${ICON.curse}</span> cursed` : ''}</div>
         <div class="itemReqLine">${itemRequirementText(item, eKind)}</div>
-        ${bonusLine}
-        ${hypPreviewHTML}
       </div>
       <div class="itemDivider"></div>
-      <div class="itemCard-sec"><div class="vcards">${cardHTML}</div></div>
+      <div class="itemCard-cards-sec">
+        ${bonusLine}
+        ${hypPreviewHTML}
+        <div class="vcards">${cardHTML}</div>
+      </div>
       <div class="itemDivider"></div>
       <div class="itemCard-sec">
       ${cooldownLeft > 0 ? `<div class="note" style="margin:4px 0 0"><span class="hoverTip" title="This item can't be used again until its cooldown runs out.">On cooldown: ${cooldownLeft} turn${cooldownLeft > 1 ? 's' : ''} left</span></div>` : ''}
@@ -2829,9 +2836,9 @@ function battleScreen() {
       <div class="duelSide you">${art(PLAYER_ART, 30)}
         <div class="sideInfo">
           <h3 style="justify-content:flex-end"><span style="color:var(--blue)">${fleetLabel()}</span></h3>
-          <div class="bar-wrap"><div class="bar-fill bar-health" style="width:${healthPct}%"></div></div>
-          <div class="note">${RUN.health} / ${RUN.maxHealth}${BATTLE.playerArmor ? ` &middot; <span class="armorText hoverTip" title="Armor protects against incoming attacks, absorbing damage equal to the amount shown."><span class="vart" style="width:12px;height:12px;font-size:12px">${ICON.shield}</span> ${BATTLE.playerArmor} Armor</span>` : ''}</div>
+          <div class="bar-wrap"><div class="bar-fill bar-health" style="width:${healthPct}%"></div><div class="bar-text">${RUN.health} / ${RUN.maxHealth}</div></div>
           <div style="margin-top:4px;display:flex;justify-content:flex-end"><button class="wo-btn green" id="fuelHealBtn" title="Fuel also gets you across the map — spending it here means less for travel." style="padding:6px 10px;font-size:11px" ${RUN.fuel < FUEL_HESTORE_COST || RUN.health >= RUN.maxHealth ? 'disabled' : ''}>Heal ${FUEL_HEAL_AMOUNT} = ${FUEL_HESTORE_COST} ${ICON.fuel}</button></div>
+          ${BATTLE.playerArmor ? `<div class="note" style="text-align:right;margin-top:2px"><span class="armorText hoverTip" style="font-weight:800;font-size:13px" title="Armor protects against incoming attacks, absorbing damage equal to the amount shown."><span class="vart" style="width:12px;height:12px;font-size:12px">${ICON.shield}</span> ${BATTLE.playerArmor} ARMOR</span></div>` : ''}
         </div>
       </div>
       <div class="vsMark">VS</div>
@@ -2845,8 +2852,8 @@ function battleScreen() {
               <span class="cur pts" title="Career Points earned for winning. More for a Perfect Win.">${ICON.star} ${Math.round(5 + BATTLE.row*3)}</span>
             </span>
           </h3>
-          <div class="bar-wrap"><div class="bar-fill bar-hp" style="width:${hpPct}%"></div></div>
-          <div class="note">${opp.hpNow} / ${opp.hp} <span class="hoverTip" style="color:var(--dim)" title="Cards this opponent draws into its pool at the start of each of its turns.">&middot; Draws ${BATTLE.opponent.drawRate}/turn</span>${BATTLE.opponent.armor > 0 ? ` &middot; <span class="status hoverTip" style="color:#5a7fa8" title="Armor absorbs damage from your direct attacks before it reaches their health. Poison, burn, and curse damage ignore it.">${ICON.defense || '🛡️'} ${BATTLE.opponent.armor} armor</span>` : ''}${(BATTLE.opponent.poisonStacks||[]).length ? ` &middot; <span class="status poisonStatus hoverTip" title="Poison now: ${(BATTLE.opponent.poisonStacks||[]).reduce((a,n)=>a+n,0)} damage. Next turn: ${(BATTLE.opponent.poisonStacks||[]).map(n=>Math.max(0,n-3)).reduce((a,n)=>a+n,0)} damage.">${ICON.poison} ${(BATTLE.opponent.poisonStacks||[]).reduce((a,n)=>a+n,0)} poison</span>` : ''}${BATTLE.opponent.burns?.length ? (() => { const burns=BATTLE.opponent.burns; const now=burns.reduce((a,b)=>a+(b.stages[b.stageIdx]||0),0); const future=[1,2].map(offset=>burns.reduce((a,b)=>a+(b.stages[b.stageIdx+offset]||0),0)).filter(n=>n>0); const nextText=future.length ? `Next: ${future.join(', ')}` : 'No more burn damage.'; return ` &middot; <span class="status burnStatus hoverTip" title="${nextText}">${ICON.fire} ${now} <b><u>Burn Damage</u></b></span>`; })() : ''}${BATTLE.opponent.curseFromPlayer ? ` &middot; <span class="status curseStatus hoverTip" title="Curse: ${BATTLE.opponent.curseFromPlayer} damage if the opponent fails to attack.">${ICON.curse} cursed</span>` : ''}</div>
+          <div class="bar-wrap"><div class="bar-fill bar-hp" style="width:${hpPct}%"></div><div class="bar-text">${opp.hpNow} / ${opp.hp}</div></div>
+          <div class="note">${BATTLE.opponent.armor > 0 ? `<span class="status hoverTip" style="color:#5a7fa8;font-weight:800;font-size:13px" title="Armor absorbs damage from your direct attacks before it reaches their health. Poison, burn, and curse damage ignore it.">${ICON.defense || '🛡️'} ${BATTLE.opponent.armor} ARMOR</span>` : ''}${(BATTLE.opponent.poisonStacks||[]).length ? ` &middot; <span class="status poisonStatus hoverTip" title="Poison now: ${(BATTLE.opponent.poisonStacks||[]).reduce((a,n)=>a+n,0)} damage. Next turn: ${(BATTLE.opponent.poisonStacks||[]).map(n=>Math.max(0,n-3)).reduce((a,n)=>a+n,0)} damage.">${ICON.poison} ${(BATTLE.opponent.poisonStacks||[]).reduce((a,n)=>a+n,0)} poison</span>` : ''}${BATTLE.opponent.burns?.length ? (() => { const burns=BATTLE.opponent.burns; const now=burns.reduce((a,b)=>a+(b.stages[b.stageIdx]||0),0); const future=[1,2].map(offset=>burns.reduce((a,b)=>a+(b.stages[b.stageIdx+offset]||0),0)).filter(n=>n>0); const nextText=future.length ? `Next: ${future.join(', ')}` : 'No more burn damage.'; return ` &middot; <span class="status burnStatus hoverTip" title="${nextText}">${ICON.fire} ${now} <b><u>Burn Damage</u></b></span>`; })() : ''}${BATTLE.opponent.curseFromPlayer ? ` &middot; <span class="status curseStatus hoverTip" title="Curse: ${BATTLE.opponent.curseFromPlayer} damage if the opponent fails to attack.">${ICON.curse} cursed</span>` : ''}</div>
           ${BATTLE.opponent.burns?.length ? `<span class="attackChip" data-detonate="1" style="background:var(--amber);border-color:#c97600;font-size:10px;padding:4px 8px">Detonate for ${BATTLE.opponent.burns.reduce((a,b)=>a+(b.stages[b.stageIdx]||0),0)} now</span>` : ''}
         </div>
       </div>
@@ -2862,15 +2869,18 @@ function battleScreen() {
     </div>
         ${BATTLE.turnDiscard.length ? `<div class="note" style="margin-top:8px">Discarding this turn (tap to undo):</div><div class="hand">${discardStagedHTML}</div>` : ''}
       </div>
-      <div class="deckStack">
-        <div class="card back" style="position:relative"><span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-family:var(--mono);font-weight:700;font-size:16px">${BATTLE.deck.length}</span></div>
-        <button class="wo-btn red" id="endTurnBtn" style="padding:8px 10px;font-size:12px;font-weight:700;width:100%">End Turn</button>
+      <div class="deckStack" style="flex-direction:row;align-items:center;gap:6px;justify-content:center">
+        <span class="hoverTip" style="font-family:var(--mono);font-weight:800;font-size:13px;color:var(--dim)" title="How many cards you draw at the start of each of your turns.">${RUN.drawPerTurn}/turn</span>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
+          <div class="card back" style="position:relative"><span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-family:var(--mono);font-weight:700;font-size:16px">${BATTLE.deck.length}</span></div>
+          <button class="wo-btn red" id="endTurnBtn" style="padding:8px 10px;font-size:12px;font-weight:700;width:100%">End Turn</button>
+        </div>
       </div>
       <div class="panel">
         <div class="hand">${poolHTML}</div>
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-          <span class="note hoverTip" style="margin:0" title="How many new cards this opponent draws at the start of each of its turns.">Draws ${opp.drawRate}/turn</span>
           <button class="wo-btn amber" id="scoutBtn" style="padding:8px 12px;font-size:12px" ${BATTLE.scoutedThisTurn || RUN.chips < 10 ? 'disabled' : ''}>Reveal a card = 10 ${ICON.coin}</button>
+          <span class="hoverTip" style="font-family:var(--mono);font-weight:800;font-size:13px;color:var(--dim);margin-left:auto" title="How many new cards this opponent draws at the start of each of its turns.">${opp.drawRate}/turn</span>
         </div>
       </div>
     </div>
@@ -2901,7 +2911,6 @@ function battleScreen() {
       </div>
     </div>
     <div class="panel">
-      <div class="hdr" style="margin-bottom:0">Turn ${BATTLE.turn}</div>
       <div class="log" id="battleLogEl">${(() => {
         const turns = [...new Set(BATTLE.logLines.map(l => l.turn))];
         return turns.map(t => `<div class="note" style="margin:6px 0 2px;color:var(--blue-dark);font-weight:700">Turn ${t}</div>${BATTLE.logLines.filter(l => l.turn === t).map(l => `<div>${l.msg}</div>`).join('')}`).join('');
@@ -3299,19 +3308,12 @@ function starterSelectScreen() {
     const itemCards = (hero.starterItems || []).map(heroItemCardPreviewHTML).join('');
     const abilityCard = heroAbilityCardHTML(id);
     return `<div class="pickrow" style="padding:14px;margin-bottom:10px">
-      <div style="display:flex;align-items:center;gap:14px;margin-bottom:10px">
-        <div style="width:60px;text-align:center;flex-shrink:0">${art(hero, 46)}</div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <div style="width:44px;text-align:center;flex-shrink:0">${art(hero, 36)}</div>
         <div class="pname" style="flex:1">${hero.name}</div>
-        <button class="wo-btn amber" data-pick="${hero.id}" style="padding:8px 14px;font-size:13px;white-space:nowrap">Choose</button>
       </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <div class="hdr" style="width:100%;margin:0"><span>Starting Items</span></div>
-        <div class="itemGrid" style="flex:1;min-width:220px">${itemCards}</div>
-        <div style="flex:1;min-width:220px">
-          <div class="hdr" style="margin:0"><span>Vehicle Ability</span></div>
-          <div class="itemGrid" style="margin-top:8px">${abilityCard}</div>
-        </div>
-      </div>
+      <div class="pickItemRow">${itemCards}${abilityCard}</div>
+      <button class="wo-btn amber" data-pick="${hero.id}" style="width:100%;margin-top:10px">Choose ${hero.name}</button>
     </div>`;
   }).join('');
   return `

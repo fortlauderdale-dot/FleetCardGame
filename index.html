@@ -9,9 +9,9 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --blue:#2451e0; --blue-dark:#173aa8; --blue-light:#e8edfd;
-    --white:#ffffff; --bg:#eef1fb; --ink:#12163a; --dim:#5c6280;
-    --amber:#ff9f1c; --red:#e5484d; --green:#2fae66; --purple:#8a4fe0; --gold:#d4af00; --defense:#2563a8; --defense-light:#e8f0f8; --defense-border:#6a94c4;
+    --blue:#4a5fc7; --blue-dark:#1a2038; --blue-light:#232a4d;
+    --white:#2b3350; --bg:#000000; --ink:#f2f4fb; --dim:#8b93c4;
+    --amber:#1fb6a6; --red:#e5484d; --green:#2fae66; --purple:#8a4fe0; --gold:#d4af00; --defense:#2563a8; --defense-light:#e8f0f8; --defense-border:#6a94c4;
     --disp:'Aptos','Aptos Display',ui-sans-serif,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
     --mono:'Aptos','Aptos Display',ui-sans-serif,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
   }
@@ -24,20 +24,20 @@
   .treasure-modal .wo{max-width:560px;width:100%;margin:0}
   .map-popup-overlay{position:fixed;inset:0;background:#12163acc;display:flex;align-items:flex-start;justify-content:center;z-index:100;padding:14px;padding-top:90px}
   .map-popup-overlay .wo{max-width:400px;width:100%;margin:0}
-  .treasure-prize{font-size:28px;font-weight:800;color:var(--blue-dark);text-align:center;margin:16px 0}
+  .treasure-prize{font-size:28px;font-weight:800;color:var(--blue);text-align:center;margin:16px 0}
 
-  .wo{background:var(--white);color:var(--ink);border:3px solid #2b3350;border-radius:12px;box-shadow:6px 6px 0 #1a2038;padding:0;margin:16px 0;overflow:hidden}
+  .wo{background:var(--white);color:var(--ink);border:3px solid var(--blue-dark);border-radius:12px;box-shadow:6px 6px 0 var(--blue-dark);padding:0;margin:16px 0;overflow:hidden}
   .wo-stripe{height:10px;background:linear-gradient(90deg,#2b3350 0%,#3d4a72 50%,#1fb6a6 100%)}
   .wo-body{padding:20px 22px 24px}
   .wo-eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:var(--dim)}
-  .wo h1{margin:6px 0 2px;font-size:clamp(24px,5.5vw,34px);line-height:1.05;font-weight:700;color:var(--blue-dark)}
+  .wo h1{margin:6px 0 2px;font-size:clamp(24px,5.5vw,34px);line-height:1.05;font-weight:700;color:var(--blue)}
   .wo h1 em{font-style:normal;color:var(--amber)}
   .wo-sub{font-family:var(--mono);font-size:13px;color:var(--dim);margin:8px 0 14px}
   .wo-btn{padding:12px 18px;font-size:15px;font-weight:700;letter-spacing:.01em;
     background:var(--blue);color:#fff;border:3px solid var(--blue-dark);border-radius:8px;box-shadow:3px 3px 0 var(--blue-dark)}
   .wo-btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--blue-dark)}
-  .wo-btn.amber{background:var(--amber);border-color:#c97600}
-  .wo-btn.gray{background:#8a90ab;border-color:#5c6280}
+  .wo-btn.amber{background:var(--amber);color:#062622;border-color:#0d8377}
+  .wo-btn.gray{background:#3a4160;border-color:#252b46}
   .wo-btn.purple{background:var(--purple);border-color:#5c2ea0}
   .wo-btn.green{background:var(--green);border-color:#1f7a48}
   .wo-btn:disabled{opacity:.4;cursor:default}
@@ -55,7 +55,7 @@
   .grid{display:flex;flex-wrap:wrap;gap:10px}
   .currencies{display:flex;gap:10px;flex-wrap:wrap;align-items:center;font-family:var(--mono);font-size:11.5px}
   .cur{border:1px solid var(--blue-light);border-radius:6px;padding:4px 8px}
-  .cur.gem{color:var(--purple);border-color:var(--purple);background:#f5effd} .cur.fuel{color:var(--green);border-color:var(--green);background:#eef9ee} .cur.energy{color:#8a6d00;border-color:var(--gold);background:#fff9df} .cur.chip{color:#a35f00;border-color:var(--amber);background:#fff4e0} .cur.pts{color:var(--blue-dark);border-color:var(--blue-dark);background:var(--blue-light)} .cur.health{color:var(--red);border-color:var(--red);background:#fdecec}
+  .cur.gem{color:var(--purple);border-color:var(--purple);background:#f5effd} .cur.fuel{color:var(--green);border-color:var(--green);background:#eef9ee} .cur.energy{color:#8a6d00;border-color:var(--gold);background:#fff9df} .cur.chip{color:#a35f00;border-color:var(--amber);background:#fff4e0} .cur.pts{color:var(--blue);border-color:var(--blue);background:var(--blue-light)} .cur.health{color:var(--red);border-color:var(--red);background:#fdecec}
   .cur{position:relative;cursor:help}.cur[title]:hover::after,.hoverTip[title]:hover::after{content:attr(title);position:absolute;z-index:50;left:50%;transform:translateX(-50%);top:calc(100% + 6px);width:max-content;max-width:220px;background:#12163a;color:#fff;padding:7px 9px;border-radius:6px;font:12px var(--disp);white-space:normal;box-shadow:3px 3px 0 #173aa8;text-align:left;pointer-events:none}.bossPreview{border:2px solid var(--red);background:#fff7f7}.mapboss{font-size:12px;font-family:var(--mono);color:var(--dim);margin-top:8px}
   .hoverTip{position:relative;cursor:help;text-decoration:underline dotted;text-underline-offset:2px}
   .tipLeft.cur[title]:hover::after,.tipLeft.hoverTip[title]:hover::after,.tipLeft.effectTip:hover::after{left:0;transform:none}
@@ -66,7 +66,7 @@
   .vsMark{align-self:center}
   .duelSide{display:flex;align-items:center;gap:8px}
   .duelSide .sideInfo{flex:1;min-width:0}
-  .duelSide h3{margin:0 0 4px;font-size:18px;color:var(--blue-dark);height:22px;display:flex;align-items:center;overflow:visible;position:relative}
+  .duelSide h3{margin:0 0 4px;font-size:18px;color:var(--blue);height:22px;display:flex;align-items:center;overflow:visible;position:relative}
   .duelSide .rewardRow{position:absolute;right:0;top:0;transform:translateY(-1px)}
   .duelSide.opp{flex-direction:row-reverse;text-align:right}
   .duelSide .bar-wrap{height:18px}
@@ -106,7 +106,7 @@
   .vslot.ready{border-color:var(--green)}
   .vslot.defense{border-color:#4a7fd8}
   .vslot.poison{border-color:#5a8a3a}
-  .vslot .vname{font-weight:700;font-size:15px;color:var(--blue-dark)}
+  .vslot .vname{font-weight:700;font-size:15px;color:var(--blue)}
   .vslot .vreq{font-family:var(--mono);font-size:10.5px;color:var(--dim);margin:3px 0}
   .vslot .vcards{display:flex;gap:3px;flex-wrap:wrap;min-height:30px;margin-top:6px}
 
@@ -129,7 +129,7 @@
   .itemCard{border-radius:8px;padding:6px 4px;background:var(--bg);min-height:172px;display:flex;flex-direction:column;align-items:center;text-align:center;box-sizing:border-box;font-size:12px;position:relative}
   .itemCard-sec{width:100%;flex:0 0 auto}
   .itemCard-cards-sec{flex:1 1 auto;display:flex;flex-direction:column;justify-content:center;align-items:center;width:100%;min-height:24px}
-  .usesBadge{position:absolute;top:4px;right:4px;font-size:9px;font-weight:800;background:var(--blue-light);color:var(--blue-dark);border-radius:5px;padding:1px 5px;line-height:1.4}
+  .usesBadge{position:absolute;top:4px;right:4px;font-size:9px;font-weight:800;background:var(--blue-light);color:var(--ink);border-radius:5px;padding:1px 5px;line-height:1.4}
   .usesBadge.depleted{background:#eee;color:var(--dim)}
   .itemCard.ready{border-color:var(--green) !important}
   .itemCard .hdr{width:100%;justify-content:center;text-align:center}
@@ -149,13 +149,13 @@
   .card.mini{width:37px;height:52px;font-size:14px;cursor:pointer;gap:0}
   .card.mini div:last-child{font-size:18px !important;line-height:1}
   .card.back{background:var(--blue);color:transparent;position:relative}
-  .card.back::after{content:'?';color:var(--white);position:absolute;font-size:16px}
+  .card.back::after{content:'?';color:var(--ink);position:absolute;font-size:16px}
   .card.back.mini::after{font-size:12px}
 
   .hand{display:flex;gap:6px;flex-wrap:wrap;padding:6px 0}
   .note{color:var(--dim);font-size:12px;margin:6px 0;font-family:var(--mono)}
   .kv{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px dashed var(--blue-light);font-family:var(--mono);font-size:12.5px}
-  .kv b{color:var(--blue-dark)}
+  .kv b{color:var(--blue)}
   .price{color:var(--amber);font-weight:700}
   .mapwrap{position:relative;margin:0 auto;overflow-x:auto;overflow-y:visible;background:linear-gradient(180deg,#dfead7,#edf4e8);border:2px solid #c8d8bf;border-radius:12px;padding:10px}.mapnode-wrap{position:absolute;transform:translate(-50%,-50%);z-index:1}
   .mapnode-wrap{position:absolute;transform:translate(-50%,-50%);z-index:1}
@@ -168,10 +168,10 @@
     font-size:19px;display:flex;align-items:center;justify-content:center;border:2px solid;background:var(--white)}
   .mapnode.future{background:var(--blue-light);border-color:var(--blue-light);color:#9aa1c4;cursor:default;opacity:.85}
   .mapnode.farfuture{background:var(--blue-light);border-color:var(--blue-light);color:#c3cae8;cursor:default;opacity:.5}
-  .mapnode.avail{background:var(--white);border-color:var(--amber);box-shadow:0 0 0 5px #ff9f1c33;cursor:pointer}
+  .mapnode.avail{background:var(--white);border-color:var(--amber);box-shadow:0 0 0 5px #1fb6a633;cursor:pointer}
   .mapnode.done{background:var(--green);border-color:var(--green);color:#fff;cursor:default}
-  .mapnode.current{background:var(--blue);border-color:var(--blue-dark);color:#fff;cursor:default;box-shadow:0 0 0 5px #2451e055;animation:herePulse 1.4s ease-in-out infinite}
-  @keyframes herePulse{0%,100%{box-shadow:0 0 0 4px #2451e055}50%{box-shadow:0 0 0 9px #2451e022}}
+  .mapnode.current{background:var(--blue);border-color:var(--blue-dark);color:#fff;cursor:default;box-shadow:0 0 0 5px #4a5fc755;animation:herePulse 1.4s ease-in-out infinite}
+  @keyframes herePulse{0%,100%{box-shadow:0 0 0 4px #4a5fc755}50%{box-shadow:0 0 0 9px #4a5fc722}}
   .hereTag{position:absolute;left:50%;bottom:calc(100% + 4px);transform:translateX(-50%);white-space:nowrap;
     background:var(--blue-dark);color:#fff;font-family:var(--mono);font-size:9.5px;font-weight:700;letter-spacing:.04em;
     padding:2px 6px;border-radius:4px;pointer-events:none}
@@ -185,7 +185,7 @@
   .pickrow{border:2px solid var(--blue-dark);background:var(--bg);border-radius:10px}
   .pickrow.locked{opacity:.55}
   .pickcard .picon{font-size:46px;display:flex;align-items:center;justify-content:center}
-  .pname{font-weight:700;font-size:17px;letter-spacing:.01em;color:var(--blue-dark)}
+  .pname{font-weight:700;font-size:17px;letter-spacing:.01em;color:var(--blue)}
   .ptag{font-family:var(--mono);font-size:11px;color:var(--dim);margin:4px 0 0}
   .pickcard .ptag{margin:4px 0 10px}
   .pickcard.locked{opacity:.55}
@@ -515,7 +515,7 @@ function opponentAttackBoxHTML(opp) {
   if (opp.locked) {
     const remaining = Math.max(0, opp.lockThreshold - opp.lockProgress);
     return `<div class="itemCard" style="cursor:default;border:2px solid var(--blue)">
-      <div class="hdr" style="font-weight:600; color:var(--blue-dark)">${opp.releaseAttackName || 'Release Blast'}</div>
+      <div class="hdr" style="font-weight:600; color:var(--blue)">${opp.releaseAttackName || 'Release Blast'}</div>
       <div class="itemReqLine">
         <span class="vart" style="width:14px;height:14px;font-size:14px;vertical-align:-2px">${ICON.lock}</span>
         Locked - ${remaining} more card value clears it
@@ -588,7 +588,7 @@ function opponentAttackBoxHTML(opp) {
     return `<div class="itemCard ${kindClass(effect)}" style="cursor:default;border:2px solid ${effect==='poison'?'#4d8f45':effect==='burn'?'#c4472d':effect==='curse'?'#7a4aa8':'var(--blue)'}">
       <div class="usesBadge hoverTip" title="Attacks per turn">${swings === Infinity ? '∞' : swings}</div>
       <div class="itemCard-sec">
-        <div class="hdr" style="font-weight:600; color:var(--blue-dark)">${name}</div>
+        <div class="hdr" style="font-weight:600; color:var(--blue)">${name}</div>
         <div class="itemReqLine">${capLine}</div>
       </div>
       <div class="itemDivider"></div>
@@ -1051,7 +1051,7 @@ function heroItemCardPreviewHTML(itemId) {
   const kindLine = formatKindAmount(item, kindTag);
   return `<div class="itemCard" style="cursor:default;border:2px solid var(--blue-dark)">
     <div class="itemCard-sec">
-      <div class="hdr" style="font-weight:600;color:var(--blue-dark)">${item.name}</div>
+      <div class="hdr" style="font-weight:600;color:var(--blue)">${item.name}</div>
       <div class="itemReqLine">${itemRequirementText(item)}</div>
     </div>
     <div class="itemDivider"></div>
@@ -2641,7 +2641,7 @@ function mapScreen() {
     const traveled = RUN.path.some(p=>p.row===e.fromRow&&p.col===e.fromCol) &&
                      RUN.path.some(p=>p.row===e.toRow&&p.col===e.toCol);
     svgLines += `<path d="M ${x1} ${y1} C ${x1+28} ${y1}, ${x2-28} ${y2}, ${x2} ${y2}"
-      fill="none" stroke="${traveled?'#ff9f1c':'#7f9180'}" stroke-width="${traveled?5:3}" stroke-linecap="round"/>`;
+      fill="none" stroke="${traveled?'#1fb6a6':'#7f9180'}" stroke-width="${traveled?5:3}" stroke-linecap="round"/>`;
   }
 
   let nodesHTML='';
@@ -2813,7 +2813,7 @@ function battleScreen() {
         ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleCardDrop(event,'${slotKey}',${effectiveMaxCards(item)})">
       <div class="usesBadge ${usesLeft <= 0 ? 'depleted' : ''} hoverTip" title="Uses left this turn">${usesBadgeText}</div>
       <div class="itemCard-sec">
-        <div class="hdr" style="font-weight:600; color:${eKind==='defense'?'var(--defense)':eKind==='poison'?'#4d8f45':eKind==='burn'?'#c4472d':eKind==='curse'?'#7a4aa8':'var(--blue-dark)'}">${item.name}${cursedAmt ? ` <span class="vart" style="width:12px;height:12px;font-size:12px;color:var(--purple)">${ICON.curse}</span> cursed` : ''}</div>
+        <div class="hdr" style="font-weight:600; color:${eKind==='defense'?'var(--defense)':eKind==='poison'?'#4d8f45':eKind==='burn'?'#c4472d':eKind==='curse'?'#7a4aa8':'var(--blue)'}">${item.name}${cursedAmt ? ` <span class="vart" style="width:12px;height:12px;font-size:12px;color:var(--purple)">${ICON.curse}</span> cursed` : ''}</div>
         <div class="itemReqLine">${itemRequirementText(item, eKind)}</div>
       </div>
       <div class="itemDivider"></div>
@@ -2892,7 +2892,7 @@ function battleScreen() {
           </h3>
           <div class="bar-wrap"><div class="bar-fill bar-hp" style="width:${hpPct}%"></div><div class="bar-text">${opp.hpNow} / ${opp.hp}</div></div>
           <div class="note">${BATTLE.opponent.armor > 0 ? `<span class="status hoverTip" style="color:#5a7fa8;font-weight:800;font-size:13px" title="Armor absorbs damage from your direct attacks before it reaches their health. Poison, burn, and curse damage ignore it.">${ICON.defense || '🛡️'} ${BATTLE.opponent.armor} ARMOR</span>` : ''}${(BATTLE.opponent.poisonStacks||[]).length ? ` &middot; <span class="status poisonStatus hoverTip" title="Poison now: ${(BATTLE.opponent.poisonStacks||[]).reduce((a,n)=>a+n,0)} damage. Next turn: ${(BATTLE.opponent.poisonStacks||[]).map(n=>Math.max(0,n-3)).reduce((a,n)=>a+n,0)} damage.">${ICON.poison} ${(BATTLE.opponent.poisonStacks||[]).reduce((a,n)=>a+n,0)} poison</span>` : ''}${BATTLE.opponent.burns?.length ? (() => { const burns=BATTLE.opponent.burns; const now=burns.reduce((a,b)=>a+(b.stages[b.stageIdx]||0),0); const future=[1,2].map(offset=>burns.reduce((a,b)=>a+(b.stages[b.stageIdx+offset]||0),0)).filter(n=>n>0); const nextText=future.length ? `Next: ${future.join(', ')}` : 'No more burn damage.'; return ` &middot; <span class="status burnStatus hoverTip" title="${nextText}">${ICON.fire} ${now} <b><u>Burn Damage</u></b></span>`; })() : ''}${BATTLE.opponent.curseFromPlayer ? ` &middot; <span class="status curseStatus hoverTip" title="Curse: ${BATTLE.opponent.curseFromPlayer} damage if the opponent fails to attack.">${ICON.curse} cursed</span>` : ''}</div>
-          ${BATTLE.opponent.burns?.length ? `<span class="attackChip" data-detonate="1" style="background:var(--amber);border-color:#c97600;font-size:10px;padding:4px 8px">Detonate for ${BATTLE.opponent.burns.reduce((a,b)=>a+(b.stages[b.stageIdx]||0),0)} now</span>` : ''}
+          ${BATTLE.opponent.burns?.length ? `<span class="attackChip" data-detonate="1" style="background:var(--amber);color:#062622;border-color:#0d8377;font-size:10px;padding:4px 8px">Detonate for ${BATTLE.opponent.burns.reduce((a,b)=>a+(b.stages[b.stageIdx]||0),0)} now</span>` : ''}
         </div>
       </div>
     </div>
@@ -2951,7 +2951,7 @@ function battleScreen() {
     <div class="panel">
       <div class="log" id="battleLogEl">${(() => {
         const turns = [...new Set(BATTLE.logLines.map(l => l.turn))];
-        return turns.map(t => `<div class="note" style="margin:6px 0 2px;color:var(--blue-dark);font-weight:700">Turn ${t}</div>${BATTLE.logLines.filter(l => l.turn === t).map(l => `<div>${l.msg}</div>`).join('')}`).join('');
+        return turns.map(t => `<div class="note" style="margin:6px 0 2px;color:var(--blue);font-weight:700">Turn ${t}</div>${BATTLE.logLines.filter(l => l.turn === t).map(l => `<div>${l.msg}</div>`).join('')}`).join('');
       })()}</div>
     </div>
   `;
@@ -3024,7 +3024,7 @@ function shopItemCategory(it) {
 }
 const SHOP_CATEGORIES = [
   { id: 'all', label: 'All' },
-  { id: 'attack', label: 'Attack', color: 'var(--blue-dark)' },
+  { id: 'attack', label: 'Attack', color: 'var(--blue)' },
   { id: 'defense', label: 'Defense', color: 'var(--defense)' },
   { id: 'poison', label: 'Poison', color: '#4d8f45' },
   { id: 'burn', label: 'Burn', color: '#c4472d' },
@@ -3047,7 +3047,7 @@ function pickShopStock() {
 function dealerItemCardHTML(item, opts) {
   const eKind = effectiveKind(item);
   const borderColor = eKind === 'defense' ? 'var(--defense)' : eKind === 'poison' ? '#4d8f45' : eKind === 'burn' ? '#c4472d' : eKind === 'curse' ? '#7a4aa8' : 'var(--blue-dark)';
-  const headerColor = borderColor;
+  const headerColor = eKind === 'defense' ? 'var(--defense)' : eKind === 'poison' ? '#4d8f45' : eKind === 'burn' ? '#c4472d' : eKind === 'curse' ? '#7a4aa8' : 'var(--blue)';
   const priceLabel = opts.mode === 'buy' ? `${item.cost} coins` : `${opts.sell} coins`;
   const footer = opts.mode === 'buy'
     ? `<button class="wo-btn amber" data-buy="${item.id}" data-cost="${item.cost}" ${opts.disabled ? 'disabled' : ''} style="padding:5px 8px;font-size:11px;white-space:nowrap;width:100%">${opts.disabledLabel || 'Purchase'}</button>`
@@ -3374,7 +3374,7 @@ function starterSelectScreen() {
 
 function upgradeScreen() {
   const TIER_LABEL = { high: 'Core Stats - Matters Every Run', medium: 'Resource Capacity', low: 'Situational & Utility' };
-  const TIER_COLOR = { high: 'var(--red)', medium: 'var(--amber)', low: 'var(--blue-dark)' };
+  const TIER_COLOR = { high: 'var(--red)', medium: 'var(--amber)', low: 'var(--blue)' };
   const groups = { high: [], medium: [], low: [] };
   UPGRADE_DEFS.forEach(u => groups[u.tier || 'medium'].push(u));
 

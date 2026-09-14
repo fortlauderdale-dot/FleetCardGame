@@ -10,13 +10,13 @@
 <style>
   :root{
     --blue:#4a5fc7; --blue-dark:#1a2038; --blue-light:#232a4d;
-    --white:#2b3350; --bg:#000000; --ink:#ffffff; --dim:#8b93c4;
+    --white:#2b3350; --bg:linear-gradient(135deg, #0b0f19 0%, #151b2d 100%); --ink:#ffffff; --dim:#8b93c4;
     --amber:#1fb6a6; --red:#e5484d; --green:#2fae66; --purple:#8a4fe0; --gold:#d4af00; --defense:#2563a8; --defense-light:#e8f0f8; --defense-border:#6a94c4;
     --disp:'Aptos','Aptos Display',ui-sans-serif,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
     --mono:'Aptos','Aptos Display',ui-sans-serif,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
   }
   *{box-sizing:border-box}
-  html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--disp);font-size:16px}
+  html,body{margin:0;min-height:100vh;background:var(--bg);background-attachment:fixed;color:var(--ink);font-family:var(--disp);font-size:16px}
   button{font-family:var(--disp);cursor:pointer}
   #app{max-width:1180px;margin:0 auto;padding:14px 18px 100px}
   .game-stage{}
@@ -26,7 +26,7 @@
   .map-popup-overlay .wo{max-width:400px;width:100%;margin:0}
   .treasure-prize{font-size:28px;font-weight:800;color:var(--blue);text-align:center;margin:16px 0}
 
-  .wo{background:var(--white);color:var(--ink);border:3px solid var(--blue-dark);border-radius:12px;box-shadow:6px 6px 0 var(--blue-dark);padding:0;margin:16px 0;overflow:hidden}
+  .wo{background:var(--white);color:var(--ink);border:3px solid var(--blue-dark);border-radius:12px;box-shadow:0 0 20px rgba(31,182,166,0.25),6px 6px 0 #1a2038;padding:0;margin:16px 0;overflow:hidden}
   .wo-stripe{height:10px;background:linear-gradient(90deg,#2b3350 0%,#3d4a72 50%,#1fb6a6 100%)}
   .wo-body{padding:20px 22px 24px}
   .wo-eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:var(--dim)}
@@ -55,7 +55,7 @@
   .grid{display:flex;flex-wrap:wrap;gap:10px}
   .currencies{display:flex;gap:10px;flex-wrap:wrap;align-items:center;font-family:var(--mono);font-size:11.5px}
   .cur{border:1px solid var(--blue-light);border-radius:6px;padding:4px 8px}
-  .cur.gem{color:var(--purple);border-color:var(--purple);background:#f5effd} .cur.fuel{color:var(--green);border-color:var(--green);background:#eef9ee} .cur.energy{color:#8a6d00;border-color:var(--gold);background:#fff9df} .cur.chip{color:#a35f00;border-color:var(--amber);background:#fff4e0} .cur.pts{color:var(--blue);border-color:var(--blue);background:var(--blue-light)} .cur.health{color:var(--red);border-color:var(--red);background:#fdecec}
+  .cur.gem{color:var(--purple);border-color:var(--purple);background:#f5effd} .cur.fuel{color:var(--green);border-color:var(--green);background:#eef9ee} .cur.energy{color:#8a6d00;border-color:var(--gold);background:#fff9df} .cur.chip{color:#a35f00;border-color:var(--amber);background:#fff4e0} .cur.pts{color:#ffd54a;border:1px solid #ffd54a;background:#1a2038} .cur.health{color:var(--red);border-color:var(--red);background:#fdecec}
   .cur{position:relative;cursor:help}.cur[title]:hover::after,.hoverTip[title]:hover::after{content:attr(title);position:absolute;z-index:50;left:50%;transform:translateX(-50%);top:calc(100% + 6px);width:max-content;max-width:220px;background:#000000;color:#ffffff;padding:7px 9px;border-radius:6px;font:12px var(--disp);white-space:normal;box-shadow:0 0 8px rgba(31,182,166,0.4);border:1px solid #1fb6a6;text-align:left;pointer-events:none}.bossPreview{border:2px solid var(--red);background:#1a0e0e}.mapboss{font-size:12px;font-family:var(--mono);color:var(--dim);margin-top:8px}
   .hoverTip{position:relative;cursor:help;text-decoration:underline dotted;text-underline-offset:2px}
   .tipLeft.cur[title]:hover::after,.tipLeft.hoverTip[title]:hover::after,.tipLeft.effectTip:hover::after{left:0;transform:none}
@@ -117,8 +117,8 @@
      would stretch a single card to the full popup width or force 3 cramped columns regardless
      of the popup's own narrower size. Fixed-width flex items keep each card the same size it
      is in the battle screen, however many there are. */
-  .popupItemRow{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
-  .popupItemRow .itemCard{flex:0 0 140px;width:140px}
+  .popupItemRow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+  .popupItemRow .itemCard{width:100%;min-width:0}
   .pickItemRow{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-start}
   .pickItemRow .itemCard{flex:0 0 130px;width:130px;min-height:120px}
   .dealerGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
@@ -140,11 +140,12 @@
   .itemBonusLine{font-size:10.5px;color:var(--purple);margin:1px 0 0;line-height:1.25}
   .itemBonusLine b{font-weight:800;cursor:help;position:relative}
 
-  .card{width:48px;height:64px;border-radius:5px;background:#f8f9fa;color:#12163a;display:flex;
+  .card{width:48px;height:64px;border-radius:5px;background:#ffffff;color:#12163a;display:flex;
     flex-direction:column;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700;
     font-size:17px;border:2px solid #12163a;cursor:pointer;user-select:none;flex-shrink:0;gap:1px}
   .card div:last-child{font-size:23px;line-height:1}
-  .card.red{color:var(--red)}
+  .card.red{color:#e5484d}
+  .card.suit-club{color:#1b7a48}
   .card.selected{outline:3px solid var(--amber);transform:translateY(-6px)}
   .card.matched{outline:3px solid var(--green)}
   .card.cursed{outline:2px solid var(--purple)}
@@ -273,6 +274,9 @@
 const SUITS = [{ s: '♦', color: 'red' }, { s: '♣', color: 'blk' }, { s: '♥', color: 'red' }, { s: '♠', color: 'blk' }];
 const RANK_LABEL = { 11: 'J', 12: 'Q', 13: 'K', 14: 'A' };
 function rankLabel(r) { return RANK_LABEL[r] || String(r); }
+// Shared suit->text-color mapping so every card render site (hand, battle, storage,
+// discard, Tuning Garage) agrees: red suits red, clubs distinct green, spades default charcoal.
+function suitColorClass(color, suit) { return color === 'red' ? 'red' : (suit === '♣' ? 'suit-club' : ''); }
 function cardValue(r) { if (r === 14) return 11; if (r >= 11) return 10; return r; }
 function freshDeck() {
   const d = [];
@@ -509,9 +513,13 @@ const ICON = {
 // added yet), it swaps itself out for entity.icon so nothing ever shows a broken image icon.
 function art(entity, px) {
   const fb = (entity && entity.icon) || ICON.truck;
-  if (entity && entity.image) {
-    return `<span class="vart" style="width:${px}px;height:${px}px;font-size:${px}px" data-fb="${fb.replace(/"/g,'&quot;')}"><img src="${entity.image}" alt="" onerror="this.outerHTML=this.closest('.vart').dataset.fb"></span>`;
-  }
+  // TEMP: current image assets carry baked-in white backgrounds that clash with the dark
+  // cyberpunk panels, so we render the emoji fallback everywhere for now. entity.image paths
+  // are left untouched in the data below - just uncomment this block once transparent art
+  // is ready and the emoji fallback becomes the error-only fallback again.
+  // if (entity && entity.image) {
+  //   return `<span class="vart" style="width:${px}px;height:${px}px;font-size:${px}px" data-fb="${fb.replace(/"/g,'&quot;')}"><img src="${entity.image}" alt="" onerror="this.outerHTML=this.closest('.vart').dataset.fb"></span>`;
+  // }
   return `<span class="vart" style="width:${px}px;height:${px}px;font-size:${px}px">${fb}</span>`;
 }
 const PLAYER_ART = { name: 'Your Fleet', icon: '🚚', image: 'vehicles/work-truck.jpg' };
@@ -2749,7 +2757,7 @@ function battleScreen() {
   const healthPct = Math.max(0, (RUN.health / RUN.maxHealth) * 100);
 
   const poolHTML = BATTLE.oppPool.map(c => c.revealed
-    ? `<div class="card ${c.color === 'red' ? 'red' : ''} ${c.suit === '♣' ? 'club-card' : ''}"><div>${rankLabel(c.rank)}</div><div>${c.suit}</div></div>`
+    ? `<div class="card ${suitColorClass(c.color, c.suit)}"><div>${rankLabel(c.rank)}</div><div>${c.suit}</div></div>`
     : `<div class="card back"></div>`).join('') || '<span class="note" style="margin:0">empty</span>';
 
   const hero = HEROES[RUN.hero.heroId];
@@ -2766,7 +2774,7 @@ function battleScreen() {
     if (item.kind === 'storage') {
       const cardHTML = idxs.map(cardHandIdx => {
         const c = BATTLE.hand[cardHandIdx];
-        return `<div class="card mini ${c.color === 'red' ? 'red' : ''} ${c.suit === '♣' ? 'club-card' : ''}" data-unassign="${slotKey}|${cardHandIdx}" title="Click to take this card back"><div>${rankLabel(c.rank)}</div><div>${c.suit}</div></div>`;
+        return `<div class="card mini ${suitColorClass(c.color, c.suit)}" data-unassign="${slotKey}|${cardHandIdx}" title="Click to take this card back"><div>${rankLabel(c.rank)}</div><div>${c.suit}</div></div>`;
       }).join('');
       return `<div class="itemCard" data-assign="${slotKey}" style="border:2px dashed var(--purple)"
           ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleCardDrop(event,'${slotKey}',${effectiveMaxCards(item)})">
@@ -2806,7 +2814,7 @@ function battleScreen() {
     const usesLeft = cap - ((BATTLE.itemUses && BATTLE.itemUses[slotKey]) || 0);
     const cardHTML = idxs.map(cardHandIdx => {
       const c = BATTLE.hand[cardHandIdx];
-      return `<div class="card mini ${c.color === 'red' ? 'red' : ''} ${c.suit === '♣' ? 'club-card' : ''}" data-unassign="${slotKey}|${cardHandIdx}"><div>${rankLabel(c.rank)}</div><div>${c.suit}</div></div>`;
+      return `<div class="card mini ${suitColorClass(c.color, c.suit)}" data-unassign="${slotKey}|${cardHandIdx}"><div>${rankLabel(c.rank)}</div><div>${c.suit}</div></div>`;
     }).join('');
     const bonusPct = item.bonus ? Math.round((item.bonus.base + item.bonus.perLevel * level) * 100) : 0;
     const bonusLine = item.bonus && bonusPct > 0 ? `<div class="itemBonusLine">Bonus <b>+${bonusPct}%</b> if ${bonusConditionText(item.bonus.condition || item.condition)}</div>` : '';
@@ -2860,7 +2868,7 @@ function battleScreen() {
   const assignedIdx = new Set(Object.values(BATTLE.slots).flat());
   const handHTML = BATTLE.hand.map((c, i) => {
     if (assignedIdx.has(i) || BATTLE.turnDiscard.includes(i) || BATTLE.usedThisTurn.has(i)) return '';
-    return `<div class="card ${c.color === 'red' ? 'red' : ''} ${selectedIdx.includes(i) ? 'selected' : ''}" data-card="${i}" draggable="true"
+    return `<div class="card ${suitColorClass(c.color, c.suit)} ${selectedIdx.includes(i) ? 'selected' : ''}" data-card="${i}" draggable="true"
       ondragstart="event.dataTransfer.setData('text/plain','${i}');this.classList.add('dragging')" ondragend="this.classList.remove('dragging')" style="position:relative">
     ${c.bonus ? `<div style="position:absolute;bottom:1px;right:2px;font-size:8px;color:var(--green)">+${c.bonus}</div>` : ''}
     <div>${rankLabel(c.rank)}</div><div>${c.suit}</div>
@@ -2868,7 +2876,7 @@ function battleScreen() {
   }).join('');
   const discardStagedHTML = BATTLE.turnDiscard.map(i => {
     const c = BATTLE.hand[i];
-    return `<div class="card mini" data-undiscard="${i}" style="opacity:.6">${rankLabel(c.rank)}${c.suit}</div>`;
+    return `<div class="card mini ${suitColorClass(c.color, c.suit)}" data-undiscard="${i}" style="opacity:.6">${rankLabel(c.rank)}${c.suit}</div>`;
   }).join('');
 
   return `
@@ -3195,12 +3203,12 @@ function blacksmithScreen() {
       btnHTML = `<button class="wo-btn gray" disabled style="padding:8px 12px;font-size:13px">Visit's extra upgrade used</button>`;
     }
     const visual = opt.scope === 'card'
-      ? `<div class="card ${SUITS.find(s=>s.s===opt.suit)?.color === 'red' ? 'red' : ''}"><div>${rankLabel(opt.rank)}</div><div style="font-size:16px">${opt.suit}</div></div>`
+      ? `<div class="card ${suitColorClass(SUITS.find(s=>s.s===opt.suit)?.color, opt.suit)}"><div>${rankLabel(opt.rank)}</div><div style="font-size:16px">${opt.suit}</div></div>`
       : `<span class="vart" style="width:38px;height:52px;font-size:22px;border:2px solid var(--blue);border-radius:5px;background:var(--white)">${opt.scope === 'rank' ? rankLabel(opt.rank) : opt.suit}</span>`;
     return `<div class="shopcard">
       <div class="hdr"><span>Tune: ${opt.label} ${bonus ? `(currently +${bonus})` : ''}</span><span></span></div>
       <div style="margin:6px 0">${visual}</div>
-      <div class="note" style="margin:0 0 6px">${opt.desc} ${opt.scope === 'card' ? `Adds +3 damage to attacks that use ${rankLabel(opt.rank)}${opt.suit}.` : `Adds +3 damage to attacks using ${opt.scope === 'rank' ? rankLabel(opt.rank) : opt.suit}.`}</div>
+      <div class="note" style="margin:0 0 6px">${opt.scope === 'card' ? `${rankLabel(opt.rank)}${opt.suit} gets +3 damage.` : opt.scope === 'rank' ? `All ${rankLabel(opt.rank)} cards get +3 damage.` : `All ${opt.suit} cards get +3 damage.`}</div>
       ${btnHTML}
     </div>`;
   }).join('');

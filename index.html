@@ -43,13 +43,13 @@
   .wo-btn:disabled{opacity:.4;cursor:default}
   .wo-btn.half{width:48%}
 
-  .panel{background:var(--white);border:2px solid var(--blue-light);border-radius:10px;padding:14px;margin-bottom:12px}
+  .panel{background:none;border:none;border-radius:0;padding:14px;margin-bottom:0;box-shadow:none}
   .hdr{display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-size:12px;
     letter-spacing:.02em;color:var(--dim);margin-bottom:8px}
   .bar-wrap{height:20px;background:var(--blue-light);border-radius:7px;overflow:hidden;border:1px solid var(--blue-light);position:relative}
   .bar-fill{height:100%;transition:width .25s}
   .bar-hp{background:var(--red)} .bar-health{background:var(--blue)}
-  .bar-text{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;text-shadow:1px 1px 2px #000,-1px -1px 2px #000,1px -1px 2px #000,-1px 1px 2px #000,0 0 4px #000;font-family:var(--mono);pointer-events:none}
+  .bar-text{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#ffffff;font-family:var(--mono);pointer-events:none}
   .duelSide .bar-text{font-size:14px}
 
   .grid{display:flex;flex-wrap:wrap;gap:10px}
@@ -75,9 +75,9 @@
   .vsMark{font-family:var(--mono);font-weight:800;color:var(--dim);font-size:13px}
   .bigicon{font-size:30px;line-height:1}
 
-  .duelBoard{display:grid;grid-template-columns:1fr 100px 1fr;gap:8px;align-items:start}
+  .duelBoard{display:grid;grid-template-columns:1fr 160px 1fr;gap:8px;align-items:start}
   @media (max-width:700px){ .duelBoard{grid-template-columns:1fr} .duelHead{grid-template-columns:1fr 1fr} .vsMark{display:none} }
-  .deckStack{text-align:center;padding-top:20px;display:flex;flex-direction:column;align-items:center;gap:10px}.deckStack .card.back{cursor:default;pointer-events:none}
+  .deckStack{text-align:center;padding-top:20px;display:flex;flex-direction:column;align-items:center;gap:10px;width:100%;box-sizing:border-box}.deckStack .card.back{cursor:default;pointer-events:none}
   .deckStack .card.back::after{content:none}
   .wo-btn.red{background:var(--red);border-color:#a83236}
 
@@ -130,8 +130,8 @@
   .itemCard:hover{box-shadow:0 0 14px rgba(31,182,166,0.35)}
   .itemCard-sec{width:100%;flex:0 0 auto}
   .itemCard-cards-sec{flex:1 1 auto;display:flex;flex-direction:column;justify-content:center;align-items:center;width:100%;min-height:24px}
-  .usesBadge{position:absolute;top:4px;right:4px;font-size:9px;font-weight:800;background:#1a2038 !important;color:#1fb6a6 !important;border:1px solid #1fb6a6;border-radius:5px;padding:1px 5px;line-height:1.4}
-  .usesBadge.depleted{background:#1a2038 !important;color:var(--dim) !important;border-color:var(--dim)}
+  .usesBadge{position:absolute;top:4px;right:4px;font-size:9px;font-weight:800;background:none;color:#1fb6a6;border:none;padding:0;line-height:1.4}
+  .usesBadge.depleted{background:none;color:var(--dim)}
   .itemCard.ready{border-color:var(--green) !important}
   .itemCard .hdr{width:100%;justify-content:center;text-align:center}
   .itemCard .vcards{display:flex;gap:3px;flex-wrap:wrap;justify-content:center;min-height:26px;margin-top:4px}
@@ -140,9 +140,9 @@
   .itemBonusLine{font-size:10.5px;color:var(--purple);margin:1px 0 0;line-height:1.25}
   .itemBonusLine b{font-weight:800;cursor:help;position:relative}
 
-  .card{width:48px;height:64px;border-radius:5px;background:var(--white);color:var(--ink);display:flex;
+  .card{width:48px;height:64px;border-radius:5px;background:#f8f9fa;color:#12163a;display:flex;
     flex-direction:column;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700;
-    font-size:17px;border:2px solid var(--blue);cursor:pointer;user-select:none;flex-shrink:0;gap:1px}
+    font-size:17px;border:2px solid #12163a;cursor:pointer;user-select:none;flex-shrink:0;gap:1px}
   .card div:last-child{font-size:23px;line-height:1}
   .card.red{color:var(--red)}
   .card.selected{outline:3px solid var(--amber);transform:translateY(-6px)}
@@ -2919,7 +2919,7 @@ function battleScreen() {
           <div class="card back" style="position:relative"><span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-family:var(--mono);font-weight:700;font-size:16px">${BATTLE.deck.length}</span></div>
           <span class="hoverTip" style="font-family:var(--mono);font-weight:400;font-size:11px;color:var(--dim)" title="How many new cards this opponent draws at the start of each of its turns.">${opp.drawRate}</span>
         </div>
-        <button class="wo-btn red" id="endTurnBtn" style="padding:14px 10px;font-size:15px;font-weight:800;width:140px;margin-top:6px">End Turn</button>
+        <button class="wo-btn red" id="endTurnBtn" style="padding:14px 10px;font-size:15px;font-weight:800;width:100%;max-width:150px;box-sizing:border-box;margin-top:6px">End Turn</button>
       </div>
       <div class="panel">
         <div class="hand">${poolHTML}</div>

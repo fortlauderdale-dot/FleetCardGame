@@ -10,7 +10,7 @@
 <style>
   :root{
     --blue:#4a5fc7; --blue-dark:#1a2038; --blue-light:#232a4d;
-    --white:#2b3350; --bg:#000000; --ink:#f2f4fb; --dim:#8b93c4;
+    --white:#2b3350; --bg:#000000; --ink:#ffffff; --dim:#8b93c4;
     --amber:#1fb6a6; --red:#e5484d; --green:#2fae66; --purple:#8a4fe0; --gold:#d4af00; --defense:#2563a8; --defense-light:#e8f0f8; --defense-border:#6a94c4;
     --disp:'Aptos','Aptos Display',ui-sans-serif,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
     --mono:'Aptos','Aptos Display',ui-sans-serif,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
@@ -56,7 +56,7 @@
   .currencies{display:flex;gap:10px;flex-wrap:wrap;align-items:center;font-family:var(--mono);font-size:11.5px}
   .cur{border:1px solid var(--blue-light);border-radius:6px;padding:4px 8px}
   .cur.gem{color:var(--purple);border-color:var(--purple);background:#f5effd} .cur.fuel{color:var(--green);border-color:var(--green);background:#eef9ee} .cur.energy{color:#8a6d00;border-color:var(--gold);background:#fff9df} .cur.chip{color:#a35f00;border-color:var(--amber);background:#fff4e0} .cur.pts{color:var(--blue);border-color:var(--blue);background:var(--blue-light)} .cur.health{color:var(--red);border-color:var(--red);background:#fdecec}
-  .cur{position:relative;cursor:help}.cur[title]:hover::after,.hoverTip[title]:hover::after{content:attr(title);position:absolute;z-index:50;left:50%;transform:translateX(-50%);top:calc(100% + 6px);width:max-content;max-width:220px;background:#12163a;color:#fff;padding:7px 9px;border-radius:6px;font:12px var(--disp);white-space:normal;box-shadow:3px 3px 0 #173aa8;text-align:left;pointer-events:none}.bossPreview{border:2px solid var(--red);background:#fff7f7}.mapboss{font-size:12px;font-family:var(--mono);color:var(--dim);margin-top:8px}
+  .cur{position:relative;cursor:help}.cur[title]:hover::after,.hoverTip[title]:hover::after{content:attr(title);position:absolute;z-index:50;left:50%;transform:translateX(-50%);top:calc(100% + 6px);width:max-content;max-width:220px;background:#000000;color:#ffffff;padding:7px 9px;border-radius:6px;font:12px var(--disp);white-space:normal;box-shadow:0 0 8px rgba(31,182,166,0.4);border:1px solid #1fb6a6;text-align:left;pointer-events:none}.bossPreview{border:2px solid var(--red);background:#1a0e0e}.mapboss{font-size:12px;font-family:var(--mono);color:var(--dim);margin-top:8px}
   .hoverTip{position:relative;cursor:help;text-decoration:underline dotted;text-underline-offset:2px}
   .tipLeft.cur[title]:hover::after,.tipLeft.hoverTip[title]:hover::after,.tipLeft.effectTip:hover::after{left:0;transform:none}
   .tipRight.cur[title]:hover::after,.tipRight.hoverTip[title]:hover::after,.tipRight.effectTip:hover::after{left:auto;right:0;transform:none}
@@ -126,15 +126,17 @@
   @media (max-width:460px){.dealerGrid{grid-template-columns:1fr}}
   .dealerGrid2col{grid-template-columns:repeat(2,1fr) !important}
   @media (max-width:460px){.dealerGrid2col{grid-template-columns:1fr !important}}
-  .itemCard{border-radius:8px;padding:6px 4px;background:var(--bg);min-height:172px;display:flex;flex-direction:column;align-items:center;text-align:center;box-sizing:border-box;font-size:12px;position:relative}
+  .itemCard{border-radius:8px;padding:6px 4px;background:rgba(10,14,26,0.9) !important;border:1px solid rgba(31,182,166,0.2);min-height:172px;display:flex;flex-direction:column;align-items:center;text-align:center;box-sizing:border-box;font-size:12px;position:relative;transition:box-shadow .15s ease}
+  .itemCard:hover{box-shadow:0 0 14px rgba(31,182,166,0.35)}
   .itemCard-sec{width:100%;flex:0 0 auto}
   .itemCard-cards-sec{flex:1 1 auto;display:flex;flex-direction:column;justify-content:center;align-items:center;width:100%;min-height:24px}
-  .usesBadge{position:absolute;top:4px;right:4px;font-size:9px;font-weight:800;background:var(--blue-light);color:var(--ink);border-radius:5px;padding:1px 5px;line-height:1.4}
-  .usesBadge.depleted{background:#eee;color:var(--dim)}
+  .usesBadge{position:absolute;top:4px;right:4px;font-size:9px;font-weight:800;background:#1a2038 !important;color:#1fb6a6 !important;border:1px solid #1fb6a6;border-radius:5px;padding:1px 5px;line-height:1.4}
+  .usesBadge.depleted{background:#1a2038 !important;color:var(--dim) !important;border-color:var(--dim)}
   .itemCard.ready{border-color:var(--green) !important}
   .itemCard .hdr{width:100%;justify-content:center;text-align:center}
   .itemCard .vcards{display:flex;gap:3px;flex-wrap:wrap;justify-content:center;min-height:26px;margin-top:4px}
-  .itemReqLine{font-size:12px;font-weight:700;color:var(--ink);margin:4px 0 2px;line-height:1.25}
+  .itemReqLine{font-size:12px;font-weight:700;color:#e2e8f0;margin:4px 0 2px;line-height:1.25}
+  .itemCard .note{color:#e2e8f0}
   .itemBonusLine{font-size:10.5px;color:var(--purple);margin:1px 0 0;line-height:1.25}
   .itemBonusLine b{font-weight:800;cursor:help;position:relative}
 
@@ -162,8 +164,8 @@
   .mapnode-wrap:hover{z-index:80}
   .mapnode-wrap:hover .tooltip{display:block}.mapnode-wrap .tooltip{top:120%;bottom:auto}
   .tooltip{display:none;position:absolute;bottom:120%;left:50%;transform:translateX(-50%);z-index:90;
-    background:var(--ink);color:#fff;font-family:var(--mono);font-size:10.5px;line-height:1.5;
-    padding:7px 10px;border-radius:6px;white-space:nowrap;z-index:5;box-shadow:2px 3px 6px #0004;text-align:left}
+    background:#000000 !important;color:#ffffff !important;font-family:var(--mono);font-size:10.5px;line-height:1.5;
+    padding:7px 10px;border-radius:6px;white-space:nowrap;z-index:5;box-shadow:0 0 8px rgba(31,182,166,0.4);border:1px solid #1fb6a6;text-align:left}
   .mapnode{position:relative;width:40px;height:40px;border-radius:50%;
     font-size:19px;display:flex;align-items:center;justify-content:center;border:2px solid;background:var(--white)}
   .mapnode.future{background:var(--blue-light);border-color:var(--blue-light);color:#9aa1c4;cursor:default;opacity:.85}
@@ -211,17 +213,22 @@
   .resourceAction.gemAction{border-color:#5c2ea0}
   .resourceAction.fuelAction{border-color:#1f7a48}
   .itemDivider{border-top:1px solid transparent;margin:5px 0 4px;width:100%}
-  .itemCard.kind-poison{background:#eef9ee;border-color:#8fbd8f !important}
-  .itemCard.kind-burn{background:#fff0ed;border-color:#e5a39a !important}
-  .itemCard.kind-curse{background:#f5effd;border-color:#b89add !important}
-  .itemCard.kind-defense{background:var(--defense-light);border-color:var(--defense-border) !important}
-  .itemCard.kind-defense .hdr{color:var(--defense) !important}
+  .itemCard.kind-damage{background:rgba(10,14,26,0.9) !important;border-color:#1fb6a6 !important;box-shadow:inset 0 0 12px rgba(31,182,166,0.25)}
+  .itemCard.kind-damage .hdr{color:#1fb6a6 !important}
+  .itemCard.kind-poison{background:rgba(10,14,26,0.9) !important;border-color:#2fae66 !important;box-shadow:inset 0 0 12px rgba(47,174,102,0.25)}
+  .itemCard.kind-poison .hdr{color:#2fae66 !important}
+  .itemCard.kind-burn{background:rgba(10,14,26,0.9) !important;border-color:#e5484d !important;box-shadow:inset 0 0 12px rgba(229,72,77,0.25)}
+  .itemCard.kind-burn .hdr{color:#e5484d !important}
+  .itemCard.kind-curse{background:rgba(10,14,26,0.9) !important;border-color:#8a4fe0 !important;box-shadow:inset 0 0 12px rgba(138,79,224,0.25)}
+  .itemCard.kind-curse .hdr{color:#8a4fe0 !important}
+  .itemCard.kind-defense{background:rgba(10,14,26,0.9) !important;border-color:#2563a8 !important;box-shadow:inset 0 0 12px rgba(37,99,168,0.3)}
+  .itemCard.kind-defense .hdr{color:#6a94c4 !important}
+  .itemCard.cursed{border-color:var(--purple) !important;box-shadow:inset 0 0 12px rgba(138,79,224,0.3)}
   .defenseText,.armorText{color:var(--defense) !important}
   .defenseText{font-weight:800}
   .attackChip.defendChip{background:var(--defense);border-color:#075e57}
-  .itemCard.kind-damage{background:#fff8ec;border-color:#e8c07a !important}
   .effectTip{font-weight:800;text-decoration:underline dotted;cursor:help;position:relative}
-  .effectTip:hover::after{content:attr(data-tip);position:absolute;z-index:60;left:50%;transform:translateX(-50%);top:calc(100% + 5px);width:230px;background:#12163a;color:#fff;padding:8px;border-radius:6px;font:11px var(--disp);text-align:left;box-shadow:3px 3px 0 #173aa8;pointer-events:none}
+  .effectTip:hover::after{content:attr(data-tip);position:absolute;z-index:60;left:50%;transform:translateX(-50%);top:calc(100% + 5px);width:230px;background:#000000;color:#ffffff;padding:8px;border-radius:6px;font:11px var(--disp);text-align:left;box-shadow:3px 3px 0 #1fb6a6;pointer-events:none;border:1px solid #1fb6a6}
   .log{font-family:var(--mono);font-size:11.5px;color:var(--dim);height:240px;max-height:240px;overflow-y:auto;
     border-top:1px dashed var(--blue-light);padding:8px 6px;margin-top:8px}
   .log div{padding:4px 0;border-bottom:1px solid #edf0f8;word-break:break-word;line-height:1.4}
@@ -514,8 +521,8 @@ function fleetLabel() { return META.playerName ? `${META.playerName}'s Fleet` : 
 function opponentAttackBoxHTML(opp) {
   if (opp.locked) {
     const remaining = Math.max(0, opp.lockThreshold - opp.lockProgress);
-    return `<div class="itemCard" style="cursor:default;border:2px solid var(--blue)">
-      <div class="hdr" style="font-weight:600; color:var(--blue)">${opp.releaseAttackName || 'Release Blast'}</div>
+    return `<div class="itemCard kind-damage" style="cursor:default">
+      <div class="hdr">${opp.releaseAttackName || 'Release Blast'}</div>
       <div class="itemReqLine">
         <span class="vart" style="width:14px;height:14px;font-size:14px;vertical-align:-2px">${ICON.lock}</span>
         Locked - ${remaining} more card value clears it
@@ -585,10 +592,10 @@ function opponentAttackBoxHTML(opp) {
       : effect === 'stun' ? `<span class="hoverTip" title="${EFFECT_TIP.stun}"><b>Stuns</b></span> your next counter-attack`
       : '';
 
-    return `<div class="itemCard ${kindClass(effect)}" style="cursor:default;border:2px solid ${effect==='poison'?'#4d8f45':effect==='burn'?'#c4472d':effect==='curse'?'#7a4aa8':'var(--blue)'}">
+    return `<div class="itemCard ${kindClass(effect)}" style="cursor:default">
       <div class="usesBadge hoverTip" title="Attacks per turn">${swings === Infinity ? '∞' : swings}</div>
       <div class="itemCard-sec">
-        <div class="hdr" style="font-weight:600; color:var(--blue)">${name}</div>
+        <div class="hdr">${name}</div>
         <div class="itemReqLine">${capLine}</div>
       </div>
       <div class="itemDivider"></div>
@@ -1049,9 +1056,9 @@ function heroItemCardPreviewHTML(itemId) {
   const drawN = item.drawUsesCardCount ? item.maxCards + (item.drawBonusFlat || 0) : (item.drawAmount || 0);
   const drawText = (item.drawAmount || item.drawUsesCardCount) ? `<div class="itemBonusLine"><b>Draw</b> ${drawN} card${drawN === 1 ? '' : 's'}</div>` : '';
   const kindLine = formatKindAmount(item, kindTag);
-  return `<div class="itemCard" style="cursor:default;border:2px solid var(--blue-dark)">
+  return `<div class="itemCard kind-${eKind}" style="cursor:default">
     <div class="itemCard-sec">
-      <div class="hdr" style="font-weight:600;color:var(--blue)">${item.name}</div>
+      <div class="hdr">${item.name}</div>
       <div class="itemReqLine">${itemRequirementText(item)}</div>
     </div>
     <div class="itemDivider"></div>
@@ -1064,7 +1071,7 @@ function heroAbilityCardHTML(heroId) {
   const sp = VEHICLE_SPECIALS[heroId];
   if (!sp) return '';
   const cost = sp.energyCost ?? sp.energyPerUnit;
-  return `<div class="itemCard" style="cursor:default;border:2px solid #b8790a">
+  return `<div class="itemCard" style="cursor:default;background:rgba(10,14,26,0.9) !important;border:1px solid #1fb6a6;box-shadow:inset 0 0 12px rgba(31,182,166,0.25)">
     <div class="itemCard-sec">
       <div class="hdr" style="font-weight:600;color:var(--amber)">${sp.name}</div>
       <div class="itemReqLine">${ICON.energy} ${cost}${sp.type === 'dodge' || sp.type === 'refuel' ? '' : '+'} Energy</div>
@@ -2808,12 +2815,11 @@ function battleScreen() {
 
     const usesBadgeText = cap === Infinity ? '∞' : `${Math.max(0, usesLeft)}/${cap}`;
     const cooldownLeft = item.cooldown != null ? (BATTLE.itemCooldowns?.[slotKey] || 0) : 0;
-    const itemBorder = cursedAmt ? 'var(--purple)' : eKind === 'defense' ? 'var(--defense)' : 'var(--blue)';
-    return `<div class="itemCard kind-${eKind} ${ready ? 'ready' : ''}" data-assign="${slotKey}" style="border:2px dashed ${itemBorder}"
+    return `<div class="itemCard kind-${eKind} ${ready ? 'ready' : ''} ${cursedAmt ? 'cursed' : ''}" data-assign="${slotKey}" style="border-style:dashed;border-width:2px"
         ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleCardDrop(event,'${slotKey}',${effectiveMaxCards(item)})">
       <div class="usesBadge ${usesLeft <= 0 ? 'depleted' : ''} hoverTip" title="Uses left this turn">${usesBadgeText}</div>
       <div class="itemCard-sec">
-        <div class="hdr" style="font-weight:600; color:${eKind==='defense'?'var(--defense)':eKind==='poison'?'#4d8f45':eKind==='burn'?'#c4472d':eKind==='curse'?'#7a4aa8':'var(--blue)'}">${item.name}${cursedAmt ? ` <span class="vart" style="width:12px;height:12px;font-size:12px;color:var(--purple)">${ICON.curse}</span> cursed` : ''}</div>
+        <div class="hdr" style="font-weight:600">${item.name}${cursedAmt ? ` <span class="vart" style="width:12px;height:12px;font-size:12px;color:var(--purple)">${ICON.curse}</span> cursed` : ''}</div>
         <div class="itemReqLine">${itemRequirementText(item, eKind)}</div>
       </div>
       <div class="itemDivider"></div>
@@ -3046,8 +3052,6 @@ function pickShopStock() {
 // Battle Page and the Pick Your Vehicle preview, with a price/action footer appended below.
 function dealerItemCardHTML(item, opts) {
   const eKind = effectiveKind(item);
-  const borderColor = eKind === 'defense' ? 'var(--defense)' : eKind === 'poison' ? '#4d8f45' : eKind === 'burn' ? '#c4472d' : eKind === 'curse' ? '#7a4aa8' : 'var(--blue-dark)';
-  const headerColor = eKind === 'defense' ? 'var(--defense)' : eKind === 'poison' ? '#4d8f45' : eKind === 'burn' ? '#c4472d' : eKind === 'curse' ? '#7a4aa8' : 'var(--blue)';
   const priceLabel = opts.mode === 'buy' ? `${item.cost} coins` : `${opts.sell} coins`;
   const footer = opts.mode === 'buy'
     ? `<button class="wo-btn amber" data-buy="${item.id}" data-cost="${item.cost}" ${opts.disabled ? 'disabled' : ''} style="padding:5px 8px;font-size:11px;white-space:nowrap;width:100%">${opts.disabledLabel || 'Purchase'}</button>`
@@ -3059,7 +3063,7 @@ function dealerItemCardHTML(item, opts) {
   </div>`;
 
   if (item.kind === 'storage') {
-    return `<div class="itemCard" style="cursor:default;border:2px solid var(--purple)">
+    return `<div class="itemCard kind-curse" style="cursor:default">
       <div class="itemCard-sec">
         <div class="hdr" style="font-weight:600;color:var(--purple)">${item.name}</div>
         <div class="note" style="font-size:11px">${item.note || ''}</div>
@@ -3081,9 +3085,9 @@ function dealerItemCardHTML(item, opts) {
   const bonusLine = item.bonus && bonusPct > 0 ? `<div class="itemBonusLine">Bonus <b>+${bonusPct}%</b> if ${bonusConditionText(item.bonus.condition || item.condition)}</div>` : '';
   const unlockLine = item.unlockThreshold != null ? `<div class="note" style="margin:2px 0 0"><span class="hoverTip" title="Play cards through it to count down a ${item.unlockThreshold}-point charge (based on the cards' value, no damage dealt). Once charged, it draws 4 cards each use, once per turn, for the rest of that battle. Charge resets every new battle."><b>Charges</b> at ${item.unlockThreshold}</span></div>` : '';
 
-  return `<div class="itemCard" style="cursor:default;border:2px solid ${borderColor}">
+  return `<div class="itemCard kind-${eKind}" style="cursor:default">
     <div class="itemCard-sec">
-      <div class="hdr" style="font-weight:600;color:${headerColor}">${item.name}</div>
+      <div class="hdr">${item.name}</div>
       <div class="itemReqLine">${itemRequirementText(item)}</div>
     </div>
     <div class="itemDivider"></div>

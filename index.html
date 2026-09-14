@@ -11,7 +11,7 @@
   :root{
     --blue:#2451e0; --blue-dark:#173aa8; --blue-light:#e8edfd;
     --white:#ffffff; --bg:#eef1fb; --ink:#12163a; --dim:#5c6280;
-    --amber:#ff9f1c; --red:#e5484d; --green:#2fae66; --purple:#8a4fe0; --gold:#d4af00; --defense:#0f766e; --defense-light:#e8f5f4; --defense-border:#68aaa5;
+    --amber:#ff9f1c; --red:#e5484d; --green:#2fae66; --purple:#8a4fe0; --gold:#d4af00; --defense:#2563a8; --defense-light:#e8f0f8; --defense-border:#6a94c4;
     --disp:'Aptos','Aptos Display',ui-sans-serif,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
     --mono:'Aptos','Aptos Display',ui-sans-serif,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
   }
@@ -49,7 +49,7 @@
   .bar-wrap{height:20px;background:var(--blue-light);border-radius:7px;overflow:hidden;border:1px solid var(--blue-light);position:relative}
   .bar-fill{height:100%;transition:width .25s}
   .bar-hp{background:var(--red)} .bar-health{background:var(--blue)}
-  .bar-text{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.7);font-family:var(--mono);pointer-events:none}
+  .bar-text{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:400;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.8);font-family:var(--mono);pointer-events:none}
 
   .grid{display:flex;flex-wrap:wrap;gap:10px}
   .currencies{display:flex;gap:10px;flex-wrap:wrap;align-items:center;font-family:var(--mono);font-size:11.5px}
@@ -110,14 +110,14 @@
   .itemGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
   @media (max-width:700px){.itemGrid{grid-template-columns:repeat(2,1fr)}}
   @media (max-width:420px){.itemGrid{grid-template-columns:1fr}}
-  /* Used for opponent attack cards inside the (narrower) pre-battle popup — a plain grid here
+  /* Used for opponent attack cards inside the (narrower) pre-battle popup - a plain grid here
      would stretch a single card to the full popup width or force 3 cramped columns regardless
      of the popup's own narrower size. Fixed-width flex items keep each card the same size it
      is in the battle screen, however many there are. */
   .popupItemRow{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
   .popupItemRow .itemCard{flex:0 0 140px;width:140px}
   .pickItemRow{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-start}
-  .pickItemRow .itemCard{flex:0 0 140px;width:140px;min-height:150px}
+  .pickItemRow .itemCard{flex:0 0 130px;width:130px;min-height:120px}
   .dealerGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
   @media (max-width:700px){.dealerGrid{grid-template-columns:repeat(2,1fr)}}
   @media (max-width:460px){.dealerGrid{grid-template-columns:1fr}}
@@ -179,7 +179,7 @@
   .shopGrid .shopcard{margin-bottom:0}
   @media (max-width:600px){.shopGrid{grid-template-columns:1fr}}
   .pickcard{border:2px solid var(--blue-light);background:var(--bg);border-radius:10px;padding:16px;width:160px;text-align:center}
-  .pickrow{border:2px solid var(--blue-light);background:var(--bg);border-radius:10px}
+  .pickrow{border:2px solid var(--blue);background:var(--bg);border-radius:10px}
   .pickrow.locked{opacity:.55}
   .pickcard .picon{font-size:46px;display:flex;align-items:center;justify-content:center}
   .pname{font-weight:700;font-size:17px;letter-spacing:.01em;color:var(--blue-dark)}
@@ -207,7 +207,7 @@
   .resourceCount{font-size:12px;font-weight:800;letter-spacing:.03em}
   .resourceAction.gemAction{border-color:#5c2ea0}
   .resourceAction.fuelAction{border-color:#1f7a48}
-  .itemDivider{border-top:1px solid rgba(20,20,40,0.15);margin:5px 0 4px;width:100%}
+  .itemDivider{border-top:1px solid transparent;margin:5px 0 4px;width:100%}
   .itemCard.kind-poison{background:#eef9ee;border-color:#8fbd8f !important}
   .itemCard.kind-burn{background:#fff0ed;border-color:#e5a39a !important}
   .itemCard.kind-curse{background:#f5effd;border-color:#b89add !important}
@@ -225,7 +225,7 @@
   @media (max-width:600px){
     .log{height:120px;max-height:120px;font-size:11px}
     /* Battle hand cards were rendering visually much taller than the item cards next to them,
-       which made it unclear which was which to tap — shrink the hand cards specifically on
+       which made it unclear which was which to tap - shrink the hand cards specifically on
        narrow screens without touching the desktop card size used everywhere else. */
     .hand .card:not(.mini){width:40px;height:54px;font-size:14px}
     .hand .card:not(.mini) div:last-child{font-size:19px}
@@ -317,14 +317,14 @@ function bestHandFromPool(pool, maxCards) {
 function bestFiveFromPool(pool) { return bestHandFromPool(pool, 5); } // kept for anything still calling the old name
 function damageFor(cards, mult) { return Math.round(cards.reduce((a, c) => a + cardValue(c.rank) + (c.bonus || 0), 0) * mult); }
 // Formats a reward object as "+X coins, +Y gems, ..." but only for the parts that are actually
-// nonzero — a run of "+0 gems, +0 fuel" just adds noise, so those parts are omitted entirely.
+// nonzero - a run of "+0 gems, +0 fuel" just adds noise, so those parts are omitted entirely.
 function formatRewardParts(reward, labels = { coins: 'coins', gems: 'gems', fuel: 'fuel', points: 'Career Points' }) {
   return Object.entries(labels)
     .filter(([key]) => reward[key])
     .map(([key, label]) => `+${reward[key]} ${label}`)
     .join(', ');
 }
-// ===== AUDIO/VISUAL DAMAGE TELLS — a quick synthesized cue plus a screen flash (and a shake
+// ===== AUDIO/VISUAL DAMAGE TELLS - a quick synthesized cue plus a screen flash (and a shake
 // for taking damage) so it's obvious something happened, without needing external sound files.
 let AUDIO_CTX = null;
 function getAudioCtx() {
@@ -379,7 +379,7 @@ function flashScreen(kind) {
     setTimeout(() => { el.style.opacity = '0'; }, 90);
   } catch (e) {}
 }
-// A big, hard-to-miss callout for how much damage you just took — so you never have to scroll
+// A big, hard-to-miss callout for how much damage you just took - so you never have to scroll
 // the log to find out what happened. Stacks a fresh one on top if hits land in quick succession.
 function showDamagePopup(amount, sourceName) {
   try {
@@ -392,18 +392,18 @@ function showDamagePopup(amount, sourceName) {
   } catch (e) {}
 }
 
-// ===== POWER SCORE — a rough, comparable "how hard does this actually hit" number, driven by
+// ===== POWER SCORE - a rough, comparable "how hard does this actually hit" number, driven by
 // draw resources (cards drawn per turn, pool/hand size, swings per turn) instead of the flat
 // damage numbers themselves. The idea: two attacks with the same nominal "mult" hit very
 // differently if one only ever sees 2 cards and the other regularly sees 5, so scoring by the
 // resources behind the hand gives a fairer way to compare opponents and items, and a lever
 // (draw rate, pool size, uses/turn) to tune difficulty with instead of only hp/dmg edits.
-// Not shown to players — a tuning aid for balancing the roster.
+// Not shown to players - a tuning aid for balancing the roster.
 function avgCardValue() { let total = 0; for (let r = 2; r <= 14; r++) total += cardValue(r); return total / 13; }
-const AVG_CARD_VALUE = avgCardValue(); // ~7.85 — average value of a random card
+const AVG_CARD_VALUE = avgCardValue(); // ~7.85 - average value of a random card
 
 // Coarse estimate of the average poker-hand multiplier once a pool/hand of a given size is
-// available to pick from — bigger pools make pairs/trips/straights easier to assemble. This is
+// available to pick from - bigger pools make pairs/trips/straights easier to assemble. This is
 // a lookup table tuned to feel right, not a full combinatorial probability calculation.
 function expectedMultForPoolSize(poolSize) {
   if (poolSize <= 1) return 1.0;
@@ -426,7 +426,7 @@ function opponentPowerScore(opp, turn = 3) {
 }
 // Same idea for a player Item: how hard it swings given its own maxCards/usesPerTurn and
 // condition bonus, assuming the player can actually assemble the cards it wants (a fair
-// assumption once RUN.drawPerTurn and hand size are high enough — this scores the item's
+// assumption once RUN.drawPerTurn and hand size are high enough - this scores the item's
 // ceiling, not how easy it is to reach that ceiling).
 function itemPowerScore(item) {
   if (item.kind === 'defense' || item.kind === 'storage' || item.kind === 'poison' || item.kind === 'burn') return 0;
@@ -436,14 +436,14 @@ function itemPowerScore(item) {
   return Math.round(usesPerTurn * maxCards * AVG_CARD_VALUE * (item.baseMult ?? 1) * bonusMult);
 }
 // Plain-language "what this opponent does" tags, generated from its actual data instead of
-// hand-written per-opponent — so the pre-battle popup can tell you its play pattern (armored,
+// hand-written per-opponent - so the pre-battle popup can tell you its play pattern (armored,
 // grows when hit, enrages, etc.) without you needing to guess or remember from past fights.
-// Deliberately doesn't mention exact numbers (hp/damage/draw rate) — just the shape of the fight.
+// Deliberately doesn't mention exact numbers (hp/damage/draw rate) - just the shape of the fight.
 function opponentTraitTags(opp) {
   const tags = [];
-  if (opp.boss) tags.push('Boss — multiple attacks per turn, can curse your Items');
+  if (opp.boss) tags.push('Boss - multiple attacks per turn, can curse your Items');
   if (opp.startArmor && opp.armorRegen) tags.push('Starts armored and regenerates some each turn');
-  else if (opp.startArmor) tags.push('Starts armored — armor only comes back if it reinforces itself');
+  else if (opp.startArmor) tags.push('Starts armored - armor only comes back if it reinforces itself');
   if (opp.special?.type === 'drawOnHit') tags.push('Grows stronger the more you hit it');
   if (opp.startPoolBonus) tags.push('Comes out swinging with extra cards from turn one');
   if (opp.discardPoolEachTurn) tags.push('Discards its whole hand every turn, win or lose');
@@ -506,7 +506,7 @@ function art(entity, px) {
 }
 const PLAYER_ART = { name: 'Your Fleet', icon: '🚚', image: 'vehicles/work-truck.jpg' };
 function fleetLabel() { return META.playerName ? `${META.playerName}'s Fleet` : 'Your Fleet'; }
-// Read-only box(es) showing what the opponent can attack with — mirrors the player's vslot UI.
+// Read-only box(es) showing what the opponent can attack with - mirrors the player's vslot UI.
 // Supports a future opp.attacks array (multiple named attacks); falls back to their single generic attack.
 function opponentAttackBoxHTML(opp) {
   if (opp.locked) {
@@ -515,7 +515,7 @@ function opponentAttackBoxHTML(opp) {
       <div class="hdr" style="font-weight:600; color:var(--blue-dark)">${opp.releaseAttackName || 'Release Blast'}</div>
       <div class="itemReqLine">
         <span class="vart" style="width:14px;height:14px;font-size:14px;vertical-align:-2px">${ICON.lock}</span>
-        Locked — ${remaining} more card value clears it
+        Locked - ${remaining} more card value clears it
       </div>
       <div class="note" style="margin-top:4px">Then hits for ${opp.lockAttack} damage${opp.turnLimit ? `, more the longer the fight has gone (up to +100% past turn ${opp.turnLimit})` : ''}, and locks back up</div>
     </div>`;
@@ -526,7 +526,7 @@ function opponentAttackBoxHTML(opp) {
   const EFFECT_TIP = {
     burn: 'Burn deals damage over the next few turns after it lands, weaker each turn.',
     poison: 'Poison deals damage at the end of a turn, then weakens after it ticks.',
-    curse: 'Curse locks onto one of your equipped Items — fire that Item before your turn ends or take the curse damage instead.',
+    curse: 'Curse locks onto one of your equipped Items - fire that Item before your turn ends or take the curse damage instead.',
     stun: 'Stun cancels your next counter-attack.',
     heal: 'Heal restores some of this opponent\'s own HP.',
     stealFuel: 'Steals fuel you\'d otherwise use to travel the map.',
@@ -540,11 +540,11 @@ function opponentAttackBoxHTML(opp) {
     const cap = a.maxCards ?? opponentMaxCards(opp);
     const effect = a.effect || 'damage';
 
-    // Line 1 — how many cards this attack uses, nothing else. Mirrors the player's itemReqLine.
+    // Line 1 - how many cards this attack uses, nothing else. Mirrors the player's itemReqLine.
     const flatCapMatch = a.fewCardsThreshold && cap === a.fewCardsThreshold.max;
     const capLine = a.autoFire ? 'No card needed' : a.straightLen ? `Any ${a.straightLen} cards in a row` : (minTier > 0 ? `${TIERS[minTier]} to Attack` : (flatCapMatch ? (cap === 1 ? 'Any card' : `Any ${cap} cards`) : (cap === 1 ? '1 card' : `Up to ${cap} cards`)));
 
-    // Line 2 — the specific condition/bonus, mirroring the player's itemBonusLine. Only one of
+    // Line 2 - the specific condition/bonus, mirroring the player's itemBonusLine. Only one of
     // these mechanics applies per attack (they're mutually exclusive by design).
     let bonusLine = '';
     let damageLine = '';
@@ -561,7 +561,7 @@ function opponentAttackBoxHTML(opp) {
       bonusLine = `Extra damage per face card (J/Q/K) played`;
       damageLine = `Attack ${a.perFaceCard.damage} × number of face cards used`;
     } else if (a.discardHand) {
-      damageLine = `No damage — knocks ${a.discardHand.count} card${a.discardHand.count > 1 ? 's' : ''} out of your hand instead`;
+      damageLine = `No damage - knocks ${a.discardHand.count} card${a.discardHand.count > 1 ? 's' : ''} out of your hand instead`;
     } else if (a.suitPunish) {
       bonusLine = `Bonus scales with ${a.suitPunish.suit} cards already in your discard pile`;
       damageLine = `Attack ${a.suitPunish.base || 0} + ${a.suitPunish.perCard} per ${a.suitPunish.suit} discarded`;
@@ -584,11 +584,14 @@ function opponentAttackBoxHTML(opp) {
 
     return `<div class="itemCard ${kindClass(effect)}" style="cursor:default;border:2px solid ${effect==='poison'?'#4d8f45':effect==='burn'?'#c4472d':effect==='curse'?'#7a4aa8':'var(--blue)'}">
       <div class="usesBadge hoverTip" title="Attacks per turn">${swings === Infinity ? '∞' : swings}</div>
-      <div class="hdr" style="font-weight:600; color:var(--blue-dark)">${name}</div>
-      <div class="itemReqLine">${capLine}</div>
-      ${bonusLine ? `<div class="itemBonusLine">${bonusLine}</div>` : ''}
+      <div class="itemCard-sec">
+        <div class="hdr" style="font-weight:600; color:var(--blue-dark)">${name}</div>
+        <div class="itemReqLine">${capLine}</div>
+      </div>
       <div class="itemDivider"></div>
-      <div class="note" style="margin-top:4px">${damageLine}${effectLine ? ` · ${effectLine}` : ''}${a.minTurn && !a.autoFire ? ` · from turn ${a.minTurn}` : ''}</div>
+      <div class="itemCard-cards-sec">${bonusLine ? `<div class="itemBonusLine">${bonusLine}</div>` : ''}</div>
+      <div class="itemDivider"></div>
+      <div class="itemCard-sec"><div class="note">${damageLine}${effectLine ? ` · ${effectLine}` : ''}${a.minTurn && !a.autoFire ? ` · from turn ${a.minTurn}` : ''}</div></div>
     </div>`;
   }).join('');
 }
@@ -596,9 +599,9 @@ function opponentAttackBoxHTML(opp) {
 /* ========== ATTACK CATALOG REGISTRY ========== */
 /* ========== CONDITION ENGINE ==========
    Every Item's `condition` is checked through this ONE function. Add a new condition
-   type here once and every Item (present or future) can use it — nothing else needs
+   type here once and every Item (present or future) can use it - nothing else needs
    to change. `cards` is whatever was actually played into that Item's slot.
-   Returns { met, label, sum, count } — sum/count feed items that scale with them. */
+   Returns { met, label, sum, count } - sum/count feed items that scale with them. */
 function checkCondition(cond, cards) {
   let result;
   if (!cond || cond.type === 'any') result = { met: cards.length > 0, label: '' };
@@ -648,13 +651,13 @@ function checkCondition(cond, cards) {
     result = { met: cards.length > 0 && sum === cond.value, label: `Σ${sum}`, sum };
   }
   else result = { met: false, label: '' };
-  // exactCount can ride along on ANY condition type above (e.g. "flush AND exactly 5 cards") —
+  // exactCount can ride along on ANY condition type above (e.g. "flush AND exactly 5 cards") -
   // set it on the condition object alongside its normal fields to AND it into the result.
   if (cond && cond.exactCount != null) result.met = result.met && cards.length === cond.exactCount;
   return result;
 }
 // One shared formula for every Item's output. `level` is that Item's own upgrade level
-// (see META.itemLevels — permanent, tuned via the Upgrades screen). Items with `flatAmount` ignore card value entirely (used for
+// (see META.itemLevels - permanent, tuned via the Upgrades screen). Items with `flatAmount` ignore card value entirely (used for
 // threshold-style poison: "any hand summing to X+ does exactly Y", not a multiplier).
 // Bonus-line phrasing: suit-count bonuses (e.g. the all-one-suit Inferno cards) read much
 // better as "4 Diamonds!" than the generic "4+ ♦" used elsewhere for open-ended suit counts.
@@ -754,7 +757,7 @@ function computeItemAmount(item, cards, level, condResult) {
   // Admin Vehicle hero, so leveling this stat is specifically a reason to run that vehicle.
   if (item.id === 'fender_bender' && RUN.hero?.heroId === 'admin' && META.levels.adminTune) mult += 0.1 * META.levels.adminTune;
   const rawSum = cards.reduce((a, c) => a + cardValue(c.rank) + (c.bonus || 0), 0);
-  // flatBonus adds a flat amount on top of sum*mult — for "sum + N" items like Jinxed Duo
+  // flatBonus adds a flat amount on top of sum*mult - for "sum + N" items like Jinxed Duo
   // (sum + 16 poison), as opposed to flatAmount above which replaces the sum entirely.
   const flatBonus = (item.flatBonus || 0) + (item.flatBonusPerLevel || 0) * level;
   const amount = Math.round(rawSum * mult) + flatBonus;
@@ -762,13 +765,13 @@ function computeItemAmount(item, cards, level, condResult) {
   return { amount, breakdown };
 }
 // All Item modification (bonus tuning, uses-per-turn, max cards, kind conversion) lives on
-// RUN, not META — these are Chop Shop purchases paid with coins, and wipe with the rest of
+// RUN, not META - these are Chop Shop purchases paid with coins, and wipe with the rest of
 // the run's coins and tuning when the run ends. Career Points and the permanent Upgrades
 // screen never touch any of this.
 function itemLevel(itemId) { return (RUN && RUN.itemLevels && RUN.itemLevels[itemId]) || 0; }
 function itemTuneCost(item, lvl) { return 40 * Math.pow(2, lvl); } // coins, doubles each level like card tuning
 // An item can level up if it has a damage `bonus` (mult grows) or a `drawPerLevel` (draw count
-// grows) — this returns how many levels it can take, or 0 if it doesn't scale at all.
+// grows) - this returns how many levels it can take, or 0 if it doesn't scale at all.
 function itemLevelCap(item) { if (item.bonus) return item.bonus.maxLevel ?? 0; if (item.drawPerLevel) return item.levelCap || 0; return 0; }
 function itemUsesLevel(itemId) { return (RUN.itemUsesLevels && RUN.itemUsesLevels[itemId]) || 0; }
 function itemUsesTuneCost(lvl) { return Math.round(50 * Math.pow(2.5, lvl)); } // coins, jumps hard after the 1st upgrade
@@ -779,7 +782,7 @@ const ITEM_MAX_CARDS_BONUS_CAP = 2; // up to +2 cards beyond the Item's base max
 function effectiveMaxCards(item) { return (item.maxStore ?? item.maxCards) + itemMaxCardsLevel(item.id); }
 // An item can be converted for the rest of this run from a plain damage attack into a status
 // effect (poison/burn/curse) at the Chop Shop. Only items with no fixed `kind` (i.e. "regular
-// attack") are eligible — defense and already-status items keep their identity.
+// attack") are eligible - defense and already-status items keep their identity.
 function normalizeItemKind(kind) {
   const k = String(kind || 'damage').toLowerCase();
   return k.includes('defend') || k === 'defense' ? 'defense' : k;
@@ -872,7 +875,7 @@ const ITEMS = {
 
   impound_release: { id: 'impound_release', name: 'Impound Release', cost: 85, maxCards: 5, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'any' }, baseMult: 0, kind: 'unlock', unlockThreshold: 45,
-    note: `Deals no damage. Playing cards through it counts down from 45 to 0 (based on the cards' value). Once fully charged, playing cards through it instead draws you 4 fresh cards, once per turn, for the rest of this battle — it never re-locks. Charge resets at the start of your next battle.` },
+    note: `Deals no damage. Playing cards through it counts down from 45 to 0 (based on the cards' value). Once fully charged, playing cards through it instead draws you 4 fresh cards, once per turn, for the rest of this battle - it never re-locks. Charge resets at the start of your next battle.` },
   fender_bender: { id: 'fender_bender', name: 'One-Two Punch', cost: 0, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'pokerTier', tier: 0 }, baseMult: 1,
     bonus: { condition: { type: 'pokerTier', tier: 1 }, base: 0.5, perLevel: 0.25, maxLevel: 2 }, // +50% ONLY if the 2 cards are a Pair, up to +100% tuned
@@ -949,7 +952,7 @@ const ITEMS = {
     note: `Holds up to 5 ${kw('Black')} cards only. Click a stored card to take it back.` },
 };
 
-/* ========== HERO ROSTER (6 total — 4 playable, 2 reserved for future vehicles) ========== */
+/* ========== HERO ROSTER (6 total - 4 playable, 2 reserved for future vehicles) ========== */
 const HEROES = {
   sidebyside: { id: 'sidebyside', name: 'Golf Cart',      icon: '🛺', image: 'vehicles/golf-cart.jpg', starterItems: ['fender_bender','pair_draw'] },
   admin:      { id: 'admin',      name: 'Admin Vehicle',   icon: '🚗', image: 'vehicles/admin-vehicle.jpg', starterItems: ['fender_bender','escort_wall'] },
@@ -958,16 +961,16 @@ const HEROES = {
   towtruck:   { id: 'towtruck',   name: 'Tow Truck',  icon: '🚨', image: 'vehicles/tow-truck.jpg', starterItems: ['escort_wall','toxic_spill'] },
   tanker:     { id: 'tanker',     name: 'Fuel Tanker', icon: '⛽', image: 'vehicles/fuel-tanker.jpg', starterItems: ['fender_bender','drawstone'] },
 };
-// Vehicle special abilities — the use for Energy (previously it had no real purpose). Each
+// Vehicle special abilities - the use for Energy (previously it had no real purpose). Each
 // hero gets one battle ability, usable any turn, that spends Energy for a survival effect.
 // 'shield', 'heal', and 'draw' types scale with however much Energy you commit at once (Math.floor
 // to the nearest whole unit); 'dodge' and 'refuel' are flat-cost, single-use-per-press effects.
 const VEHICLE_SPECIALS = {
-  sidebyside: { name: 'Quick Shield', type: 'shield', energyPerUnit: 4, amountPerUnit: 20, desc: 'Spend Energy for armor — every 4 Energy grants +20 armor. Spend as much as you have at once.' },
-  admin:      { name: 'Roadside Patch', type: 'heal', energyPerUnit: 5, amountPerUnit: 15, desc: 'Spend Energy to heal — every 5 Energy restores 15 health. Spend as much as you have at once.' },
+  sidebyside: { name: 'Quick Shield', type: 'shield', energyPerUnit: 4, amountPerUnit: 20, desc: 'Spend Energy for armor - every 4 Energy grants +20 armor. Spend as much as you have at once.' },
+  admin:      { name: 'Roadside Patch', type: 'heal', energyPerUnit: 5, amountPerUnit: 15, desc: 'Spend Energy to heal - every 5 Energy restores 15 health. Spend as much as you have at once.' },
   interstate: { name: 'Evasive Maneuver', type: 'dodge', energyCost: 6, chance: 0.5, desc: 'Spend 6 Energy for a 50% chance to dodge the opponent\'s next attack entirely.' },
-  convoy:     { name: 'Brace for Impact', type: 'shield', energyPerUnit: 3, amountPerUnit: 20, desc: 'Spend Energy for armor — every 3 Energy grants +20 armor. Spend as much as you have at once.' },
-  towtruck:   { name: 'Winch Pull', type: 'draw', energyPerUnit: 5, amountPerUnit: 1, desc: 'Spend Energy to draw cards — every 5 Energy draws 1 card. Spend as much as you have at once.' },
+  convoy:     { name: 'Brace for Impact', type: 'shield', energyPerUnit: 3, amountPerUnit: 20, desc: 'Spend Energy for armor - every 3 Energy grants +20 armor. Spend as much as you have at once.' },
+  towtruck:   { name: 'Winch Pull', type: 'draw', energyPerUnit: 5, amountPerUnit: 1, desc: 'Spend Energy to draw cards - every 5 Energy draws 1 card. Spend as much as you have at once.' },
   tanker:     { name: 'Siphon Reserve', type: 'refuel', energyCost: 8, amountPerUnit: 10, desc: 'Spend 8 Energy to refill 10 Fuel.' },
 };
 function useVehicleSpecial() {
@@ -1013,20 +1016,20 @@ function useVehicleSpecial() {
   render(battleScreen());
 }
 // Consumes an active dodge chance (from a vehicle special) against the next incoming hit,
-// win or lose — it's spent on being used, not on succeeding. Returns the (possibly zeroed) dmg.
+// win or lose - it's spent on being used, not on succeeding. Returns the (possibly zeroed) dmg.
 function applyDodgeIfActive(oppDmg) {
   if (!BATTLE.dodgeChance) return oppDmg;
   const chance = BATTLE.dodgeChance;
   BATTLE.dodgeChance = 0;
   if (Math.random() < chance) {
-    battleLog(`Evasive Maneuver pays off — you dodge the hit entirely!`);
+    battleLog(`Evasive Maneuver pays off - you dodge the hit entirely!`);
     playSfx('dodge'); flashScreen('dodge');
     return 0;
   }
   return oppDmg;
 }
 const STARTERS = ['sidebyside', 'admin', 'interstate', 'convoy', 'towtruck', 'tanker', 'comingsoon1', 'comingsoon2'];
-// Real, accurate item-card preview for the Pick Your Vehicle screen — built from the same
+// Real, accurate item-card preview for the Pick Your Vehicle screen - built from the same
 // ITEMS data and the same visual language as the in-battle card, instead of hand-written text
 // that can drift out of sync with what the item actually does.
 function heroItemCardPreviewHTML(itemId) {
@@ -1084,7 +1087,7 @@ function starterLockNote(id) {
   return '';
 }
 
-/* ========== OPPONENT ROSTER — CITY HAZARD EVENTS (World 1) ========== */
+/* ========== OPPONENT ROSTER - CITY HAZARD EVENTS (World 1) ========== */
 
 const OPPONENT_TIERS = [
   // --- TIER 1: Minor Street Impediments (Early Game) ---
@@ -1155,15 +1158,15 @@ const OPPONENT_TIERS = [
   ],
 ];
 
-const BOSS = { id: 'wildfire', name: 'Wildfire', tier: 6, icon: '🔥', image: 'Hazards/wildfire.jpg', hp: 160, minTier: 3, drawRate: 4, turnLimit: 10, boss: true, usesPerTurn: 2, curse: { count: 2, amount: 12, chance: 0.55 }, attacks: [{ name: 'Firestorm Surge', maxCards: 5, minTier: 3, effect: 'burn' }, { name: 'Ashfall', maxCards: 4, minTier: 2, effect: 'poison' }, { name: 'Total Engulfment', maxCards: 5, minTier: 0, perFaceCard: { damage: 12 } }], attackInfo: 'Attack: uses its best poker hand for about 10-35 damage, depending on the hand, and can hit twice a turn. Can also curse your equipped Items — an Item that doesn\'t fire before turn end takes its curse damage.' };
-// Per-swing damage ceiling by opponent tier (index 0-5, tier 6 = boss) — keeps any single hit
+const BOSS = { id: 'wildfire', name: 'Wildfire', tier: 6, icon: '🔥', image: 'Hazards/wildfire.jpg', hp: 160, minTier: 3, drawRate: 4, turnLimit: 10, boss: true, usesPerTurn: 2, curse: { count: 2, amount: 12, chance: 0.55 }, attacks: [{ name: 'Firestorm Surge', maxCards: 5, minTier: 3, effect: 'burn' }, { name: 'Ashfall', maxCards: 4, minTier: 2, effect: 'poison' }, { name: 'Total Engulfment', maxCards: 5, minTier: 0, perFaceCard: { damage: 12 } }], attackInfo: 'Attack: uses its best poker hand for about 10-35 damage, depending on the hand, and can hit twice a turn. Can also curse your equipped Items - an Item that doesn\'t fire before turn end takes its curse damage.' };
+// Per-swing damage ceiling by opponent tier (index 0-5, tier 6 = boss) - keeps any single hit
 // from spiking into a near-kill regardless of how good a hand the opponent draws into.
 const OPPONENT_SWING_CAP = [22, 28, 34, 40, 46, 52, 60];
 
 function revealFraction(row) { return [1.0, 0.8, 0.6, 0.4, 0.25, 0.1, 0][Math.min(row, 6)]; }
 
 /* ========== LEVELED UPGRADE TREE (permanent, up to 20 levels each) ========== */
-// Impact tiers set both the starting cost and how fast each level grows — stats that matter a
+// Impact tiers set both the starting cost and how fast each level grows - stats that matter a
 // lot in every run (draw, HP, hand size) cost noticeably more per level than situational ones
 // (energy cap, fuel efficiency), so the price reflects how much a level actually helps you.
 const UPGRADE_TIERS = {
@@ -1175,23 +1178,28 @@ const UPGRADE_DEFS = [
   { id: 'draw',    label: 'Cards Drawn Per Turn', desc: '+1 card drawn at the start of each turn (also raises your opening hand).', tier: 'high',
     currentValue: lvl => `${2 + lvl} cards/turn` },
   { id: 'chips',   label: 'Starting Coins',       desc: '+8 starting coins at New Playthrough.', tier: 'low',
-    currentValue: lvl => `${40 + lvl * 8} coins` },
+    currentValue: lvl => `${40 + lvl * 8} coins`,
+    unlock: { desc: 'Complete 1 run', check: () => (META.runsPlayed || 0) >= 1 } },
   { id: 'hp',      label: 'Max HP',               desc: '+15 max health per level.', tier: 'high',
     currentValue: lvl => `${100 + lvl * 15} HP` },
   { id: 'handCap', label: 'Maximum Hand Size',    desc: '+2 cards to your maximum hand size per level.', tier: 'high',
     currentValue: lvl => `${7 + lvl * 2} cards`,
     unlock: { desc: 'Beat 50 opponents (lifetime)', check: () => (META.enemiesBeaten || 0) >= 50 } },
   { id: 'fuel',    label: 'Starting Fuel',        desc: '+1 starting fuel per level.', tier: 'low',
-    currentValue: lvl => `${10 + lvl} fuel` },
+    currentValue: lvl => `${10 + lvl} fuel`,
+    unlock: { desc: 'Complete 1 run', check: () => (META.runsPlayed || 0) >= 1 } },
   { id: 'fuelCap', label: 'Fuel Tank Size',       desc: '+5 max fuel you can hold per level.', tier: 'medium',
-    currentValue: lvl => `${20 + lvl * 5} fuel` },
+    currentValue: lvl => `${20 + lvl * 5} fuel`,
+    unlock: { desc: 'Complete 2 runs', check: () => (META.runsPlayed || 0) >= 2 } },
   { id: 'gem',     label: 'Gem Efficiency',       desc: '+1 card drawn per gem spent.', tier: 'medium',
     currentValue: lvl => `${1 + lvl} card${1 + lvl > 1 ? 's' : ''}/gem`,
     unlock: { desc: 'Reach World 2', check: () => (META.bestWorld || 1) >= 2 } },
   { id: 'gemCap',  label: 'Gem Pouch Size',       desc: '+2 max gems you can hold per level.', tier: 'medium',
-    currentValue: lvl => `${10 + lvl * 2} gems` },
+    currentValue: lvl => `${10 + lvl * 2} gems`,
+    unlock: { desc: 'Complete 3 runs', check: () => (META.runsPlayed || 0) >= 3 } },
   { id: 'energyCap', label: 'Energy Cell Size',   desc: '+5 max energy you can hold per level.', tier: 'medium',
-    currentValue: lvl => `${20 + lvl * 5} energy` },
+    currentValue: lvl => `${20 + lvl * 5} energy`,
+    unlock: { desc: 'Beat 20 opponents (lifetime)', check: () => (META.enemiesBeaten || 0) >= 20 } },
   { id: 'garage',  label: 'Garage Expansion',     desc: '+1 starting Item slot.', tier: 'medium',
     currentValue: lvl => `${3 + lvl} slots`,
     unlock: { desc: 'Complete 3 runs', check: () => (META.runsPlayed || 0) >= 3 } },
@@ -1199,14 +1207,17 @@ const UPGRADE_DEFS = [
     currentValue: lvl => `${3 + lvl} spaces ahead`,
     unlock: { desc: 'Land 5 Perfect Wins', check: () => (META.perfectWins || 0) >= 5 } },
   { id: 'fuelpen', label: 'Fuel Efficiency',      desc: 'Running out of fuel costs less health when it happens.', tier: 'low',
-    currentValue: lvl => `${Math.max(0, 10 - lvl * 2)} HP lost (was 10)` },
+    currentValue: lvl => `${Math.max(0, 10 - lvl * 2)} HP lost (was 10)`,
+    unlock: { desc: 'Complete 6 runs', check: () => (META.runsPlayed || 0) >= 6 } },
   { id: 'reveal',  label: 'Battle Scan',          desc: 'Start every battle with 1 extra opponent card already revealed.', tier: 'low',
-    currentValue: lvl => `${1 + lvl} card${1 + lvl > 1 ? 's' : ''} revealed` },
+    currentValue: lvl => `${1 + lvl} card${1 + lvl > 1 ? 's' : ''} revealed`,
+    unlock: { desc: 'Beat the World 1 boss', check: () => (META.bestWorld || 1) >= 2 || !!META.world2Cleared } },
   { id: 'adminTune', label: 'Admin Vehicle Pair Bonus', desc: '+10% to the Admin Vehicle\'s One-Two Punch Pair bonus per level.', tier: 'low',
-    currentValue: lvl => `+${lvl * 10}%` },
+    currentValue: lvl => `+${lvl * 10}%`,
+    unlock: { desc: 'Complete 5 runs', check: () => (META.runsPlayed || 0) >= 5 } },
 ];
 const MAX_LEVEL = 10; // the ceiling every Career upgrade can reach
-// A single smooth exponential per tier — no cliff, no special-cased "soft cap" jump. Each level
+// A single smooth exponential per tier - no cliff, no special-cased "soft cap" jump. Each level
 // costs roughly 1.5x the one before it, so the climb from level 0 to 10 feels continuous: cheap
 // and fast early on, a real commitment by level 10, never a shocking one-level price spike.
 function upgradeCost(def, atLevel) {
@@ -1217,11 +1228,13 @@ function upgradeUnlocked(def) { return !def.unlock || def.unlock.check(); }
 
 /* ========== META (persists forever) ========== */
 const META_KEY = 'fleetduel-meta-v7';
+const META_VERSION = 2; // bump this to force everyone's saved Career Points/levels to reset (e.g. after a scoring rework)
 function loadMeta() {
   try {
     const raw = localStorage.getItem(META_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
+      if (parsed.metaVersion !== META_VERSION) throw new Error('stale meta version, resetting');
       parsed.levels = parsed.levels || {};
       UPGRADE_DEFS.forEach(u => { if (parsed.levels[u.id] == null) parsed.levels[u.id] = 0; });
       if (parsed.enemiesBeaten == null) parsed.enemiesBeaten = 0;
@@ -1232,14 +1245,14 @@ function loadMeta() {
     }
   } catch (e) {}
   const levels = {}; UPGRADE_DEFS.forEach(u => levels[u.id] = 0);
-  return { points: 0, lifetimePoints: 0, highScore: 0, bestRun: 0, runsPlayed: 0, enemiesBeaten: 0, bestWorld: 1, perfectWins: 0, world2Cleared: false, levels };
+  return { metaVersion: META_VERSION, points: 0, lifetimePoints: 0, highScore: 0, bestRun: 0, runsPlayed: 0, enemiesBeaten: 0, bestWorld: 1, perfectWins: 0, world2Cleared: false, levels };
 }
 let META = loadMeta();
-function saveMeta() { try { localStorage.setItem(META_KEY, JSON.stringify(META)); } catch (e) {} }
+function saveMeta() { try { META.metaVersion = META_VERSION; localStorage.setItem(META_KEY, JSON.stringify(META)); } catch (e) {} }
 function earnPoints(n) { META.points += n; META.lifetimePoints += n; if (RUN) RUN.scoreThisRun += n; saveMeta(); }
 
 /* ========== RUN SAVE (mid-run continuity, roguelite-style) ========== */
-const RUN_KEY = 'fleetduel-run-v80-heroitem';
+const RUN_KEY = 'fleetduel-run-v81-scorereset';
 function saveRun() { try { localStorage.setItem(RUN_KEY, JSON.stringify(RUN)); } catch (e) {} }
 function loadRunSave() { try { const raw = localStorage.getItem(RUN_KEY); if (raw) return JSON.parse(raw); } catch (e) {} return null; }
 function clearRunSave() { try { localStorage.removeItem(RUN_KEY); } catch (e) {} }
@@ -1303,7 +1316,7 @@ function scaleMonsterForNewWorld(baseMonster, worldMultiplier, tier) {
 function generateMap() {
   const nodes = [], edges = [];
   const tierForRow = r => Math.min(OPPONENT_TIERS.length - 1, Math.floor(r / 3));
-  // A zero-upgrade run should be a real fight, not a formality — this ramps difficulty up
+  // A zero-upgrade run should be a real fight, not a formality - this ramps difficulty up
   // smoothly across World 1's own tiers (on top of the World 2+ worldMultiplier), so late-map
   // fights are noticeably tougher than early ones instead of only differing by hand-authored HP.
   const tierDifficultyMult = tier => 1 + tier * 0.12;
@@ -1314,7 +1327,7 @@ function generateMap() {
   // Set to 1.0 for World 1, can be hooked into a menu later for World 2 (1.5), World 3 (2.0), etc.
   const worldMultiplier = RUN.worldMultiplier || 1.0; 
 
-  // Every opponent in a tier gets used once before any of them repeat — a shuffled draw queue
+  // Every opponent in a tier gets used once before any of them repeat - a shuffled draw queue
   // per tier, refilled only once fully drained. Previously every node picked independently at
   // random, so a small tier could hand you the same opponent five times before moving on.
   const tierQueues = {};
@@ -1366,7 +1379,7 @@ function generateMap() {
     }
   });
   
-  // Scale the final world Boss object as well — its own fixed ramp on top of the world multiplier
+  // Scale the final world Boss object as well - its own fixed ramp on top of the world multiplier
   nodes.push([{type:'battle', opponent: scaleMonsterForNewWorld(BOSS, worldMultiplier * 1.3, 6)}]);
 
   // Proximity-based connections: each node mostly links to the node(s) nearest its own
@@ -1518,7 +1531,7 @@ function reenterCurrentNode(row, col) {
   if (node.type === 'rest') { render(garageScreen()); return; }
   if (node.type === 'blacksmith') { RETURN_TO_CASTLE_MENU = false; BLACKSMITH_OPTIONS = pickBlacksmithOptions(); BLACKSMITH_VISIT = { primary: null, secondary: null }; render(blacksmithScreen()); return; }
   if (node.type === 'chopshop') { RETURN_TO_CASTLE_MENU = false; render(chopShopScreen('map')); return; }
-  // Battles and Supply Caches aren't re-enterable stops — nothing to do for those here.
+  // Battles and Supply Caches aren't re-enterable stops - nothing to do for those here.
   render(mapScreen());
 }
 let RETURN_TO_CASTLE_MENU = false;
@@ -1679,8 +1692,8 @@ function castleMatchScreen() {
 }
 
 let BLACKSMITH_OPTIONS = null;
-let BLACKSMITH_VISIT = null; // { primary: idx|null, secondary: idx|null } — one paid upgrade, plus one optional paid add-on, per visit
-function scopeCostMult(scope) { return scope === 'card' ? 1 : scope === 'rank' ? 3 : 4; } // rank hits 4 cards, suit hits 13 — priced for how many cards benefit
+let BLACKSMITH_VISIT = null; // { primary: idx|null, secondary: idx|null } - one paid upgrade, plus one optional paid add-on, per visit
+function scopeCostMult(scope) { return scope === 'card' ? 1 : scope === 'rank' ? 3 : 4; } // rank hits 4 cards, suit hits 13 - priced for how many cards benefit
 function tuneCost(bonus, isSecondary, scope) { const base = 20 * Math.pow(2, bonus / 3) * scopeCostMult(scope); return Math.round(isSecondary ? base * 1.5 : base); }
 function pickBlacksmithOptions() {
   // One of each kind every visit: a specific card, every card of a rank, every card of a suit.
@@ -1790,7 +1803,7 @@ function drawOpponentCards() {
 function battleLog(msg) { BATTLE.logLines.push({ turn: BATTLE.turn, msg }); if (BATTLE.logLines.length > 200) BATTLE.logLines.shift(); }
 
 // Every opponent already carries a hand-tuned turnLimit (6-10, scaling with difficulty) that
-// was never actually wired to anything — battles could stall out indefinitely behind armor or
+// was never actually wired to anything - battles could stall out indefinitely behind armor or
 // poison with zero consequence. This makes that data do something: past their turnLimit, an
 // opponent "enrages," hitting +12% harder for each turn over, capped at +100%. Rewards playing
 // to close a fight out instead of turtling forever.
@@ -1802,14 +1815,14 @@ function enrageMultiplier(opp, turn) {
 
 // Curse: an opponent can curse 1, 2, 3, all, or a random number of cards currently in the
 // player's hand. If the player hasn't played a cursed card by the end of the turn it was
-// checked, it deals its damage and clears. Curse never stacks — re-cursing an already-cursed
+// checked, it deals its damage and clears. Curse never stacks - re-cursing an already-cursed
 // Item instead detonates the OLD curse for its damage right now, then the NEW curse amount
 // takes over from that point.
 function tryApplyCurse() {
   const spec = BATTLE.opponent.curse;
   if (!spec) return;
   if (Math.random() > (spec.chance ?? 1)) return;
-  // Curse targets equipped Items (never storage — cursing something that can't attack would be an unwinnable trap).
+  // Curse targets equipped Items (never storage - cursing something that can't attack would be an unwinnable trap).
   const eligible = RUN.hero.items.map((id, i) => `${id}_${i}`).filter(key => {
     const item = ITEMS[key.replace(/_\d+$/, '')];
     return item && item.kind !== 'storage';
@@ -1823,12 +1836,12 @@ function tryApplyCurse() {
     const prior = BATTLE.itemCurses[key];
     if (prior) {
       RUN.health = Math.max(0, RUN.health - prior);
-      battleLog(`${item.name}'s old curse goes off before the new one lands — you take ${prior} damage! Health: ${RUN.health}/${RUN.maxHealth}.`);
+      battleLog(`${item.name}'s old curse goes off before the new one lands - you take ${prior} damage! Health: ${RUN.health}/${RUN.maxHealth}.`);
     }
     BATTLE.itemCurses[key] = spec.amount;
   });
   const names = chosen.map(key => ITEMS[key.replace(/_\d+$/, '')].name).join(', ');
-  battleLog(`${BATTLE.opponent.name} curses your ${names} — fire ${chosen.length > 1 ? 'them' : 'it'} this turn or take ${spec.amount} damage${chosen.length > 1 ? ' each' : ''}.`);
+  battleLog(`${BATTLE.opponent.name} curses your ${names} - fire ${chosen.length > 1 ? 'them' : 'it'} this turn or take ${spec.amount} damage${chosen.length > 1 ? ' each' : ''}.`);
 }
 // Burn: a decaying 3-turn damage-over-time effect. The player can detonate it early for whatever
 // the current stage is worth, forfeiting the smaller remaining ticks.
@@ -1886,7 +1899,7 @@ function unmarkDiscard(i) { BATTLE.turnDiscard = BATTLE.turnDiscard.filter(x => 
 
 // Sorting BATTLE.hand reorders the array, which would silently corrupt any indices
 // sitting in item slots (especially storage, which survives across turns) unless we
-// relink them afterward by card object identity — same fix as the end-of-turn splice.
+// relink them afterward by card object identity - same fix as the end-of-turn splice.
 function resortHandAndRelink(mode) {
   mode = mode || 'value';
   const preserved = {};
@@ -1945,7 +1958,7 @@ function executePlayerAttack(itemId, index) {
     return;
   }
 
-  // Enforce this Item's uses-per-turn cap (default 1, raised only via the Chop Shop — never by power tuning).
+  // Enforce this Item's uses-per-turn cap (default 1, raised only via the Chop Shop - never by power tuning).
   BATTLE.itemUses = BATTLE.itemUses || {};
   const level = itemLevel(itemId);
   const cap = itemUsesCap(item, itemUsesLevel(itemId));
@@ -1955,7 +1968,7 @@ function executePlayerAttack(itemId, index) {
     return;
   }
 
-  // Cooldown items (not used by anything yet — set item.cooldown to a turn count to opt an
+  // Cooldown items (not used by anything yet - set item.cooldown to a turn count to opt an
   // item into this). BATTLE.itemCooldowns[slotKey] counts down by 1 at the start of each of
   // the player's turns (see endTurn) and blocks firing while above 0.
   if (item.cooldown != null && (BATTLE.itemCooldowns?.[slotKey] || 0) > 0) {
@@ -1975,7 +1988,7 @@ function executePlayerAttack(itemId, index) {
   const condResult = checkCondition(item.condition, cards);
 
   if (!condResult.met) {
-    battleLog(`${item.name} — ${condResult.label || 'requirement unmet'}.`);
+    battleLog(`${item.name} - ${condResult.label || 'requirement unmet'}.`);
     render(battleScreen());
     return;
   }
@@ -1987,7 +2000,7 @@ function executePlayerAttack(itemId, index) {
   // Impound Release-style "charge" items: no damage, ever. Playing cards through it counts
   // down a charge meter (from the raw value of the cards played, not the item's own mult/bonus
   // math, since it deals no damage). Once charged, it permanently switches to drawing 4 cards
-  // per use for the rest of THIS battle only — charge and unlock both reset on the next battle
+  // per use for the rest of THIS battle only - charge and unlock both reset on the next battle
   // since they live on BATTLE, not RUN.
   if (item.unlockThreshold != null) {
     BATTLE.itemUnlockProgress = BATTLE.itemUnlockProgress || {};
@@ -1999,16 +2012,16 @@ function executePlayerAttack(itemId, index) {
         if (BATTLE.deck.length) { const c = BATTLE.deck.pop(); BATTLE.hand.push(c); drawn.push(c); }
       }
       resortHandAndRelink(RUN.handSortMode);
-      battleLog(`${item.name} — Charged! Drew ${drawn.map(c => rankLabel(c.rank) + c.suit).join(' ') || 'no cards'}`);
+      battleLog(`${item.name} - Charged! Drew ${drawn.map(c => rankLabel(c.rank) + c.suit).join(' ') || 'no cards'}`);
     } else {
       const rawSum = cards.reduce((a, c) => a + cardValue(c.rank), 0);
       BATTLE.itemUnlockProgress[slotKey] = (BATTLE.itemUnlockProgress[slotKey] || 0) + rawSum;
       const remaining = Math.max(0, item.unlockThreshold - BATTLE.itemUnlockProgress[slotKey]);
       if (remaining <= 0) {
         BATTLE.itemUnlocked[slotKey] = true;
-        battleLog(`${item.name} is fully charged! From now on it draws 4 cards each time you play it — once per turn, for the rest of this fight.`);
+        battleLog(`${item.name} is fully charged! From now on it draws 4 cards each time you play it - once per turn, for the rest of this fight.`);
       } else {
-        battleLog(`${item.name} — Charging: ${remaining} more needed`);
+        battleLog(`${item.name} - Charging: ${remaining} more needed`);
       }
     }
     idxs.forEach(i => BATTLE.usedThisTurn.add(i));
@@ -2020,29 +2033,29 @@ function executePlayerAttack(itemId, index) {
     return;
   }
 
-  // Kind effect (damage/defense/poison/burn/curse) and the draw effect are independent —
+  // Kind effect (damage/defense/poison/burn/curse) and the draw effect are independent -
   // an item can do one, the other, or both (e.g. deal damage AND draw cards). A pure-draw
   // item like Quick Draw just has baseMult 0, so its kind effect amount is 0 and gets skipped.
   if (amount > 0 || item.flatAmount != null) {
     if (eKind === 'defense') {
       BATTLE.playerArmor += amount;
-      battleLog(`${item.name} [${cardsStr}] — ${condResult.label}! +${amount} armor — ${breakdown}`);
+      battleLog(`${item.name} [${cardsStr}] - ${condResult.label}! +${amount} armor - ${breakdown}`);
       playSfx('shield'); flashScreen('shield');
     } else if (eKind === 'poison') {
       BATTLE.opponent.poisonStacks = BATTLE.opponent.poisonStacks || [];
       BATTLE.opponent.poisonStacks.push(amount);
-      battleLog(`${item.name} [${cardsStr}] — ${condResult.label}! Applied ${amount} poison (${breakdown}).`);
+      battleLog(`${item.name} [${cardsStr}] - ${condResult.label}! Applied ${amount} poison (${breakdown}).`);
     } else if (eKind === 'burn') {
       // Burn is the patient choice: clean, easy-to-read percentages of what a straight attack
-      // with the same cards would do — 75% this turn, 50% next, 25% the turn after (150% total
+      // with the same cards would do - 75% this turn, 50% next, 25% the turn after (150% total
       // if left alone start to finish), versus 100% right now from a direct attack instead.
       const stages = [Math.round(amount * 0.75), Math.round(amount * 0.5), Math.round(amount * 0.25)];
       BATTLE.opponent.burns = BATTLE.opponent.burns || [];
       BATTLE.opponent.burns.push({ stages, stageIdx: 0 });
-      battleLog(`${item.name} [${cardsStr}] — ${condResult.label}! Applies burn: ${stages[0]} damage now (${breakdown}), then ${stages[1]} next turn and ${stages[2]} the turn after if left alone.`);
+      battleLog(`${item.name} [${cardsStr}] - ${condResult.label}! Applies burn: ${stages[0]} damage now (${breakdown}), then ${stages[1]} next turn and ${stages[2]} the turn after if left alone.`);
     } else if (eKind === 'curse') {
       BATTLE.opponent.curseFromPlayer = (BATTLE.opponent.curseFromPlayer || 0) + amount;
-      battleLog(`${item.name} [${cardsStr}] — ${condResult.label}! Cursed them for ${amount} (${breakdown}) — it lands if they fail to attack next turn.`);
+      battleLog(`${item.name} [${cardsStr}] - ${condResult.label}! Cursed them for ${amount} (${breakdown}) - it lands if they fail to attack next turn.`);
     } else {
       const atkBefore = BATTLE.opponent.hpNow;
       let dmgToApply = amount;
@@ -2055,12 +2068,12 @@ function executePlayerAttack(itemId, index) {
       BATTLE.opponent.hpNow = Math.max(0, BATTLE.opponent.hpNow - dmgToApply);
       if (dmgToApply === atkBefore && atkBefore > 0) BATTLE.exactKill = true;
       const armorNote = armorAbsorbed > 0 ? ` (${armorAbsorbed} blocked by their armor${BATTLE.opponent.armor > 0 ? `, ${BATTLE.opponent.armor} left` : ''})` : '';
-      battleLog(`${item.name} [${cardsStr}] — ${condResult.label}! ${amount} damage${armorNote} (${breakdown}).`);
+      battleLog(`${item.name} [${cardsStr}] - ${condResult.label}! ${amount} damage${armorNote} (${breakdown}).`);
       playSfx('hit');
       flashScreen('hit-opponent');
       // New opponent effect: some opponents get sturdier the more you hit them, drawing an
       // extra card into their pool every time you land a direct attack (not on defense/poison/
-      // burn/curse — only real damage triggers it).
+      // burn/curse - only real damage triggers it).
       if (BATTLE.opponent.special?.type === 'drawOnHit' && BATTLE.opponent.hpNow > 0) {
         const drawAmt = BATTLE.opponent.special.amount || 1;
         for (let i = 0; i < drawAmt; i++) {
@@ -2072,7 +2085,7 @@ function executePlayerAttack(itemId, index) {
     }
   }
 
-  // This Item fired — clears any curse on it, and counts against its uses-per-turn cap.
+  // This Item fired - clears any curse on it, and counts against its uses-per-turn cap.
   if (BATTLE.itemCurses && BATTLE.itemCurses[slotKey]) { delete BATTLE.itemCurses[slotKey]; battleLog(`${item.name}'s curse cleared.`); }
   BATTLE.itemUses[slotKey] = (BATTLE.itemUses[slotKey] || 0) + 1;
   if (item.cooldown != null) {
@@ -2101,7 +2114,7 @@ function executePlayerAttack(itemId, index) {
       if(!BATTLE.deck.length){ if(!BATTLE.discard.length) break; BATTLE.deck=shuffle(BATTLE.discard); BATTLE.discard=[]; }
       if(BATTLE.deck.length){ const c=BATTLE.deck.pop(); BATTLE.hand.push(c); drawn.push(c); }
     }
-    battleLog(`${item.name} — Discarded ${cardsStr}, drew ${drawn.map(c=>rankLabel(c.rank)+c.suit).join(' ') || 'no cards'}.`);
+    battleLog(`${item.name} - Discarded ${cardsStr}, drew ${drawn.map(c=>rankLabel(c.rank)+c.suit).join(' ') || 'no cards'}.`);
     resortHandAndRelink(RUN.handSortMode);
   }
 
@@ -2170,7 +2183,7 @@ function endTurn() {
       const slowDmg = Math.min(20, Math.round((elapsedSec - graceSec) / 5) * 3);
       if (slowDmg > 0) {
         RUN.health = Math.max(0, RUN.health - slowDmg);
-        battleLog(`Took too long this turn — ${BATTLE.opponent.name} punishes the hesitation for ${slowDmg} damage! Health: ${RUN.health}/${RUN.maxHealth}.`);
+        battleLog(`Took too long this turn - ${BATTLE.opponent.name} punishes the hesitation for ${slowDmg} damage! Health: ${RUN.health}/${RUN.maxHealth}.`);
         BATTLE.lastHit = { amount: slowDmg, source: `${BATTLE.opponent.name} (slow turn)` };
         playSfx('hurt'); flashScreen('hurt'); showDamagePopup(slowDmg, 'Took too long this turn');
       }
@@ -2183,7 +2196,7 @@ function endTurn() {
       const itemId = slotKey.replace(/_\d+$/, '');
       const item = ITEMS[itemId];
       RUN.health = Math.max(0, RUN.health - amount);
-      battleLog(`${item ? item.name : 'Cursed item'} never fired — you take ${amount} damage! Health: ${RUN.health}/${RUN.maxHealth}.`);
+      battleLog(`${item ? item.name : 'Cursed item'} never fired - you take ${amount} damage! Health: ${RUN.health}/${RUN.maxHealth}.`);
       BATTLE.lastHit = { amount, source: `${item ? item.name : 'a cursed Item'} not firing` };
       playSfx('hurt'); flashScreen('hurt'); showDamagePopup(amount, `${item ? item.name : 'Cursed item'} didn't fire`);
     });
@@ -2192,7 +2205,7 @@ function endTurn() {
 
   if (BATTLE.turnDiscard.length) battleLog(`Discarded ${BATTLE.turnDiscard.length} card${BATTLE.turnDiscard.length > 1 ? 's' : ''}.`);
 
-  // Storage Items keep their cards turn to turn — remember them by object identity so we
+  // Storage Items keep their cards turn to turn - remember them by object identity so we
   // can relink them to their new array positions after the hand gets spliced below.
   const preservedStorage = {};
   Object.entries(BATTLE.slots).forEach(([key, idxs]) => {
@@ -2250,7 +2263,7 @@ function endTurn() {
   } else if (BATTLE.opponent.locked) {
     if (BATTLE.opponent.turnLimit && BATTLE.turn === BATTLE.opponent.turnLimit + 1 && !BATTLE.enrageNotified) {
       BATTLE.enrageNotified = true;
-      battleLog(`${BATTLE.opponent.name} is enraged from the drawn-out fight — its attacks hit harder from here on.`);
+      battleLog(`${BATTLE.opponent.name} is enraged from the drawn-out fight - its attacks hit harder from here on.`);
     }
     if (BATTLE.opponent.lockProgress >= BATTLE.opponent.lockThreshold) {
       let oppDmg = Math.round(BATTLE.opponent.lockAttack * enrageMultiplier(BATTLE.opponent, BATTLE.turn));
@@ -2280,7 +2293,7 @@ function endTurn() {
     let attackDef = null;
     if (BATTLE.opponent.turnLimit && BATTLE.turn === BATTLE.opponent.turnLimit + 1 && !BATTLE.enrageNotified) {
       BATTLE.enrageNotified = true;
-      battleLog(`${BATTLE.opponent.name} is enraged from the drawn-out fight — its attacks hit harder from here on.`);
+      battleLog(`${BATTLE.opponent.name} is enraged from the drawn-out fight - its attacks hit harder from here on.`);
     }
     for (let swing = 0; swing < attackTimes; swing++) {
       const choices=(BATTLE.opponent.attacks&&BATTLE.opponent.attacks.length?BATTLE.opponent.attacks:[{}]);
@@ -2335,7 +2348,7 @@ function endTurn() {
         oppDmg = Math.round(damageFor(best.cards, best.mult) * enrageMultiplier(BATTLE.opponent, BATTLE.turn));
       }
       // Cap a single swing's damage by the opponent's tier so an unlucky hand of theirs can't
-      // spike into a near-kill out of nowhere — pressure should build up, not blindside you.
+      // spike into a near-kill out of nowhere - pressure should build up, not blindside you.
       const swingCap = OPPONENT_SWING_CAP[BATTLE.opponent.tier ?? OPPONENT_SWING_CAP.length - 1] ?? 60;
       oppDmg = Math.min(oppDmg, swingCap);
       oppDmg = applyDodgeIfActive(oppDmg);
@@ -2372,8 +2385,8 @@ function endTurn() {
         ? `${rawDmg} damage, but your armor absorbed ${armorBlocked}${oppDmg > 0 ? ` (${oppDmg} got through)` : ''}${BATTLE.playerArmor > 0 ? ` and you have ${BATTLE.playerArmor} armor remaining` : ', and your armor is gone'}`
         : `${oppDmg} damage`;
       battleLog(attackDef.autoFire
-        ? `${BATTLE.opponent.name}'s ${attackDef.name || 'attack'} kicks in — ${dmgPhrase}.${specialLog} Your health: ${RUN.health}/${RUN.maxHealth}.`
-        : `${BATTLE.opponent.name} used ${attackDef.name || best.label} with ${best.label} (${usedText}) — ${dmgPhrase}.${specialLog} Your health: ${RUN.health}/${RUN.maxHealth}.`);
+        ? `${BATTLE.opponent.name}'s ${attackDef.name || 'attack'} kicks in - ${dmgPhrase}.${specialLog} Your health: ${RUN.health}/${RUN.maxHealth}.`
+        : `${BATTLE.opponent.name} used ${attackDef.name || best.label} with ${best.label} (${usedText}) - ${dmgPhrase}.${specialLog} Your health: ${RUN.health}/${RUN.maxHealth}.`);
       BATTLE.oppPool = BATTLE.oppPool.filter(c => !best.cards.includes(c));
       if (RUN.health <= 0) break;
     }
@@ -2388,7 +2401,7 @@ function endTurn() {
     } else {
       const curseDmg = BATTLE.opponent.curseFromPlayer;
       const curseBefore=BATTLE.opponent.hpNow; BATTLE.opponent.hpNow = Math.max(0, BATTLE.opponent.hpNow - curseDmg); if (curseDmg === curseBefore && curseBefore > 0) BATTLE.exactKill = true;
-      battleLog(`Your curse lands for ${curseDmg} damage — ${BATTLE.opponent.name} failed to attack!`);
+      battleLog(`Your curse lands for ${curseDmg} damage - ${BATTLE.opponent.name} failed to attack!`);
     }
     BATTLE.opponent.curseFromPlayer = 0;
     if (BATTLE.opponent.hpNow <= 0) { winBattle(); return; }
@@ -2400,7 +2413,7 @@ function endTurn() {
   drawCards(RUN.drawPerTurn);
   resortHandAndRelink(RUN.handSortMode);
   // Some opponents discard their whole pool at the end of every turn instead of carrying cards
-  // forward — they draw a fresh, fixed-size hand each time regardless of what they used.
+  // forward - they draw a fresh, fixed-size hand each time regardless of what they used.
   if (BATTLE.opponent.discardPoolEachTurn && BATTLE.oppPool.length) {
     BATTLE.oppDiscard.push(...BATTLE.oppPool);
     BATTLE.oppPool = [];
@@ -2502,7 +2515,7 @@ function effectPhrase(effect) {
   return { burn:'applies burn', poison:'applies poison', curse:'curses one of your Items', stun:'stuns your next counter-attack', heal:'heals itself', stealFuel:'steals fuel', reinforceArmor:'reinforces its own armor', draw:'draws an extra card' }[effect] || effect;
 }
 // Generates a real, accurate description of what an opponent's attacks actually do, from its
-// own data — so the pre-battle popup can never drift out of sync with what it does in a fight
+// own data - so the pre-battle popup can never drift out of sync with what it does in a fight
 // the way a hand-written blurb eventually would.
 function describeOpponentAttacks(opp) {
   if (!opp.attacks || !opp.attacks.length) return opp.locked ? 'Builds up turn by turn, then unleashes one big hit once it reaches its threshold.' : 'Attacks using whatever hand it can draw from its pool.';
@@ -2528,7 +2541,7 @@ function nodePopupContent(r, c) {
   if (node.type === 'battle') {
     const o = node.opponent;
     const { chipReward, gemReward, fuelReward, pointsReward } = battleRewardsFor(o, r);
-    const enrageNote = o.turnLimit ? `<div class="note" style="margin-top:6px"><span class="hoverTip" title="Its damage climbs +12% per turn past this limit, capped at +100% (2x).">Enrages after turn ${o.turnLimit}</span> — every attack shown below hits harder the longer the fight runs.</div>` : '';
+    const enrageNote = o.turnLimit ? `<div class="note" style="margin-top:6px"><span class="hoverTip" title="Its damage climbs +12% per turn past this limit, capped at +100% (2x).">Enrages after turn ${o.turnLimit}</span> - every attack shown below hits harder the longer the fight runs.</div>` : '';
     const specialNote = o.special?.type === 'drawOnHit' ? `<div class="note" style="margin-top:4px">Draws +${o.special.amount || 1} card${(o.special.amount||1)>1?'s':''} into its hand every time you land a direct hit on it.</div>`
       : o.startPoolBonus ? `<div class="note" style="margin-top:4px">Starts the fight with ${o.startPoolBonus} extra card${o.startPoolBonus>1?'s':''} already in hand.</div>`
       : o.special?.type === 'lifesteal' ? `<div class="note" style="margin-top:4px">Heals ${Math.round((o.special.pct||0.5)*100)}% of the damage its attacks deal.</div>`
@@ -2634,7 +2647,7 @@ function mapScreen() {
     else if(node.type==='battle'){
       const o=node.opponent;
       tip=`HP: ${o.hp}<br>${tierNeedText(o.minTier)} needed to attack${o.turnLimit?`<br>Gets stronger the longer the fight runs`:''}${o.boss?'<br><b>World Boss</b>':''}`;
-    } else if(node.type==='shop') tip='Dealership — buy and sell Items.';
+    } else if(node.type==='shop') tip='Dealership - buy and sell Items.';
     else if(node.type==='rest') tip='Restore 30 health.';
     else if(node.type==='blacksmith') tip='Spend coins to permanently boost a card, rank, or suit for this run.';
     else if(node.type==='chopshop') tip='Spend coins to modify your Items for this run: bonus %, uses per turn, max cards, or convert to poison/burn/curse.';
@@ -2667,7 +2680,7 @@ function mapScreen() {
 }
 
 /* ========== RUN-SCOPED UPGRADES (paid with coins, last only for this run) ========== */
-const MAX_ITEM_CAP = 9; // 3 rows of 3 — hard ceiling regardless of how many slot upgrades stack
+const MAX_ITEM_CAP = 9; // 3 rows of 3 - hard ceiling regardless of how many slot upgrades stack
 const RUN_UPGRADE_DEFS = {
   itemSlots:   { label: 'Item Slot',        desc: '+1 Item slot, this run only.', baseCost: 100, mult: 2, cap: 6 },
   drawPerTurn: { label: 'Cards Drawn/Turn', desc: '+1 card drawn at the start of each turn, this run only.', baseCost: 60, mult: 2, cap: 5 },
@@ -2748,7 +2761,7 @@ function battleScreen() {
     const previewCalc = ready ? computeItemAmount(item, cards, level, condResult) : null;
     // Live "what if" preview: if the slot is still empty but the player has cards selected in
     // their hand, show what this item would do with those cards, before they've actually been
-    // dropped in — saves doing the math in your head to compare options.
+    // dropped in - saves doing the math in your head to compare options.
     let hypPreviewHTML = '';
     if (!idxs.length && typeof selectedIdx !== 'undefined' && selectedIdx.length) {
       const hypCards = selectedIdx.filter(i => !BATTLE.usedThisTurn.has(i)).slice(0, effectiveMaxCards(item)).map(i => BATTLE.hand[i]);
@@ -2799,7 +2812,7 @@ function battleScreen() {
           :eKind==='curse'?`<span class="effectTip curseText" data-tip="Curse goes off if this item isn't fired again before the opponent's next turn."><b>Curse</b></span>`
           :eKind==='defense'?`<span class="effectTip" style="color:var(--defense)" data-tip="Armor protects against incoming attacks, absorbing damage equal to the amount shown."><b>Armor</b></span>`
           :'';
-        const unlockText = item.unlockThreshold != null ? (BATTLE.itemUnlocked && BATTLE.itemUnlocked[slotKey] ? '<span class="hoverTip" title="Charged for the rest of this battle — playing cards through it now draws 4, once per turn."><b>Charged: Draw 4/turn</b></span>' : `<span class="hoverTip" title="Play cards through it to count down the charge (based on the cards' value, no damage dealt). Once it hits 0, it draws 4 cards each use, once per turn, for the rest of this battle.">${Math.max(0, item.unlockThreshold - ((BATTLE.itemUnlockProgress && BATTLE.itemUnlockProgress[slotKey]) || 0))} to charge</span>`) : '';
+        const unlockText = item.unlockThreshold != null ? (BATTLE.itemUnlocked && BATTLE.itemUnlocked[slotKey] ? '<span class="hoverTip" title="Charged for the rest of this battle - playing cards through it now draws 4, once per turn."><b>Charged: Draw 4/turn</b></span>' : `<span class="hoverTip" title="Play cards through it to count down the charge (based on the cards' value, no damage dealt). Once it hits 0, it draws 4 cards each use, once per turn, for the rest of this battle.">${Math.max(0, item.unlockThreshold - ((BATTLE.itemUnlockProgress && BATTLE.itemUnlockProgress[slotKey]) || 0))} to charge</span>`) : '';
         if (cards.length && ready) {
           const kindText = hasKindAmount ? `${previewCalc.breakdown} ${kindTag || '<b>Damage</b>'}` : '';
           return `<div class="note" style="margin:4px 0 0">${[kindText, drawText].filter(Boolean).join(' + ') || 'Requirement not met'}</div>${unlockText?`<div class="note" style="margin:2px 0 0">${unlockText}</div>`:''}`;
@@ -2841,14 +2854,14 @@ function battleScreen() {
         <div class="sideInfo">
           <h3 style="justify-content:flex-end"><span style="color:var(--blue)">${fleetLabel()}</span></h3>
           <div class="bar-wrap"><div class="bar-fill bar-health" style="width:${healthPct}%"></div><div class="bar-text">${RUN.health} / ${RUN.maxHealth}</div></div>
-          <div style="margin-top:4px;display:flex;justify-content:flex-end"><button class="wo-btn green" id="fuelHealBtn" title="Fuel also gets you across the map — spending it here means less for travel." style="padding:6px 10px;font-size:11px" ${RUN.fuel < FUEL_HESTORE_COST || RUN.health >= RUN.maxHealth ? 'disabled' : ''}>Heal ${FUEL_HEAL_AMOUNT} = ${FUEL_HESTORE_COST} ${ICON.fuel}</button></div>
+          <div style="margin-top:4px;display:flex;justify-content:flex-end"><button class="wo-btn green" id="fuelHealBtn" title="Fuel also gets you across the map - spending it here means less for travel." style="padding:6px 10px;font-size:11px" ${RUN.fuel < FUEL_HESTORE_COST || RUN.health >= RUN.maxHealth ? 'disabled' : ''}>Heal ${FUEL_HEAL_AMOUNT} = ${FUEL_HESTORE_COST} ${ICON.fuel}</button></div>
           ${BATTLE.playerArmor ? `<div class="note" style="text-align:right;margin-top:2px"><span class="armorText hoverTip" style="font-weight:800;font-size:13px" title="Armor protects against incoming attacks, absorbing damage equal to the amount shown."><span class="vart" style="width:12px;height:12px;font-size:12px">${ICON.shield}</span> ${BATTLE.playerArmor} ARMOR</span></div>` : ''}
         </div>
       </div>
       <div class="vsMark">VS</div>
       <div class="duelSide opp">${art(opp, 30)}
         <div class="sideInfo">
-          <h3 style="justify-content:space-between;gap:6px;flex-wrap:nowrap"><span style="color:var(--red)">${opp.name}</span>${BATTLE.enrageNotified ? ` <span class="hoverTip" style="color:var(--red);font-size:13px" title="This opponent is past its turn limit and hitting harder.">Enraged</span>` : ''}${opp.boss ? ` <span class="hoverTip" style="color:var(--red);font-size:13px" title="This is a boss fight — taking too long on a turn costs extra health, so don't sit on it.">&#9201;</span>` : ''}
+          <h3 style="justify-content:space-between;gap:6px;flex-wrap:nowrap"><span style="color:var(--red)">${opp.name}</span>${BATTLE.enrageNotified ? ` <span class="hoverTip" style="color:var(--red);font-size:13px" title="This opponent is past its turn limit and hitting harder.">Enraged</span>` : ''}${opp.boss ? ` <span class="hoverTip" style="color:var(--red);font-size:13px" title="This is a boss fight - taking too long on a turn costs extra health, so don't sit on it.">&#9201;</span>` : ''}
             <span class="rewardRow">
               <span class="cur chip" title="Coins earned for winning.">${ICON.coin} ${Math.round(22 + opp.hp/7)}</span>
               ${battleRewardsFor(opp, BATTLE.row).gemReward ? `<span class="cur gem" title="Gems earned for winning.">${ICON.gem} ${battleRewardsFor(opp, BATTLE.row).gemReward}</span>` : ''}
@@ -2873,18 +2886,18 @@ function battleScreen() {
     </div>
         ${BATTLE.turnDiscard.length ? `<div class="note" style="margin-top:8px">Discarding this turn (tap to undo):</div><div class="hand">${discardStagedHTML}</div>` : ''}
       </div>
-      <div class="deckStack" style="flex-direction:row;align-items:center;gap:6px;justify-content:center">
-        <span class="hoverTip" style="font-family:var(--mono);font-weight:800;font-size:13px;color:var(--dim)" title="How many cards you draw at the start of each of your turns.">${RUN.drawPerTurn}/turn</span>
-        <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
+      <div class="deckStack" style="flex-direction:row;align-items:center;gap:8px;justify-content:center">
+        <span class="hoverTip" style="font-family:var(--mono);font-weight:400;font-size:11px;color:var(--dim)" title="How many cards you draw at the start of each of your turns.">${RUN.drawPerTurn}</span>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;min-width:0">
           <div class="card back" style="position:relative"><span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-family:var(--mono);font-weight:700;font-size:16px">${BATTLE.deck.length}</span></div>
-          <button class="wo-btn red" id="endTurnBtn" style="padding:8px 10px;font-size:12px;font-weight:700;width:100%">End Turn</button>
+          <button class="wo-btn red" id="endTurnBtn" style="padding:12px 10px;font-size:14px;font-weight:800;width:100%">End Turn</button>
         </div>
+        <span class="hoverTip" style="font-family:var(--mono);font-weight:400;font-size:11px;color:var(--dim)" title="How many new cards this opponent draws at the start of each of its turns.">${opp.drawRate}</span>
       </div>
       <div class="panel">
         <div class="hand">${poolHTML}</div>
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
           <button class="wo-btn amber" id="scoutBtn" style="padding:8px 12px;font-size:12px" ${BATTLE.scoutedThisTurn || RUN.chips < 10 ? 'disabled' : ''}>Reveal a card = 10 ${ICON.coin}</button>
-          <span class="hoverTip" style="font-family:var(--mono);font-weight:800;font-size:13px;color:var(--dim);margin-left:auto" title="How many new cards this opponent draws at the start of each of its turns.">${opp.drawRate}/turn</span>
         </div>
       </div>
     </div>
@@ -3020,7 +3033,7 @@ function dealerItemCardHTML(item, opts) {
     : `<button class="wo-btn gray" data-sell="${opts.index}" style="padding:5px 8px;font-size:11px;white-space:nowrap;margin-top:4px">Sell</button>`;
   const priceCol = `<div style="display:flex;flex-direction:column;align-items:flex-end;flex-shrink:0;justify-content:center">
     <div class="price" style="white-space:nowrap">${priceLabel}</div>
-    ${item.kind !== 'storage' ? `<div class="hoverTip note" style="margin:2px 0 0;font-size:10px;white-space:nowrap" title="A rough gauge of how hard this item can hit at full setup, based on its cards, uses per turn, and bonus — not how easy it is to trigger. Use it to compare items, not to predict exact damage.">Power ${itemPowerScore(item)}</div>` : ''}
+    ${item.kind !== 'storage' ? `<div class="hoverTip note" style="margin:2px 0 0;font-size:10px;white-space:nowrap" title="A rough gauge of how hard this item can hit at full setup. Use it to compare items.">Power ${itemPowerScore(item)}</div>` : ''}
     ${footer}
   </div>`;
   const nameHTML = `<div class="hdr" style="font-weight:700;color:${headerColor};width:100%;text-align:left">${item.name}</div>`;
@@ -3311,9 +3324,9 @@ function starterSelectScreen() {
     }
     const itemCards = (hero.starterItems || []).map(heroItemCardPreviewHTML).join('');
     const abilityCard = heroAbilityCardHTML(id);
-    return `<div class="pickrow" style="padding:12px;margin-bottom:10px">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-        <div style="width:36px;text-align:center;flex-shrink:0">${art(hero, 30)}</div>
+    return `<div class="pickrow" style="padding:10px;margin-bottom:8px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <div style="width:30px;text-align:left;flex-shrink:0">${art(hero, 28)}</div>
         <div class="pname" style="flex:1">${hero.name}</div>
         <button class="wo-btn amber" data-pick="${hero.id}" style="padding:6px 14px;font-size:12px;white-space:nowrap">Choose</button>
       </div>
@@ -3332,7 +3345,7 @@ function starterSelectScreen() {
 }
 
 function upgradeScreen() {
-  const TIER_LABEL = { high: 'Core Stats — Matters Every Run', medium: 'Resource Capacity', low: 'Situational & Utility' };
+  const TIER_LABEL = { high: 'Core Stats - Matters Every Run', medium: 'Resource Capacity', low: 'Situational & Utility' };
   const TIER_COLOR = { high: 'var(--red)', medium: 'var(--amber)', low: 'var(--blue-dark)' };
   const groups = { high: [], medium: [], low: [] };
   UPGRADE_DEFS.forEach(u => groups[u.tier || 'medium'].push(u));
@@ -3344,31 +3357,27 @@ function upgradeScreen() {
     const cost = maxed ? 0 : upgradeCost(u, lvl);
     const refund = lvl > 0 ? upgradeCost(u, lvl - 1) : 0;
     if (!unlocked) {
-      return `<div class="shopcard" style="opacity:0.6">
-        <div class="hdr"><span><b>${u.label}</b></span><span class="price">${ICON.lock || '🔒'} Locked</span></div>
-        <div class="note" style="margin:0">${u.desc}</div>
-        <div class="note" style="margin:4px 0 0;color:var(--red)">Unlock: ${u.unlock.desc}</div>
+      return `<div class="shopcard" style="opacity:0.6;padding:8px 10px">
+        <div class="hdr" style="margin:0"><span><b>${u.label}</b></span><span class="price">${ICON.lock || '🔒'} Locked</span></div>
+        <div class="note" style="margin:2px 0 0;color:var(--red)">Unlock: ${u.unlock.desc}</div>
       </div>`;
     }
-    return `<div class="shopcard">
-      <div class="hdr"><span><b>${u.label}</b> (Lv ${lvl}/${MAX_LEVEL})</span></div>
-      <div class="note" style="margin:2px 0 6px">${u.desc}</div>
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
-        <div class="note hoverTip" style="margin:0;font-weight:700;color:var(--ink)" title="What you actually have right now at this level.">Currently: ${u.currentValue(lvl)}</div>
-        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+    return `<div class="shopcard" style="padding:8px 10px">
+      <div class="hdr" style="margin:0"><span><b>${u.label}</b> (Lv ${lvl}/${MAX_LEVEL})</span></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-top:3px">
+        <div class="note hoverTip" style="margin:0;font-weight:700;color:var(--ink)" title="${u.desc}">Currently: ${u.currentValue(lvl)}</div>
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:nowrap">
           <span class="price" style="white-space:nowrap">${maxed ? 'MAX' : cost + ' pts'}</span>
-          <div style="display:flex;gap:6px;flex-wrap:nowrap">
-            ${lvl > 0 ? `<button class="wo-btn gray" data-leveldown="${u.id}" style="padding:6px 10px;font-size:12px;white-space:nowrap">Refund (+${refund})</button>` : ''}
-            ${maxed ? '' : `<button class="wo-btn amber" data-levelup="${u.id}" style="padding:6px 10px;font-size:12px;white-space:nowrap" ${META.points < cost ? 'disabled' : ''}>Level Up</button>`}
-          </div>
+          ${lvl > 0 ? `<button class="wo-btn gray hoverTip" data-leveldown="${u.id}" title="Refunds +${refund} points" style="padding:6px 10px;font-size:12px;white-space:nowrap">Refund</button>` : ''}
+          ${maxed ? '' : `<button class="wo-btn amber" data-levelup="${u.id}" style="padding:6px 10px;font-size:12px;white-space:nowrap" ${META.points < cost ? 'disabled' : ''}>Level Up</button>`}
         </div>
       </div>
-      <div class="levelbar"><i style="width:${(lvl / MAX_LEVEL) * 100}%"></i></div>
+      <div class="levelbar" style="margin-top:6px"><i style="width:${(lvl / MAX_LEVEL) * 100}%"></i></div>
     </div>`;
   };
 
   const sections = ['high', 'medium', 'low'].map(tier => `
-    <div class="hdr" style="margin-top:16px"><span style="color:${TIER_COLOR[tier]}">${TIER_LABEL[tier]}</span></div>
+    <div style="margin-top:18px;font-weight:800;font-size:15px;text-transform:uppercase;letter-spacing:0.03em;color:${TIER_COLOR[tier]};border-bottom:2px solid ${TIER_COLOR[tier]};padding-bottom:4px">${TIER_LABEL[tier]}</div>
     <div style="margin:8px 0">${groups[tier].map(cardFor).join('')}</div>
   `).join('');
 
@@ -3378,7 +3387,6 @@ function upgradeScreen() {
       <div class="wo-body">
         <h1>Spend Your <em>Career Points</em></h1>
         <div class="wo-sub">Career Points: ${META.points} &middot; Lifetime: ${META.lifetimePoints} &middot; High score: ${META.highScore}</div>
-        <div class="note" style="margin:-4px 0 6px">These carry over between playthroughs and can only be spent before a run begins. Item modifications (bonus, uses per turn, card limit, converting to poison/burn/curse) are done in-run at the Chop Shop using coins, and reset every run.</div>
         <button class="wo-btn" id="upgradeContinueBtn" style="width:100%;margin-bottom:6px">Back</button>
         ${sections}
         <button class="wo-btn" id="upgradeContinueBtn2" style="width:100%;margin-top:12px">Back</button>

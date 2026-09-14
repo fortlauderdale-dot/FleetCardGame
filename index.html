@@ -26,8 +26,8 @@
   .map-popup-overlay .wo{max-width:400px;width:100%;margin:0}
   .treasure-prize{font-size:28px;font-weight:800;color:var(--blue-dark);text-align:center;margin:16px 0}
 
-  .wo{background:var(--white);color:var(--ink);border:3px solid var(--blue);border-radius:12px;box-shadow:6px 6px 0 var(--blue-dark);padding:0;margin:16px 0;overflow:hidden}
-  .wo-stripe{height:10px;background:repeating-linear-gradient(-45deg,var(--amber) 0 16px,var(--blue) 16px 32px)}
+  .wo{background:var(--white);color:var(--ink);border:3px solid #2b3350;border-radius:12px;box-shadow:6px 6px 0 #1a2038;padding:0;margin:16px 0;overflow:hidden}
+  .wo-stripe{height:10px;background:linear-gradient(90deg,#2b3350 0%,#3d4a72 50%,#1fb6a6 100%)}
   .wo-body{padding:20px 22px 24px}
   .wo-eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:var(--dim)}
   .wo h1{margin:6px 0 2px;font-size:clamp(24px,5.5vw,34px);line-height:1.05;font-weight:700;color:var(--blue-dark)}
@@ -49,7 +49,8 @@
   .bar-wrap{height:20px;background:var(--blue-light);border-radius:7px;overflow:hidden;border:1px solid var(--blue-light);position:relative}
   .bar-fill{height:100%;transition:width .25s}
   .bar-hp{background:var(--red)} .bar-health{background:var(--blue)}
-  .bar-text{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:400;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.8);font-family:var(--mono);pointer-events:none}
+  .bar-text{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;text-shadow:1px 1px 2px #000,-1px -1px 2px #000,1px -1px 2px #000,-1px 1px 2px #000,0 0 4px #000;font-family:var(--mono);pointer-events:none}
+  .duelSide .bar-text{font-size:14px}
 
   .grid{display:flex;flex-wrap:wrap;gap:10px}
   .currencies{display:flex;gap:10px;flex-wrap:wrap;align-items:center;font-family:var(--mono);font-size:11.5px}
@@ -57,6 +58,8 @@
   .cur.gem{color:var(--purple);border-color:var(--purple);background:#f5effd} .cur.fuel{color:var(--green);border-color:var(--green);background:#eef9ee} .cur.energy{color:#8a6d00;border-color:var(--gold);background:#fff9df} .cur.chip{color:#a35f00;border-color:var(--amber);background:#fff4e0} .cur.pts{color:var(--blue-dark);border-color:var(--blue-dark);background:var(--blue-light)} .cur.health{color:var(--red);border-color:var(--red);background:#fdecec}
   .cur{position:relative;cursor:help}.cur[title]:hover::after,.hoverTip[title]:hover::after{content:attr(title);position:absolute;z-index:50;left:50%;transform:translateX(-50%);top:calc(100% + 6px);width:max-content;max-width:220px;background:#12163a;color:#fff;padding:7px 9px;border-radius:6px;font:12px var(--disp);white-space:normal;box-shadow:3px 3px 0 #173aa8;text-align:left;pointer-events:none}.bossPreview{border:2px solid var(--red);background:#fff7f7}.mapboss{font-size:12px;font-family:var(--mono);color:var(--dim);margin-top:8px}
   .hoverTip{position:relative;cursor:help;text-decoration:underline dotted;text-underline-offset:2px}
+  .tipLeft.cur[title]:hover::after,.tipLeft.hoverTip[title]:hover::after,.tipLeft.effectTip:hover::after{left:0;transform:none}
+  .tipRight.cur[title]:hover::after,.tipRight.hoverTip[title]:hover::after,.tipRight.effectTip:hover::after{left:auto;right:0;transform:none}
   .upgradeNum{color:var(--amber)}
 
   .duelHead{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:flex-start}
@@ -66,7 +69,7 @@
   .duelSide h3{margin:0 0 4px;font-size:18px;color:var(--blue-dark);height:22px;display:flex;align-items:center;overflow:visible;position:relative}
   .duelSide .rewardRow{position:absolute;right:0;top:0;transform:translateY(-1px)}
   .duelSide.opp{flex-direction:row-reverse;text-align:right}
-  .duelSide .bar-wrap{height:10px}
+  .duelSide .bar-wrap{height:18px}
   .rewardRow{display:inline-flex;gap:4px;flex-wrap:wrap;vertical-align:middle}
   .rewardRow .cur{font-size:9px;padding:2px 5px;white-space:nowrap}
   .vsMark{font-family:var(--mono);font-weight:800;color:var(--dim);font-size:13px}
@@ -179,7 +182,7 @@
   .shopGrid .shopcard{margin-bottom:0}
   @media (max-width:600px){.shopGrid{grid-template-columns:1fr}}
   .pickcard{border:2px solid var(--blue-light);background:var(--bg);border-radius:10px;padding:16px;width:160px;text-align:center}
-  .pickrow{border:2px solid var(--blue);background:var(--bg);border-radius:10px}
+  .pickrow{border:2px solid var(--blue-dark);background:var(--bg);border-radius:10px}
   .pickrow.locked{opacity:.55}
   .pickcard .picon{font-size:46px;display:flex;align-items:center;justify-content:center}
   .pname{font-weight:700;font-size:17px;letter-spacing:.01em;color:var(--blue-dark)}
@@ -712,7 +715,7 @@ function itemRequirementText(item) {
   else if (cond?.type === 'allSuits') specific = `one of each ${kw('Suit')}`;
   else if (cond?.type === 'cardIn') specific = describeCondition(cond);
   else if (cond?.type === 'parity') specific = `Up to ${max} ${cond.parity} cards`;
-  else if (cond?.type === 'exactRank') specific = cond.requireAll ? `all ${rankLabel(cond.rank)}s` : `a ${rankLabel(cond.rank)}`;
+  else if (cond?.type === 'exactRank') specific = cond.requireAll ? `all ${rankLabel(cond.rank)}s` : `Any ${rankLabel(cond.rank)}`;
   else if (cond?.type === 'straightLen') specific = `${cond.len}-card ${kw('Straight')}`;
   else if (cond?.type === 'sumThreshold') specific = `Card(s) need to total ${cond.min} or higher`;
   else if (cond?.type === 'sumExact') specific = `Σ = ${cond.value} exactly`;
@@ -876,7 +879,7 @@ const ITEMS = {
   impound_release: { id: 'impound_release', name: 'Impound Release', cost: 85, maxCards: 5, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'any' }, baseMult: 0, kind: 'unlock', unlockThreshold: 45,
     note: `Deals no damage. Playing cards through it counts down from 45 to 0 (based on the cards' value). Once fully charged, playing cards through it instead draws you 4 fresh cards, once per turn, for the rest of this battle - it never re-locks. Charge resets at the start of your next battle.` },
-  fender_bender: { id: 'fender_bender', name: 'One-Two Punch', cost: 0, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+  fender_bender: { id: 'fender_bender', name: 'One-Two Punch', cost: 0, sellValue: 25, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'pokerTier', tier: 0 }, baseMult: 1,
     bonus: { condition: { type: 'pokerTier', tier: 1 }, base: 0.5, perLevel: 0.25, maxLevel: 2 }, // +50% ONLY if the 2 cards are a Pair, up to +100% tuned
     note: 'Up to 2 cards. A Pair adds a bonus that grows the more you tune it.' },
@@ -1044,24 +1047,24 @@ function heroItemCardPreviewHTML(itemId) {
     : eKind === 'defense' ? `<span class="effectTip" style="color:var(--defense)" data-tip="Armor protects against incoming attacks, absorbing damage equal to the amount shown."><b>Armor</b></span>`
     : '';
   const drawN = item.drawUsesCardCount ? item.maxCards + (item.drawBonusFlat || 0) : (item.drawAmount || 0);
-  const drawText = (item.drawAmount || item.drawUsesCardCount) ? `<b>Draw</b> ${drawN} card${drawN === 1 ? '' : 's'}` : '';
+  const drawText = (item.drawAmount || item.drawUsesCardCount) ? `<div class="itemBonusLine"><b>Draw</b> ${drawN} card${drawN === 1 ? '' : 's'}</div>` : '';
   const kindLine = formatKindAmount(item, kindTag);
-  return `<div class="itemCard" style="cursor:default;border:1px solid var(--blue-light)">
+  return `<div class="itemCard" style="cursor:default;border:2px solid var(--blue-dark)">
     <div class="itemCard-sec">
       <div class="hdr" style="font-weight:600;color:var(--blue-dark)">${item.name}</div>
       <div class="itemReqLine">${itemRequirementText(item)}</div>
     </div>
     <div class="itemDivider"></div>
-    <div class="itemCard-cards-sec">${bonusLine || '<div class="note" style="margin:0">No bonus</div>'}</div>
+    <div class="itemCard-cards-sec">${bonusLine}${drawText}</div>
     <div class="itemDivider"></div>
-    <div class="itemCard-sec"><div class="note">${[kindLine, drawText].filter(Boolean).join(' + ')}</div></div>
+    <div class="itemCard-sec"><div class="note">${kindLine}</div></div>
   </div>`;
 }
 function heroAbilityCardHTML(heroId) {
   const sp = VEHICLE_SPECIALS[heroId];
   if (!sp) return '';
   const cost = sp.energyCost ?? sp.energyPerUnit;
-  return `<div class="itemCard" style="cursor:default;border:1px solid var(--amber)">
+  return `<div class="itemCard" style="cursor:default;border:2px solid #b8790a">
     <div class="itemCard-sec">
       <div class="hdr" style="font-weight:600;color:var(--amber)">${sp.name}</div>
       <div class="itemReqLine">${ICON.energy} ${cost}${sp.type === 'dodge' || sp.type === 'refuel' ? '' : '+'} Energy</div>
@@ -1094,7 +1097,7 @@ const OPPONENT_TIERS = [
   [ 
     { id: 'trashfire', name: 'Trash Can Fire', icon: '🔥', image: 'Hazards/trash-fire.jpg', hp: 35, minTier: 0, drawRate: 1, attacks: [{ name: 'Ember Flare', maxCards: 1, minTier: 0 }] },
     { id: 'pothole', name: 'Nasty Pothole', icon: '🕳️', image: 'Hazards/pothole.jpg', hp: 42, minTier: 0, drawRate: 1, attacks: [{ name: 'Axle Buster', maxCards: 1, minTier: 0, fewCardsThreshold: { max: 1, damage: 14 } }] },
-    { id: 'flickerlight', name: 'Flickering Street Light', icon: '💡', image: 'Hazards/flicker-light.jpg', hp: 45, minTier: 0, drawRate: 2, attacks: [{ name: 'Static Discharge', maxCards: 2, minTier: 0 }] },
+    { id: 'flickerlight', name: 'Flickering Street Light', icon: '💡', image: 'Hazards/flicker-light.jpg', hp: 45, minTier: 0, drawRate: 2, rewardMult: 1.6, attacks: [{ name: 'Static Discharge', maxCards: 2, minTier: 0 }] },
     { id: 'potholeAmbush', name: 'Ambush Pothole Cluster', icon: '⚡', image: 'Hazards/pothole.jpg', hp: 40, minTier: 0, drawRate: 2, startPoolBonus: 2, attacks: [{ name: 'Multi-Axle Buster', maxCards: 2, minTier: 0 }] }
   ],
 
@@ -2432,8 +2435,9 @@ function battleRewardsFor(opp, row) {
   const isElite = /\[Elite\]/.test(opp.name || '');
   const gemReward = opp.boss ? 5 : isElite ? 2 : 0;
   const fuelReward = 2 + Math.floor(row / 5);
-  const chipReward = Math.round(22 + opp.hp / 7);
-  const pointsReward = Math.round(5 + row * 3);
+  const rewardMult = opp.rewardMult || 1;
+  const chipReward = Math.round((22 + opp.hp / 7) * rewardMult);
+  const pointsReward = Math.round((5 + row * 3) * rewardMult);
   return { chipReward, gemReward, fuelReward, pointsReward };
 }
 function winBattle(outlast) {
@@ -2510,6 +2514,18 @@ function currencyBar(extraHTML = '') {
 let MAP_POPUP = null; // {row, col} of the node currently shown in the map info popup
 let TREASURE_POPUP = null; // reward object shown as a lightweight overlay on top of the map, not a full screen change
 function tierNeedText(minTier) { return minTier > 0 ? `At least a ${TIERS[minTier]}` : 'Any card'; }
+// Short, map-hover version of the same "what does it take to attack" logic used in the
+// Stop Details popup (opponentAttackBoxHTML) - keeps the two in sync instead of the hover
+// falling back to a minTier-only guess that ignores how many cards the attack actually uses.
+function tierNeedTextForOpponent(o) {
+  const a = (o.attacks && o.attacks[0]) || {};
+  const minTier = a.minTier ?? o.minTier ?? 0;
+  const cap = a.maxCards ?? opponentMaxCards(o);
+  if (a.autoFire) return 'No card needed';
+  if (minTier > 0) return `At least a ${TIERS[minTier]}`;
+  if (cap > 1) return `Up to ${cap} cards`;
+  return 'Any card';
+}
 function suitName(s) { return { '♥':'Hearts', '♦':'Diamonds', '♣':'Clubs', '♠':'Spades' }[s] || s; }
 function effectPhrase(effect) {
   return { burn:'applies burn', poison:'applies poison', curse:'curses one of your Items', stun:'stuns your next counter-attack', heal:'heals itself', stealFuel:'steals fuel', reinforceArmor:'reinforces its own armor', draw:'draws an extra card' }[effect] || effect;
@@ -2646,7 +2662,7 @@ function mapScreen() {
     if(!showReal) tip='Move closer to scout this stop.';
     else if(node.type==='battle'){
       const o=node.opponent;
-      tip=`HP: ${o.hp}<br>${tierNeedText(o.minTier)} needed to attack${o.turnLimit?`<br>Gets stronger the longer the fight runs`:''}${o.boss?'<br><b>World Boss</b>':''}`;
+      tip=`HP: ${o.hp}<br>${tierNeedTextForOpponent(o)} needed to attack${o.turnLimit?`<br>Gets stronger the longer the fight runs`:''}${o.boss?'<br><b>World Boss</b>':''}`;
     } else if(node.type==='shop') tip='Dealership - buy and sell Items.';
     else if(node.type==='rest') tip='Restore 30 health.';
     else if(node.type==='blacksmith') tip='Spend coins to permanently boost a card, rank, or suit for this run.';
@@ -2708,11 +2724,15 @@ function runUpgradeScreen() {
       </div>
     </div>`;
   }).join('');
-  return `${noticeHTML()}<div class="wo"><div class="wo-stripe"></div><div class="wo-body">
-    <button class="wo-btn gray" id="leaveRunUpgradeBtn" style="width:100%;margin-bottom:10px">Back</button>
+  const backLabel = RUN_UPGRADE_RETURN === 'battle' ? 'Back to Battle'
+    : RUN_UPGRADE_RETURN === 'shop' ? (RUN_UPGRADE_RETURN_FROMCASTLE ? 'Back to Compound' : 'Back to Road')
+    : RUN_UPGRADE_RETURN === 'blacksmith' ? 'Back to Tuning Garage'
+    : RUN_UPGRADE_RETURN === 'rest' ? 'Back to Service Station'
+    : 'Back to Road';
+  return `${noticeHTML()}<div class="wo" style="max-width:640px;margin-left:auto;margin-right:auto"><div class="wo-stripe"></div><div class="wo-body">
     <div class="wo-eyebrow">Run Upgrade</div><h1>Run <em>Upgrades</em></h1>${currencyBar()}
-    <div class="note" style="margin:8px 0 12px">Paid for with coins. These bonuses last only for this run and reset when the run ends.</div>
     <div style="margin:6px 0">${rows}</div>
+    <button class="wo-btn gray" id="leaveRunUpgradeBtn" style="width:100%;margin-top:14px">${backLabel}</button>
   </div></div>`;
 }
 
@@ -2770,7 +2790,7 @@ function battleScreen() {
         const hypCalc = computeItemAmount(item, hypCards, level, hypCond);
         const hypKind = effectiveKind(item, index);
         const hypWord = hypKind === 'defense' ? 'armor' : hypKind === 'poison' ? 'poison' : hypKind === 'burn' ? 'burn (1st turn)' : hypKind === 'curse' ? 'curse' : 'damage';
-        if (hypCalc.amount > 0) hypPreviewHTML = `<div class="note hoverTip" style="margin:4px 0 0;color:var(--amber);font-weight:700" title="What your selected cards would do if dropped into this Item.">With selected cards: ${hypCalc.amount} ${hypWord}</div>`;
+        if (hypCalc.amount > 0) hypPreviewHTML = `<div class="note hoverTip" style="margin:4px 0 0;color:var(--amber);font-weight:700" title="What your selected cards would do if dropped into this Item.">${hypCalc.amount} ${hypWord}</div>`;
       }
     }
     const eKind = effectiveKind(item, index);
@@ -2783,6 +2803,8 @@ function battleScreen() {
     }).join('');
     const bonusPct = item.bonus ? Math.round((item.bonus.base + item.bonus.perLevel * level) * 100) : 0;
     const bonusLine = item.bonus && bonusPct > 0 ? `<div class="itemBonusLine">Bonus <b>+${bonusPct}%</b> if ${bonusConditionText(item.bonus.condition || item.condition)}</div>` : '';
+    const drawNPreview = item.drawUsesCardCount ? (cards.length + (item.drawBonusFlat||0) + (item.drawPerLevel||0)*level) : (item.drawAmount ? item.drawAmount + (item.drawPerLevel||0)*level : 0);
+    const drawBonusLine = (item.drawAmount || item.drawUsesCardCount) ? `<div class="itemBonusLine hoverTip" title="Draws ${drawNPreview} card${drawNPreview===1?'':'s'} immediately after this item is used."><b>Draw</b> ${drawNPreview} card${drawNPreview===1?'':'s'}</div>` : '';
 
     const usesBadgeText = cap === Infinity ? '∞' : `${Math.max(0, usesLeft)}/${cap}`;
     const cooldownLeft = item.cooldown != null ? (BATTLE.itemCooldowns?.[slotKey] || 0) : 0;
@@ -2797,6 +2819,7 @@ function battleScreen() {
       <div class="itemDivider"></div>
       <div class="itemCard-cards-sec">
         ${bonusLine}
+        ${drawBonusLine}
         ${hypPreviewHTML}
         <div class="vcards">${cardHTML}</div>
       </div>
@@ -2805,8 +2828,6 @@ function battleScreen() {
       ${cooldownLeft > 0 ? `<div class="note" style="margin:4px 0 0"><span class="hoverTip" title="This item can't be used again until its cooldown runs out.">On cooldown: ${cooldownLeft} turn${cooldownLeft > 1 ? 's' : ''} left</span></div>` : ''}
       ${(() => {
         const hasKindAmount = item.flatAmount != null || (item.baseMult ?? 1) > 0;
-        const drawN = item.drawUsesCardCount ? (cards.length + (item.drawBonusFlat||0) + (item.drawPerLevel||0)*level) : (item.drawAmount ? item.drawAmount + (item.drawPerLevel||0)*level : 0);
-        const drawText = (item.drawAmount || item.drawUsesCardCount) ? `<span class="hoverTip" title="Draws ${drawN} card${drawN===1?'':'s'} immediately after this item is used."><b>Draw</b> ${drawN} card${drawN===1?'':'s'}</span>` : '';
         const kindTag = eKind==='poison'?`<span class="effectTip poisonText" data-tip="Poison deals its damage at the end of the opponent's turn, then drops by 3 each turn until it's gone."><b>Poison</b></span>`
           :eKind==='burn'?`<span class="effectTip burnText" data-tip="Burn hits for full damage, then half, then a quarter, fading out over 3 turns."><b>Burn</b></span>`
           :eKind==='curse'?`<span class="effectTip curseText" data-tip="Curse goes off if this item isn't fired again before the opponent's next turn."><b>Curse</b></span>`
@@ -2815,11 +2836,11 @@ function battleScreen() {
         const unlockText = item.unlockThreshold != null ? (BATTLE.itemUnlocked && BATTLE.itemUnlocked[slotKey] ? '<span class="hoverTip" title="Charged for the rest of this battle - playing cards through it now draws 4, once per turn."><b>Charged: Draw 4/turn</b></span>' : `<span class="hoverTip" title="Play cards through it to count down the charge (based on the cards' value, no damage dealt). Once it hits 0, it draws 4 cards each use, once per turn, for the rest of this battle.">${Math.max(0, item.unlockThreshold - ((BATTLE.itemUnlockProgress && BATTLE.itemUnlockProgress[slotKey]) || 0))} to charge</span>`) : '';
         if (cards.length && ready) {
           const kindText = hasKindAmount ? `${previewCalc.breakdown} ${kindTag || '<b>Damage</b>'}` : '';
-          return `<div class="note" style="margin:4px 0 0">${[kindText, drawText].filter(Boolean).join(' + ') || 'Requirement not met'}</div>${unlockText?`<div class="note" style="margin:2px 0 0">${unlockText}</div>`:''}`;
+          return `<div class="note" style="margin:4px 0 0">${kindText || 'Requirement not met'}</div>${unlockText?`<div class="note" style="margin:2px 0 0">${unlockText}</div>`:''}`;
         }
         if (cards.length && !ready) return `<div class="note" style="margin:4px 0 0">Requirement not met</div>`;
         const staticKindText = formatKindAmount(item, kindTag);
-        return `<div class="note" style="margin:4px 0 0">${[staticKindText, drawText].filter(Boolean).join(' + ')}</div>${unlockText?`<div class="note" style="margin:2px 0 0">${unlockText}</div>`:''}`;
+        return `<div class="note" style="margin:4px 0 0">${staticKindText}</div>${unlockText?`<div class="note" style="margin:2px 0 0">${unlockText}</div>`:''}`;
       })()}
       <div>
         <div style="margin-top:4px">
@@ -2863,10 +2884,10 @@ function battleScreen() {
         <div class="sideInfo">
           <h3 style="justify-content:space-between;gap:6px;flex-wrap:nowrap"><span style="color:var(--red)">${opp.name}</span>${BATTLE.enrageNotified ? ` <span class="hoverTip" style="color:var(--red);font-size:13px" title="This opponent is past its turn limit and hitting harder.">Enraged</span>` : ''}${opp.boss ? ` <span class="hoverTip" style="color:var(--red);font-size:13px" title="This is a boss fight - taking too long on a turn costs extra health, so don't sit on it.">&#9201;</span>` : ''}
             <span class="rewardRow">
-              <span class="cur chip" title="Coins earned for winning.">${ICON.coin} ${Math.round(22 + opp.hp/7)}</span>
+              <span class="cur chip" title="Coins earned for winning.">${ICON.coin} ${battleRewardsFor(opp, BATTLE.row).chipReward}</span>
               ${battleRewardsFor(opp, BATTLE.row).gemReward ? `<span class="cur gem" title="Gems earned for winning.">${ICON.gem} ${battleRewardsFor(opp, BATTLE.row).gemReward}</span>` : ''}
               ${battleRewardsFor(opp, BATTLE.row).fuelReward ? `<span class="cur fuel" title="Fuel earned for winning.">${ICON.fuel} ${battleRewardsFor(opp, BATTLE.row).fuelReward}</span>` : ''}
-              <span class="cur pts" title="Career Points earned for winning. More for a Perfect Win.">${ICON.star} ${Math.round(5 + BATTLE.row*3)}</span>
+              <span class="cur pts" title="Career Points earned for winning. More for a Perfect Win.">${ICON.star} ${battleRewardsFor(opp, BATTLE.row).pointsReward}</span>
             </span>
           </h3>
           <div class="bar-wrap"><div class="bar-fill bar-hp" style="width:${hpPct}%"></div><div class="bar-text">${opp.hpNow} / ${opp.hp}</div></div>
@@ -2878,21 +2899,21 @@ function battleScreen() {
     <div class="duelBoard">
       <div class="panel">
         <div class="hand">${handHTML}</div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="wo-btn gray" id="sortToggleBtn" style="padding:8px 12px;font-size:12px;width:110px;text-align:center;white-space:nowrap">Sort: ${(RUN.handSortMode || 'value') === 'value' ? 'Value' : 'Suit'}</button>
-          <button class="wo-btn gray" id="discardSelectedBtn" style="padding:8px 12px;font-size:12px" title="Fold selected cards face-down instead of playing them." ${!selectedIdx.length ? 'disabled' : ''}>Discard Selected</button>
-          <button class="wo-btn purple" id="gemDrawBtn" style="padding:8px 12px;font-size:12px" ${RUN.gems < 1 ? 'disabled' : ''}>Draw ${1 + META.levels.gem + (RUN.runUpgrades?.gemDraw||0)} card${(1 + META.levels.gem + (RUN.runUpgrades?.gemDraw||0)) > 1 ? 's' : ''} = ${GEM_DRAW_COST} ${ICON.gem}</button>
-          ${(() => { const sp = VEHICLE_SPECIALS[RUN.hero.heroId]; if (!sp) return ''; const minNeed = sp.energyCost ?? sp.energyPerUnit; return `<button class="wo-btn amber hoverTip" id="vehicleSpecialBtn" style="padding:8px 12px;font-size:12px" title="${sp.desc}" ${RUN.energy < minNeed ? 'disabled' : ''}>${sp.name} (${ICON.energy} ${minNeed}${sp.type==='dodge' ? '' : '+'})</button>`; })()}
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="wo-btn gray" id="sortToggleBtn" style="padding:8px 8px;font-size:12px;width:88px;text-align:center;white-space:nowrap">Sort: ${(RUN.handSortMode || 'value') === 'value' ? 'Value' : 'Suit'}</button>
+          <button class="wo-btn gray" id="discardSelectedBtn" style="padding:8px 10px;font-size:12px" title="Fold selected cards face-down instead of playing them." ${!selectedIdx.length ? 'disabled' : ''}>Discard Selected</button>
+          <button class="wo-btn purple" id="gemDrawBtn" style="padding:8px 10px;font-size:12px" ${RUN.gems < 1 ? 'disabled' : ''}>Draw ${1 + META.levels.gem + (RUN.runUpgrades?.gemDraw||0)} card${(1 + META.levels.gem + (RUN.runUpgrades?.gemDraw||0)) > 1 ? 's' : ''} = ${GEM_DRAW_COST} ${ICON.gem}</button>
+          ${(() => { const sp = VEHICLE_SPECIALS[RUN.hero.heroId]; if (!sp) return ''; const minNeed = sp.energyCost ?? sp.energyPerUnit; return `<button class="wo-btn amber hoverTip" id="vehicleSpecialBtn" style="padding:8px 10px;font-size:12px" title="${sp.desc}" ${RUN.energy < minNeed ? 'disabled' : ''}>${sp.name} = ${minNeed} ${ICON.energy}</button>`; })()}
     </div>
         ${BATTLE.turnDiscard.length ? `<div class="note" style="margin-top:8px">Discarding this turn (tap to undo):</div><div class="hand">${discardStagedHTML}</div>` : ''}
       </div>
-      <div class="deckStack" style="flex-direction:row;align-items:center;gap:8px;justify-content:center">
-        <span class="hoverTip" style="font-family:var(--mono);font-weight:400;font-size:11px;color:var(--dim)" title="How many cards you draw at the start of each of your turns.">${RUN.drawPerTurn}</span>
-        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;min-width:0">
+      <div class="deckStack" style="flex-direction:column;align-items:center;gap:10px">
+        <div style="display:flex;align-items:center;gap:10px;justify-content:center">
+          <span class="hoverTip" style="font-family:var(--mono);font-weight:400;font-size:11px;color:var(--dim)" title="How many cards you draw at the start of each of your turns.">${RUN.drawPerTurn}</span>
           <div class="card back" style="position:relative"><span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-family:var(--mono);font-weight:700;font-size:16px">${BATTLE.deck.length}</span></div>
-          <button class="wo-btn red" id="endTurnBtn" style="padding:12px 10px;font-size:14px;font-weight:800;width:100%">End Turn</button>
+          <span class="hoverTip" style="font-family:var(--mono);font-weight:400;font-size:11px;color:var(--dim)" title="How many new cards this opponent draws at the start of each of its turns.">${opp.drawRate}</span>
         </div>
-        <span class="hoverTip" style="font-family:var(--mono);font-weight:400;font-size:11px;color:var(--dim)" title="How many new cards this opponent draws at the start of each of its turns.">${opp.drawRate}</span>
+        <button class="wo-btn red" id="endTurnBtn" style="padding:14px 10px;font-size:15px;font-weight:800;width:140px;margin-top:6px">End Turn</button>
       </div>
       <div class="panel">
         <div class="hand">${poolHTML}</div>
@@ -3003,54 +3024,53 @@ function shopItemCategory(it) {
 }
 const SHOP_CATEGORIES = [
   { id: 'all', label: 'All' },
-  { id: 'attack', label: 'Attack' },
-  { id: 'defense', label: 'Defense' },
-  { id: 'poison', label: 'Poison' },
-  { id: 'burn', label: 'Burn' },
-  { id: 'curse', label: 'Curse' },
-  { id: 'draw', label: 'Draw' },
+  { id: 'attack', label: 'Attack', color: 'var(--blue-dark)' },
+  { id: 'defense', label: 'Defense', color: 'var(--defense)' },
+  { id: 'poison', label: 'Poison', color: '#4d8f45' },
+  { id: 'burn', label: 'Burn', color: '#c4472d' },
+  { id: 'curse', label: 'Curse', color: '#7a4aa8' },
+  { id: 'draw', label: 'Draw', color: 'var(--amber)' },
 ];
 function pickShopStock() {
   const row = Math.max(0, RUN.currentRow || 0);
+  // Storage bag (Stash) cards are temporarily pulled from the Dealership rotation until
+  // they're rebalanced with more value - the item data stays in ITEMS, just not offered here.
   const pool = Object.values(ITEMS).filter(it => it.kind !== 'storage' && it.cost > 0 && (it.minRow == null || it.minRow <= row));
-  const bags = Object.values(ITEMS).filter(it => it.kind === 'storage' && it.cost > 0);
   const shuffled = shuffle([...pool]);
-  const stock = shuffled.slice(0, 8);
-  // Always include at least one storage bag option so hold-card items stay purchasable.
-  if (bags.length) stock.push(shuffle([...bags])[0]);
-  return stock;
+  return shuffled.slice(0, 8);
 }
 // One shared card style for the Dealership, matching the equipped-item cards used in battle
 // (same header colors, same Poison/Burn/Curse hover tags) so an item looks the same whether
 // you're buying it or using it. `opts` is either {mode:'buy', disabled, disabledLabel} or
-// {mode:'sell', sell, index}.
+// {mode:'sell', sell, index}. Re-uses the same vertical itemCard layout that's used on the
+// Battle Page and the Pick Your Vehicle preview, with a price/action footer appended below.
 function dealerItemCardHTML(item, opts) {
   const eKind = effectiveKind(item);
-  const headerColor = eKind === 'defense' ? 'var(--defense)' : eKind === 'poison' ? '#4d8f45' : eKind === 'burn' ? '#c4472d' : eKind === 'curse' ? '#7a4aa8' : 'var(--blue-dark)';
+  const borderColor = eKind === 'defense' ? 'var(--defense)' : eKind === 'poison' ? '#4d8f45' : eKind === 'burn' ? '#c4472d' : eKind === 'curse' ? '#7a4aa8' : 'var(--blue-dark)';
+  const headerColor = borderColor;
   const priceLabel = opts.mode === 'buy' ? `${item.cost} coins` : `${opts.sell} coins`;
   const footer = opts.mode === 'buy'
-    ? `<button class="wo-btn amber" data-buy="${item.id}" data-cost="${item.cost}" ${opts.disabled ? 'disabled' : ''} style="padding:5px 8px;font-size:11px;white-space:nowrap;margin-top:4px">${opts.disabledLabel || 'Purchase'}</button>`
-    : `<button class="wo-btn gray" data-sell="${opts.index}" style="padding:5px 8px;font-size:11px;white-space:nowrap;margin-top:4px">Sell</button>`;
-  const priceCol = `<div style="display:flex;flex-direction:column;align-items:flex-end;flex-shrink:0;justify-content:center">
+    ? `<button class="wo-btn amber" data-buy="${item.id}" data-cost="${item.cost}" ${opts.disabled ? 'disabled' : ''} style="padding:5px 8px;font-size:11px;white-space:nowrap;width:100%">${opts.disabledLabel || 'Purchase'}</button>`
+    : `<button class="wo-btn gray" data-sell="${opts.index}" style="padding:5px 8px;font-size:11px;white-space:nowrap;width:100%">Sell</button>`;
+  const priceFooter = `<div style="width:100%;display:flex;flex-direction:column;align-items:center;gap:3px;margin-top:6px">
     <div class="price" style="white-space:nowrap">${priceLabel}</div>
-    ${item.kind !== 'storage' ? `<div class="hoverTip note" style="margin:2px 0 0;font-size:10px;white-space:nowrap" title="A rough gauge of how hard this item can hit at full setup. Use it to compare items.">Power ${itemPowerScore(item)}</div>` : ''}
+    ${item.kind !== 'storage' ? `<div class="hoverTip note" style="margin:0;font-size:10px;white-space:nowrap" title="A rough gauge of how hard this item can hit at full setup. Use it to compare items.">Power ${itemPowerScore(item)}</div>` : ''}
     ${footer}
   </div>`;
-  const nameHTML = `<div class="hdr" style="font-weight:700;color:${headerColor};width:100%;text-align:left">${item.name}</div>`;
 
   if (item.kind === 'storage') {
-    return `<div class="itemCard" style="min-height:auto;text-align:left;align-items:center;padding:8px;flex-direction:row;gap:10px">
-      <div style="flex:1;min-width:0;max-width:calc(100% - 84px)">
-        ${nameHTML}
-        <div class="itemDivider"></div>
-        <div class="note" style="text-align:left;margin:0">${item.note || ''}</div>
+    return `<div class="itemCard" style="cursor:default;border:2px solid var(--purple)">
+      <div class="itemCard-sec">
+        <div class="hdr" style="font-weight:600;color:var(--purple)">${item.name}</div>
+        <div class="note" style="font-size:11px">${item.note || ''}</div>
       </div>
-      ${priceCol}
+      <div class="itemDivider"></div>
+      <div class="itemCard-sec">${priceFooter}</div>
     </div>`;
   }
 
   const drawN = item.drawUsesCardCount ? (item.maxCards + (item.drawBonusFlat || 0)) : (item.drawAmount || 0);
-  const drawText = (item.drawAmount || item.drawUsesCardCount) ? `<span class="hoverTip" title="Draws ${drawN} card${drawN === 1 ? '' : 's'} immediately after this item is used."><b>Draw</b> ${drawN} card${drawN === 1 ? '' : 's'}</span>` : '';
+  const drawBonusLine = (item.drawAmount || item.drawUsesCardCount) ? `<div class="itemBonusLine hoverTip" title="Draws ${drawN} card${drawN === 1 ? '' : 's'} immediately after this item is used."><b>Draw</b> ${drawN} card${drawN === 1 ? '' : 's'}</div>` : '';
   const kindTag = eKind === 'poison' ? `<span class="effectTip poisonText" data-tip="Poison deals its damage at the end of the opponent's turn, then drops by 3 each turn until it's gone."><b>Poison</b></span>`
     : eKind === 'burn' ? `<span class="effectTip burnText" data-tip="Burn hits for full damage, then half, then a quarter, fading out over 3 turns."><b>Burn</b></span>`
     : eKind === 'curse' ? `<span class="effectTip curseText" data-tip="Curse goes off if this item isn't fired again before the opponent's next turn."><b>Curse</b></span>`
@@ -3059,18 +3079,21 @@ function dealerItemCardHTML(item, opts) {
   const kindLine = formatKindAmount(item, kindTag);
   const bonusPct = item.bonus ? Math.round(item.bonus.base * 100) : 0;
   const bonusLine = item.bonus && bonusPct > 0 ? `<div class="itemBonusLine">Bonus <b>+${bonusPct}%</b> if ${bonusConditionText(item.bonus.condition || item.condition)}</div>` : '';
-  const unlockLine = item.unlockThreshold != null ? `<div class="note" style="margin:2px 0 0;text-align:left"><span class="hoverTip" title="Play cards through it to count down a ${item.unlockThreshold}-point charge (based on the cards' value, no damage dealt). Once charged, it draws 4 cards each use, once per turn, for the rest of that battle. Charge resets every new battle."><b>Charges</b> at ${item.unlockThreshold}</span></div>` : '';
+  const unlockLine = item.unlockThreshold != null ? `<div class="note" style="margin:2px 0 0"><span class="hoverTip" title="Play cards through it to count down a ${item.unlockThreshold}-point charge (based on the cards' value, no damage dealt). Once charged, it draws 4 cards each use, once per turn, for the rest of that battle. Charge resets every new battle."><b>Charges</b> at ${item.unlockThreshold}</span></div>` : '';
 
-  return `<div class="itemCard" style="min-height:auto;text-align:left;align-items:center;padding:8px;flex-direction:row;gap:10px">
-    <div style="flex:1;min-width:0;max-width:calc(100% - 84px)">
-      ${nameHTML}
-      <div class="itemReqLine" style="text-align:left">${itemRequirementText(item)}</div>
-      ${bonusLine}
-      <div class="itemDivider"></div>
-      ${kindLine || drawText ? `<div class="note" style="margin:2px 0 0;text-align:left">${[kindLine, drawText].filter(Boolean).join(' + ')}</div>` : ''}
-      ${unlockLine}
+  return `<div class="itemCard" style="cursor:default;border:2px solid ${borderColor}">
+    <div class="itemCard-sec">
+      <div class="hdr" style="font-weight:600;color:${headerColor}">${item.name}</div>
+      <div class="itemReqLine">${itemRequirementText(item)}</div>
     </div>
-    ${priceCol}
+    <div class="itemDivider"></div>
+    <div class="itemCard-cards-sec">${bonusLine}${drawBonusLine}</div>
+    <div class="itemDivider"></div>
+    <div class="itemCard-sec">
+      ${kindLine ? `<div class="note" style="margin:0">${kindLine}</div>` : ''}
+      ${unlockLine}
+      ${priceFooter}
+    </div>
   </div>`;
 }
 function shopScreen(fromCastle=false) {
@@ -3080,7 +3103,12 @@ function shopScreen(fromCastle=false) {
   const filterButtonsHTML = SHOP_CATEGORIES.map(cat => {
     const count = cat.id === 'all' ? allOptions.length : allOptions.filter(it => shopItemCategory(it) === cat.id).length;
     if (cat.id !== 'all' && count === 0) return '';
-    return `<button class="wo-btn ${SHOP_FILTER === cat.id ? 'amber' : 'gray'}" data-shopfilter="${cat.id}" style="padding:5px 10px;font-size:11px">${cat.label} (${count})</button>`;
+    const active = SHOP_FILTER === cat.id;
+    const style = cat.color
+      ? (active ? `padding:5px 10px;font-size:11px;background:${cat.color};border-color:${cat.color};color:#fff`
+                : `padding:5px 10px;font-size:11px;border-color:${cat.color};color:${cat.color}`)
+      : 'padding:5px 10px;font-size:11px';
+    return `<button class="wo-btn ${cat.color ? '' : (active ? 'amber' : 'gray')}" data-shopfilter="${cat.id}" style="${style}">${cat.label} (${count})</button>`;
   }).join('');
   const itemRows = options.map(it => dealerItemCardHTML(it, {
     mode: 'buy',
@@ -3090,7 +3118,7 @@ function shopScreen(fromCastle=false) {
   const ownedRows = RUN.hero.items.map((id,i)=>{
     const it=ITEMS[id]; if(!it) return '';
     const modCost=(itemLevel(id)>0?itemTuneCost(it,Math.max(0,itemLevel(id)-1)):0)+(itemUsesLevel(id)>0?itemUsesTuneCost(itemUsesLevel(id)-1):0)+(itemMaxCardsLevel(id)>0?itemMaxCardsTuneCost(itemMaxCardsLevel(id)-1):0)+(RUN.itemKindOverride[`${id}_${i}`] || RUN.itemKindOverride[id]?itemKindConvertCost():0);
-    const sell=Math.floor((it.cost+modCost)/2);
+    const sell=it.sellValue != null ? it.sellValue + Math.floor(modCost/2) : Math.floor((it.cost+modCost)/2);
     return dealerItemCardHTML(it, { mode: 'sell', sell, index: i });
   }).join('');
   return `${noticeHTML()}
@@ -3330,7 +3358,7 @@ function starterSelectScreen() {
         <div class="pname" style="flex:1">${hero.name}</div>
         <button class="wo-btn amber" data-pick="${hero.id}" style="padding:6px 14px;font-size:12px;white-space:nowrap">Choose</button>
       </div>
-      <div class="pickItemRow">${itemCards}${abilityCard}</div>
+      <div class="pickItemRow">${abilityCard}${itemCards}</div>
     </div>`;
   }).join('');
   return `
@@ -3874,6 +3902,15 @@ function render(html) {
 }
 
 /* ========== BOOT ========== */
+document.addEventListener('mouseover', (e) => {
+  const el = e.target.closest('.hoverTip[title], .effectTip, .cur[title]');
+  if (!el) return;
+  el.classList.remove('tipLeft', 'tipRight');
+  const r = el.getBoundingClientRect();
+  const halfTip = 120; // half of the ~230-240px tooltip width used across these styles
+  if (r.left - halfTip < 8) el.classList.add('tipLeft');
+  else if (r.right + halfTip > window.innerWidth - 8) el.classList.add('tipRight');
+});
 (function boot() {
   const savedBattle = loadBattleSave();
   const savedRun = loadRunSave();

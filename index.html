@@ -82,6 +82,7 @@
   .deckStack{text-align:center;padding-top:20px;display:flex;flex-direction:column;align-items:center;gap:10px;width:100%;box-sizing:border-box}.deckStack .card.back{cursor:default;pointer-events:none}
   .deckStack .card.back::after{content:none}
   .wo-btn.red{background:var(--red);border-color:#a83236}
+  .wo-btn.teal{background:transparent;border:2px solid #1fb6a6;color:#1fb6a6;box-shadow:none}
 
   .duelMatchup {
   display: grid;
@@ -125,9 +126,9 @@
   .pickItemRow .itemCard{flex:0 0 130px;width:130px;min-height:120px}
   .dealerGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
   @media (max-width:700px){.dealerGrid{grid-template-columns:repeat(2,1fr)}}
-  @media (max-width:460px){.dealerGrid{grid-template-columns:1fr}}
-  .dealerGrid2col{grid-template-columns:repeat(2,1fr) !important}
-  @media (max-width:460px){.dealerGrid2col{grid-template-columns:1fr !important}}
+  @media (max-width:420px){.dealerGrid{grid-template-columns:1fr}}
+  .dealerCardWrap{display:flex;flex-direction:column}
+  .dealerMeta{margin-top:6px;padding:8px;display:flex;flex-direction:column;align-items:center;gap:4px}
   .itemCard{border-radius:8px;padding:6px 4px;background:rgba(10,14,26,0.9) !important;border:1px solid rgba(31,182,166,0.2);min-height:172px;display:flex;flex-direction:column;align-items:center;text-align:center;box-sizing:border-box;font-size:12px;position:relative;transition:box-shadow .15s ease}
   .itemCard:hover{box-shadow:0 0 14px rgba(31,182,166,0.35)}
   .itemCard-sec{width:100%;flex:0 0 auto}
@@ -1065,26 +1066,80 @@ const STARTERS = ['sidebyside', 'admin', 'interstate', 'convoy', 'towtruck', 'ta
 function heroItemCardPreviewHTML(itemId) {
   const item = ITEMS[itemId];
   if (!item) return '';
+  return renderStandardItemCard(item, {});
+}
+// Single global item-card renderer. Builds the shared card face (header, requirement, bonus/draw
+// lines, assigned cards, and a footer) used identically on the Pick Your Vehicle preview, the
+// Dealership, and the Battle screen - any styling or tint change here applies everywhere at once.
+// opts:
+//   interactive: true for the battle screen's live, droppable card (adds data-assign + drag hooks)
+//   slotKey: required when interactive
+//   cards: card objects currently assigned to this item (defaults to none)
+//   cursedAmt / ready / usesBadgeText / usesDepleted / cooldownLeft: battle-only live state
+//   hypPreviewHTML: battle-only "what if" preview line
+//   footerHTML: content for the final section (defaults to the static kind/amount line)
+function renderStandardItemCard(item, opts = {}) {
+  const {
+    interactive = false, slotKey = null, cards = [], cursedAmt = null, ready = false,
+    usesBadgeText = null, usesDepleted = false, cooldownLeft = 0, hypPreviewHTML = '',
+    footerHTML = null, level = 0,
+  } = opts;
   const eKind = effectiveKind(item);
-  const bonusPct = item.bonus ? Math.round(item.bonus.base * 100) : 0;
+  const dragAttrs = interactive
+    ? ` data-assign="${slotKey}" style="border-style:dashed;border-width:2px" ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleCardDrop(event,'${slotKey}',${effectiveMaxCards(item)})"`
+    : ` style="cursor:default"`;
+  const usesBadge = usesBadgeText != null ? `<div class="usesBadge ${usesDepleted ? 'depleted' : ''} hoverTip" title="Uses left this turn">${usesBadgeText}</div>` : '';
+
+  if (item.kind === 'storage') {
+    const cardHTML = cards.map((c, i) => {
+      const handIdx = opts.idxs ? opts.idxs[i] : i;
+      return `<div class="card mini ${suitColorClass(c.color, c.suit)}" ${interactive ? `data-unassign="${slotKey}|${handIdx}" title="Click to take this card back"` : ''}><div>${rankLabel(c.rank)}</div><div>${c.suit}</div></div>`;
+    }).join('');
+    return `<div class="itemCard kind-curse"${dragAttrs}>
+      ${interactive ? `<div class="usesBadge hoverTip" title="Cards currently held">${cards.length}/${effectiveMaxCards(item)}</div>` : ''}
+      <div class="itemCard-sec">
+        <div class="hdr" style="font-weight:600;color:var(--purple)">${item.name}</div>
+        <div class="note" style="font-size:11px">${item.note || ''}</div>
+      </div>
+      <div class="itemDivider"></div>
+      <div class="itemCard-cards-sec">
+        ${interactive ? `<div class="vcards">${cardHTML}</div>${cards.length > 0 ? `<button class="wo-btn gray" style="padding:3px 6px;font-size:10px;margin-top:6px" data-clear="${slotKey}">Release All</button>` : ''}` : ''}
+      </div>
+      ${footerHTML != null ? `<div class="itemDivider"></div><div class="itemCard-sec">${footerHTML}</div>` : ''}
+    </div>`;
+  }
+
+  const drawN = item.drawUsesCardCount ? (cards.length ? cards.length : item.maxCards) + (item.drawBonusFlat || 0) + (item.drawPerLevel || 0) * level : (item.drawAmount ? item.drawAmount + (item.drawPerLevel || 0) * level : 0);
+  const drawBonusLine = (item.drawAmount || item.drawUsesCardCount) ? `<div class="itemBonusLine hoverTip" title="Draws ${drawN} card${drawN === 1 ? '' : 's'} immediately after this item is used."><b>Draw</b> ${drawN} card${drawN === 1 ? '' : 's'}</div>` : '';
+  const bonusPct = item.bonus ? Math.round((item.bonus.base + (item.bonus.perLevel || 0) * level) * 100) : 0;
   const bonusLine = item.bonus && bonusPct > 0 ? `<div class="itemBonusLine">Bonus <b>+${bonusPct}%</b> if ${bonusConditionText(item.bonus.condition || item.condition)}</div>` : '';
   const kindTag = eKind === 'poison' ? `<span class="effectTip poisonText" data-tip="Poison deals its damage at the end of the opponent's turn, then drops by 3 each turn until it's gone."><b>Poison</b></span>`
     : eKind === 'burn' ? `<span class="effectTip burnText" data-tip="Burn hits for full damage, then half, then a quarter, fading out over 3 turns."><b>Burn</b></span>`
     : eKind === 'curse' ? `<span class="effectTip curseText" data-tip="Curse goes off if this item isn't fired again before the opponent's next turn."><b>Curse</b></span>`
     : eKind === 'defense' ? `<span class="effectTip" style="color:var(--defense)" data-tip="Armor protects against incoming attacks, absorbing damage equal to the amount shown."><b>Armor</b></span>`
     : '';
-  const drawN = item.drawUsesCardCount ? item.maxCards + (item.drawBonusFlat || 0) : (item.drawAmount || 0);
-  const drawText = (item.drawAmount || item.drawUsesCardCount) ? `<div class="itemBonusLine"><b>Draw</b> ${drawN} card${drawN === 1 ? '' : 's'}</div>` : '';
-  const kindLine = formatKindAmount(item, kindTag);
-  return `<div class="itemCard kind-${eKind}" style="cursor:default">
+  const unlockLine = item.unlockThreshold != null && footerHTML == null ? `<div class="note" style="margin:2px 0 0"><span class="hoverTip" title="Play cards through it to count down a ${item.unlockThreshold}-point charge (based on the cards' value, no damage dealt). Once charged, it draws 4 cards each use, once per turn, for the rest of that battle. Charge resets every new battle."><b>Charges</b> at ${item.unlockThreshold}</span></div>` : '';
+  const staticKindLine = footerHTML == null ? `<div class="note" style="margin:0">${formatKindAmount(item, kindTag)}</div>` : '';
+  const cardHTML = cards.map((c, i) => {
+    const handIdx = opts.idxs ? opts.idxs[i] : i;
+    return `<div class="card mini ${suitColorClass(c.color, c.suit)}" ${interactive ? `data-unassign="${slotKey}|${handIdx}"` : ''}><div>${rankLabel(c.rank)}</div><div>${c.suit}</div></div>`;
+  }).join('');
+
+  return `<div class="itemCard kind-${eKind} ${ready ? 'ready' : ''} ${cursedAmt ? 'cursed' : ''}"${dragAttrs}>
+    ${usesBadge}
     <div class="itemCard-sec">
-      <div class="hdr">${item.name}</div>
-      <div class="itemReqLine">${itemRequirementText(item)}</div>
+      <div class="hdr" style="font-weight:600">${item.name}${cursedAmt ? ` <span class="vart" style="width:12px;height:12px;font-size:12px;color:var(--purple)">${ICON.curse}</span> cursed` : ''}</div>
+      <div class="itemReqLine">${itemRequirementText(item, eKind)}</div>
     </div>
     <div class="itemDivider"></div>
-    <div class="itemCard-cards-sec">${bonusLine}${drawText}</div>
+    <div class="itemCard-cards-sec">
+      ${bonusLine}${drawBonusLine}${hypPreviewHTML}
+      ${interactive ? `<div class="vcards">${cardHTML}</div>` : ''}
+    </div>
     <div class="itemDivider"></div>
-    <div class="itemCard-sec"><div class="note">${kindLine}</div></div>
+    <div class="itemCard-sec">
+      ${footerHTML != null ? footerHTML : `${staticKindLine}${unlockLine}`}
+    </div>
   </div>`;
 }
 function heroAbilityCardHTML(heroId) {
@@ -2720,7 +2775,7 @@ function mapScreen() {
 
   return `${noticeHTML()}
   <div class="panel">${currencyBar(`<div style="margin-left:auto;display:flex;gap:6px">
-        <button class="wo-btn" id="openRunUpgradeFromMapBtn" style="padding:4px 9px;font-size:11px;white-space:nowrap;border-width:1px;box-shadow:none">Run Upgrade</button>
+        <button class="wo-btn purple" id="openRunUpgradeFromMapBtn" style="padding:4px 9px;font-size:11px;white-space:nowrap;border-width:1px">Run Upgrade</button>
         <button class="wo-btn gray" id="forfeitRunBtn" style="padding:4px 9px;font-size:11px;white-space:nowrap;border-width:1px;box-shadow:none">Forfeit Run</button>
       </div>`)}</div>
   <div class="panel">
@@ -2740,10 +2795,10 @@ function mapScreen() {
 /* ========== RUN-SCOPED UPGRADES (paid with coins, last only for this run) ========== */
 const MAX_ITEM_CAP = 9; // 3 rows of 3 - hard ceiling regardless of how many slot upgrades stack
 const RUN_UPGRADE_DEFS = {
-  itemSlots:   { label: 'Item Slot',        desc: '+1 Item slot, this run only.', baseCost: 100, mult: 2, cap: 6 },
-  drawPerTurn: { label: 'Cards Drawn/Turn', desc: '+1 card drawn at the start of each turn, this run only.', baseCost: 60, mult: 2, cap: 5 },
-  sightRange:  { label: 'Map Sight Range',  desc: '+1 route space visible ahead on the map, this run only.', baseCost: 40, mult: 1.8, cap: 5 },
-  gemDraw:     { label: 'Gem Draw',         desc: '+1 card drawn per gem spent, this run only.', baseCost: 50, mult: 2, cap: 4 },
+  itemSlots:   { label: 'Item Slot',        desc: '+1 Item slot.', baseCost: 100, mult: 2, cap: 6, base: () => Math.min(MAX_ITEM_CAP, 3 + (META.levels.garage || 0)) },
+  drawPerTurn: { label: 'Cards Drawn/Turn', desc: '+1 card drawn at the start of each turn.', baseCost: 60, mult: 2, cap: 5, base: () => 2 + (META.levels.draw || 0) },
+  sightRange:  { label: 'Map Sight Range',  desc: '+1 route space visible ahead on the map.', baseCost: 40, mult: 1.8, cap: 5, base: () => 3 + (META.levels.range || 0) },
+  gemDraw:     { label: 'Gem Draw',         desc: '+1 card drawn per gem spent.', baseCost: 50, mult: 2, cap: 4, base: () => 1 + (META.levels.gem || 0) },
 };
 function runUpgradeCost(kind) {
   const def = RUN_UPGRADE_DEFS[kind], n = RUN.runUpgrades[kind] || 0;
@@ -2758,8 +2813,9 @@ function runUpgradeScreen() {
     const full = kind === 'health' && RUN.health >= RUN.maxHealth;
     const cost = runUpgradeCost(kind);
     const canAfford = RUN.chips >= cost && !maxed && !full;
-    return `<div class="shopcard"><div class="hdr"><span>${def.label}</span><span class="note" style="margin:0">Current: ${def.isHeal ? `${RUN.health}/${RUN.maxHealth} HP` : `+${n}`}</span></div>
-      <div class="note" style="margin:0 0 8px">${def.desc}</div>
+    const currentLabel = def.isHeal ? `${RUN.health}/${RUN.maxHealth} HP` : `${def.base ? def.base() : 0} (+${n})`;
+    return `<div class="shopcard" style="padding:8px 10px"><div class="hdr" style="margin:0"><span>${def.label}</span><span class="note" style="margin:0">Current: ${currentLabel}</span></div>
+      <div class="note" style="margin:2px 0 6px">${def.desc}</div>
       <div style="display:flex;justify-content:flex-end;align-items:center;gap:10px">
         <span class="price" style="white-space:nowrap">${maxed ? 'MAXED' : cost + ' coins'}</span>
         <button class="wo-btn amber" data-runupgrade="${kind}" ${canAfford ? '' : 'disabled'} style="padding:8px 12px;font-size:13px;white-space:nowrap">${maxed ? 'Maxed for this run' : full ? 'Full health' : 'Buy'}</button>
@@ -2774,7 +2830,7 @@ function runUpgradeScreen() {
   return `${noticeHTML()}<div class="wo" style="max-width:640px;margin-left:auto;margin-right:auto"><div class="wo-stripe"></div><div class="wo-body">
     <div class="wo-eyebrow">Run Upgrade</div><h1>Run <em>Upgrades</em></h1>${currencyBar()}
     <div style="margin:6px 0">${rows}</div>
-    <button class="wo-btn gray" id="leaveRunUpgradeBtn" style="width:100%;margin-top:14px">${backLabel}</button>
+    <button class="wo-btn teal" id="leaveRunUpgradeBtn" style="width:100%;margin-top:10px">${backLabel}</button>
   </div></div>`;
 }
 
@@ -2908,7 +2964,7 @@ function battleScreen() {
 
   return `
     <div class="panel">${currencyBar(`<div style="margin-left:auto;display:flex;gap:6px">
-        <button class="wo-btn" id="openRunUpgradeFromBattleBtn" style="padding:4px 9px;font-size:11px;white-space:nowrap;border-width:1px;box-shadow:none">Run Upgrade</button>
+        <button class="wo-btn purple" id="openRunUpgradeFromBattleBtn" style="padding:4px 9px;font-size:11px;white-space:nowrap;border-width:1px">Run Upgrade</button>
         <button class="wo-btn gray" id="forfeitRunBtn" style="padding:4px 9px;font-size:11px;white-space:nowrap;border-width:1px;box-shadow:none">Forfeit Run</button>
       </div>`)}</div>
     <div class="panel duelHead">
@@ -2916,8 +2972,8 @@ function battleScreen() {
         <div class="sideInfo">
           <h3 style="justify-content:flex-end"><span style="color:var(--blue)">${fleetLabel()}</span></h3>
           <div class="bar-wrap"><div class="bar-fill bar-health" style="width:${healthPct}%"></div><div class="bar-text">${RUN.health} / ${RUN.maxHealth}</div></div>
-          <div style="margin-top:4px;display:flex;justify-content:flex-end"><button class="wo-btn green" id="fuelHealBtn" title="Fuel also gets you across the map - spending it here means less for travel." style="padding:6px 10px;font-size:11px" ${RUN.fuel < FUEL_HESTORE_COST || RUN.health >= RUN.maxHealth ? 'disabled' : ''}>Heal ${FUEL_HEAL_AMOUNT} = ${FUEL_HESTORE_COST} ${ICON.fuel}</button></div>
           ${BATTLE.playerArmor ? `<div class="note" style="text-align:right;margin-top:2px"><span class="armorText hoverTip" style="font-weight:800;font-size:13px" title="Armor protects against incoming attacks, absorbing damage equal to the amount shown."><span class="vart" style="width:12px;height:12px;font-size:12px">${ICON.shield}</span> ${BATTLE.playerArmor} ARMOR</span></div>` : ''}
+          <div style="margin-top:4px;display:flex;justify-content:flex-end"><button class="wo-btn green" id="fuelHealBtn" title="Fuel also gets you across the map - spending it here means less for travel." style="padding:6px 10px;font-size:11px" ${RUN.fuel < FUEL_HESTORE_COST || RUN.health >= RUN.maxHealth ? 'disabled' : ''}>Heal ${FUEL_HEAL_AMOUNT} = ${FUEL_HESTORE_COST} ${ICON.fuel}</button></div>
         </div>
       </div>
       <div class="vsMark">VS</div>
@@ -3086,7 +3142,6 @@ function pickShopStock() {
 // {mode:'sell', sell, index}. Re-uses the same vertical itemCard layout that's used on the
 // Battle Page and the Pick Your Vehicle preview, with a price/action footer appended below.
 function dealerItemCardHTML(item, opts) {
-  const eKind = effectiveKind(item);
   const priceLabel = opts.mode === 'buy' ? `${item.cost} coins` : `${opts.sell} coins`;
   const footer = opts.mode === 'buy'
     ? `<button class="wo-btn amber" data-buy="${item.id}" data-cost="${item.cost}" ${opts.disabled ? 'disabled' : ''} style="padding:5px 8px;font-size:11px;white-space:nowrap;width:100%">${opts.disabledLabel || 'Purchase'}</button>`
@@ -3094,67 +3149,16 @@ function dealerItemCardHTML(item, opts) {
   // Meta-block: price, Power Score, and the buy/sell button live here, entirely separate from
   // the item card face - the card itself should look identical whether you're browsing the
   // Dealership or looking at it equipped in battle.
-  const metaBlock = `<div class="panel" style="margin-top:6px;padding:8px;display:flex;flex-direction:column;align-items:center;gap:4px">
+  const metaBlock = `<div class="panel dealerMeta">
     <div class="price" style="white-space:nowrap">${priceLabel}</div>
     ${item.kind !== 'storage' ? `<div class="hoverTip note" style="margin:0;font-size:10px;white-space:nowrap" title="A rough gauge of how hard this item can hit at full setup. Use it to compare items.">Power ${itemPowerScore(item)}</div>` : ''}
     ${footer}
   </div>`;
-
-  if (item.kind === 'storage') {
-    return `<div>
-      <div class="itemCard kind-curse" style="cursor:default">
-        <div class="itemCard-sec">
-          <div class="hdr" style="font-weight:600;color:var(--purple)">${item.name}</div>
-          <div class="note" style="font-size:11px">${item.note || ''}</div>
-        </div>
-      </div>
-      ${metaBlock}
-    </div>`;
-  }
-
-  const drawN = item.drawUsesCardCount ? (item.maxCards + (item.drawBonusFlat || 0)) : (item.drawAmount || 0);
-  const drawBonusLine = (item.drawAmount || item.drawUsesCardCount) ? `<div class="itemBonusLine hoverTip" title="Draws ${drawN} card${drawN === 1 ? '' : 's'} immediately after this item is used."><b>Draw</b> ${drawN} card${drawN === 1 ? '' : 's'}</div>` : '';
-  const kindTag = eKind === 'poison' ? `<span class="effectTip poisonText" data-tip="Poison deals its damage at the end of the opponent's turn, then drops by 3 each turn until it's gone."><b>Poison</b></span>`
-    : eKind === 'burn' ? `<span class="effectTip burnText" data-tip="Burn hits for full damage, then half, then a quarter, fading out over 3 turns."><b>Burn</b></span>`
-    : eKind === 'curse' ? `<span class="effectTip curseText" data-tip="Curse goes off if this item isn't fired again before the opponent's next turn."><b>Curse</b></span>`
-    : eKind === 'defense' ? `<span class="effectTip" style="color:var(--defense)" data-tip="Armor protects against incoming attacks, absorbing damage equal to the amount shown."><b>Armor</b></span>`
-    : '';
-  const kindLine = formatKindAmount(item, kindTag);
-  const bonusPct = item.bonus ? Math.round(item.bonus.base * 100) : 0;
-  const bonusLine = item.bonus && bonusPct > 0 ? `<div class="itemBonusLine">Bonus <b>+${bonusPct}%</b> if ${bonusConditionText(item.bonus.condition || item.condition)}</div>` : '';
-  const unlockLine = item.unlockThreshold != null ? `<div class="note" style="margin:2px 0 0"><span class="hoverTip" title="Play cards through it to count down a ${item.unlockThreshold}-point charge (based on the cards' value, no damage dealt). Once charged, it draws 4 cards each use, once per turn, for the rest of that battle. Charge resets every new battle."><b>Charges</b> at ${item.unlockThreshold}</span></div>` : '';
-
-  return `<div>
-    <div class="itemCard kind-${eKind}" style="cursor:default">
-      <div class="itemCard-sec">
-        <div class="hdr">${item.name}</div>
-        <div class="itemReqLine">${itemRequirementText(item)}</div>
-      </div>
-      <div class="itemDivider"></div>
-      <div class="itemCard-cards-sec">${bonusLine}${drawBonusLine}</div>
-      <div class="itemDivider"></div>
-      <div class="itemCard-sec">
-        ${kindLine ? `<div class="note" style="margin:0">${kindLine}</div>` : ''}
-        ${unlockLine}
-      </div>
-    </div>
-    ${metaBlock}
-  </div>`;
+  return `<div class="dealerCardWrap">${renderStandardItemCard(item, {})}${metaBlock}</div>`;
 }
 function shopScreen(fromCastle=false) {
   if (!RUN.shopStock) RUN.shopStock = pickShopStock().map(it => it.id);
-  const allOptions = RUN.shopStock.map(id => ITEMS[id]).filter(Boolean);
-  const options = SHOP_FILTER === 'all' ? allOptions : allOptions.filter(it => shopItemCategory(it) === SHOP_FILTER);
-  const filterButtonsHTML = SHOP_CATEGORIES.map(cat => {
-    const count = cat.id === 'all' ? allOptions.length : allOptions.filter(it => shopItemCategory(it) === cat.id).length;
-    if (cat.id !== 'all' && count === 0) return '';
-    const active = SHOP_FILTER === cat.id;
-    const style = cat.color
-      ? (active ? `padding:5px 10px;font-size:11px;background:${cat.color};border-color:${cat.color};color:#fff`
-                : `padding:5px 10px;font-size:11px;border-color:${cat.color};color:${cat.color}`)
-      : 'padding:5px 10px;font-size:11px';
-    return `<button class="wo-btn ${cat.color ? '' : (active ? 'amber' : 'gray')}" data-shopfilter="${cat.id}" style="${style}">${cat.label} (${count})</button>`;
-  }).join('');
+  const options = RUN.shopStock.map(id => ITEMS[id]).filter(Boolean);
   const itemRows = options.map(it => dealerItemCardHTML(it, {
     mode: 'buy',
     disabled: RUN.chips < it.cost || RUN.hero.items.length >= RUN.itemCap,
@@ -3169,15 +3173,14 @@ function shopScreen(fromCastle=false) {
   return `${noticeHTML()}
     <div class="wo">
       <div class="wo-stripe"></div><div class="wo-body">
-        <h1>Dealership</h1>${currencyBar()}
-        <div style="display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 10px">${filterButtonsHTML}</div>
-        <div class="dealerGrid dealerGrid2col" style="margin:6px 0 12px">${itemRows || '<div class="note">No items in this category.</div>'}</div>
-        <div class="hdr" style="margin-top:14px;font-weight:800;font-size:14px"><span>Equipped Items</span><span>${RUN.hero.items.length}/${RUN.itemCap}</span></div>
-        ${ownedRows ? `<div class="dealerGrid dealerGrid2col" style="margin-top:8px">${ownedRows}</div>` : `<div class="note" style="margin-top:6px">Nothing equipped yet.</div>`}
-        <div style="display:flex;gap:8px;margin-top:16px">
-          <button class="wo-btn gray" id="leaveShopBtn" style="flex:1">${fromCastle ? "Back to Compound" : "Back to Road"}</button>
-          <button class="wo-btn gray" id="openRunUpgradeFromShopBtn" data-fromcastle="${fromCastle ? '1' : '0'}" style="flex:1">Upgrades</button>
+        <div style="display:flex;gap:8px;margin-bottom:10px">
+          <button class="wo-btn teal" id="leaveShopBtn" style="flex:1">${fromCastle ? "Back to Compound" : "Back to Road"}</button>
+          <button class="wo-btn purple" id="openRunUpgradeFromShopBtn" data-fromcastle="${fromCastle ? '1' : '0'}" style="flex:1">Upgrades</button>
         </div>
+        <h1>Dealership</h1>${currencyBar()}
+        <div class="dealerGrid" style="margin:10px 0 12px">${itemRows || '<div class="note">No items in this category.</div>'}</div>
+        <div class="hdr" style="margin-top:14px;font-weight:800;font-size:14px"><span>Equipped Items</span><span>${RUN.hero.items.length}/${RUN.itemCap}</span></div>
+        ${ownedRows ? `<div class="dealerGrid" style="margin-top:8px">${ownedRows}</div>` : `<div class="note" style="margin-top:6px">Nothing equipped yet.</div>`}
       </div>
     </div>`;
 }
@@ -3205,7 +3208,7 @@ function garageScreen(message='') {
           <button class="wo-btn amber" id="stationFuelBtn" ${RUN.chips < 8 || RUN.fuel >= RUN.maxFuel ? 'disabled' : ''}>1 Fuel = 8 Coins</button>
         </div>
 
-        <button class="wo-btn" id="leaveStationBtn" style="width:100%;margin-top:12px;background:transparent;border:2px solid #1fb6a6;color:#1fb6a6;box-shadow:none">Back on the Road</button>
+        <button class="wo-btn teal" id="leaveStationBtn" style="width:100%;margin-top:12px">Back on the Road</button>
       </div>
     </div>
   </div>`;
@@ -3322,8 +3325,8 @@ function blacksmithScreen() {
         ${itemLevelRows ? `<div class="hdr" style="margin-top:14px"><span>Item Upgrades</span><span>Not limited by this visit</span></div><div style="margin:6px 0 12px">${itemLevelRows}</div>` : ''}
         ${capacityRows ? `<div class="hdr" style="margin-top:14px"><span>Capacity Upgrades</span><span>Up to +${ITEM_MAX_CARDS_BONUS_CAP}</span></div><div style="margin:6px 0 12px">${capacityRows}</div>` : ''}
         ${usesRows ? `<div class="hdr" style="margin-top:14px"><span>Uses Per Turn Upgrades</span><span>Up to +${ITEM_MAX_USES_LEVEL}</span></div><div style="margin:6px 0 12px">${usesRows}</div>` : ''}
-        <button class="wo-btn" id="leaveBlacksmithBtn">Back on the Road</button>
-        <button class="wo-btn gray" id="openRunUpgradeFromBlacksmithBtn" style="margin-top:8px">Upgrades</button>
+        <button class="wo-btn teal" id="leaveBlacksmithBtn">Back on the Road</button>
+        <button class="wo-btn purple" id="openRunUpgradeFromBlacksmithBtn" style="margin-top:8px">Upgrades</button>
       </div>
     </div>
   `;
@@ -3480,7 +3483,7 @@ function chopShopScreen(returnTo) {
     return `<div class="shopcard"><div class="hdr"><span>${item.name}</span><span>Item ${index+1}</span></div><div class="note">Add one special effect to this Item only. This cannot be refunded or changed during the run.</div><div style="display:flex;gap:8px;flex-wrap:wrap">${buttons}</div></div>`;
   }).join('');
   return `${noticeHTML()}<div class="wo"><div class="wo-stripe"></div><div class="wo-body">
-    <button class="wo-btn gray" id="leaveChopShopBtn" style="width:100%;margin-bottom:10px">${RETURN_TO_CASTLE_MENU?'Back to Compound':'Back to Road'}</button>
+    <button class="wo-btn teal" id="leaveChopShopBtn" style="width:100%;margin-bottom:10px">${RETURN_TO_CASTLE_MENU?'Back to Compound':'Back to Road'}</button>
     <div class="wo-eyebrow">Chop Shop</div><h1>Special <em>Modifications</em></h1>${currencyBar()}
     <div class="note" style="margin:10px 0">Only Items you currently own can be modified. One special effect per Item.</div>
     <div style="margin:12px 0">${rows || '<div class="note">No Items available.</div>'}</div>

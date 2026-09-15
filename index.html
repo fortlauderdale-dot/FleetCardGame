@@ -295,6 +295,10 @@ function rankLabel(r) { return RANK_LABEL[r] || String(r); }
 // Shared suit->text-color mapping so every card render site (hand, battle, storage,
 // discard, Tuning Garage) agrees: red suits red, clubs distinct green, spades default charcoal.
 function suitColorClass(color, suit) { return color === 'red' ? 'red' : (suit === '♣' ? 'suit-club' : ''); }
+// Shared Σ (Summation) glyph, wrapped in the same hover-tooltip convention as every other
+// inline term in the game, so it reads as an explained symbol instead of unexplained shorthand
+// anywhere it appears - item cards, requirement text, or the hazard-preview popup.
+const SIGMA_TIP = `<span class="hoverTip" data-title="Summation: The total face value of all cards used to satisfy this item's requirements.">Σ</span>`;
 // A tiny playing-card-styled chip used anywhere a suit requirement needs to read like a card
 // face instead of plain text - white background, color-coded glyph, same palette the real
 // hand cards use (red for hearts/diamonds, forest green for clubs, charcoal for spades).
@@ -624,9 +628,9 @@ function opponentAttackBoxHTML(opp) {
       damageLine = `Attack ${a.suitPunish.base || 0} + ${a.suitPunish.perCard} per ${a.suitPunish.suit} discarded`;
     } else if (minTier > 0) {
       bonusLine = '';
-      damageLine = a.straightLen ? `Attack straight value × ${TIER_MULT[minTier].toFixed(1)}` : `Attack Σ × ${TIER_MULT[minTier].toFixed(1)}`;
+      damageLine = a.straightLen ? `Attack straight value × ${TIER_MULT[minTier].toFixed(1)}` : `Attack ${SIGMA_TIP} × ${TIER_MULT[minTier].toFixed(1)}`;
     } else {
-      damageLine = a.straightLen ? 'Attack straight value' : 'Attack Σ';
+      damageLine = a.straightLen ? 'Attack straight value' : `Attack ${SIGMA_TIP}`;
     }
     const STATUS_EFFECTS = { burn: 'Burn', poison: 'Poison', curse: 'Curse' };
     const effectLabel = STATUS_EFFECTS[effect];
@@ -701,11 +705,11 @@ function checkCondition(cond, cards) {
   }
   else if (cond.type === 'sumThreshold') {
     const sum = cards.reduce((a, c) => a + cardValue(c.rank) + (c.bonus || 0), 0);
-    result = { met: cards.length > 0 && sum >= cond.min, label: `Σ${sum}`, sum };
+    result = { met: cards.length > 0 && sum >= cond.min, label: `${SIGMA_TIP}${sum}`, sum };
   }
   else if (cond.type === 'sumExact') {
     const sum = cards.reduce((a, c) => a + cardValue(c.rank) + (c.bonus || 0), 0);
-    result = { met: cards.length > 0 && sum === cond.value, label: `Σ${sum}`, sum };
+    result = { met: cards.length > 0 && sum === cond.value, label: `${SIGMA_TIP}${sum}`, sum };
   }
   else result = { met: false, label: '' };
   // exactCount can ride along on ANY condition type above (e.g. "flush AND exactly 5 cards") -
@@ -733,8 +737,8 @@ function describeCondition(cond) {
   if (cond.type === 'cardIn') return cond.cards.map(c => `${rankLabel(c.rank)}${c.suit}`).join(' or ');
   if (cond.type === 'parity') return cond.mode === 'all' ? `all ${cond.parity}` : `${cond.count}+ ${cond.parity} cards`;
   if (cond.type === 'exactRank') return cond.requireAll ? `all ${rankLabel(cond.rank)}s` : `a ${rankLabel(cond.rank)}`;
-  if (cond.type === 'sumThreshold') return `Σ${cond.min}+`;
-  if (cond.type === 'sumExact') return `Σ = ${cond.value} exactly`;
+  if (cond.type === 'sumThreshold') return `${SIGMA_TIP}${cond.min}+`;
+  if (cond.type === 'sumExact') return `${SIGMA_TIP} = ${cond.value} exactly`;
   return '';
 }
 /* ========== GLOSSARY (hoverable keywords) ==========
@@ -772,7 +776,7 @@ function itemRequirementText(item) {
   else if (cond?.type === 'exactRank') specific = cond.requireAll ? `all ${rankLabel(cond.rank)}s` : `Any ${rankLabel(cond.rank)}`;
   else if (cond?.type === 'straightLen') specific = `${cond.len}-card ${kw('Straight')}`;
   else if (cond?.type === 'sumThreshold') specific = `Card(s) need to total ${cond.min} or higher`;
-  else if (cond?.type === 'sumExact') specific = `Σ = ${cond.value} exactly`;
+  else if (cond?.type === 'sumExact') specific = `${SIGMA_TIP} = ${cond.value} exactly`;
   else if (cond?.type === 'exactCount') specific = `${cond.count} cards`;
   else if (cond?.type === 'pokerTier' && cond.tier > 0) specific = cond.tier === 5 ? kw('Flush') : cond.tier === 4 ? kw('Straight') : TIERS[cond.tier];
   if (cond?.exactCount != null && cond?.type !== 'exactCount') specific = `${specific} (${cond.exactCount} cards)`;
@@ -788,7 +792,7 @@ function formatKindAmount(item, kindTagHTML) {
   if (!hasKindAmount) return '';
   const maxC = effectiveMaxCards(item);
   const multVal = item.baseMult ?? 1;
-  const amountText = multVal !== 1 ? `&times;${multVal}` : (maxC > 1 ? 'Σ' : '');
+  const amountText = multVal !== 1 ? `&times;${multVal}` : (maxC > 1 ? SIGMA_TIP : '');
   if (!amountText) return kindTagHTML || '';
   return kindTagHTML ? [kindTagHTML, amountText].filter(Boolean).join(' ') : `<b>Attack</b> ${amountText}`;
 }
@@ -884,37 +888,37 @@ const ITEMS = {
     note: `Needs one of each ${kw('Suit')} (4 cards). Flat ${kw('Attack')} for 40 damage.` },
   repo_notice: { id: 'repo_notice', name: 'Repo Notice', cost: 55, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'colorCount', color: 'blk', count: 2 }, baseMult: 1, kind: 'curse',
-    note: `Needs 2+ ${kw('Black')} cards. Curses the opponent for Σ of the cards played.` },
+    note: `Needs 2+ ${kw('Black')} cards. Curses the opponent for ${SIGMA_TIP} of the cards played.` },
   safety_inspection: { id: 'safety_inspection', name: 'Safety Inspection', cost: 55, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'colorCount', color: 'red', count: 2 }, baseMult: 1, kind: 'defense',
-    note: `Needs 2+ ${kw('Red')} cards. Blocks damage equal to Σ of the cards played.` },
+    note: `Needs 2+ ${kw('Red')} cards. Blocks damage equal to ${SIGMA_TIP} of the cards played.` },
   jinxed_duo: { id: 'jinxed_duo', name: 'Jinxed Duo', cost: 60, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'cardIn', cards: [{ rank: 3, suit: '♣' }, { rank: 4, suit: '♣' }] }, baseMult: 1,
     flatBonus: 16, flatBonusPerLevel: 0, kind: 'poison',
     drawAmount: 1, drawPerLevel: 0,
-    note: `Needs the 3${kw('Club',"club")} or 4${kw('Club',"club")}. Poison damage for Σ of cards played + 16, then draw 1 card immediately.` },
+    note: `Needs the 3${kw('Club',"club")} or 4${kw('Club',"club")}. Poison damage for ${SIGMA_TIP} of cards played + 16, then draw 1 card immediately.` },
 
   /* -- Suit-flavored "exactly 4 cards" burn items -- */
   heart_inferno: { id: 'heart_inferno', name: 'Heart Inferno', cost: 65, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'exactCount', count: 4 }, baseMult: 1, kind: 'burn',
     bonus: { condition: { type: 'suitCount', suit: '♥', count: 4 }, base: 0.5, perLevel: 0, maxLevel: 0 },
-    note: `Needs exactly 4 cards. Flame damage for Σ, +50% if all 4 are ${kw('Heart',"heart")}.` },
+    note: `Needs exactly 4 cards. Flame damage for ${SIGMA_TIP}, +50% if all 4 are ${kw('Heart',"heart")}.` },
   diamond_inferno: { id: 'diamond_inferno', name: 'Diamond Inferno', cost: 65, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'exactCount', count: 4 }, baseMult: 1, kind: 'burn',
     bonus: { condition: { type: 'suitCount', suit: '♦', count: 4 }, base: 0.5, perLevel: 0, maxLevel: 0 },
-    note: `Needs exactly 4 cards. Flame damage for Σ, +50% if all 4 are ${kw('Diamond')}.` },
+    note: `Needs exactly 4 cards. Flame damage for ${SIGMA_TIP}, +50% if all 4 are ${kw('Diamond')}.` },
   club_inferno: { id: 'club_inferno', name: 'Club Inferno', cost: 65, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'exactCount', count: 4 }, baseMult: 1, kind: 'burn',
     bonus: { condition: { type: 'suitCount', suit: '♣', count: 4 }, base: 0.5, perLevel: 0, maxLevel: 0 },
-    note: `Needs exactly 4 cards. Flame damage for Σ, +50% if all 4 are ${kw('Club',"club")}.` },
+    note: `Needs exactly 4 cards. Flame damage for ${SIGMA_TIP}, +50% if all 4 are ${kw('Club',"club")}.` },
   spade_inferno: { id: 'spade_inferno', name: 'Spade Inferno', cost: 65, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'exactCount', count: 4 }, baseMult: 1, kind: 'burn',
     bonus: { condition: { type: 'suitCount', suit: '♠', count: 4 }, base: 0.5, perLevel: 0, maxLevel: 0 },
-    note: `Needs exactly 4 cards. Flame damage for Σ, +50% if all 4 are ${kw('Spade')}.` },
+    note: `Needs exactly 4 cards. Flame damage for ${SIGMA_TIP}, +50% if all 4 are ${kw('Spade')}.` },
 
   five_alarm_flush: { id: 'five_alarm_flush', name: 'Five-Alarm Flush', cost: 90, maxCards: 5, usesPerTurn: 2, usesPerTurnPerLevel: 1, minRow: 3,
     condition: { type: 'pokerTier', tier: 5, exactCount: 5 }, baseMult: 1.5,
-    note: `Needs exactly 5 cards making a ${kw('Flush')}. Σ +50% damage. 2 uses per turn.` },
+    note: `Needs exactly 5 cards making a ${kw('Flush')}. ${SIGMA_TIP} +50% damage. 2 uses per turn.` },
 
   exact_change: { id: 'exact_change', name: 'Exact Change', cost: 35, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'sumExact', value: 4 }, baseMult: 0,
@@ -923,7 +927,7 @@ const ITEMS = {
 
   chain_starter: { id: 'chain_starter', name: 'Chain Starter', cost: 50, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1, minRow: 2,
     condition: { type: 'straightLen', len: 3 }, baseMult: 2.5,
-    note: `Needs a 3-card ${kw('Straight')} (example: 6, 7, 8). Σ +150% damage.` },
+    note: `Needs a 3-card ${kw('Straight')} (example: 6, 7, 8). ${SIGMA_TIP} +150% damage.` },
 
   drawstone: { id: 'drawstone', name: 'Drawstone', cost: 40, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'sumThreshold', min: 7 }, baseMult: 0,
@@ -973,7 +977,7 @@ const ITEMS = {
     note: 'Needs a 7 among your played cards. Rare to have one ready, so it hits hard when you do.' },
   escort_wall: { id: 'escort_wall', name: 'Roadblock', cost: 45, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'pokerTier', tier: 1 }, baseMult: 1, kind: 'defense',
-    note: `Needs a Pair. Blocks damage equal to Σ of the cards played, instead of dealing damage.` },
+    note: `Needs a Pair. Blocks damage equal to ${SIGMA_TIP} of the cards played, instead of dealing damage.` },
   toxic_spill: { id: 'toxic_spill', name: 'Toxic Spill', cost: 40, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'any' }, baseMult: 0.5, kind: 'poison',
     bonus: { base: 0, perLevel: 0.15, maxLevel: 3 },
@@ -1204,17 +1208,17 @@ const OPPONENT_TIERS = [
   // --- TIER 1: Minor Street Impediments (Early Game) ---
   [ 
     { id: 'trashfire', name: 'Trash Can Fire', icon: '🔥', image: 'Hazards/trash-fire.jpg', hp: 35, minTier: 0, drawRate: 1, attacks: [{ name: 'Ember Flare', maxCards: 1, minTier: 0 }] },
-    { id: 'pothole', name: 'Nasty Pothole', icon: '🕳️', image: 'Hazards/pothole.jpg', hp: 34, minTier: 0, drawRate: 1, attacks: [{ name: 'Axle Buster', maxCards: 2, minTier: 1 }] },
-    { id: 'flickerlight', name: 'Flickering Street Light', icon: '💡', image: 'Hazards/flicker-light.jpg', hp: 36, minTier: 0, drawRate: 2, rewardMult: 1.6, attacks: [{ name: 'Static Discharge', maxCards: 2, minTier: 1 }] },
-    { id: 'potholeAmbush', name: 'Ambush Pothole Cluster', icon: '⚡', image: 'Hazards/pothole.jpg', hp: 35, minTier: 0, drawRate: 2, attacks: [{ name: 'Multi-Axle Buster', maxCards: 2, minTier: 1 }] }
+    { id: 'pothole', name: 'Nasty Pothole', icon: '🕳️', image: 'Hazards/pothole.jpg', hp: 34, minTier: 0, drawRate: 2, startHandSize: 1, attacks: [{ name: 'Axle Buster', maxCards: 2, minTier: 1 }] },
+    { id: 'flickerlight', name: 'Flickering Street Light', icon: '💡', image: 'Hazards/flicker-light.jpg', hp: 36, minTier: 0, drawRate: 2, startHandSize: 1, rewardMult: 1.6, attacks: [{ name: 'Static Discharge', maxCards: 2, minTier: 1 }] },
+    { id: 'potholeAmbush', name: 'Ambush Pothole Cluster', icon: '⚡', image: 'Hazards/pothole.jpg', hp: 35, minTier: 0, drawRate: 2, startHandSize: 1, attacks: [{ name: 'Multi-Axle Buster', maxCards: 2, minTier: 1 }] }
   ],
 
   // --- TIER 2: Active Road Obstacles & Complex Rules ---
   [ 
     { id: 'jaywalker', name: 'Jaywalker', icon: '🚶', image: 'Hazards/jaywalker.jpg', hp: 55, minTier: 1, drawRate: 2, attacks: [{ name: 'Sudden Dash', maxCards: 2, minTier: 1 }, { name: 'Enrage', minTurn: 6, autoFire: { damage: 15 } }] },
     { id: 'grumpyMeter', name: 'Broken Meter', icon: '🅿️', image: 'Hazards/broken-meter.jpg', hp: 60, minTier: 1, drawRate: 2, attacks: [{ name: 'Coin Jam', maxCards: 2, minTier: 1, effect: 'stealFuel' }, { name: 'Repo Notice', maxCards: 2, minTier: 1, effect: 'curse' }, { name: 'Ticket Slip', maxCards: 2, minTier: 0, discardHand: { count: 1 } }] },
-    { id: 'looseWire', name: 'Downed Power Line', icon: '⚡', image: 'Hazards/downed-line.jpg', hp: 65, minTier: 0, drawRate: 2, attacks: [{ name: 'Live Wire Shock', maxCards: 2, minTier: 0, effect: 'stun' }] },
-    { id: 'meterBox', name: 'Reinforced Meter Box', icon: '🛡️', image: 'Hazards/broken-meter.jpg', hp: 60, minTier: 1, drawRate: 2, startArmor: 15, attacks: [{ name: 'Slot Jam', maxCards: 2, minTier: 1 }] }
+    { id: 'looseWire', name: 'Downed Power Line', icon: '⚡', image: 'Hazards/downed-line.jpg', hp: 65, minTier: 0, drawRate: 2, attacks: [{ name: 'Live Wire Shock', maxCards: 2, minTier: 0 }] },
+    { id: 'meterBox', name: 'Reinforced Meter Box', icon: '🛡️', image: 'Hazards/broken-meter.jpg', hp: 45, minTier: 1, drawRate: 2, startArmor: 15, attacks: [{ name: 'Slot Jam', maxCards: 2, minTier: 1 }] }
   ],
 
   // --- TIER 3: The Mid-Way Drain (High pressure threshold math) ---
@@ -1887,7 +1891,7 @@ function startBattle(opponentDef, row, col, castleStage=0) {
   });
   drawCards(Math.min(5 + (RUN.drawPerTurn - 2), RUN.handSize));
   resortHandAndRelink(RUN.handSortMode);
-  drawOpponentCards();
+  drawOpponentStartingHand();
   // Optional: some opponents start with extra cards already in their pool on top of their
   // normal drawRate, for a "comes out swinging" feel without changing their per-turn draw.
   if (opponentDef.startPoolBonus) {
@@ -1912,6 +1916,21 @@ function drawCards(n) {
 function drawOpponentCards() {
   BATTLE.scoutedThisTurn = false; BATTLE.abilityUsedThisTurn = false;
   for (let i = 0; i < BATTLE.opponent.drawRate; i++) {
+    if (!BATTLE.oppDeck.length) { if (!BATTLE.oppDiscard.length) break; BATTLE.oppDeck = shuffle(BATTLE.oppDiscard); BATTLE.oppDiscard = []; }
+    const c = BATTLE.oppDeck.pop();
+    c.revealed = Math.random() < revealFraction(BATTLE.row);
+    BATTLE.oppPool.push(c);
+    if (BATTLE.opponent.locked) BATTLE.opponent.lockProgress += cardValue(c.rank);
+  }
+}
+// Turn-1-only draw, kept separate from the recurring per-turn drawRate above. An opponent can
+// set startHandSize to control exactly how threatening it looks the moment the fight opens -
+// low (0 or 1) for a "delayed threat" that builds up over a couple of turns via drawRate,
+// or left unset to fall back to the old behavior of opening with a full drawRate hand.
+function drawOpponentStartingHand() {
+  BATTLE.scoutedThisTurn = false; BATTLE.abilityUsedThisTurn = false;
+  const n = BATTLE.opponent.startHandSize != null ? BATTLE.opponent.startHandSize : BATTLE.opponent.drawRate;
+  for (let i = 0; i < n; i++) {
     if (!BATTLE.oppDeck.length) { if (!BATTLE.oppDiscard.length) break; BATTLE.oppDeck = shuffle(BATTLE.oppDiscard); BATTLE.oppDiscard = []; }
     const c = BATTLE.oppDeck.pop();
     c.revealed = Math.random() < revealFraction(BATTLE.row);
@@ -3594,7 +3613,7 @@ function render(html) {
   const advanceWorldBtn = document.getElementById('advanceWorldBtn');
   if (advanceWorldBtn) advanceWorldBtn.onclick = () => {
     RUN.world = 2;
-    RUN.worldMultiplier = 1.5;
+    RUN.worldMultiplier = 1.25;
     RUN.map = generateMap();
     RUN.bossRow = RUN.map.nodes.length - 1;
     RUN.currentRow = -1;

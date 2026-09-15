@@ -18,7 +18,7 @@
   *{box-sizing:border-box}
   html,body{margin:0;min-height:100vh;background:var(--bg);background-attachment:fixed;color:var(--ink);font-family:var(--disp);font-size:16px}
   button{font-family:var(--disp);cursor:pointer}
-  #app{max-width:1600px;margin:0 auto;padding:14px 18px 100px}
+  #app{max-width:1180px;margin:0 auto;padding:14px 18px 100px}
   .game-stage{}
   .treasure-modal{position:fixed;inset:0;background:#12163acc;display:flex;align-items:center;justify-content:center;z-index:100;padding:20px}
   .treasure-modal .wo{max-width:560px;width:100%;margin:0}
@@ -43,7 +43,8 @@
   .wo-btn:disabled{opacity:.4;cursor:default}
   .wo-btn.half{width:48%}
 
-  .panel{background:none;border:none;border-radius:0;padding:14px;margin-bottom:0;box-shadow:none}
+  h1,h3{text-shadow:0 0 8px rgba(31,182,166,0.5)}
+  .panel{background:rgba(21,27,45,0.85) !important;border:1px solid rgba(31,182,166,0.3);border-radius:10px;padding:14px;margin-bottom:12px;box-shadow:none}
   .hdr{display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-size:12px;
     letter-spacing:.02em;color:var(--dim);margin-bottom:8px}
   .bar-wrap{height:20px;background:var(--blue-light);border-radius:7px;overflow:hidden;border:1px solid var(--blue-light);position:relative}
@@ -1536,7 +1537,7 @@ function selectNode(row, col) {
   commitNode(row, col);
   if (node.type === 'castle') render(castleMenuScreen());
   else if (node.type === 'shop') { RETURN_TO_CASTLE_MENU = false; RUN.shopStock = null; render(shopScreen()); }
-  else if (node.type === 'rest') render(garageScreen());
+  else if (node.type === 'rest') { GARAGE_POPUP = true; GARAGE_MESSAGE = ''; render(mapScreen()); }
   else if (node.type === 'blacksmith') { RETURN_TO_CASTLE_MENU = false; BLACKSMITH_OPTIONS = pickBlacksmithOptions(); BLACKSMITH_VISIT = { primary: null, secondary: null }; render(blacksmithScreen()); }
   else if (node.type === 'chopshop') { RETURN_TO_CASTLE_MENU = false; render(chopShopScreen('map')); }
   else if (node.type === 'treasure') { const found = rollTreasure(node.big); playSfx('open'); TREASURE_POPUP = found; render(mapScreen()); }
@@ -1546,7 +1547,7 @@ function reenterCurrentNode(row, col) {
   const node = RUN.map.nodes[row][col];
   if (node.type === 'castle') { render(castleMenuScreen()); return; }
   if (node.type === 'shop') { RETURN_TO_CASTLE_MENU = false; RUN.shopStock = null; render(shopScreen()); return; }
-  if (node.type === 'rest') { render(garageScreen()); return; }
+  if (node.type === 'rest') { GARAGE_POPUP = true; GARAGE_MESSAGE = ''; render(mapScreen()); return; }
   if (node.type === 'blacksmith') { RETURN_TO_CASTLE_MENU = false; BLACKSMITH_OPTIONS = pickBlacksmithOptions(); BLACKSMITH_VISIT = { primary: null, secondary: null }; render(blacksmithScreen()); return; }
   if (node.type === 'chopshop') { RETURN_TO_CASTLE_MENU = false; render(chopShopScreen('map')); return; }
   // Battles and Supply Caches aren't re-enterable stops - nothing to do for those here.
@@ -2528,6 +2529,8 @@ function currencyBar(extraHTML = '') {
 
 let MAP_POPUP = null; // {row, col} of the node currently shown in the map info popup
 let TREASURE_POPUP = null; // reward object shown as a lightweight overlay on top of the map, not a full screen change
+let GARAGE_POPUP = false; // true when the Service Station is open as an overlay on top of the map
+let GARAGE_MESSAGE = ''; // transient message (e.g. "Rested up") shown inside that overlay
 function tierNeedText(minTier) { return minTier > 0 ? `At least a ${TIERS[minTier]}` : 'Any card'; }
 // Short, map-hover version of the same "what does it take to attack" logic used in the
 // Stop Details popup (opponentAttackBoxHTML) - keeps the two in sync instead of the hover
@@ -2706,6 +2709,7 @@ function mapScreen() {
       </div>
       ${MAP_POPUP ? nodePopupScreen(MAP_POPUP.row, MAP_POPUP.col) : ''}
       ${TREASURE_POPUP ? treasureScreen(TREASURE_POPUP) : ''}
+      ${GARAGE_POPUP ? garageScreen(GARAGE_MESSAGE) : ''}
     </div>
   </div>`;
 }
@@ -3151,8 +3155,8 @@ function shopScreen(fromCastle=false) {
 
 function garageScreen(message='') {
   const restAvailable = RUN.health < RUN.maxHealth && !(RUN.restStopUsed && RUN.restStopUsed.row === RUN.currentRow && RUN.restStopUsed.col === RUN.currentCol);
-  return `${noticeHTML()}
-    <div class="wo">
+  return `<div class="map-popup-overlay">
+    <div class="wo" style="max-width:420px">
       <div class="wo-stripe"></div>
       <div class="wo-body">
         <div class="wo-eyebrow">Service Station</div>
@@ -3172,9 +3176,10 @@ function garageScreen(message='') {
           <button class="wo-btn amber" id="stationFuelBtn" ${RUN.chips < 8 || RUN.fuel >= RUN.maxFuel ? 'disabled' : ''}>1 Fuel = 8 Coins</button>
         </div>
 
-        <button class="wo-btn gray" id="leaveStationBtn" style="width:100%;margin-top:12px">Back to Route Map</button>
+        <button class="wo-btn" id="leaveStationBtn" style="width:100%;margin-top:12px;background:transparent;border:2px solid #1fb6a6;color:#1fb6a6;box-shadow:none">Back on the Road</button>
       </div>
-    </div>`;
+    </div>
+  </div>`;
 }
 
 
@@ -3566,7 +3571,7 @@ function render(html) {
         RUN.fuel += 1;
         playSfx('buy');
         saveRun();
-        render(garageScreen());
+        render(mapScreen());
       }
     };
   }
@@ -3579,14 +3584,15 @@ function render(html) {
       RUN.restStopUsed = { row: RUN.currentRow, col: RUN.currentCol };
       playSfx('heal');
       saveRun(); 
-      render(garageScreen('Rested up: +30 Health.')); 
+      GARAGE_MESSAGE = 'Rested up: +30 Health.';
+      render(mapScreen()); 
     };
   }
 
   // 3. Service Station Exit Back to Map Route
   const leaveStationBtn = document.getElementById('leaveStationBtn');
   if (leaveStationBtn) {
-    leaveStationBtn.onclick = () => render(mapScreen());
+    leaveStationBtn.onclick = () => { GARAGE_POPUP = false; render(mapScreen()); };
   }
 
   // 4. Compound Inn Fuel Purchase (Dynamic 8-coin math check)
@@ -3721,12 +3727,14 @@ function render(html) {
     saveRun();
     render(runUpgradeScreen());
   });
-  const leaveRunUpgradeBtn = document.getElementById('leaveRunUpgradeBtn'); if (leaveRunUpgradeBtn) leaveRunUpgradeBtn.onclick = () => render(
-    RUN_UPGRADE_RETURN === 'battle' ? battleScreen() :
-    RUN_UPGRADE_RETURN === 'shop' ? shopScreen(RUN_UPGRADE_RETURN_FROMCASTLE) :
-    RUN_UPGRADE_RETURN === 'blacksmith' ? blacksmithScreen() :
-    RUN_UPGRADE_RETURN === 'rest' ? garageScreen() :
-    mapScreen());
+  const leaveRunUpgradeBtn = document.getElementById('leaveRunUpgradeBtn'); if (leaveRunUpgradeBtn) leaveRunUpgradeBtn.onclick = () => {
+    if (RUN_UPGRADE_RETURN === 'rest') { GARAGE_POPUP = true; render(mapScreen()); return; }
+    render(
+      RUN_UPGRADE_RETURN === 'battle' ? battleScreen() :
+      RUN_UPGRADE_RETURN === 'shop' ? shopScreen(RUN_UPGRADE_RETURN_FROMCASTLE) :
+      RUN_UPGRADE_RETURN === 'blacksmith' ? blacksmithScreen() :
+      mapScreen());
+  };
   const openRunUpgradeFromMapBtn = document.getElementById('openRunUpgradeFromMapBtn'); if (openRunUpgradeFromMapBtn) openRunUpgradeFromMapBtn.onclick = () => { RUN_UPGRADE_RETURN = 'map'; render(runUpgradeScreen()); };
   const openRunUpgradeFromBattleBtn = document.getElementById('openRunUpgradeFromBattleBtn'); if (openRunUpgradeFromBattleBtn) openRunUpgradeFromBattleBtn.onclick = () => { RUN_UPGRADE_RETURN = 'battle'; render(runUpgradeScreen()); };
   const openRunUpgradeFromShopBtn = document.getElementById('openRunUpgradeFromShopBtn'); if (openRunUpgradeFromShopBtn) openRunUpgradeFromShopBtn.onclick = () => { RUN_UPGRADE_RETURN = 'shop'; RUN_UPGRADE_RETURN_FROMCASTLE = openRunUpgradeFromShopBtn.dataset.fromcastle === '1'; render(runUpgradeScreen()); };

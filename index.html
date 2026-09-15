@@ -410,11 +410,13 @@ function playSfx(kind) {
   else fire();
 }
 // Browsers keep a freshly-created (or navigated) AudioContext suspended until a direct user
-// gesture unlocks it. Every click anywhere in the game counts as that gesture, so resume here
-// too - this covers screen transitions and buttons that don't otherwise call playSfx first.
+// gesture unlocks it, and a heavy scene re-render can occasionally leave it stalled without
+// formally reporting 'suspended'. Rather than gate on that self-reported state, just call
+// resume() unconditionally on every tap - resuming an already-running context is a safe no-op,
+// and this way scene transitions can never silently freeze the audio pipeline.
 document.addEventListener('click', () => {
   const ctx = getAudioCtx();
-  if (ctx && ctx.state === 'suspended') ctx.resume().catch(() => {});
+  if (ctx) ctx.resume().catch(() => {});
 }, true);
 function flashScreen(kind) {
   try {
@@ -690,8 +692,14 @@ function checkCondition(cond, cards) {
     result = { met: !!hit, label: hit ? `${rankLabel(hit.rank)}${hit.suit}` : '' };
   }
   else if (cond.type === 'parity') {
-    const isEven = c => c.rank % 2 === 0;
-    const matchFn = cond.parity === 'even' ? isEven : (c => !isEven(c));
+    // Odd/even here means actual card-game parity, not raw JS rank number: Ace is stored as
+    // rank 14 (an even number) but is conventionally the "1" of the deck, so it belongs with
+    // 3/5/7/9 as Odd. Face cards (J/Q/K) don't count toward either bucket. This also makes sure
+    // we're counting how many of the PLAYED CARDS actually match that parity, never the total
+    // number of cards played (a hand of 5 cards with only 1 odd card should count as 1, not 5).
+    const ODD_RANKS = [14, 3, 5, 7, 9];
+    const EVEN_RANKS = [2, 4, 6, 8, 10];
+    const matchFn = cond.parity === 'even' ? (c => EVEN_RANKS.includes(c.rank)) : (c => ODD_RANKS.includes(c.rank));
     const n = cards.filter(matchFn).length;
     if (cond.mode === 'all') result = { met: cards.length > 0 && n === cards.length, label: `All ${cond.parity}`, count: n };
     else result = { met: n >= cond.count, label: `${n} ${cond.parity}`, count: n };
@@ -774,7 +782,7 @@ function itemRequirementText(item) {
   else if (cond?.type === 'colorCount') specific = `${cond.count}+ ${kw(cond.color === 'red' ? 'Red' : 'Black')} cards`;
   else if (cond?.type === 'allSuits') specific = `one of each ${kw('Suit')}`;
   else if (cond?.type === 'cardIn') specific = describeCondition(cond);
-  else if (cond?.type === 'parity') specific = `Up to ${max} ${cond.parity} cards`;
+  else if (cond?.type === 'parity') specific = `Up to ${max} ${cond.parity === 'odd' ? `<span class="hoverTip" data-title="Odd Cards: Ace, 3, 5, 7, 9.">Odd</span>` : cond.parity} cards`;
   else if (cond?.type === 'exactRank') specific = cond.requireAll ? `all ${rankLabel(cond.rank)}s` : `Any ${rankLabel(cond.rank)}`;
   else if (cond?.type === 'straightLen') specific = `${cond.len}-card ${kw('Straight')}`;
   else if (cond?.type === 'sumThreshold') specific = `Card(s) need to total ${cond.min} or higher`;
@@ -875,7 +883,35 @@ const ITEM_MAX_USES_LEVEL = 2; // level 0/1/2 -> 1/2/3 uses per turn
 function itemMaxCardsLevel(itemId) { return (RUN && RUN.itemMaxCardsLevels && RUN.itemMaxCardsLevels[itemId]) || 0; }
 function itemMaxCardsTuneCost(lvl) { return Math.round(60 * Math.pow(2.5, lvl)); } // coins, jumps hard after the 1st upgrade
 const ITEM_MAX_CARDS_BONUS_CAP = 2; // up to +2 cards beyond the Item's base maxCards
-function effectiveMaxCards(item) { return (item.maxStore ?? item.maxCards) + itemMaxCardsLevel(item.id); }
+// How many cards this game's evaluateHand actually needs to reach a given poker tier. A
+// "Straight" here is any run of 3+ consecutive unique ranks, so its length is intentionally
+// item-defined rather than fixed - Straight (4) and Straight Flush (8) are left uncapped here,
+// everything else has one unambiguous natural size.
+const POKER_TIER_CARD_COUNT = { 0: 1, 1: 2, 2: 4, 3: 3, 5: 5, 6: 5, 7: 4 };
+// Strict card-count ceiling: a Pair only ever needs 2 cards, a Three of a Kind only ever needs
+// 3, and so on - letting a slot hold more than that just lets a trash kicker card ride along and
+// inflate the Summation (Sigma) total without contributing to the actual poker hand. This caps
+// every pokerTier-conditioned Item at its tier's natural size, no matter how high maxCards (or a
+// Tuning Garage capacity upgrade) pushes it, so a multi-pair hand is always scored as one clean
+// Pair rather than a padded, over-valued combo.
+function pokerTierNaturalCap(item) {
+  const cond = item && item.condition;
+  if (!cond || cond.type !== 'pokerTier') return null;
+  let natural = POKER_TIER_CARD_COUNT[cond.tier] ?? null;
+  // An item's own bonus can require a HIGHER tier than its base condition (e.g. One-Two Punch
+  // fires on Any Card but only pays its bonus on an actual Pair) - the cap has to cover
+  // whichever needs more cards, or the bonus could never legitimately trigger at all.
+  if (item.bonus && item.bonus.condition && item.bonus.condition.type === 'pokerTier') {
+    const bonusNatural = POKER_TIER_CARD_COUNT[item.bonus.condition.tier];
+    if (bonusNatural != null) natural = natural != null ? Math.max(natural, bonusNatural) : bonusNatural;
+  }
+  return natural;
+}
+function effectiveMaxCards(item) {
+  const raw = (item.maxStore ?? item.maxCards) + itemMaxCardsLevel(item.id);
+  const natural = pokerTierNaturalCap(item);
+  return natural != null ? Math.min(raw, natural) : raw;
+}
 // An item can be converted for the rest of this run from a plain damage attack into a status
 // effect (poison/burn/curse) at the Chop Shop. Only items with no fixed `kind` (i.e. "regular
 // attack") are eligible - defense and already-status items keep their identity.
@@ -2286,11 +2322,16 @@ function executePlayerAttack(itemId, index) {
     return;
   }
 
-  // Enforce this Item's uses-per-turn cap (default 1, raised only via the Chop Shop - never by power tuning).
+  // Enforce this Item's uses-per-turn cap (default 1, raised only via the Chop Shop - never by
+  // power tuning) - EXCEPT while a charge-meter Item (like Impound Release) is still charging.
+  // Depositing cards into it does no damage and isn't really "attacking," so the player can
+  // chunk down the charge requirement as many times as they want in one turn; the cap only
+  // applies once it's actually unlocked and doing something (drawing 4 cards).
+  const isChargingUnlockItem = item.unlockThreshold != null && !(BATTLE.itemUnlocked && BATTLE.itemUnlocked[slotKey]);
   BATTLE.itemUses = BATTLE.itemUses || {};
   const level = itemLevel(itemId);
   const cap = itemUsesCap(item, itemUsesLevel(itemId));
-  if ((BATTLE.itemUses[slotKey] || 0) >= cap) {
+  if (!isChargingUnlockItem && (BATTLE.itemUses[slotKey] || 0) >= cap) {
     battleLog(`${item.name} has already fired ${cap} time${cap > 1 ? 's' : ''} this turn.`);
     render(battleScreen());
     return;
@@ -2612,7 +2653,7 @@ function endTurn() {
           if (!item) continue;
           const cap = item.usesPerTurn ?? 1;
           if ((oppItemUsesThisTurn[itemId] || 0) >= cap) continue;
-          const best = bestHandFromPool(BATTLE.oppPool, item.maxCards ?? maxCards);
+          const best = bestHandFromPool(BATTLE.oppPool, effectiveMaxCards(item) ?? maxCards);
           const cond = checkCondition(item.condition, best.cards);
           if (cond.met) { itemPick = { item, best, cond }; break; }
         }
@@ -3172,6 +3213,9 @@ function battleScreen() {
     const effectWord = eKind === 'defense' ? 'armor' : eKind === 'poison' ? 'poison' : eKind === 'burn' ? 'burn' : eKind === 'curse' ? 'curse' : 'dmg';
     const cap = itemUsesCap(item, itemUsesLevel(itemId));
     const usesLeft = cap - ((BATTLE.itemUses && BATTLE.itemUses[slotKey]) || 0);
+    // Impound Release-style charge items: unlimited deposits while still charging (only the
+    // unlocked, draw-4 mode is capped like a normal Item).
+    const isChargingUnlockItem = item.unlockThreshold != null && !(BATTLE.itemUnlocked && BATTLE.itemUnlocked[slotKey]);
     const cardHTML = idxs.map(cardHandIdx => {
       const c = BATTLE.hand[cardHandIdx];
       return `<div class="card mini ${suitColorClass(c.color, c.suit)}" data-unassign="${slotKey}|${cardHandIdx}"><div>${rankLabel(c.rank)}</div><div>${c.suit}</div></div>`;
@@ -3181,11 +3225,11 @@ function battleScreen() {
     const drawNPreview = item.drawUsesCardCount ? (cards.length + (item.drawBonusFlat||0) + (item.drawPerLevel||0)*level) : (item.drawAmount ? item.drawAmount + (item.drawPerLevel||0)*level : 0);
     const drawBonusLine = (item.drawAmount || item.drawUsesCardCount) ? `<div class="itemBonusLine hoverTip" data-title="Draws ${drawNPreview} card${drawNPreview===1?'':'s'} immediately after this item is used."><b>Draw</b> ${drawNPreview} card${drawNPreview===1?'':'s'}</div>` : '';
 
-    const usesBadgeText = cap === Infinity ? '∞' : `${Math.max(0, usesLeft)}/${cap}`;
+    const usesBadgeText = isChargingUnlockItem ? '∞' : cap === Infinity ? '∞' : `${Math.max(0, usesLeft)}/${cap}`;
     const cooldownLeft = item.cooldown != null ? (BATTLE.itemCooldowns?.[slotKey] || 0) : 0;
     return `<div class="itemCard kind-${eKind} ${ready ? 'ready' : ''} ${cursedAmt ? 'cursed' : ''}" data-assign="${slotKey}" style="border-style:dashed;border-width:2px"
         ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleCardDrop(event,'${slotKey}',${effectiveMaxCards(item)})">
-      <div class="usesBadge ${usesLeft <= 0 ? 'depleted' : ''} hoverTip" data-title="Uses left this turn">${usesBadgeText}</div>
+      <div class="usesBadge ${(!isChargingUnlockItem && usesLeft <= 0) ? 'depleted' : ''} hoverTip" data-title="Uses left this turn">${usesBadgeText}</div>
       <div class="itemCard-sec">
         <div class="hdr" style="font-weight:600">${item.name}${cursedAmt ? ` <span class="vart" style="width:12px;height:12px;font-size:12px;color:var(--purple)">${ICON.curse}</span> cursed` : ''}</div>
         <div class="itemReqLine">${itemRequirementText(item, eKind)}</div>
@@ -3194,6 +3238,7 @@ function battleScreen() {
       <div class="itemCard-cards-sec">
         ${bonusLine}
         ${drawBonusLine}
+        ${item.unlockThreshold != null ? `<div class="itemBonusLine" style="color:var(--purple);font-weight:700;text-align:center">Draw 4 cards each turn once unlocked</div>` : ''}
         ${hypPreviewHTML}
         <div class="vcards">${cardHTML}</div>
       </div>
@@ -3207,7 +3252,7 @@ function battleScreen() {
           :eKind==='curse'?`<span class="effectTip curseText" data-tip="Curse goes off if this item isn't fired again before the opponent's next turn."><b>Curse</b></span>`
           :eKind==='defense'?`<span class="effectTip" style="color:var(--defense)" data-tip="Armor protects against incoming attacks, absorbing damage equal to the amount shown."><b>Armor</b></span>`
           :'';
-        const unlockText = item.unlockThreshold != null ? (BATTLE.itemUnlocked && BATTLE.itemUnlocked[slotKey] ? '<span class="hoverTip" data-title="Charged for the rest of this battle - playing cards through it now draws 4, once per turn."><b>Charged: Draw 4/turn</b></span>' : `<span class="hoverTip" data-title="Play cards through it to count down the charge (based on the cards' value, no damage dealt). Once it hits 0, it draws 4 cards each use, once per turn, for the rest of this battle.">${Math.max(0, item.unlockThreshold - ((BATTLE.itemUnlockProgress && BATTLE.itemUnlockProgress[slotKey]) || 0))} to charge</span>`) : '';
+        const unlockText = item.unlockThreshold != null ? (BATTLE.itemUnlocked && BATTLE.itemUnlocked[slotKey] ? '<span class="hoverTip" data-title="Charged for the rest of this battle - playing cards through it now draws 4, once per turn."><b>Charged: Draw 4/turn</b></span>' : `<span class="hoverTip" data-title="Locked: This card cannot trigger actions until you drop cards into it to fulfill the listed point total.">Locked</span>: ${Math.max(0, item.unlockThreshold - ((BATTLE.itemUnlockProgress && BATTLE.itemUnlockProgress[slotKey]) || 0))} to charge`) : '';
         if (cards.length && ready) {
           const kindText = hasKindAmount ? `${previewCalc.breakdown} ${kindTag || '<b>Damage</b>'}` : '';
           return `<div class="note" style="margin:4px 0 0">${kindText || 'Requirement not met'}</div>${unlockText?`<div class="note" style="margin:2px 0 0">${unlockText}</div>`:''}`;
@@ -3219,7 +3264,7 @@ function battleScreen() {
       <div>
         <div style="margin-top:4px">
           ${idxs.length ? `<button class="wo-btn gray" style="padding:3px 6px;font-size:10px" data-clear="${slotKey}">Clear</button>` : ''}
-          ${ready && usesLeft > 0 && cooldownLeft <= 0 ? `<span class="attackChip ${eKind==='defense' ? 'defendChip' : ''}" data-attack="${slotKey}" style="font-size:10px; padding:3px 6px">${eKind==='defense' ? 'Defend ▶' : (item.flatAmount==null && (item.baseMult ?? 1)===0 && (item.drawAmount || item.drawUsesCardCount)) ? 'Draw ▶' : 'Attack ▶'}</span>` : ''}
+          ${ready && (usesLeft > 0 || isChargingUnlockItem) && cooldownLeft <= 0 ? `<span class="attackChip ${eKind==='defense' ? 'defendChip' : ''}" data-attack="${slotKey}" style="font-size:10px; padding:3px 6px">${item.unlockThreshold != null ? (isChargingUnlockItem ? 'Deposit Card(s) ▶' : 'Draw ▶') : eKind==='defense' ? 'Defend ▶' : (item.flatAmount==null && (item.baseMult ?? 1)===0 && (item.drawAmount || item.drawUsesCardCount)) ? 'Draw ▶' : 'Attack ▶'}</span>` : ''}
         </div>
       </div>
       </div>
@@ -3796,7 +3841,12 @@ function render(html) {
   app.innerHTML = `<div class="game-stage">${html}</div>`;
   if (IN_BATTLE) saveBattleState();
   const mw = app.querySelector('.mapwrap');
-  if (mw) { mw.scrollLeft = MAP_SCROLL_X; mw.onscroll = () => { MAP_SCROLL_X = mw.scrollLeft; }; if (RUN && mw.querySelector('.mapnode-wrap')) { requestAnimationFrame(()=>{ const row = Math.max(0,RUN.currentRow); const colW = 94; const target = Math.max(0, row*colW - mw.clientWidth*0.15); mw.scrollLeft = target; MAP_SCROLL_X = target; }); } }
+  // Skip the map's own scroll-restore/auto-center while a popup (Service Station, treasure,
+  // etc.) is open on top of it - re-scrolling a map the player can't even see right now is what
+  // produced the visible jump/disconnect when something as small as a fuel purchase re-rendered
+  // the whole screen. The popup's own numbers (via its own currencyBar() call, same RUN state)
+  // are already correct the instant app.innerHTML is replaced above; this only touches the map.
+  if (mw && !GARAGE_POPUP) { mw.scrollLeft = MAP_SCROLL_X; mw.onscroll = () => { MAP_SCROLL_X = mw.scrollLeft; }; if (RUN && mw.querySelector('.mapnode-wrap')) { requestAnimationFrame(()=>{ const row = Math.max(0,RUN.currentRow); const colW = 94; const target = Math.max(0, row*colW - mw.clientWidth*0.15); mw.scrollLeft = target; MAP_SCROLL_X = target; }); } }
 
   app.querySelectorAll('[data-card]').forEach(el => el.onclick = () => toggleCardSelect(+el.dataset.card));
   app.querySelectorAll('[data-assign]').forEach(el => el.onclick = (e) => {

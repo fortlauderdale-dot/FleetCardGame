@@ -584,6 +584,16 @@ function opponentAttackBoxHTML(opp) {
 
   const rawAttacks = (opp.attacks && opp.attacks.length ? opp.attacks : [{}]);
   const swings = opp.usesPerTurn ?? OPPONENT_USES_PER_TURN_DEFAULT;
+  // Unified engine: an opponent with `items` instead of `attacks` is previewed with the exact
+  // same card renderer a hero's own Items use - no separate description text to keep in sync,
+  // because it's literally the same catalog entry either side of the fight.
+  if (opp.items && opp.items.length) {
+    return opp.items.map(itemId => {
+      const item = ITEMS[itemId];
+      if (!item) return '';
+      return renderStandardItemCard(item, { usesBadgeText: swings === Infinity ? '∞' : String(swings) });
+    }).join('');
+  }
   const EFFECT_TIP = {
     burn: 'Burn deals damage over the next few turns after it lands, weaker each turn.',
     poison: 'Poison deals damage at the end of a turn, then weakens after it ticks.',
@@ -711,6 +721,10 @@ function checkCondition(cond, cards) {
     const sum = cards.reduce((a, c) => a + cardValue(c.rank) + (c.bonus || 0), 0);
     result = { met: cards.length > 0 && sum === cond.value, label: `${SIGMA_TIP}${sum}`, sum };
   }
+  else if (cond.type === 'suitCountExact') {
+    const n = cards.filter(c => c.suit === cond.suit).length;
+    result = { met: n === cond.count, label: `${n} of ${cond.suit}`, count: n };
+  }
   else result = { met: false, label: '' };
   // exactCount can ride along on ANY condition type above (e.g. "flush AND exactly 5 cards") -
   // set it on the condition object alongside its normal fields to AND it into the result.
@@ -796,9 +810,42 @@ function formatKindAmount(item, kindTagHTML) {
   if (!amountText) return kindTagHTML || '';
   return kindTagHTML ? [kindTagHTML, amountText].filter(Boolean).join(' ') : `<b>Attack</b> ${amountText}`;
 }
-function computeItemAmount(item, cards, level, condResult) {
+// One shared formula for every Item's output - player AND opponent alike, since opponent
+// attacks are now just Items in the same catalog. `level` is the player-side upgrade level
+// (always 0 for opponents, who don't have Chop Shop tuning). `isOpponent` is the one
+// opponent-only switch: when true, the finished amount is scaled by RUN.worldMultiplier so a
+// World 2+ opponent's item hits harder without needing a second copy of its data.
+function computeItemAmount(item, cards, level, condResult, isOpponent) {
+  const worldMult = isOpponent ? (RUN.worldMultiplier || 1.0) : 1;
+  // Face-card scaling (e.g. the old perFaceCard attacks): damage scales purely with how many
+  // J/Q/K were played, ignoring card value entirely.
+  if (item.perFaceCardDamage != null) {
+    const faceCount = cards.filter(c => c.rank >= 11 && c.rank <= 13).length;
+    const amount = Math.round(faceCount * item.perFaceCardDamage * worldMult);
+    return { amount, breakdown: `${faceCount} face card${faceCount === 1 ? '' : 's'} × ${item.perFaceCardDamage} = ${amount}` };
+  }
+  // Pure utility moves (e.g. discardHand) deal no direct damage - resolveOpponentAttackEffect
+  // (or the player-side equivalent) handles the actual effect from the item's own fields.
+  if (item.utilityEffect) {
+    return { amount: 0, breakdown: item.utilityEffect };
+  }
+  // Suit/color "punish" attacks: a flat base plus a per-card bonus for every matching card
+  // already banked elsewhere (suitPunish reads the discard pile, colorPunish reads the live
+  // pool) - the cards played into the item itself don't factor into the number at all.
+  if (item.suitPunish) {
+    const suitCount = BATTLE.discard.filter(c => c.suit === item.suitPunish.suit).length;
+    const amount = Math.round(((item.suitPunish.base || 0) + suitCount * item.suitPunish.perCard) * worldMult);
+    return { amount, breakdown: `${item.suitPunish.base || 0} + ${suitCount}×${item.suitPunish.perCard} = ${amount}` };
+  }
+  if (item.colorPunish) {
+    const isRed = c => c.suit === '♥' || c.suit === '♦';
+    const count = BATTLE.oppPool.filter(c => (item.colorPunish.color === 'red') === isRed(c)).length;
+    const amount = Math.round(((item.colorPunish.base || 0) + count * item.colorPunish.perCard) * worldMult);
+    return { amount, breakdown: `${item.colorPunish.base || 0} + ${count}×${item.colorPunish.perCard} = ${amount}` };
+  }
   if (item.flatAmount != null) {
-    return { amount: Math.round(item.flatAmount + (item.flatAmountPerLevel || 0) * level), breakdown: `flat ${item.flatAmount}${item.flatAmountPerLevel ? ` +${item.flatAmountPerLevel}/lv` : ''}` };
+    const amount = Math.round((item.flatAmount + (item.flatAmountPerLevel || 0) * level) * worldMult);
+    return { amount, breakdown: `flat ${item.flatAmount}${item.flatAmountPerLevel ? ` +${item.flatAmountPerLevel}/lv` : ''}` };
   }
   let mult = item.baseMult ?? (condResult.mult ?? 1);
   let bonusApplied = false;
@@ -816,12 +863,12 @@ function computeItemAmount(item, cards, level, condResult) {
   if (item.perCardBonus && cards.length > 1) mult += item.perCardBonus * (cards.length - 1);
   // Admin Vehicle's Career upgrade: a small extra multiplier on One-Two Punch, only for the
   // Admin Vehicle hero, so leveling this stat is specifically a reason to run that vehicle.
-  if (item.id === 'fender_bender' && RUN.hero?.heroId === 'admin' && META.levels.adminTune) mult += 0.1 * META.levels.adminTune;
+  if (item.id === 'fender_bender' && !isOpponent && RUN.hero?.heroId === 'admin' && META.levels.adminTune) mult += 0.1 * META.levels.adminTune;
   const rawSum = cards.reduce((a, c) => a + cardValue(c.rank) + (c.bonus || 0), 0);
   // flatBonus adds a flat amount on top of sum*mult - for "sum + N" items like Jinxed Duo
   // (sum + 16 poison), as opposed to flatAmount above which replaces the sum entirely.
   const flatBonus = (item.flatBonus || 0) + (item.flatBonusPerLevel || 0) * level;
-  const amount = Math.round(rawSum * mult) + flatBonus;
+  const amount = Math.round((Math.round(rawSum * mult) + flatBonus) * worldMult);
   const breakdown = `${rawSum} × ${mult.toFixed(2).replace(/^0/, '').replace(/\.?0+$/, '')}${flatBonus ? ` +${flatBonus}` : ''}${bonusApplied ? ' (bonus)' : ''} = ${amount}`;
   return { amount, breakdown };
 }
@@ -941,6 +988,15 @@ const ITEMS = {
     condition: { type: 'pokerTier', tier: 0 }, baseMult: 1,
     bonus: { condition: { type: 'pokerTier', tier: 1 }, base: 0.5, perLevel: 0.25, maxLevel: 2 }, // +50% ONLY if the 2 cards are a Pair, up to +100% tuned
     note: 'Up to 2 cards. A Pair adds a bonus that grows the more you tune it.' },
+  /* -- Opponent-only Items: same catalog, same engine, just never offered in the Dealership or
+     as a starter (no `cost`, not referenced by any hero's starterItems). A hazard's `items`
+     array points here exactly like a hero's `starterItems` does. -- */
+  opp_pair_curse: { id: 'opp_pair_curse', name: 'Repo Notice', maxCards: 2, usesPerTurn: 1,
+    condition: { type: 'pokerTier', tier: 1 }, baseMult: 1, kind: 'curse',
+    note: `Needs a Pair. Curses one of your Items for ${SIGMA_TIP} of the cards played.` },
+  opp_single_steal: { id: 'opp_single_steal', name: 'Coin Jam', maxCards: 1, usesPerTurn: 1,
+    condition: { type: 'any', exactCount: 1 }, flatAmount: 8, opponentEffect: 'stealFuel',
+    note: 'Needs exactly 1 card. Small hit, and it siphons a bit of your fuel.' },
   triple_threat: { id: 'triple_threat', name: 'Triple Threat', cost: 45, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'pokerTier', tier: 3, exactTier: true }, baseMult: 1,
     bonus: { base: 1.0, perLevel: 1.0, maxLevel: 3 }, // Three of a Kind: +100% up to +400% tuned
@@ -1208,17 +1264,17 @@ const OPPONENT_TIERS = [
   // --- TIER 1: Minor Street Impediments (Early Game) ---
   [ 
     { id: 'trashfire', name: 'Trash Can Fire', icon: '🔥', image: 'Hazards/trash-fire.jpg', hp: 35, minTier: 0, drawRate: 1, attacks: [{ name: 'Ember Flare', maxCards: 1, minTier: 0 }] },
-    { id: 'pothole', name: 'Nasty Pothole', icon: '🕳️', image: 'Hazards/pothole.jpg', hp: 34, minTier: 0, drawRate: 2, startHandSize: 1, attacks: [{ name: 'Axle Buster', maxCards: 2, minTier: 1 }] },
-    { id: 'flickerlight', name: 'Flickering Street Light', icon: '💡', image: 'Hazards/flicker-light.jpg', hp: 36, minTier: 0, drawRate: 2, startHandSize: 1, rewardMult: 1.6, attacks: [{ name: 'Static Discharge', maxCards: 2, minTier: 1 }] },
-    { id: 'potholeAmbush', name: 'Ambush Pothole Cluster', icon: '⚡', image: 'Hazards/pothole.jpg', hp: 35, minTier: 0, drawRate: 2, startHandSize: 1, attacks: [{ name: 'Multi-Axle Buster', maxCards: 2, minTier: 1 }] }
+    { id: 'pothole', name: 'Nasty Pothole', icon: '🕳️', image: 'Hazards/pothole.jpg', hp: 34, minTier: 0, drawRate: 2, startHandSize: 1, items: ['fender_bender'] },
+    { id: 'flickerlight', name: 'Flickering Street Light', icon: '💡', image: 'Hazards/flicker-light.jpg', hp: 36, minTier: 0, drawRate: 2, startHandSize: 1, rewardMult: 1.6, items: ['fender_bender'] },
+    { id: 'potholeAmbush', name: 'Ambush Pothole Cluster', icon: '⚡', image: 'Hazards/pothole.jpg', hp: 35, minTier: 0, drawRate: 2, startHandSize: 1, items: ['fender_bender'] }
   ],
 
   // --- TIER 2: Active Road Obstacles & Complex Rules ---
   [ 
     { id: 'jaywalker', name: 'Jaywalker', icon: '🚶', image: 'Hazards/jaywalker.jpg', hp: 55, minTier: 1, drawRate: 2, attacks: [{ name: 'Sudden Dash', maxCards: 2, minTier: 1 }, { name: 'Enrage', minTurn: 6, autoFire: { damage: 15 } }] },
-    { id: 'grumpyMeter', name: 'Broken Meter', icon: '🅿️', image: 'Hazards/broken-meter.jpg', hp: 60, minTier: 1, drawRate: 2, attacks: [{ name: 'Coin Jam', maxCards: 2, minTier: 1, effect: 'stealFuel' }, { name: 'Repo Notice', maxCards: 2, minTier: 1, effect: 'curse' }, { name: 'Ticket Slip', maxCards: 2, minTier: 0, discardHand: { count: 1 } }] },
+    { id: 'grumpyMeter', name: 'Broken Meter', icon: '🅿️', image: 'Hazards/broken-meter.jpg', hp: 60, minTier: 1, drawRate: 2, items: ['opp_pair_curse', 'opp_single_steal'] },
     { id: 'looseWire', name: 'Downed Power Line', icon: '⚡', image: 'Hazards/downed-line.jpg', hp: 65, minTier: 0, drawRate: 2, attacks: [{ name: 'Live Wire Shock', maxCards: 2, minTier: 0 }] },
-    { id: 'meterBox', name: 'Reinforced Meter Box', icon: '🛡️', image: 'Hazards/broken-meter.jpg', hp: 45, minTier: 1, drawRate: 2, startArmor: 15, attacks: [{ name: 'Slot Jam', maxCards: 2, minTier: 1 }] }
+    { id: 'meterBox', name: 'Reinforced Meter Box', icon: '🛡️', image: 'Hazards/broken-meter.jpg', hp: 45, minTier: 1, drawRate: 2, startArmor: 15, items: ['fender_bender'] }
   ],
 
   // --- TIER 3: The Mid-Way Drain (High pressure threshold math) ---
@@ -2438,6 +2494,68 @@ function endTurn() {
       battleLog(`${BATTLE.opponent.name} is enraged from the drawn-out fight - its attacks hit harder from here on.`);
     }
     for (let swing = 0; swing < attackTimes; swing++) {
+      if (BATTLE.opponent.items && BATTLE.opponent.items.length) {
+        // Unified engine: an opponent Item is evaluated exactly like a hero's equipped Item
+        // would be - same checkCondition, same computeItemAmount, same ITEMS catalog - just
+        // scanned left to right, first Item whose condition the current pool satisfies wins.
+        let itemPick = null;
+        for (const itemId of BATTLE.opponent.items) {
+          const item = ITEMS[itemId];
+          if (!item) continue;
+          const best = bestHandFromPool(BATTLE.oppPool, item.maxCards ?? maxCards);
+          const cond = checkCondition(item.condition, best.cards);
+          if (cond.met) { itemPick = { item, best, cond }; break; }
+        }
+        if (!itemPick) break;
+        const { item, best, cond } = itemPick;
+        anyAttack = true;
+        const { amount: baseAmount } = computeItemAmount(item, best.cards, 0, cond, true);
+        let oppDmg = Math.round(baseAmount * enrageMultiplier(BATTLE.opponent, BATTLE.turn));
+        const swingCap = OPPONENT_SWING_CAP[BATTLE.opponent.tier ?? OPPONENT_SWING_CAP.length - 1] ?? 60;
+        oppDmg = Math.min(oppDmg, swingCap);
+        oppDmg = applyDodgeIfActive(oppDmg);
+        const rawDmg = oppDmg;
+        let armorBlocked = 0;
+        if (BATTLE.playerArmor > 0) {
+          armorBlocked = Math.min(BATTLE.playerArmor, oppDmg);
+          BATTLE.playerArmor -= armorBlocked; oppDmg -= armorBlocked;
+        }
+        RUN.health = Math.max(0, RUN.health - oppDmg);
+        if (oppDmg > 0) { playSfx('hurt'); flashScreen('hurt'); BATTLE.lastHit = { amount: oppDmg, source: BATTLE.opponent.name }; showDamagePopup(oppDmg, BATTLE.opponent.name); }
+        const usedText = best.cards.map(c => `${rankLabel(c.rank)}${c.suit}`).join(' ');
+        // A synthetic effect descriptor lets the SAME resolveOpponentAttackEffect used by the
+        // legacy attacks path (curse/poison/burn/stun/heal/stealFuel/draw/discardHand) handle
+        // an Item's effect too, since kind/utilityEffect map onto the exact fields it expects.
+        attackDef = {
+          effect: (item.kind === 'curse' || item.kind === 'poison' || item.kind === 'burn') ? item.kind : item.opponentEffect,
+          discardHand: item.utilityEffect === 'discardHand' ? { count: item.discardCount || 1 } : undefined,
+        };
+        let specialLog = resolveOpponentAttackEffect(attackDef, oppDmg);
+        const spec = BATTLE.opponent.special;
+        if (spec?.type === 'lifesteal') {
+          const healAmt = Math.round(oppDmg * (spec.pct ?? 0.5));
+          if (healAmt > 0) { BATTLE.opponent.hpNow = Math.min(BATTLE.opponent.hp, BATTLE.opponent.hpNow + healAmt); specialLog = ` It heals ${healAmt}.`; }
+        } else if (spec?.type === 'redSteal') {
+          const redCount = best.cards.filter(c => c.color === 'red').length;
+          if (redCount >= (spec.redThreshold ?? 3)) {
+            const fuelStolen = Math.min(RUN.fuel, spec.fuelSteal ?? 1);
+            RUN.fuel -= fuelStolen;
+            for (let i = 0; i < (spec.extraDraw ?? 1); i++) {
+              if (!BATTLE.oppDeck.length) { if (!BATTLE.oppDiscard.length) break; BATTLE.oppDeck = shuffle(BATTLE.oppDiscard); BATTLE.oppDiscard = []; }
+              const c = BATTLE.oppDeck.pop(); c.revealed = Math.random() < revealFraction(BATTLE.row); BATTLE.oppPool.push(c);
+            }
+            specialLog = ` It steals ${fuelStolen} fuel and draws an extra card!`;
+          }
+        }
+        const dmgPhrase = armorBlocked > 0
+          ? `${rawDmg} damage, but your armor absorbed ${armorBlocked}${oppDmg > 0 ? ` (${oppDmg} got through)` : ''}${BATTLE.playerArmor > 0 ? ` and you have ${BATTLE.playerArmor} armor remaining` : ', and your armor is gone'}`
+          : `${oppDmg} damage`;
+        battleLog(`${BATTLE.opponent.name} used ${item.name}${cond.label ? ` with ${cond.label}` : ''} (${usedText}) - ${dmgPhrase}.${specialLog} Your health: ${RUN.health}/${RUN.maxHealth}.`);
+        BATTLE.oppDiscard.push(...best.cards);
+        BATTLE.oppPool = BATTLE.oppPool.filter(c => !best.cards.includes(c));
+        if (RUN.health <= 0) break;
+        continue;
+      }
       const choices=(BATTLE.opponent.attacks&&BATTLE.opponent.attacks.length?BATTLE.opponent.attacks:[{}]);
       // Left-to-right selection: try each attack in card order and use the FIRST one that's
       // viable, rather than picking whichever scores highest. This means the leftmost attack

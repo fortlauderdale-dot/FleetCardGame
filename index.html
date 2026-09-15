@@ -1271,7 +1271,11 @@ const OPPONENT_TIERS = [
   [ 
     { id: 'trashfire', name: 'Trash Can Fire', icon: '🔥', image: 'Hazards/trash-fire.jpg', hp: 35, minTier: 0, drawRate: 1, items: ['high_card_gate'] },
     { id: 'pothole', name: 'Nasty Pothole', icon: '🕳️', image: 'Hazards/pothole.jpg', hp: 34, minTier: 0, drawRate: 2, startHandSize: 1, items: ['fender_bender'] },
-    { id: 'flickerlight', name: 'Flickering Street Light', icon: '💡', image: 'Hazards/flicker-light.jpg', hp: 36, minTier: 0, drawRate: 2, startHandSize: 1, rewardMult: 1.6, items: ['low_tier_threshold'] },
+    // NOTE: heart_inferno needs an exact 4-card Hearts hand, but fender_bender's own condition
+    // (Any Card) is always true the moment the pool has 1+ cards - so left-to-right, index 0
+    // wins basically every turn and heart_inferno is effectively dormant as configured. Flagged
+    // rather than silently reordered, since swapping the order is a balance call, not a bug fix.
+    { id: 'flickerlight', name: 'Flickering Street Light', icon: '💡', image: 'Hazards/flicker-light.jpg', hp: 36, minTier: 0, drawRate: 2, startHandSize: 1, rewardMult: 1.6, items: ['fender_bender', 'heart_inferno'] },
     { id: 'potholeAmbush', name: 'Ambush Pothole Cluster', icon: '⚡', image: 'Hazards/pothole.jpg', hp: 35, minTier: 0, drawRate: 2, startHandSize: 1, items: ['fender_bender'] }
   ],
 

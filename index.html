@@ -43,7 +43,8 @@
   .wo-btn:disabled{opacity:.4;cursor:default}
   .wo-btn.half{width:48%}
 
-  h1,h3{text-shadow:0 0 8px rgba(31,182,166,0.5)}
+  h1,h3{color:#1fb6a6;text-shadow:0 1px 0 #0b0f19}
+  .wo h1 em{text-shadow:0 1px 0 #0b0f19}
   .panel{background:rgba(21,27,45,0.85) !important;border:1px solid rgba(31,182,166,0.3);border-radius:10px;padding:14px;margin-bottom:12px;box-shadow:none}
   .hdr{display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-size:12px;
     letter-spacing:.02em;color:var(--dim);margin-bottom:8px}
@@ -1889,7 +1890,9 @@ function assignSelectedTo(slotKey) {
   const room = cap - BATTLE.slots[slotKey].length;
   if (room <= 0) return;
 
-  let candidates = selectedIdx.filter(i => !BATTLE.usedThisTurn.has(i)).filter(i => !BATTLE.slots[slotKey].includes(i));
+  const assignedElsewhere = new Set();
+  Object.entries(BATTLE.slots).forEach(([key, ix]) => { if (key !== slotKey) ix.forEach(i => assignedElsewhere.add(i)); });
+  let candidates = selectedIdx.filter(i => !BATTLE.usedThisTurn.has(i)).filter(i => !BATTLE.slots[slotKey].includes(i)).filter(i => !assignedElsewhere.has(i));
   if (item.kind === 'storage' && item.acceptFilter) {
     candidates = candidates.filter(i => {
       const c = BATTLE.hand[i];
@@ -1996,9 +1999,11 @@ function executePlayerAttack(itemId, index) {
     return;
   }
 
-  // Prevent cards already used this turn from being used again.
+  // Prevent cards already used this turn from being used again (blocks reassigning the
+  // same cards to a different Item slot after they've already fired once this turn).
   if (idxs.some(i => BATTLE.usedThisTurn.has(i))) {
-    battleLog(`One or more cards in ${item.name} were already used this turn.`);
+    BATTLE.slots[slotKey] = [];
+    battleLog(`Cards already used this turn.`);
     render(battleScreen());
     return;
   }
@@ -3469,7 +3474,7 @@ function metaScreen() {
         <div class="wo-sub">Career Points: ${META.points} &middot; Best route: ${META.bestRun}/21 &middot; High score: ${META.highScore} &middot; Runs played: ${META.runsPlayed}</div>
         <div class="panel" style="margin-bottom:10px">
           <div class="hdr"><span>Fleet Name</span><span></span></div>
-          <input id="playerNameInput" type="text" maxlength="18" placeholder="Your name" value="${(META.playerName||'').replace(/"/g,'&quot;')}" style="width:100%;padding:9px 10px;border:2px solid var(--blue-light);border-radius:6px;font-family:var(--disp);font-size:15px;color:var(--ink)">
+          <input id="playerNameInput" type="text" maxlength="18" placeholder="Your name" value="${(META.playerName||'').replace(/"/g,'&quot;')}" style="width:100%;padding:9px 10px;border:2px solid #1fb6a6;border-radius:6px;font-family:var(--disp);font-size:15px;color:#ffffff;background:#1a2038">
         </div>
         <button class="wo-btn amber" id="viewUpgradesBtn" style="width:100%;margin-bottom:10px">View Upgrades</button>
         ${hasSave ? `<button class="wo-btn" id="continueRunBtn" style="margin-bottom:10px;width:100%">Continue Run</button>` : ''}

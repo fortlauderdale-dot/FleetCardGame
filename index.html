@@ -124,11 +124,10 @@
   .popupItemRow .itemCard{width:100%;min-width:0}
   .pickItemRow{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-start}
   .pickItemRow .itemCard{flex:0 0 130px;width:130px;min-height:120px}
-  .dealerGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-  @media (max-width:700px){.dealerGrid{grid-template-columns:repeat(2,1fr)}}
-  @media (max-width:420px){.dealerGrid{grid-template-columns:1fr}}
-  .dealerCardWrap{display:flex;flex-direction:column}
-  .dealerMeta{margin-top:6px;padding:8px;display:flex;flex-direction:column;align-items:center;gap:4px}
+  .dealerRow{display:flex;gap:12px;overflow-x:auto;padding-bottom:6px;-webkit-overflow-scrolling:touch}
+  .dealerCardPanel{flex:0 0 150px;width:150px;display:flex;flex-direction:column;padding:8px}
+  .dealerMetaDivider{height:1px;background:rgba(31,182,166,0.2);margin:8px 0 6px;flex-shrink:0}
+  .dealerMeta{display:flex;flex-direction:column;align-items:center;gap:4px}
   .itemCard{border-radius:8px;padding:6px 4px;background:rgba(10,14,26,0.9) !important;border:1px solid rgba(31,182,166,0.2);min-height:172px;display:flex;flex-direction:column;align-items:center;text-align:center;box-sizing:border-box;font-size:12px;position:relative;transition:box-shadow .15s ease}
   .itemCard:hover{box-shadow:0 0 14px rgba(31,182,166,0.35)}
   .itemCard-sec{width:100%;flex:0 0 auto}
@@ -3110,24 +3109,6 @@ function nodeResultScreen(won, rewards) {
   `;
 }
 
-let SHOP_FILTER = 'all';
-function shopItemCategory(it) {
-  if (it.kind === 'defense') return 'defense';
-  if (it.kind === 'poison') return 'poison';
-  if (it.kind === 'burn') return 'burn';
-  if (it.kind === 'curse') return 'curse';
-  if ((it.drawAmount || it.drawUsesCardCount) && (it.baseMult ?? 1) === 0) return 'draw';
-  return 'attack';
-}
-const SHOP_CATEGORIES = [
-  { id: 'all', label: 'All' },
-  { id: 'attack', label: 'Attack', color: 'var(--blue)' },
-  { id: 'defense', label: 'Defense', color: 'var(--defense)' },
-  { id: 'poison', label: 'Poison', color: '#4d8f45' },
-  { id: 'burn', label: 'Burn', color: '#c4472d' },
-  { id: 'curse', label: 'Curse', color: '#7a4aa8' },
-  { id: 'draw', label: 'Draw', color: 'var(--amber)' },
-];
 function pickShopStock() {
   const row = Math.max(0, RUN.currentRow || 0);
   // Storage bag (Stash) cards are temporarily pulled from the Dealership rotation until
@@ -3146,15 +3127,18 @@ function dealerItemCardHTML(item, opts) {
   const footer = opts.mode === 'buy'
     ? `<button class="wo-btn amber" data-buy="${item.id}" data-cost="${item.cost}" ${opts.disabled ? 'disabled' : ''} style="padding:5px 8px;font-size:11px;white-space:nowrap;width:100%">${opts.disabledLabel || 'Purchase'}</button>`
     : `<button class="wo-btn gray" data-sell="${opts.index}" style="padding:5px 8px;font-size:11px;white-space:nowrap;width:100%">Sell</button>`;
-  // Meta-block: price, Power Score, and the buy/sell button live here, entirely separate from
-  // the item card face - the card itself should look identical whether you're browsing the
-  // Dealership or looking at it equipped in battle.
-  const metaBlock = `<div class="panel dealerMeta">
-    <div class="price" style="white-space:nowrap">${priceLabel}</div>
-    ${item.kind !== 'storage' ? `<div class="hoverTip note" style="margin:0;font-size:10px;white-space:nowrap" title="A rough gauge of how hard this item can hit at full setup. Use it to compare items.">Power ${itemPowerScore(item)}</div>` : ''}
-    ${footer}
+  // The card face and its shop metrics (price, Power Score, buy/sell button) now live inside
+  // one single outer panel, separated only by a thin internal divider - proving visually that
+  // the metrics belong to the exact card sitting above them, not a separate box next to it.
+  return `<div class="dealerCardPanel panel">
+    ${renderStandardItemCard(item, {})}
+    <div class="dealerMetaDivider"></div>
+    <div class="dealerMeta">
+      <div class="price" style="white-space:nowrap">${priceLabel}</div>
+      ${item.kind !== 'storage' ? `<div class="hoverTip note" style="margin:0;font-size:10px;white-space:nowrap" title="A rough gauge of how hard this item can hit at full setup. Use it to compare items.">Power ${itemPowerScore(item)}</div>` : ''}
+      ${footer}
+    </div>
   </div>`;
-  return `<div class="dealerCardWrap">${renderStandardItemCard(item, {})}${metaBlock}</div>`;
 }
 function shopScreen(fromCastle=false) {
   if (!RUN.shopStock) RUN.shopStock = pickShopStock().map(it => it.id);
@@ -3178,9 +3162,9 @@ function shopScreen(fromCastle=false) {
           <button class="wo-btn purple" id="openRunUpgradeFromShopBtn" data-fromcastle="${fromCastle ? '1' : '0'}" style="flex:1">Upgrades</button>
         </div>
         <h1>Dealership</h1>${currencyBar()}
-        <div class="dealerGrid" style="margin:10px 0 12px">${itemRows || '<div class="note">No items in this category.</div>'}</div>
+        <div class="dealerRow" style="margin:10px 0 12px">${itemRows || '<div class="note">No items in this category.</div>'}</div>
         <div class="hdr" style="margin-top:14px;font-weight:800;font-size:14px"><span>Equipped Items</span><span>${RUN.hero.items.length}/${RUN.itemCap}</span></div>
-        ${ownedRows ? `<div class="dealerGrid" style="margin-top:8px">${ownedRows}</div>` : `<div class="note" style="margin-top:6px">Nothing equipped yet.</div>`}
+        ${ownedRows ? `<div class="dealerRow" style="margin-top:8px">${ownedRows}</div>` : `<div class="note" style="margin-top:6px">Nothing equipped yet.</div>`}
       </div>
     </div>`;
 }
@@ -3317,6 +3301,10 @@ function blacksmithScreen() {
     <div class="wo">
       <div class="wo-stripe"></div>
       <div class="wo-body">
+        <div style="display:flex;gap:8px;margin-bottom:10px">
+          <button class="wo-btn teal" id="leaveBlacksmithBtn" style="flex:1">Back on the Road</button>
+          <button class="wo-btn purple" id="openRunUpgradeFromBlacksmithBtn" style="flex:1">Upgrades</button>
+        </div>
         <div class="wo-eyebrow">Tuning Garage &middot; Run Upgrade (resets next run)</div>
         <h1>Tune Your <em>Fleet</em></h1>
         <div class="wo-sub">${visitNote}</div>
@@ -3325,8 +3313,6 @@ function blacksmithScreen() {
         ${itemLevelRows ? `<div class="hdr" style="margin-top:14px"><span>Item Upgrades</span><span>Not limited by this visit</span></div><div style="margin:6px 0 12px">${itemLevelRows}</div>` : ''}
         ${capacityRows ? `<div class="hdr" style="margin-top:14px"><span>Capacity Upgrades</span><span>Up to +${ITEM_MAX_CARDS_BONUS_CAP}</span></div><div style="margin:6px 0 12px">${capacityRows}</div>` : ''}
         ${usesRows ? `<div class="hdr" style="margin-top:14px"><span>Uses Per Turn Upgrades</span><span>Up to +${ITEM_MAX_USES_LEVEL}</span></div><div style="margin:6px 0 12px">${usesRows}</div>` : ''}
-        <button class="wo-btn teal" id="leaveBlacksmithBtn">Back on the Road</button>
-        <button class="wo-btn purple" id="openRunUpgradeFromBlacksmithBtn" style="margin-top:8px">Upgrades</button>
       </div>
     </div>
   `;
@@ -3923,10 +3909,6 @@ function render(html) {
     RUN.shopStock = RUN.shopStock.filter(id => id !== el.dataset.buy);
     playSfx('buy');
     saveRun();
-    render(shopScreen());
-  });
-  app.querySelectorAll('[data-shopfilter]').forEach(el => el.onclick = () => {
-    SHOP_FILTER = el.dataset.shopfilter;
     render(shopScreen());
   });
 

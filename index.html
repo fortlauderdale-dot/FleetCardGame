@@ -275,6 +275,19 @@
 <body>
 <div id="app"></div>
 <script>
+/* ========== WORLD NAMING ========== */
+// Centralized lookup for every world's route name - drives every "Back to [World Name]" exit
+// button across the game. Add a world here and every exit label picks it up automatically.
+const WORLD_NAMES = {
+  1: 'A1A Coastline',
+  2: 'Las Olas Boulevard',
+  3: 'Downtown Core',
+  4: 'Riverwalk District',
+  5: 'Sunrise Industrial',
+  6: 'Alligator Alley',
+  7: 'Port Everglades',
+  8: 'The Fleet Compound',
+};
 /* ========== CARD MODEL ========== */
 const SUITS = [{ s: '♦', color: 'red' }, { s: '♣', color: 'blk' }, { s: '♥', color: 'red' }, { s: '♠', color: 'blk' }];
 const RANK_LABEL = { 11: 'J', 12: 'Q', 13: 'K', 14: 'A' };
@@ -486,7 +499,7 @@ function opponentTraitTags(opp) {
   if (opp.special?.type === 'lifesteal') tags.push('Heals off its own attacks');
   if (opp.special?.type === 'redSteal') tags.push('Punishes you for discarding red cards');
   if (opp.locked) tags.push('Builds toward one big hit instead of attacking normally');
-  if (opp.turnLimit) tags.push('Hits harder the longer the fight drags on');
+  if (opp.turnLimit && opp.enrageEnabled) tags.push('Hits harder the longer the fight drags on');
   if (opp.usesPerTurn > 1) tags.push(`Attacks ${opp.usesPerTurn} times per turn`);
   const effects = new Set((opp.attacks || []).map(a => a.effect).filter(Boolean));
   if (effects.has('heal')) tags.push('Can heal itself mid-fight');
@@ -549,7 +562,7 @@ function fleetLabel() { return META.playerName ? `${META.playerName}'s Fleet` : 
 // The road itself is named after the active world - World 1 runs along the coastal A1A, World 2
 // moves the route into Downtown. Every exit button that leaves a sub-screen back onto the route
 // reads whichever name matches RUN.world, so it updates automatically the moment a run advances.
-function roadExitLabel() { return `Back to ${RUN && RUN.world >= 2 ? 'Downtown' : 'A1A'}`; }
+function roadExitLabel() { return `Back to ${WORLD_NAMES[RUN && RUN.world] || WORLD_NAMES[1]}`; }
 // Read-only box(es) showing what the opponent can attack with - mirrors the player's vslot UI.
 // Supports a future opp.attacks array (multiple named attacks); falls back to their single generic attack.
 function opponentAttackBoxHTML(opp) {
@@ -561,7 +574,7 @@ function opponentAttackBoxHTML(opp) {
         <span class="vart" style="width:14px;height:14px;font-size:14px;vertical-align:-2px">${ICON.lock}</span>
         Locked - ${remaining} more card value clears it
       </div>
-      <div class="note" style="margin-top:4px">Then hits for ${opp.lockAttack} damage${opp.turnLimit ? `, more the longer the fight has gone (up to +100% past turn ${opp.turnLimit})` : ''}, and locks back up</div>
+      <div class="note" style="margin-top:4px">Then hits for ${opp.lockAttack} damage${opp.turnLimit && opp.enrageEnabled ? `, more the longer the fight has gone (up to +100% past turn ${opp.turnLimit})` : ''}, and locks back up</div>
     </div>`;
   }
 
@@ -1191,9 +1204,9 @@ const OPPONENT_TIERS = [
   // --- TIER 1: Minor Street Impediments (Early Game) ---
   [ 
     { id: 'trashfire', name: 'Trash Can Fire', icon: '🔥', image: 'Hazards/trash-fire.jpg', hp: 35, minTier: 0, drawRate: 1, attacks: [{ name: 'Ember Flare', maxCards: 1, minTier: 0 }] },
-    { id: 'pothole', name: 'Nasty Pothole', icon: '🕳️', image: 'Hazards/pothole.jpg', hp: 42, minTier: 0, drawRate: 1, attacks: [{ name: 'Axle Buster', maxCards: 1, minTier: 0, fewCardsThreshold: { max: 1, damage: 14 } }] },
-    { id: 'flickerlight', name: 'Flickering Street Light', icon: '💡', image: 'Hazards/flicker-light.jpg', hp: 45, minTier: 0, drawRate: 2, rewardMult: 1.6, attacks: [{ name: 'Static Discharge', maxCards: 2, minTier: 0 }] },
-    { id: 'potholeAmbush', name: 'Ambush Pothole Cluster', icon: '⚡', image: 'Hazards/pothole.jpg', hp: 40, minTier: 0, drawRate: 2, startPoolBonus: 2, attacks: [{ name: 'Multi-Axle Buster', maxCards: 2, minTier: 0 }] }
+    { id: 'pothole', name: 'Nasty Pothole', icon: '🕳️', image: 'Hazards/pothole.jpg', hp: 34, minTier: 0, drawRate: 1, attacks: [{ name: 'Axle Buster', maxCards: 2, minTier: 1 }] },
+    { id: 'flickerlight', name: 'Flickering Street Light', icon: '💡', image: 'Hazards/flicker-light.jpg', hp: 36, minTier: 0, drawRate: 2, rewardMult: 1.6, attacks: [{ name: 'Static Discharge', maxCards: 2, minTier: 1 }] },
+    { id: 'potholeAmbush', name: 'Ambush Pothole Cluster', icon: '⚡', image: 'Hazards/pothole.jpg', hp: 35, minTier: 0, drawRate: 2, attacks: [{ name: 'Multi-Axle Buster', maxCards: 2, minTier: 1 }] }
   ],
 
   // --- TIER 2: Active Road Obstacles & Complex Rules ---
@@ -1201,7 +1214,7 @@ const OPPONENT_TIERS = [
     { id: 'jaywalker', name: 'Jaywalker', icon: '🚶', image: 'Hazards/jaywalker.jpg', hp: 55, minTier: 1, drawRate: 2, attacks: [{ name: 'Sudden Dash', maxCards: 2, minTier: 1 }, { name: 'Enrage', minTurn: 6, autoFire: { damage: 15 } }] },
     { id: 'grumpyMeter', name: 'Broken Meter', icon: '🅿️', image: 'Hazards/broken-meter.jpg', hp: 60, minTier: 1, drawRate: 2, attacks: [{ name: 'Coin Jam', maxCards: 2, minTier: 1, effect: 'stealFuel' }, { name: 'Repo Notice', maxCards: 2, minTier: 1, effect: 'curse' }, { name: 'Ticket Slip', maxCards: 2, minTier: 0, discardHand: { count: 1 } }] },
     { id: 'looseWire', name: 'Downed Power Line', icon: '⚡', image: 'Hazards/downed-line.jpg', hp: 65, minTier: 0, drawRate: 2, attacks: [{ name: 'Live Wire Shock', maxCards: 2, minTier: 0, effect: 'stun' }] },
-    { id: 'meterBox', name: 'Reinforced Meter Box', icon: '🛡️', image: 'Hazards/broken-meter.jpg', hp: 60, minTier: 1, drawRate: 2, startArmor: 15, armorRegen: 5, armorRegenCap: 15, attacks: [{ name: 'Slot Jam', maxCards: 2, minTier: 1 }] }
+    { id: 'meterBox', name: 'Reinforced Meter Box', icon: '🛡️', image: 'Hazards/broken-meter.jpg', hp: 60, minTier: 1, drawRate: 2, startArmor: 15, attacks: [{ name: 'Slot Jam', maxCards: 2, minTier: 1 }] }
   ],
 
   // --- TIER 3: The Mid-Way Drain (High pressure threshold math) ---
@@ -1908,13 +1921,13 @@ function drawOpponentCards() {
 }
 function battleLog(msg) { BATTLE.logLines.push({ turn: BATTLE.turn, msg }); if (BATTLE.logLines.length > 200) BATTLE.logLines.shift(); }
 
-// Every opponent already carries a hand-tuned turnLimit (6-10, scaling with difficulty) that
-// was never actually wired to anything - battles could stall out indefinitely behind armor or
-// poison with zero consequence. This makes that data do something: past their turnLimit, an
-// opponent "enrages," hitting +12% harder for each turn over, capped at +100%. Rewards playing
-// to close a fight out instead of turtling forever.
+// Every opponent carries a hand-tuned turnLimit (6-10, scaling with difficulty), but that
+// number stays purely informational for now - it does NOT automatically make an opponent hit
+// harder. Enrage is opt-in per opponent via `enrageEnabled: true` on its blueprint, reserved for
+// specific bosses or high-tier threats. Until an opponent's data explicitly sets that flag,
+// this always returns 1 (no bonus), regardless of how long the fight runs.
 function enrageMultiplier(opp, turn) {
-  if (!opp || !opp.turnLimit) return 1;
+  if (!opp || !opp.turnLimit || !opp.enrageEnabled) return 1;
   const over = Math.max(0, turn - opp.turnLimit);
   return 1 + Math.min(1.0, over * 0.12);
 }
@@ -2371,7 +2384,7 @@ function endTurn() {
     battleLog(`${BATTLE.opponent.name} is stunned and doesn't counter-attack.`);
     BATTLE.opponentStunned = false;
   } else if (BATTLE.opponent.locked) {
-    if (BATTLE.opponent.turnLimit && BATTLE.turn === BATTLE.opponent.turnLimit + 1 && !BATTLE.enrageNotified) {
+    if (BATTLE.opponent.turnLimit && BATTLE.opponent.enrageEnabled && BATTLE.turn === BATTLE.opponent.turnLimit + 1 && !BATTLE.enrageNotified) {
       BATTLE.enrageNotified = true;
       battleLog(`${BATTLE.opponent.name} is enraged from the drawn-out fight - its attacks hit harder from here on.`);
     }
@@ -2401,7 +2414,7 @@ function endTurn() {
     const maxCards = opponentMaxCards(BATTLE.opponent);
     let anyAttack = false;
     let attackDef = null;
-    if (BATTLE.opponent.turnLimit && BATTLE.turn === BATTLE.opponent.turnLimit + 1 && !BATTLE.enrageNotified) {
+    if (BATTLE.opponent.turnLimit && BATTLE.opponent.enrageEnabled && BATTLE.turn === BATTLE.opponent.turnLimit + 1 && !BATTLE.enrageNotified) {
       BATTLE.enrageNotified = true;
       battleLog(`${BATTLE.opponent.name} is enraged from the drawn-out fight - its attacks hit harder from here on.`);
     }
@@ -2497,6 +2510,10 @@ function endTurn() {
       battleLog(attackDef.autoFire
         ? `${BATTLE.opponent.name}'s ${attackDef.name || 'attack'} kicks in - ${dmgPhrase}.${specialLog} Your health: ${RUN.health}/${RUN.maxHealth}.`
         : `${BATTLE.opponent.name} used ${attackDef.name || best.label} with ${best.label} (${usedText}) - ${dmgPhrase}.${specialLog} Your health: ${RUN.health}/${RUN.maxHealth}.`);
+      // The cards used for this swing are spent: they go to the opponent's discard pile (so a
+      // future reshuffle can bring them back) and come out of the live pool immediately, so the
+      // opponent can never sit on the same pocket pair or big hand and fire it again unchanged.
+      BATTLE.oppDiscard.push(...best.cards);
       BATTLE.oppPool = BATTLE.oppPool.filter(c => !best.cards.includes(c));
       if (RUN.health <= 0) break;
     }
@@ -2666,7 +2683,7 @@ function nodePopupContent(r, c) {
   if (node.type === 'battle') {
     const o = node.opponent;
     const { chipReward, gemReward, fuelReward, pointsReward } = battleRewardsFor(o, r);
-    const enrageNote = o.turnLimit ? `<div class="note" style="margin-top:6px"><span class="hoverTip" data-title="Its damage climbs +12% per turn past this limit, capped at +100% (2x).">Enrages after turn ${o.turnLimit}</span> - every attack shown below hits harder the longer the fight runs.</div>` : '';
+    const enrageNote = o.turnLimit && o.enrageEnabled ? `<div class="note" style="margin-top:6px"><span class="hoverTip" data-title="Its damage climbs +12% per turn past this limit, capped at +100% (2x).">Enrages after turn ${o.turnLimit}</span> - every attack shown below hits harder the longer the fight runs.</div>` : '';
     const specialNote = o.special?.type === 'drawOnHit' ? `<div class="note" style="margin-top:4px">Draws +${o.special.amount || 1} card${(o.special.amount||1)>1?'s':''} into its hand every time you land a direct hit on it.</div>`
       : o.startPoolBonus ? `<div class="note" style="margin-top:4px">Starts the fight with ${o.startPoolBonus} extra card${o.startPoolBonus>1?'s':''} already in hand.</div>`
       : o.special?.type === 'lifesteal' ? `<div class="note" style="margin-top:4px">Heals ${Math.round((o.special.pct||0.5)*100)}% of the damage its attacks deal.</div>`
@@ -3193,6 +3210,10 @@ function garageScreen(message='') {
         <h1>Fuel &amp; <em>Repairs</em></h1>
         <div class="wo-sub">Pull over to heal or top off your gas tank.</div>
         ${currencyBar()}
+        <div style="display:flex;gap:8px;margin:10px 0">
+          <button class="wo-btn teal" id="leaveStationBtn" style="flex:1">${roadExitLabel()}</button>
+          <button class="wo-btn purple" id="openRunUpgradeFromRestBtn" style="flex:1">Upgrades</button>
+        </div>
         ${message ? `<div class="panel"><div class="note">${message}</div></div>` : ''}
 
         <div class="shopcard">
@@ -3205,8 +3226,6 @@ function garageScreen(message='') {
           <h3>Fuel Dispenser</h3>
           <button class="wo-btn amber" id="stationFuelBtn" ${RUN.chips < 8 || RUN.fuel >= RUN.maxFuel ? 'disabled' : ''}>1 Fuel = 8 Coins</button>
         </div>
-
-        <button class="wo-btn teal" id="leaveStationBtn" style="width:100%;margin-top:12px">${roadExitLabel()}</button>
       </div>
     </div>
   </div>`;
@@ -3483,8 +3502,8 @@ function chopShopScreen(returnTo) {
     return `<div class="shopcard"><div class="hdr"><span>${item.name}</span><span>Item ${index+1}</span></div><div class="note">Add one special effect to this Item only. This cannot be refunded or changed during the run.</div><div style="display:flex;gap:8px;flex-wrap:wrap">${buttons}</div></div>`;
   }).join('');
   return `${noticeHTML()}<div class="wo"><div class="wo-stripe"></div><div class="wo-body">
-    <button class="wo-btn teal" id="leaveChopShopBtn" style="width:100%;margin-bottom:10px">${RETURN_TO_CASTLE_MENU?'Back to Compound':roadExitLabel()}</button>
     <div class="wo-eyebrow">Chop Shop</div><h1>Special <em>Modifications</em></h1>${currencyBar()}
+    <button class="wo-btn teal" id="leaveChopShopBtn" style="width:100%;margin:10px 0">${RETURN_TO_CASTLE_MENU?'Back to Compound':roadExitLabel()}</button>
     <div class="note" style="margin:10px 0">Only Items you currently own can be modified. One special effect per Item.</div>
     <div style="margin:12px 0">${rows || '<div class="note">No Items available.</div>'}</div>
   </div></div>`;

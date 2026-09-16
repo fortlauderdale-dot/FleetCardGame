@@ -147,7 +147,7 @@
     font-size:17px;border:2px solid #12163a;cursor:pointer;user-select:none;flex-shrink:0;gap:1px}
   .card div:last-child{font-size:23px;line-height:1}
   .card.red{color:#e5484d}
-  .card.suit-club{color:#1b7a48}
+  .card.suit-club{color:#16a085}
   .card.selected{outline:3px solid var(--amber);transform:translateY(-6px)}
   .card.matched{outline:3px solid var(--green)}
   .card.cursed{outline:2px solid var(--purple)}
@@ -155,7 +155,7 @@
   .card.mini div:last-child{font-size:18px !important;line-height:1}
   .suitMicroCard{display:inline-flex;align-items:center;justify-content:center;width:16px;height:20px;border-radius:3px;background:#ffffff;color:#12163a;font-size:12px;font-weight:800;line-height:1;vertical-align:-3px;margin:0 1px;box-shadow:0 0 0 1px rgba(0,0,0,0.2)}
   .suitMicroCard.red{color:#e5484d}
-  .suitMicroCard.suit-club{color:#1b7a48}
+  .suitMicroCard.suit-club{color:#16a085}
   .card.back{background:var(--blue);color:transparent;position:relative}
   .card.back::after{content:'?';color:var(--ink);position:absolute;font-size:16px}
   .card.back.mini::after{font-size:12px}
@@ -744,7 +744,7 @@ function describeCondition(cond) {
   if (cond.type === 'suitCount') return `${cond.count}+ ${cond.suit}`;
   if (cond.type === 'colorCount') return `${cond.count}+ ${cond.color === 'red' ? 'Red' : 'Black'} cards`;
   if (cond.type === 'allSuits') return 'one of each suit';
-  if (cond.type === 'cardIn') return cond.cards.map(c => `${rankLabel(c.rank)}${c.suit}`).join(' or ');
+  if (cond.type === 'cardIn') return cond.cards.map(c => `${rankLabel(c.rank)}${suitMicroCardHTML(c.suit)}`).join(' or ');
   if (cond.type === 'parity') return cond.mode === 'all' ? `all ${cond.parity}` : `${cond.count}+ ${cond.parity} cards`;
   if (cond.type === 'exactRank') return cond.requireAll ? `all ${rankLabel(cond.rank)}s` : `a ${rankLabel(cond.rank)}`;
   if (cond.type === 'sumThreshold') return `${SIGMA_TIP}${cond.min}+`;
@@ -896,7 +896,11 @@ const POKER_TIER_CARD_COUNT = { 0: 1, 1: 2, 2: 4, 3: 3, 5: 5, 6: 5, 7: 4 };
 // Pair rather than a padded, over-valued combo.
 function pokerTierNaturalCap(item) {
   const cond = item && item.condition;
-  if (!cond || cond.type !== 'pokerTier') return null;
+  if (!cond) return null;
+  // suitCountExact has one unambiguous natural size too: exactly cond.count cards of that
+  // suit and nothing else, so a trash kicker can never ride along in the slot.
+  if (cond.type === 'suitCountExact') return cond.count;
+  if (cond.type !== 'pokerTier') return null;
   let natural = POKER_TIER_CARD_COUNT[cond.tier] ?? null;
   // An item's own bonus can require a HIGHER tier than its base condition (e.g. One-Two Punch
   // fires on Any Card but only pays its bonus on an actual Pair) - the cap has to cover
@@ -967,7 +971,7 @@ const ITEMS = {
     condition: { type: 'cardIn', cards: [{ rank: 3, suit: '♣' }, { rank: 4, suit: '♣' }] }, baseMult: 1,
     flatBonus: 16, flatBonusPerLevel: 0, kind: 'poison',
     drawAmount: 1, drawPerLevel: 0,
-    note: `Needs the 3${kw('Club',"club")} or 4${kw('Club',"club")}. Poison damage for ${SIGMA_TIP} of cards played + 16, then draw 1 card immediately.` },
+    note: `Needs the ${rankLabel(3)}${suitMicroCardHTML('♣')} or ${rankLabel(4)}${suitMicroCardHTML('♣')}. Poison damage for ${SIGMA_TIP} of cards played + 16, then draw 1 card immediately.` },
 
   /* -- Suit-flavored "exactly 4 cards" burn items -- */
   heart_inferno: { id: 'heart_inferno', name: 'Heart Inferno', cost: 65, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
@@ -3144,6 +3148,7 @@ function runUpgradeScreen() {
     : RUN_UPGRADE_RETURN === 'shop' ? (RUN_UPGRADE_RETURN_FROMCASTLE ? 'Back to Compound' : roadExitLabel())
     : RUN_UPGRADE_RETURN === 'blacksmith' ? 'Back to Tuning Garage'
     : RUN_UPGRADE_RETURN === 'rest' ? 'Back to Service Station'
+    : RUN_UPGRADE_RETURN === 'chopshop' ? 'Back to Chop Shop'
     : roadExitLabel();
   return `${noticeHTML()}<div class="wo" style="max-width:640px;margin-left:auto;margin-right:auto"><div class="wo-stripe"></div><div class="wo-body">
     <div class="wo-eyebrow">Run Upgrade</div><h1>Run <em>Upgrades</em></h1>${currencyBar()}
@@ -3807,7 +3812,10 @@ function chopShopScreen(returnTo) {
   }).join('');
   return `${noticeHTML()}<div class="wo"><div class="wo-stripe"></div><div class="wo-body">
     <div class="wo-eyebrow">Chop Shop</div><h1>Special <em>Modifications</em></h1>${currencyBar()}
-    <button class="wo-btn teal" id="leaveChopShopBtn" style="width:100%;margin:10px 0">${RETURN_TO_CASTLE_MENU?'Back to Compound':roadExitLabel()}</button>
+    <div style="display:flex;gap:8px;margin:10px 0">
+      <button class="wo-btn teal" id="leaveChopShopBtn" style="flex:1">${RETURN_TO_CASTLE_MENU?'Back to Compound':roadExitLabel()}</button>
+      <button class="wo-btn purple" id="openRunUpgradeFromChopShopBtn" style="flex:1">Upgrades</button>
+    </div>
     <div class="note" style="margin:10px 0">Only Items you currently own can be modified. One special effect per Item.</div>
     <div style="margin:12px 0">${rows || '<div class="note">No Items available.</div>'}</div>
   </div></div>`;
@@ -3846,7 +3854,7 @@ function render(html) {
   // produced the visible jump/disconnect when something as small as a fuel purchase re-rendered
   // the whole screen. The popup's own numbers (via its own currencyBar() call, same RUN state)
   // are already correct the instant app.innerHTML is replaced above; this only touches the map.
-  if (mw && !GARAGE_POPUP) { mw.scrollLeft = MAP_SCROLL_X; mw.onscroll = () => { MAP_SCROLL_X = mw.scrollLeft; }; if (RUN && mw.querySelector('.mapnode-wrap')) { requestAnimationFrame(()=>{ const row = Math.max(0,RUN.currentRow); const colW = 94; const target = Math.max(0, row*colW - mw.clientWidth*0.15); mw.scrollLeft = target; MAP_SCROLL_X = target; }); } }
+  if (mw && !GARAGE_POPUP) { mw.scrollLeft = MAP_SCROLL_X; mw.onscroll = () => { MAP_SCROLL_X = mw.scrollLeft; }; if (RUN && mw.querySelector('.mapnode-wrap')) { requestAnimationFrame(()=>{ const row = Math.max(0,RUN.currentRow); const colW = 118; const target = Math.max(0, row*colW - mw.clientWidth*0.15); mw.scrollLeft = target; MAP_SCROLL_X = target; }); } }
 
   app.querySelectorAll('[data-card]').forEach(el => el.onclick = () => toggleCardSelect(+el.dataset.card));
   app.querySelectorAll('[data-assign]').forEach(el => el.onclick = (e) => {
@@ -4093,6 +4101,7 @@ function render(html) {
       RUN_UPGRADE_RETURN === 'battle' ? battleScreen() :
       RUN_UPGRADE_RETURN === 'shop' ? shopScreen(RUN_UPGRADE_RETURN_FROMCASTLE) :
       RUN_UPGRADE_RETURN === 'blacksmith' ? blacksmithScreen() :
+      RUN_UPGRADE_RETURN === 'chopshop' ? chopShopScreen() :
       mapScreen());
   };
   const openRunUpgradeFromMapBtn = document.getElementById('openRunUpgradeFromMapBtn'); if (openRunUpgradeFromMapBtn) openRunUpgradeFromMapBtn.onclick = () => { RUN_UPGRADE_RETURN = 'map'; render(runUpgradeScreen()); };
@@ -4100,6 +4109,7 @@ function render(html) {
   const openRunUpgradeFromShopBtn = document.getElementById('openRunUpgradeFromShopBtn'); if (openRunUpgradeFromShopBtn) openRunUpgradeFromShopBtn.onclick = () => { RUN_UPGRADE_RETURN = 'shop'; RUN_UPGRADE_RETURN_FROMCASTLE = openRunUpgradeFromShopBtn.dataset.fromcastle === '1'; render(runUpgradeScreen()); };
   const openRunUpgradeFromBlacksmithBtn = document.getElementById('openRunUpgradeFromBlacksmithBtn'); if (openRunUpgradeFromBlacksmithBtn) openRunUpgradeFromBlacksmithBtn.onclick = () => { RUN_UPGRADE_RETURN = 'blacksmith'; render(runUpgradeScreen()); };
   const openRunUpgradeFromRestBtn = document.getElementById('openRunUpgradeFromRestBtn'); if (openRunUpgradeFromRestBtn) openRunUpgradeFromRestBtn.onclick = () => { RUN_UPGRADE_RETURN = 'rest'; render(runUpgradeScreen()); };
+  const openRunUpgradeFromChopShopBtn = document.getElementById('openRunUpgradeFromChopShopBtn'); if (openRunUpgradeFromChopShopBtn) openRunUpgradeFromChopShopBtn.onclick = () => { RUN_UPGRADE_RETURN = 'chopshop'; render(runUpgradeScreen()); };
   app.querySelectorAll('[data-levelup]').forEach(el => el.onclick = () => {
     const u = UPGRADE_DEFS.find(x => x.id === el.dataset.levelup);
     if (!upgradeUnlocked(u)) return;

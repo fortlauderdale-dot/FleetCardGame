@@ -17,6 +17,11 @@
   }
   *{box-sizing:border-box}
   html,body{margin:0;min-height:100vh;background:var(--bg);background-attachment:fixed;color:var(--ink);font-family:var(--disp);font-size:16px}
+  /* World 2 (Alligator Alley) swaps the ambient backdrop and panel accent color; toggled on
+     <body> by render() based on RUN.world, so no per-screen template needs to know about it. */
+  body.world-2{--bg:linear-gradient(135deg, #1c2a1c 0%, #23241f 55%, #14261f 100%)}
+  body.world-2 .panel{border-color:rgba(0,230,118,0.35)}
+  body.world-2 .wo{box-shadow:0 0 20px rgba(0,230,118,0.3),6px 6px 0 #1a2038}
   button{font-family:var(--disp);cursor:pointer}
   #app{max-width:1180px;margin:0 auto;padding:14px 18px 100px}
   .game-stage{}
@@ -4535,6 +4540,7 @@ document.addEventListener('mouseover', (e) => {
   const oldRender=render;
   window.render=function(html){
     oldRender(html);
+    document.body.classList.toggle('world-2', !!(RUN && RUN.world >= 2));
     const app=document.getElementById('app');
     app.querySelectorAll('[data-card]').forEach(el=>{let ph=false;el.onclick=()=>{if(ph){ph=false;return;}toggleCardSelect(+el.dataset.card);};el.onpointerdown=e=>{if(e.pointerType!=='mouse'||e.button===0){e.preventDefault();ph=true;toggleCardSelect(+el.dataset.card);}};});
     const name=document.getElementById('playerNameInput');

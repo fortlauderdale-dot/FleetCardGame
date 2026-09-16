@@ -282,7 +282,7 @@
   .mapnode.type-blacksmith,.mapnode.type-chopshop{background:#fff8e9;border-color:#d99a30}
   .mapnode.type-castle{background:#f2edff;border-color:#8a4fe0}
   @media (max-width:700px){.resourceRow{grid-template-columns:1fr}}
-  .castleMenu{display:flex;flex-direction:column;gap:10px;margin:14px 0}
+  .castleMenu{display:flex;flex-direction:column;gap:10px;margin:14px auto;max-width:440px}
   .castleBtn{display:block;width:100%;text-align:center;padding:16px;font-family:var(--disp);font-size:16px;font-weight:700;color:#4a2f14;
     background:linear-gradient(180deg,#ecd6ab,#d8b077);border:2px solid #8a5a2b;border-radius:8px;box-shadow:0 3px 0 #6b431d}
   .castleBtn:active{transform:translateY(2px);box-shadow:0 1px 0 #6b431d}
@@ -430,11 +430,18 @@ function playSfx(kind) {
 // gesture unlocks it, and a heavy scene re-render can occasionally leave it stalled without
 // formally reporting 'suspended'. Rather than gate on that self-reported state, just call
 // resume() unconditionally on every tap - resuming an already-running context is a safe no-op,
-// and this way scene transitions can never silently freeze the audio pipeline.
-document.addEventListener('click', () => {
+// and this way scene transitions can never silently freeze the audio pipeline. This is wired
+// once, here, on document in the capture phase, rather than duplicated inside every individual
+// click/pointer handler across Attack chips, Map Nodes, Dealership items, and Castle options -
+// a single delegated listener covers all of them (including anything rendered later) for free.
+// pointerdown is included alongside click so a drag gesture (assigning a card via dragstart)
+// unlocks audio too, even if the drag itself never produces a native click event.
+function unlockAudioCtx() {
   const ctx = getAudioCtx();
-  if (ctx) ctx.resume().catch(() => {});
-}, true);
+  if (ctx && ctx.state === 'suspended') ctx.resume().catch(() => {});
+}
+document.addEventListener('click', unlockAudioCtx, true);
+document.addEventListener('pointerdown', unlockAudioCtx, true);
 function flashScreen(kind) {
   try {
     let el = document.getElementById('screenFlash');

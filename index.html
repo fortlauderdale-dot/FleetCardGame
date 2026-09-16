@@ -2310,6 +2310,53 @@ function detonateBurn() {
   render(battleScreen());
 }
 
+// Manual slot-targeted Curse trap on an Opponent Item. Re-cursing an already-cursed slot
+// detonates the old curse immediately, then the new amount takes over.
+function applyOpponentItemCurse(key, amount) {
+  BATTLE.opponentItemCurses = BATTLE.opponentItemCurses || {};
+  if (BATTLE.opponentItemCurses[key]) detonateOpponentItemCurse(key, 'a new curse replaced the old one');
+  BATTLE.opponentItemCurses[key] = amount;
+}
+function detonateOpponentItemCurse(key, why) {
+  const amt = BATTLE.opponentItemCurses && BATTLE.opponentItemCurses[key];
+  if (!amt) return;
+  delete BATTLE.opponentItemCurses[key];
+  const name = ITEMS[key.replace(/_\d+$/, '')]?.name || 'Cursed Item';
+  const before = BATTLE.opponent.hpNow;
+  BATTLE.opponent.hpNow = Math.max(0, before - amt);
+  if (amt === before && before > 0) BATTLE.exactKill = true;
+  battleLog(`${BATTLE.opponent.name}'s ${name} - ${amt} curse damage${why ? ' (' + why + ')' : ''}.`);
+}
+// Manual slot-targeted Burn trap on an Opponent Item. Stacks combine additively after the
+// old value has already decayed for the turn.
+function applyOpponentItemBurn(key, amount) {
+  BATTLE.opponentItemBurns = BATTLE.opponentItemBurns || {};
+  BATTLE.opponentItemBurns[key] = (BATTLE.opponentItemBurns[key] || 0) + amount;
+}
+function chooseCurseTarget(key) {
+  if (!BATTLE.pendingTarget || BATTLE.pendingTarget.type !== 'curse') return;
+  const { amount, itemName } = BATTLE.pendingTarget;
+  BATTLE.pendingTarget = null;
+  applyOpponentItemCurse(key, amount);
+  const name = ITEMS[key.replace(/_\d+$/, '')]?.name || 'Item';
+  battleLog(`${itemName} locks a ${amount}-damage curse onto ${BATTLE.opponent.name}'s ${name}. If it doesn't fire before their turn ends, it triggers.`);
+  saveRun();
+  render(battleScreen());
+}
+function chooseBurnTarget(key) {
+  if (!BATTLE.pendingTarget || BATTLE.pendingTarget.type !== 'burn') return;
+  const { amount, itemName } = BATTLE.pendingTarget;
+  BATTLE.pendingTarget = null;
+  applyOpponentItemBurn(key, amount);
+  const name = ITEMS[key.replace(/_\d+$/, '')]?.name || 'Item';
+  battleLog(`${itemName} ignites ${BATTLE.opponent.name}'s ${name} for ${BATTLE.opponentItemBurns[key]} burn. Firing it will backfire into their own health.`);
+  saveRun();
+  render(battleScreen());
+}
+function cancelPendingTarget() {
+  BATTLE.pendingTarget = null;
+  render(battleScreen());
+}
 function toggleCardSelect(i) { const pos = selectedIdx.indexOf(i); if (pos === -1) selectedIdx.push(i); else selectedIdx.splice(pos, 1); render(battleScreen()); }
 function assignSelectedTo(slotKey) {
   if (!selectedIdx.length) return;
@@ -2389,11 +2436,9 @@ function drawWithGem() {
   if (RUN.gems < 1) return;
   RUN.gems -= 1;
   const n = 1 + META.levels.gem + (RUN.runUpgrades?.gemDraw || 0);
-  for (let i = 0; i < n; i++) {
-    if (!BATTLE.deck.length) { if (!BATTLE.discard.length) break; BATTLE.deck = shuffle(BATTLE.discard); BATTLE.discard = []; }
-    BATTLE.hand.push(BATTLE.deck.pop());
-  }
-  const drawn = BATTLE.hand.slice(-n).map(c => `${rankLabel(c.rank)}${c.suit}`).join(' ');
+  const before = BATTLE.hand.length;
+  drawCards(n, true);
+  const drawn = BATTLE.hand.slice(before).map(c => `${rankLabel(c.rank)}${c.suit}`).join(' ');
   battleLog(`Spent a gem: Drew ${drawn || 'no cards'}.`);
   resortHandAndRelink(RUN.handSortMode);
   saveRun(); render(battleScreen());
@@ -2469,11 +2514,9 @@ function executePlayerAttack(itemId, index) {
     BATTLE.itemUnlockProgress = BATTLE.itemUnlockProgress || {};
     BATTLE.itemUnlocked = BATTLE.itemUnlocked || {};
     if (BATTLE.itemUnlocked[slotKey]) {
-      const drawn = [];
-      for (let i = 0; i < 4; i++) {
-        if (!BATTLE.deck.length) { if (!BATTLE.discard.length) break; BATTLE.deck = shuffle(BATTLE.discard); BATTLE.discard = []; }
-        if (BATTLE.deck.length) { const c = BATTLE.deck.pop(); BATTLE.hand.push(c); drawn.push(c); }
-      }
+      const before = BATTLE.hand.length;
+      drawCards(4, true);
+      const drawn = BATTLE.hand.slice(before);
       resortHandAndRelink(RUN.handSortMode);
       battleLog(`${item.name} - Charged! Drew ${drawn.map(c => rankLabel(c.rank) + c.suit).join(' ') || 'no cards'}`);
     } else {
@@ -2509,16 +2552,14 @@ function executePlayerAttack(itemId, index) {
       BATTLE.opponent.poisonStacks.push(amount);
       battleLog(`${item.name} [${cardsStr}] - ${condResult.label}! Applied ${amount} poison (${breakdown}).`);
     } else if (eKind === 'burn') {
-      // Burn is the patient choice: clean, easy-to-read percentages of what a straight attack
-      // with the same cards would do - 75% this turn, 50% next, 25% the turn after (150% total
-      // if left alone start to finish), versus 100% right now from a direct attack instead.
-      const stages = [Math.round(amount * 0.75), Math.round(amount * 0.5), Math.round(amount * 0.25)];
-      BATTLE.opponent.burns = BATTLE.opponent.burns || [];
-      BATTLE.opponent.burns.push({ stages, stageIdx: 0 });
-      battleLog(`${item.name} [${cardsStr}] - ${condResult.label}! Applies burn: ${stages[0]} damage now (${breakdown}), then ${stages[1]} next turn and ${stages[2]} the turn after if left alone.`);
+      // Burn is now a manual, slot-targeted trap: the player picks exactly which Opponent
+      // Item slot to ignite, rather than the damage landing automatically.
+      BATTLE.pendingTarget = { type: 'burn', amount, itemName: item.name };
+      battleLog(`${item.name} [${cardsStr}] - ${condResult.label}! Select an item slot on ${BATTLE.opponent.name}'s inventory to ignite for ${amount} (${breakdown}).`);
     } else if (eKind === 'curse') {
-      BATTLE.opponent.curseFromPlayer = (BATTLE.opponent.curseFromPlayer || 0) + amount;
-      battleLog(`${item.name} [${cardsStr}] - ${condResult.label}! Cursed them for ${amount} (${breakdown}) - it lands if they fail to attack next turn.`);
+      // Curse is manual and slot-targeted too: the player locks it onto one specific Item.
+      BATTLE.pendingTarget = { type: 'curse', amount, itemName: item.name };
+      battleLog(`${item.name} [${cardsStr}] - ${condResult.label}! Select an item slot on ${BATTLE.opponent.name}'s inventory to curse for ${amount} (${breakdown}).`);
     } else {
       const atkBefore = BATTLE.opponent.hpNow;
       let dmgToApply = amount;
@@ -2572,11 +2613,13 @@ function executePlayerAttack(itemId, index) {
     const drawN = item.drawUsesCardCount
       ? cards.length + (item.drawBonusFlat || 0) + (item.drawPerLevel || 0) * level
       : item.drawAmount + (item.drawPerLevel || 0) * level;
-    const drawn=[];
-    for(let i=0;i<drawN;i++){
-      if(!BATTLE.deck.length){ if(!BATTLE.discard.length) break; BATTLE.deck=shuffle(BATTLE.discard); BATTLE.discard=[]; }
-      if(BATTLE.deck.length){ const c=BATTLE.deck.pop(); BATTLE.hand.push(c); drawn.push(c); }
-    }
+    // The just-used cards were already pushed into BATTLE.discard immediately above. Drawing
+    // through the shared drawCards() (rather than reimplementing the deck/discard cycle here)
+    // means a reshuffle triggered by this very draw can't pull those same cards straight back
+    // into the hand that fired them.
+    const beforeDraw = BATTLE.hand.length;
+    drawCards(drawN, true);
+    const drawn = BATTLE.hand.slice(beforeDraw);
     battleLog(`${item.name} - Discarded ${cardsStr}, drew ${drawn.map(c=>rankLabel(c.rank)+c.suit).join(' ') || 'no cards'}.`);
     resortHandAndRelink(RUN.handSortMode);
   }
@@ -2740,18 +2783,28 @@ function endTurn() {
         // would be - same checkCondition, same computeItemAmount, same ITEMS catalog - just
         // scanned left to right, first Item whose condition the current pool satisfies wins.
         let itemPick = null;
-        for (const itemId of BATTLE.opponent.items) {
+        for (let slotPos = 0; slotPos < BATTLE.opponent.items.length; slotPos++) {
+          const itemId = BATTLE.opponent.items[slotPos];
           const item = ITEMS[itemId];
           if (!item) continue;
           const cap = item.usesPerTurn ?? 1;
           if ((oppItemUsesThisTurn[itemId] || 0) >= cap) continue;
+          const slotKeyForBurn = `${itemId}_${slotPos}`;
+          // A burned slot is a trap: a smart opponent recognizes firing it means self-damage
+          // and skips it entirely, moving right to look for a safer item instead.
+          if (BATTLE.opponentItemBurns && BATTLE.opponentItemBurns[slotKeyForBurn]) continue;
           const best = bestHandFromPool(BATTLE.oppPool, effectiveMaxCards(item) ?? maxCards);
           const cond = checkCondition(item.condition, best.cards);
-          if (cond.met) { itemPick = { item, best, cond }; break; }
+          if (cond.met) { itemPick = { item, best, cond, key: slotKeyForBurn }; break; }
         }
         if (!itemPick) break;
-        const { item, best, cond } = itemPick;
+        const { item, best, cond, key } = itemPick;
         oppItemUsesThisTurn[item.id] = (oppItemUsesThisTurn[item.id] || 0) + 1;
+        // Firing a cursed slot breaks the trap cleanly - no damage.
+        if (BATTLE.opponentItemCurses && BATTLE.opponentItemCurses[key]) {
+          delete BATTLE.opponentItemCurses[key];
+          battleLog(`${BATTLE.opponent.name}'s ${item.name} fires and breaks the curse trap on it.`);
+        }
         anyAttack = true;
         // Lock items (Impound Release's engine, mirrored for opponents): while locked, cards
         // routed through it only deposit their value toward the charge - no damage, no effect -
@@ -2911,16 +2964,19 @@ function endTurn() {
     if (!attackDef || attackDef.effect !== 'curse') tryApplyCurse();
   }
 
-  if (BATTLE.opponent.curseFromPlayer) {
-    if (opponentLandedHit) {
-      battleLog(`${BATTLE.opponent.name} shakes off your curse this time.`);
-    } else {
-      const curseDmg = BATTLE.opponent.curseFromPlayer;
-      const curseBefore=BATTLE.opponent.hpNow; BATTLE.opponent.hpNow = Math.max(0, BATTLE.opponent.hpNow - curseDmg); if (curseDmg === curseBefore && curseBefore > 0) BATTLE.exactKill = true;
-      battleLog(`Your curse lands for ${curseDmg} damage - ${BATTLE.opponent.name} failed to attack!`);
-    }
-    BATTLE.opponent.curseFromPlayer = 0;
+  // Curses locked onto specific Opponent Item slots detonate now if that Item never fired
+  // this turn (firing it already broke and cleared the curse cleanly, above).
+  if (BATTLE.opponentItemCurses && Object.keys(BATTLE.opponentItemCurses).length) {
+    Object.keys(BATTLE.opponentItemCurses).forEach(k => detonateOpponentItemCurse(k, 'it never fired this turn'));
     if (BATTLE.opponent.hpNow <= 0) { winBattle(); return; }
+  }
+  // Burns on Opponent Item slots decay by half if left unfired. A smart opponent avoids firing
+  // a burned slot (see the item-picking loop above), so this is the normal outcome.
+  if (BATTLE.opponentItemBurns && Object.keys(BATTLE.opponentItemBurns).length) {
+    Object.keys(BATTLE.opponentItemBurns).forEach(k => {
+      BATTLE.opponentItemBurns[k] = Math.floor(BATTLE.opponentItemBurns[k] * 0.5);
+      if (BATTLE.opponentItemBurns[k] <= 0) delete BATTLE.opponentItemBurns[k];
+    });
   }
 
   if (RUN.health <= 0) { IN_BATTLE = false; clearBattleSave(); playSfx('lose'); render(nodeResultScreen(false, { lastHit: BATTLE.lastHit })); return; }
@@ -3420,7 +3476,8 @@ function battleScreen() {
               ${BATTLE.opponent.armor > 0 ? `<span class="status hoverTip" style="color:#5a7fa8;font-weight:800;font-size:13px" data-title="Armor absorbs damage from your direct attacks before it reaches their health. Poison, burn, and curse damage ignore it.">${ICON.defense || '🛡️'} ${BATTLE.opponent.armor} ARMOR</span>` : ''}
               ${(BATTLE.opponent.poisonStacks||[]).length ? `<span class="status poisonStatus hoverTip" data-title="Poison now: ${(BATTLE.opponent.poisonStacks||[]).reduce((a,n)=>a+n,0)} damage. Next turn: ${(BATTLE.opponent.poisonStacks||[]).map(n=>Math.max(0,n-3)).reduce((a,n)=>a+n,0)} damage.">${ICON.poison} ${(BATTLE.opponent.poisonStacks||[]).reduce((a,n)=>a+n,0)} poison</span>` : ''}
               ${BATTLE.opponent.burns?.length ? (() => { const burns=BATTLE.opponent.burns; const now=burns.reduce((a,b)=>a+(b.stages[b.stageIdx]||0),0); const future=[1,2].map(offset=>burns.reduce((a,b)=>a+(b.stages[b.stageIdx+offset]||0),0)).filter(n=>n>0); const nextText=future.length ? `Next: ${future.join(', ')}` : 'No more burn damage.'; return `<span class="status burnStatus hoverTip" data-title="${nextText}">${ICON.fire} ${now} <b><u>Burn Damage</u></b></span>`; })() : ''}
-              ${BATTLE.opponent.curseFromPlayer ? `<span class="status curseStatus hoverTip" data-title="Curse: ${BATTLE.opponent.curseFromPlayer} damage if the opponent fails to attack.">${ICON.curse} cursed</span>` : ''}
+              ${BATTLE.opponentItemCurses && Object.keys(BATTLE.opponentItemCurses).length ? `<span class="status curseStatus hoverTip" data-title="${Object.entries(BATTLE.opponentItemCurses).map(([k,v])=>`${ITEMS[k.replace(/_\d+$/,'')]?.name||'Item'}: ${v} if not fired`).join(' | ')}">${ICON.curse} ${Object.keys(BATTLE.opponentItemCurses).length} Item${Object.keys(BATTLE.opponentItemCurses).length>1?'s':''} cursed</span>` : ''}
+              ${BATTLE.opponentItemBurns && Object.keys(BATTLE.opponentItemBurns).length ? `<span class="status burnStatus hoverTip" data-title="${Object.entries(BATTLE.opponentItemBurns).map(([k,v])=>`${ITEMS[k.replace(/_\d+$/,'')]?.name||'Item'}: ${v} if fired`).join(' | ')}">${ICON.fire} ${Object.keys(BATTLE.opponentItemBurns).length} Item${Object.keys(BATTLE.opponentItemBurns).length>1?'s':''} burned</span>` : ''}
             </div>
           </div>
         </div>
@@ -4531,15 +4588,20 @@ document.addEventListener('mouseover', (e) => {
     BATTLE.turnDiscard=BATTLE.turnDiscard||[];
     BATTLE.itemCurses=BATTLE.itemCurses||{};
     BATTLE.opponentItemCurses=BATTLE.opponentItemCurses||{};
+    BATTLE.opponentItemBurns=BATTLE.opponentItemBurns||{};
     BATTLE.itemUtilityLevels=BATTLE.itemUtilityLevels||{};
+    BATTLE.stagedFireCards=BATTLE.stagedFireCards||[];
   }
+  /* Cards staged by actual object identity, not hand index - an item's own draw/discard logic
+     can splice BATTLE.hand and shift every index after it, which would silently invalidate an
+     index-based stage the instant that happens. Object identity survives the splice. */
   function stagedCards(){
     ensureBattlePatchState();
-    return BATTLE.turnDiscard.map(i=>BATTLE.hand[i]).filter(Boolean);
+    return BATTLE.stagedFireCards.filter(Boolean);
   }
-  function stageIndexes(indexes){
+  function stageCards(cards){
     ensureBattlePatchState();
-    indexes.forEach(i=>{if(Number.isInteger(i)&&i>=0&&!BATTLE.turnDiscard.includes(i))BATTLE.turnDiscard.push(i);});
+    cards.forEach(c=>{if(c&&!BATTLE.stagedFireCards.includes(c))BATTLE.stagedFireCards.push(c);});
   }
 
   /* Mid-turn draw protection: any card already staged this turn is removed from the
@@ -4589,19 +4651,14 @@ document.addEventListener('mouseover', (e) => {
       item.condition=oldCond;item.unlockThreshold=oldThreshold;return;
     }
 
-    if(item)stageIndexes(idxs);
+    /* The absolute moment this item's condition is validated, its cards are cached by object
+       identity so a mid-turn draw/reshuffle this same action triggers can never pull them back
+       into the hand that just used them - staged before any drawing or deck-recycle math runs. */
+    const cardsForStage=idxs.map(i=>BATTLE.hand[i]).filter(Boolean);
+    if(item&&cardsForStage.length&&checkCondition(item.condition,cardsForStage).met)stageCards(cardsForStage);
     originalExecutePlayerAttack(itemId,index);
     item.condition=oldCond;item.unlockThreshold=oldThreshold;
 
-    /* The legacy player-Curse field is converted immediately into the new targeted Item trap. */
-    if(itemId&&BATTLE.opponent?.curseFromPlayer){
-      const amount=BATTLE.opponent.curseFromPlayer;BATTLE.opponent.curseFromPlayer=0;
-      const list=BATTLE.opponent.items||[];const keys=list.map((id,i)=>`${id}_${i}`).filter(k=>ITEMS[k.replace(/_\d+$/,'')]&&ITEMS[k.replace(/_\d+$/,'')].kind!=='storage');
-      if(keys.length){const target=keys[(Math.random()*keys.length)|0];applyTargetedCurse('opponent',target,amount);battleLog(`Curse locked onto ${BATTLE.opponent.name}'s ${ITEMS[itemIdFromKey(target)]?.name||'Item'} for ${amount} damage.`);}
-    }
-    /* Old draw-item code may have put a just-used card into discard. Pull it back out; End Turn
-       owns the only legal transition from turnDiscard -> global discard. */
-    const staged=stagedCards();if(staged.length)BATTLE.discard=BATTLE.discard.filter(c=>!staged.includes(c));
     if(IN_BATTLE)saveBattleState();
   };
   executePlayerAttack=window.executePlayerAttack;
@@ -4622,63 +4679,16 @@ document.addEventListener('mouseover', (e) => {
   window.checkCondition=function(cond,cards){return originalCheckCondition(cond,cards);};
   checkCondition=window.checkCondition;
 
-  /* Targeted Curse engine. */
-  function curseMap(target){
-    ensureBattlePatchState();
-    return target==='player'?BATTLE.itemCurses:BATTLE.opponentItemCurses;
-  }
   function itemIdFromKey(k){return String(k).replace(/_\d+$/,'');}
-  function targetList(target){return target==='player'?(RUN.hero?.items||[]):(BATTLE.opponent?.items||[]);}
-  function eligibleCurseKeys(target){return targetList(target).map((id,i)=>`${id}_${i}`).filter(k=>{const it=ITEMS[itemIdFromKey(k)];return it&&it.kind!=='storage';});}
-  function detonateCurse(target,key,why){
-    const m=curseMap(target),d=m[key];if(!d)return 0;delete m[key];
-    const name=ITEMS[itemIdFromKey(key)]?.name||'Cursed Item';
-    if(target==='player'){
-      RUN.health=Math.max(0,RUN.health-d);BATTLE.lastHit={amount:d,source:`${name} curse`};
-      battleLog(`${name} triggers for ${d} damage${why?' - '+why:''}. Health: ${RUN.health}/${RUN.maxHealth}.`);
-      playSfx('hurt');flashScreen('hurt');showDamagePopup(d,`${name} curse`);
-    }else{
-      const before=BATTLE.opponent.hpNow;BATTLE.opponent.hpNow=Math.max(0,before-d);
-      if(d===before&&before>0)BATTLE.exactKill=true;
-      battleLog(`${name} on ${BATTLE.opponent.name} triggers for ${d} damage${why?' - '+why:''}.`);
-    }
-    return d;
-  }
-  function applyTargetedCurse(target,key,amount){
-    const m=curseMap(target);
-    if(m[key])detonateCurse(target,key,'a new Curse replaced the old one');
-    m[key]=amount;
-  }
-  window.tryApplyCurse=function(){
-    ensureBattlePatchState();
-    const spec=BATTLE.opponent?.curse;if(!spec||Math.random()>(spec.chance??1))return;
-    const keys=eligibleCurseKeys('player');if(!keys.length)return;
-    const count=spec.count==='all'?keys.length:spec.count==='random'?1+Math.floor(Math.random()*Math.min(3,keys.length)):Math.min(Number(spec.count)||1,keys.length);
-    shuffle(keys).slice(0,count).forEach(k=>applyTargetedCurse('player',k,spec.amount));
-    battleLog(`${BATTLE.opponent.name} placed ${spec.amount}-damage Curse traps on ${Math.min(count,keys.length)} Item slot${count===1?'':'s'}. Fire each cursed Item before turn end to break its Curse.`);
-  };
-  tryApplyCurse=window.tryApplyCurse;
 
-  /* Player-side Curse conversion targets an actual opponent Item slot. */
-  function replacePlayerCurseLog(){
-    const keys=eligibleCurseKeys('opponent');if(!keys.length)return false;
-    const key=keys[(Math.random()*keys.length)|0];
-    const amount=arguments[0];applyTargetedCurse('opponent',key,amount);
-    battleLog(`Curse locked onto ${BATTLE.opponent.name}'s ${ITEMS[itemIdFromKey(key)]?.name||'Item'} for ${amount} damage if that Item is not fired on its turn.`);
-    return true;
-  }
-
-  /* Wrap the old end-turn cleanup. The original engine already removes used/manual cards at End
-     Turn. Because our wrapper staged used cards before execution, no mid-turn recycle can occur. */
+  /* Curse (opponent -> player) and Burn/Curse (player -> opponent, manually targeted) are now
+     both handled natively - see tryApplyCurse, applyOpponentItemCurse, applyOpponentItemBurn,
+     chooseCurseTarget/chooseBurnTarget, and the detonation/decay blocks inside endTurn(). This
+     wrapper only needs to clear this turn's fire-staging so a new turn starts clean. */
   window.endTurn=function(){
     ensureBattlePatchState();
     originalEndTurn();
-    /* Any Curse placed on an opponent Item that was not fired during its attack window detonates
-       before the player gets to act again. */
-    if(BATTLE?.opponent?.hpNow>0){
-      Object.keys(BATTLE.opponentItemCurses||{}).forEach(k=>detonateCurse('opponent',k,'the Item was not fired this turn'));
-      if(BATTLE.opponent.hpNow<=0)winBattle();
-    }
+    BATTLE.stagedFireCards=[];
     if(IN_BATTLE)saveBattleState();
   };
   endTurn=window.endTurn;
@@ -4697,6 +4707,30 @@ document.addEventListener('mouseover', (e) => {
     if(curseKeys.length){
       const badges=curseKeys.map(k=>`<span class="curseBadge">CURSED: ${BATTLE.itemCurses[k]}</span>`).join(' ');
       html=html.replace(/(<div class="panel">\s*<div class="note" style="margin:0 0 4px">Drag cards or tap to select<\/div>)/,`<div class="panel curseShield"><div class="note" style="margin:0 0 6px"><b>Active Curse Traps</b> ${badges}</div></div>$1`);
+    }
+    /* Manual slot targeting: firing a Curse or Burn item opens this picker instead of landing
+       automatically. End Turn is disabled until a slot is chosen. */
+    if(BATTLE.pendingTarget){
+      html=html.replace(/(<button class="wo-btn red" id="endTurnBtn")/,'$1 disabled');
+      const isBurn=BATTLE.pendingTarget.type==='burn';
+      const rows=(BATTLE.opponent.items||[]).map((id,i)=>{
+        const it=ITEMS[id];if(!it||it.kind==='storage')return '';
+        const key=`${id}_${i}`;
+        const curseAmt=BATTLE.opponentItemCurses&&BATTLE.opponentItemCurses[key];
+        const burnAmt=BATTLE.opponentItemBurns&&BATTLE.opponentItemBurns[key];
+        const tag=curseAmt?` <span class="curseBadge">CURSED: ${curseAmt}</span>`:burnAmt?` <span class="curseBadge">BURN: ${burnAmt}</span>`:'';
+        return `<button class="wo-btn ${isBurn?'amber':'purple'} targetSlotBtn" data-targetkey="${key}" style="width:100%;text-align:left;margin-bottom:6px">${it.name}${tag}</button>`;
+      }).join('');
+      const modal=`<div class="targetPickerOverlay" style="position:fixed;inset:0;background:#12163acc;display:flex;align-items:center;justify-content:center;z-index:110;padding:20px">
+        <div class="wo" style="max-width:380px;width:100%"><div class="wo-stripe"></div><div class="wo-body">
+          <div class="wo-eyebrow">${isBurn?'Ignite an Item':'Curse an Item'}</div>
+          <h1>Pick ${BATTLE.opponent.name}'s <em>Item</em></h1>
+          <div class="note" style="margin-bottom:10px">${isBurn?`This item slot is trapped. If ${BATTLE.opponent.name} fires it, the burn backfires into their own health instead of yours.`:`This item slot is trapped. It stays cursed until ${BATTLE.opponent.name} fires it before their turn ends, or it detonates.`}</div>
+          ${rows||'<div class="note">No eligible item slots.</div>'}
+          <button class="wo-btn gray" id="cancelPendingTargetBtn" style="width:100%;margin-top:4px">Cancel</button>
+        </div></div>
+      </div>`;
+      html+=modal;
     }
     return html;
   };
@@ -4748,6 +4782,12 @@ document.addEventListener('mouseover', (e) => {
     const dash=document.getElementById('openRunSummaryBtn');if(dash)dash.onclick=()=>render(runSummaryScreen());
     const homeDash=document.getElementById('viewRunSummaryHomeBtn');if(homeDash)homeDash.onclick=()=>render(runSummaryScreen());
     const leave=document.getElementById('leaveRunSummaryBtn');if(leave)leave.onclick=()=>render(IN_BATTLE?battleScreen():metaScreen());
+    app.querySelectorAll('[data-targetkey]').forEach(el=>el.onclick=()=>{
+      const k=el.dataset.targetkey;
+      if(!BATTLE.pendingTarget)return;
+      if(BATTLE.pendingTarget.type==='burn')chooseBurnTarget(k);else chooseCurseTarget(k);
+    });
+    const cancelTarget=document.getElementById('cancelPendingTargetBtn');if(cancelTarget)cancelTarget.onclick=()=>cancelPendingTarget();
     bindDev();
   };
   render=window.render;

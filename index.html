@@ -2110,6 +2110,10 @@ function castleMatchScreen() {
 }
 
 let BLACKSMITH_OPTIONS = null;
+// Holo-Viewer selection state for the Tuning Garage's per-item panel. Kept as its own module-
+// level variable rather than on BATTLE, since the Garage is reachable from the map where no
+// battle is in progress and BATTLE can be null.
+let GARAGE_SELECTED_ITEM = null;
 let BLACKSMITH_VISIT = null; // { primary: idx|null, secondary: idx|null } - one paid upgrade, plus one optional paid add-on, per visit
 function scopeCostMult(scope) { return scope === 'card' ? 1 : scope === 'rank' ? 3 : 4; } // rank hits 4 cards, suit hits 13 - priced for how many cards benefit
 function tuneCost(bonus, isSecondary, scope) { const base = 20 * Math.pow(2, bonus / 3) * scopeCostMult(scope); return Math.round(isSecondary ? base * 1.5 : base); }
@@ -3658,74 +3662,90 @@ function blacksmithScreen() {
     const visual = opt.scope === 'card'
       ? `<div class="card ${suitColorClass(SUITS.find(s=>s.s===opt.suit)?.color, opt.suit)}"><div>${rankLabel(opt.rank)}</div><div style="font-size:16px">${opt.suit}</div></div>`
       : `<span class="vart" style="width:38px;height:52px;font-size:22px;border:2px solid var(--blue);border-radius:5px;background:var(--white)">${opt.scope === 'rank' ? rankLabel(opt.rank) : opt.suit}</span>`;
+    // Before/after mini-card preview: a green corner badge shows the running total bonus, so
+    // the "after" card visibly previews what the purchase scales the bonus up to.
+    const badge = (amt) => amt > 0 ? `<span style="position:absolute;top:-6px;right:-6px;background:#2fae66;color:#fff;font-size:10px;font-weight:800;border-radius:10px;padding:1px 5px;box-shadow:0 0 0 2px #12163a">+${amt}</span>` : '';
+    const beforeMini = `<div style="position:relative;display:inline-block">${visual}${badge(bonus)}</div>`;
+    const afterMini = maxed || (isPrimary || isSecondary) ? '' : `<div style="position:relative;display:inline-block">${visual}${badge(bonus + 3)}</div>`;
+    const previewCost = maxed || isPrimary || isSecondary ? null : (!primaryTaken ? tuneCost(bonus, false, opt.scope) : !secondaryTaken ? tuneCost(bonus, true, opt.scope) : null);
     return `<div class="shopcard">
       <div class="hdr"><span>Tune: ${opt.label} ${bonus ? `(currently +${bonus})` : ''}</span><span></span></div>
-      <div style="margin:6px 0">${visual}</div>
+      <div style="margin:6px 0;display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center">
+        ${beforeMini}
+        ${afterMini ? `<div style="display:flex;flex-direction:column;align-items:center;gap:2px"><span style="color:#00e676;font-weight:800;font-size:12px;white-space:nowrap">Upgrade ➔</span><span class="price" style="white-space:nowrap">${previewCost} coins</span></div>${afterMini}` : ''}
+      </div>
       <div class="note" style="margin:0 0 6px">${opt.scope === 'card' ? `${rankLabel(opt.rank)}${opt.suit} gets +3 damage.` : opt.scope === 'rank' ? `All ${rankLabel(opt.rank)} cards get +3 damage.` : `All ${opt.suit} cards get +3 damage.`}</div>
       ${btnHTML}
     </div>`;
   }).join('');
-  const seenItemIds = new Set();
-  const itemLevelRows = RUN.hero.items.map(itemId => {
-    if (seenItemIds.has(itemId)) return '';
-    seenItemIds.add(itemId);
-    const item = ITEMS[itemId];
-    if (!item) return '';
-    const cap = itemLevelCap(item);
-    if (cap <= 0) return '';
-    const lvl = itemLevel(itemId);
-    const maxed = lvl >= cap;
-    const cost = maxed ? 0 : itemTuneCost(item, lvl);
-    const refund = lvl > 0 ? itemTuneCost(item, lvl - 1) : 0;
-    const currentText = item.bonus
-      ? `Currently +${Math.round((item.bonus.base + item.bonus.perLevel * lvl) * 100)}% bonus`
-      : `Currently draws ${item.drawAmount + (item.drawPerLevel||0)*lvl} card${(item.drawAmount + (item.drawPerLevel||0)*lvl) === 1 ? '' : 's'}`;
-    return `<div class="shopcard">
-      <div class="hdr"><span><b>${item.name}</b> (Lv ${lvl}/${cap})</span><span class="price">${maxed ? 'MAX' : cost + ' coins'}</span></div>
-      <div class="note" style="margin:0 0 6px">${currentText}</div>
-      <div style="display:flex;justify-content:flex-end;gap:6px;flex-wrap:wrap">
-        ${lvl > 0 ? `<button class="wo-btn gray" data-bonusdown="${itemId}" style="padding:6px 10px;font-size:12px">Refund (+${refund})</button>` : ''}
-        ${maxed ? '' : `<button class="wo-btn amber" data-bonusup="${itemId}" style="padding:6px 10px;font-size:12px" ${RUN.chips < cost ? 'disabled' : ''}>Level Up</button>`}
+  const uniqueItemIds = [...new Set(RUN.hero.items)];
+  if (!GARAGE_SELECTED_ITEM || !uniqueItemIds.includes(GARAGE_SELECTED_ITEM)) {
+    GARAGE_SELECTED_ITEM = uniqueItemIds.includes('fender_bender') ? 'fender_bender' : (uniqueItemIds[0] || null);
+  }
+  const directoryHTML = uniqueItemIds.map(id => {
+    const item = ITEMS[id]; if (!item) return '';
+    const active = id === GARAGE_SELECTED_ITEM;
+    return `<button class="wo-btn ${active ? 'amber' : 'gray'}" data-garageselect="${id}" style="width:100%;text-align:left;margin-bottom:6px;padding:8px 10px;font-size:12px">${item.name}</button>`;
+  }).join('');
+  // Comparison block shared by every upgrade type in the Holo-Viewer: real "before" and "after"
+  // card faces (rendered through the same renderStandardItemCard everything else uses, so the
+  // preview can never drift out of sync with the live math) with the cost between them.
+  const holoCompareBlock = (beforeHTML, afterHTML, cost) => `<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center;margin:8px 0">
+      <div>${beforeHTML}</div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+        <span style="color:#00e676;font-weight:800;font-size:13px;white-space:nowrap">Upgrade ➔</span>
+        <span class="price" style="white-space:nowrap">${cost} coins</span>
       </div>
+      <div>${afterHTML}</div>
     </div>`;
-  }).filter(Boolean).join('');
-  const seenForCapacity = new Set();
-  const capacityRows = RUN.hero.items.map(itemId => {
-    if (seenForCapacity.has(itemId)) return '';
-    seenForCapacity.add(itemId);
-    const item = ITEMS[itemId]; if (!item) return '';
-    const lvl = itemMaxCardsLevel(itemId);
-    const maxed = lvl >= ITEM_MAX_CARDS_BONUS_CAP;
-    const cost = maxed ? 0 : itemMaxCardsTuneCost(lvl);
-    const refund = lvl > 0 ? itemMaxCardsTuneCost(lvl - 1) : 0;
-    const label = item.kind === 'storage' ? 'cards it can hold' : 'cards it can use at once';
-    return `<div class="shopcard">
-      <div class="hdr"><span><b>${item.name}</b> (Lv ${lvl}/${ITEM_MAX_CARDS_BONUS_CAP})</span><span class="price">${maxed ? 'MAX' : cost + ' coins'}</span></div>
-      <div class="note" style="margin:0 0 6px">Currently ${effectiveMaxCards(item)} ${label}.</div>
-      <div style="display:flex;justify-content:flex-end;gap:6px;flex-wrap:wrap">
-        ${lvl > 0 ? `<button class="wo-btn gray" data-cardsdown="${itemId}" style="padding:6px 10px;font-size:12px">Refund (+${refund})</button>` : ''}
-        ${maxed ? '' : `<button class="wo-btn amber" data-cardsup="${itemId}" style="padding:6px 10px;font-size:12px" ${RUN.chips < cost ? 'disabled' : ''}>+1 Capacity</button>`}
-      </div>
-    </div>`;
-  }).filter(Boolean).join('');
-  const seenForUses = new Set();
-  const usesRows = RUN.hero.items.map(itemId => {
-    if (seenForUses.has(itemId)) return '';
-    seenForUses.add(itemId);
-    const item = ITEMS[itemId]; if (!item || item.kind === 'storage' || !item.usesPerTurnPerLevel) return '';
-    const lvl = itemUsesLevel(itemId);
-    const maxed = lvl >= ITEM_MAX_USES_LEVEL;
-    const cost = maxed ? 0 : itemUsesTuneCost(lvl);
-    const refund = lvl > 0 ? itemUsesTuneCost(lvl - 1) : 0;
-    return `<div class="shopcard">
-      <div class="hdr"><span><b>${item.name}</b> (Lv ${lvl}/${ITEM_MAX_USES_LEVEL})</span><span class="price">${maxed ? 'MAX' : cost + ' coins'}</span></div>
-      <div class="note" style="margin:0 0 6px">Currently ${itemUsesCap(item, lvl)} use${itemUsesCap(item, lvl) > 1 ? 's' : ''} per turn.</div>
-      <div style="display:flex;justify-content:flex-end;gap:6px;flex-wrap:wrap">
-        ${lvl > 0 ? `<button class="wo-btn gray" data-usesdown="${itemId}" style="padding:6px 10px;font-size:12px">Refund (+${refund})</button>` : ''}
-        ${maxed ? '' : `<button class="wo-btn amber" data-usesup="${itemId}" style="padding:6px 10px;font-size:12px" ${RUN.chips < cost ? 'disabled' : ''}>+1 Use Per Turn</button>`}
-      </div>
-    </div>`;
-  }).filter(Boolean).join('');
+  let holoHTML = '<div class="note">No item selected.</div>';
+  const selectedItem = GARAGE_SELECTED_ITEM ? ITEMS[GARAGE_SELECTED_ITEM] : null;
+  if (selectedItem) {
+    const id = selectedItem.id;
+    const sections = [];
+
+    const lvlCap = itemLevelCap(selectedItem);
+    if (lvlCap > 0) {
+      const lvl = itemLevel(id), maxed = lvl >= lvlCap;
+      const cost = maxed ? 0 : itemTuneCost(selectedItem, lvl);
+      const before = renderStandardItemCard(selectedItem, { level: lvl });
+      const after = maxed ? before : renderStandardItemCard(selectedItem, { level: lvl + 1 });
+      sections.push(`<div class="hdr" style="margin-top:10px"><span>Bonus Level (Lv ${lvl}/${lvlCap})</span></div>
+        ${holoCompareBlock(before, after, maxed ? 'MAX' : cost)}
+        <div style="display:flex;justify-content:center;gap:6px">
+          ${lvl > 0 ? `<button class="wo-btn gray" data-bonusdown="${id}" style="padding:6px 10px;font-size:12px">Refund</button>` : ''}
+          ${maxed ? '' : `<button class="wo-btn amber" data-bonusup="${id}" style="padding:6px 10px;font-size:12px" ${RUN.chips < cost ? 'disabled' : ''}>Level Up</button>`}
+        </div>`);
+    }
+
+    const capLvl = itemMaxCardsLevel(id), capMaxed = capLvl >= ITEM_MAX_CARDS_BONUS_CAP;
+    const capCost = capMaxed ? 0 : itemMaxCardsTuneCost(capLvl);
+    const capBefore = renderStandardItemCard(selectedItem, {});
+    let capAfter = capBefore;
+    if (!capMaxed) { RUN.itemMaxCardsLevels[id] = capLvl + 1; capAfter = renderStandardItemCard(selectedItem, {}); RUN.itemMaxCardsLevels[id] = capLvl; }
+    sections.push(`<div class="hdr" style="margin-top:14px"><span>Card Capacity (Lv ${capLvl}/${ITEM_MAX_CARDS_BONUS_CAP})</span></div>
+      ${holoCompareBlock(capBefore, capAfter, capMaxed ? 'MAX' : capCost)}
+      <div style="display:flex;justify-content:center;gap:6px">
+        ${capLvl > 0 ? `<button class="wo-btn gray" data-cardsdown="${id}" style="padding:6px 10px;font-size:12px">Refund</button>` : ''}
+        ${capMaxed ? '' : `<button class="wo-btn amber" data-cardsup="${id}" style="padding:6px 10px;font-size:12px" ${RUN.chips < capCost ? 'disabled' : ''}>+1 Capacity</button>`}
+      </div>`);
+
+    if (selectedItem.kind !== 'storage' && selectedItem.usesPerTurnPerLevel) {
+      const usesLvl = itemUsesLevel(id), usesMaxed = usesLvl >= ITEM_MAX_USES_LEVEL;
+      const usesCost = usesMaxed ? 0 : itemUsesTuneCost(usesLvl);
+      const usesBefore = renderStandardItemCard(selectedItem, {});
+      let usesAfter = usesBefore;
+      if (!usesMaxed) { RUN.itemUsesLevels[id] = usesLvl + 1; usesAfter = renderStandardItemCard(selectedItem, {}); RUN.itemUsesLevels[id] = usesLvl; }
+      sections.push(`<div class="hdr" style="margin-top:14px"><span>Uses Per Turn (Lv ${usesLvl}/${ITEM_MAX_USES_LEVEL})</span></div>
+        ${holoCompareBlock(usesBefore, usesAfter, usesMaxed ? 'MAX' : usesCost)}
+        <div style="display:flex;justify-content:center;gap:6px">
+          ${usesLvl > 0 ? `<button class="wo-btn gray" data-usesdown="${id}" style="padding:6px 10px;font-size:12px">Refund</button>` : ''}
+          ${usesMaxed ? '' : `<button class="wo-btn amber" data-usesup="${id}" style="padding:6px 10px;font-size:12px" ${RUN.chips < usesCost ? 'disabled' : ''}>+1 Use Per Turn</button>`}
+        </div>`);
+    }
+
+    holoHTML = sections.join('') || '<div class="note">This item has no run-scoped upgrades available.</div>';
+  }
   const visitNote = BLACKSMITH_VISIT.primary === null
     ? `Pick one card to pay for a main upgrade. You can pay a bit more to also upgrade a second card in the same visit.`
     : (BLACKSMITH_VISIT.secondary === null ? `You can pay extra to also upgrade one more card this visit, or move on.` : `You've used both upgrades this visit. Come back another time to tune more.`);
@@ -3742,9 +3762,14 @@ function blacksmithScreen() {
           <button class="wo-btn purple" id="openRunUpgradeFromBlacksmithBtn" style="flex:1">Upgrades</button>
         </div>
         <div style="margin:12px 0">${rows}</div>
-        ${itemLevelRows ? `<div class="hdr" style="margin-top:14px"><span>Item Upgrades</span><span>Not limited by this visit</span></div><div style="margin:6px 0 12px">${itemLevelRows}</div>` : ''}
-        ${capacityRows ? `<div class="hdr" style="margin-top:14px"><span>Capacity Upgrades</span><span>Up to +${ITEM_MAX_CARDS_BONUS_CAP}</span></div><div style="margin:6px 0 12px">${capacityRows}</div>` : ''}
-        ${usesRows ? `<div class="hdr" style="margin-top:14px"><span>Uses Per Turn Upgrades</span><span>Up to +${ITEM_MAX_USES_LEVEL}</span></div><div style="margin:6px 0 12px">${usesRows}</div>` : ''}
+        <div class="hdr" style="margin-top:14px"><span>Equipped Items</span></div>
+        <div style="display:grid;grid-template-columns:150px 1fr;gap:14px;align-items:start;margin-top:8px">
+          <div class="panel" style="margin:0">${directoryHTML || '<div class="note">No items equipped.</div>'}</div>
+          <div class="panel" style="margin:0">
+            <div class="hdr"><span>Holo-Viewer${selectedItem ? `: ${selectedItem.name}` : ''}</span></div>
+            ${holoHTML}
+          </div>
+        </div>
       </div>
     </div>
   `;
@@ -4113,6 +4138,11 @@ function render(html) {
     };
   }
 
+  app.querySelectorAll('[data-garageselect]').forEach(el => el.onclick = () => {
+    GARAGE_SELECTED_ITEM = el.dataset.garageselect;
+    render(blacksmithScreen());
+  });
+
   app.querySelectorAll('[data-bonusup]').forEach(el => el.onclick = () => {
     const item = ITEMS[el.dataset.bonusup];
     const cap = itemLevelCap(item);
@@ -4145,7 +4175,7 @@ function render(html) {
     RUN.chips -= cost;
     RUN.itemUsesLevels[item.id] = lvl + 1;
     saveRun();
-    render(chopShopScreen());
+    render(blacksmithScreen());
   });
   app.querySelectorAll('[data-usesdown]').forEach(el => el.onclick = () => {
     const item = ITEMS[el.dataset.usesdown];
@@ -4155,7 +4185,7 @@ function render(html) {
     RUN.itemUsesLevels[item.id] = lvl - 1;
     RUN.chips += refund;
     saveRun();
-    render(chopShopScreen());
+    render(blacksmithScreen());
   });
   app.querySelectorAll('[data-cardsup]').forEach(el => el.onclick = () => {
     const item = ITEMS[el.dataset.cardsup];
@@ -4166,7 +4196,7 @@ function render(html) {
     RUN.chips -= cost;
     RUN.itemMaxCardsLevels[item.id] = lvl + 1;
     saveRun();
-    render(chopShopScreen());
+    render(blacksmithScreen());
   });
   app.querySelectorAll('[data-cardsdown]').forEach(el => el.onclick = () => {
     const item = ITEMS[el.dataset.cardsdown];
@@ -4176,7 +4206,7 @@ function render(html) {
     RUN.itemMaxCardsLevels[item.id] = lvl - 1;
     RUN.chips += refund;
     saveRun();
-    render(chopShopScreen());
+    render(blacksmithScreen());
   });
   app.querySelectorAll('[data-kindconvert]').forEach(el => el.onclick = () => {
     const itemId = el.dataset.kindconvert; const to = el.dataset.kindto;

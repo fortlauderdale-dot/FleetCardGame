@@ -16,7 +16,7 @@
     --mono:'Aptos','Aptos Display',ui-sans-serif,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
   }
   *{box-sizing:border-box}
-  html,body{margin:0;min-height:100vh;background:var(--bg);background-attachment:fixed;color:var(--ink);font-family:var(--disp);font-size:16px}
+  html,body{margin:0;min-height:100vh;background:var(--bg);background-attachment:fixed;color:var(--ink);font-family:var(--disp);font-size:16px;overflow-x:hidden}
   /* World 2 (Alligator Alley) swaps the ambient backdrop and panel accent color; toggled on
      <body> by render() based on RUN.world, so no per-screen template needs to know about it. */
   body.world-2{--bg:linear-gradient(135deg, #1c2a1c 0%, #23241f 55%, #14261f 100%)}
@@ -1973,6 +1973,7 @@ function castleDungeonScreen(message='') {
       <div class="wo-eyebrow">Castle Dungeon</div>
       <h1>Battle <em>Challenge</em></h1>
       ${currencyBar()}
+      <button class="wo-btn gray" id="backToCastleMenuBtn" style="width:100%;margin-bottom:10px">Back to Compound Menu</button>
       ${message ? `<div class="panel"><div class="note">${message}</div></div>` : ''}
       <div class="shopcard"><h3>Battle Challenge</h3><div class="note">Win the first battle to earn the listed reward, then choose whether to risk a second, harder battle for a larger reward.</div>
         <div class="currencies"><div class="cur chip">${ICON.coin} 45 coins</div><div class="cur gem">${ICON.gem} 3 gems</div><div class="cur fuel">${ICON.fuel} 8 fuel</div></div><button class="wo-btn amber" id="castleBattle1Btn" ${RUN.castleState?.firstDone?'disabled':''}>${RUN.castleState?.firstDone?'First Battle Won':'Battle 1'}</button>
@@ -1980,7 +1981,6 @@ function castleDungeonScreen(message='') {
       ${RUN.castleState?.firstDone && !RUN.castleState?.secondDone ? `<div class="shopcard"><h3>High-Roller Battle</h3><div class="note">The second fight is harder.</div><div class="currencies"><div class="cur chip">${ICON.coin} 100 coins</div><div class="cur gem">${ICON.gem} 6 gems</div><div class="cur fuel">${ICON.fuel} 14 fuel</div></div><button class="wo-btn amber" id="castleBattle2Btn">Battle 2</button></div>` : ''}
       ${RUN.castleState?.secondDone && !RUN.castleState?.thirdDone ? `<div class="shopcard"><h3>Overlord Battle</h3><div class="note">Twice as hard as Battle 2, but it's the one that actually pays out an Item Card.</div><div class="currencies"><div class="cur chip">${ICON.coin} 160 coins</div><div class="cur gem">${ICON.gem} 10 gems</div><div class="cur fuel">${ICON.fuel} 20 fuel</div><div class="cur pts">Guaranteed Item Card</div></div><button class="wo-btn amber" id="castleBattle3Btn">Battle 3</button></div>` : ''}
       ${RUN.castleState?.thirdDone ? `<div class="note" style="margin-top:8px">Dungeon cleared for this run.</div>` : ''}
-      <button class="wo-btn gray" id="backToCastleMenuBtn">Back to Compound Menu</button>
     </div>
   </div>`;
 }
@@ -1992,6 +1992,7 @@ function castleInnScreen(message='') {
       <div class="wo-eyebrow">Inn</div>
       <h1>Rest &amp; <em>Refuel</em></h1>
       ${currencyBar()}
+      <button class="wo-btn gray" id="backToCastleMenuBtn" style="width:100%;margin-bottom:10px">Back to Compound Menu</button>
       ${message ? `<div class="panel"><div class="note">${message}</div></div>` : ''}
       <div class="shopcard">
         <h3>Cheap Refuel</h3>
@@ -2005,7 +2006,6 @@ function castleInnScreen(message='') {
           Sleep ${RUN.innSleeps === 0 ? 'Free' : `(${20 * RUN.innSleeps} coins)`}
         </button>
       </div>
-      <button class="wo-btn gray" id="backToCastleMenuBtn">Back to Compound Menu</button>
     </div>
   </div>`; 
 }
@@ -2219,10 +2219,7 @@ function startBattle(opponentDef, row, col, castleStage=0) {
   // Optional: some opponents start with extra cards already in their pool on top of their
   // normal drawRate, for a "comes out swinging" feel without changing their per-turn draw.
   if (opponentDef.startPoolBonus) {
-    for (let i = 0; i < opponentDef.startPoolBonus; i++) {
-      if (!BATTLE.oppDeck.length) { if (!BATTLE.oppDiscard.length) break; BATTLE.oppDeck = shuffle(BATTLE.oppDiscard); BATTLE.oppDiscard = []; }
-      if (BATTLE.oppDeck.length) { const c = BATTLE.oppDeck.pop(); c.revealed = Math.random() < revealFraction(BATTLE.row); BATTLE.oppPool.push(c); }
-    }
+    drawOpponentPoolCards(opponentDef.startPoolBonus);
   }
   for (let i = 0; i < 1 + META.levels.reveal; i++) {
     const hidden = BATTLE.oppPool.filter(c => !c.revealed);
@@ -2237,14 +2234,34 @@ function drawCards(n, allowOverflow = false) {
     BATTLE.hand.push(BATTLE.deck.pop());
   }
 }
-function drawOpponentCards() {
-  BATTLE.scoutedThisTurn = false; BATTLE.abilityUsedThisTurn = false;
-  for (let i = 0; i < BATTLE.opponent.drawRate; i++) {
-    if (!BATTLE.oppDeck.length) { if (!BATTLE.oppDiscard.length) break; BATTLE.oppDeck = shuffle(BATTLE.oppDiscard); BATTLE.oppDiscard = []; }
+// Live Graveyard Shuffle (opponent side): every opponent draw rebuilds their deck from
+// everything not currently live in their pool - oppDeck plus all of oppDiscard - so a card they
+// just discarded is back in the mix on their very next draw instead of sitting dead until the
+// deck runs out. revealedOnDraw/hiddenOnDraw let a specific opponent override the normal
+// fractional reveal chance with an exact count of the cards just drawn.
+function drawOpponentPoolCards(n) {
+  const opp = BATTLE.opponent;
+  const live = new Set(BATTLE.oppPool);
+  BATTLE.oppDeck = shuffle([...BATTLE.oppDeck, ...BATTLE.oppDiscard].filter(c => !live.has(c)));
+  BATTLE.oppDiscard = [];
+  const drawn = [];
+  for (let i = 0; i < n; i++) {
+    if (!BATTLE.oppDeck.length) break;
     const c = BATTLE.oppDeck.pop();
-    c.revealed = Math.random() < revealFraction(BATTLE.row);
+    drawn.push(c);
     BATTLE.oppPool.push(c);
   }
+  if (opp.revealedOnDraw != null || opp.hiddenOnDraw != null) {
+    const revealCount = opp.revealedOnDraw != null ? opp.revealedOnDraw : Math.max(0, drawn.length - (opp.hiddenOnDraw || 0));
+    drawn.forEach((c, i) => { c.revealed = i < revealCount; });
+  } else {
+    drawn.forEach(c => { c.revealed = Math.random() < revealFraction(BATTLE.row); });
+  }
+  return drawn;
+}
+function drawOpponentCards() {
+  BATTLE.scoutedThisTurn = false; BATTLE.abilityUsedThisTurn = false;
+  drawOpponentPoolCards(BATTLE.opponent.drawRate);
 }
 // Turn-1-only draw, kept separate from the recurring per-turn drawRate above. An opponent can
 // set startHandSize to control exactly how threatening it looks the moment the fight opens -
@@ -2253,14 +2270,19 @@ function drawOpponentCards() {
 function drawOpponentStartingHand() {
   BATTLE.scoutedThisTurn = false; BATTLE.abilityUsedThisTurn = false;
   const n = BATTLE.opponent.startHandSize != null ? BATTLE.opponent.startHandSize : BATTLE.opponent.drawRate;
-  for (let i = 0; i < n; i++) {
-    if (!BATTLE.oppDeck.length) { if (!BATTLE.oppDiscard.length) break; BATTLE.oppDeck = shuffle(BATTLE.oppDiscard); BATTLE.oppDiscard = []; }
-    const c = BATTLE.oppDeck.pop();
-    c.revealed = Math.random() < revealFraction(BATTLE.row);
-    BATTLE.oppPool.push(c);
+  drawOpponentPoolCards(n);
+}
+function battleLog(msg) {
+  BATTLE.logLines.push({ turn: BATTLE.turn, msg });
+  if (BATTLE.logLines.length > 200) BATTLE.logLines.shift();
+  // Force the log to track its latest entry every time one is recorded. The DOM won't have
+  // today's new line in it until the next render() call, so this also fires again there -
+  // that second call is what actually lands the scroll once the text is on screen.
+  if (typeof document !== 'undefined') {
+    const el = document.getElementById('battleLogEl');
+    if (el) el.scrollTop = el.scrollHeight;
   }
 }
-function battleLog(msg) { BATTLE.logLines.push({ turn: BATTLE.turn, msg }); if (BATTLE.logLines.length > 200) BATTLE.logLines.shift(); }
 
 // Foundational simplification pass: the turn-limit enrage system has been removed entirely.
 // Opponents no longer hit harder just because a fight runs long - any future "gets stronger
@@ -2493,6 +2515,21 @@ function executePlayerAttack(itemId, index) {
   }
 
   const cards = idxs.map(i => BATTLE.hand[i]);
+
+  // Purge Hand items demand everything: the actor must load their whole hand in at once. Falling
+  // short still costs the whole hand - it purges for zero effect instead of blocking outright.
+  if (item.purgeHand && !(idxs.length === BATTLE.hand.length && BATTLE.hand.length > 0)) {
+    const wholeHand = [...BATTLE.hand];
+    BATTLE.discard.push(...wholeHand);
+    BATTLE.hand = [];
+    BATTLE.slots = {};
+    BATTLE.usedThisTurn = new Set();
+    battleLog(`${item.name} needs your entire hand loaded in - it fizzles and purges your hand instead.`);
+    saveRun();
+    render(battleScreen());
+    return;
+  }
+
   const condResult = checkCondition(item.condition, cards);
 
   if (!condResult.met) {
@@ -2580,10 +2617,7 @@ function executePlayerAttack(itemId, index) {
       // burn/curse - only real damage triggers it).
       if (BATTLE.opponent.special?.type === 'drawOnHit' && BATTLE.opponent.hpNow > 0) {
         const drawAmt = BATTLE.opponent.special.amount || 1;
-        for (let i = 0; i < drawAmt; i++) {
-          if (!BATTLE.oppDeck.length) { if (!BATTLE.oppDiscard.length) break; BATTLE.oppDeck = shuffle(BATTLE.oppDiscard); BATTLE.oppDiscard = []; }
-          if (BATTLE.oppDeck.length) { const c = BATTLE.oppDeck.pop(); c.revealed = Math.random() < revealFraction(BATTLE.row); BATTLE.oppPool.push(c); }
-        }
+        drawOpponentPoolCards(drawAmt);
         battleLog(`${BATTLE.opponent.name} recoils and draws ${drawAmt === 1 ? 'a card' : drawAmt + ' cards'} for its next attack.`);
       }
     }
@@ -2675,7 +2709,8 @@ function resolveOpponentAttackEffect(attack, oppDmg) {
     const n=Math.min(RUN.fuel,1); RUN.fuel-=n; return n?` Stole ${n} fuel.`:' Tried to steal fuel, but you had none.';
   }
   if (attack.effect === 'draw') {
-    if(BATTLE.oppDeck.length){ const c=BATTLE.oppDeck.pop(); c.revealed=false; BATTLE.oppPool.push(c); return ' Drew an extra card.'; }
+    const drawn = drawOpponentPoolCards(1);
+    if (drawn.length) { drawn[0].revealed = false; return ' Drew an extra card.'; }
   }
   return '';
 }
@@ -2860,10 +2895,7 @@ function endTurn() {
           if (redCount >= (spec.redThreshold ?? 3)) {
             const fuelStolen = Math.min(RUN.fuel, spec.fuelSteal ?? 1);
             RUN.fuel -= fuelStolen;
-            for (let i = 0; i < (spec.extraDraw ?? 1); i++) {
-              if (!BATTLE.oppDeck.length) { if (!BATTLE.oppDiscard.length) break; BATTLE.oppDeck = shuffle(BATTLE.oppDiscard); BATTLE.oppDiscard = []; }
-              const c = BATTLE.oppDeck.pop(); c.revealed = Math.random() < revealFraction(BATTLE.row); BATTLE.oppPool.push(c);
-            }
+            drawOpponentPoolCards(spec.extraDraw ?? 1);
             specialLog = ` It steals ${fuelStolen} fuel and draws an extra card!`;
           }
         }
@@ -2934,10 +2966,7 @@ function endTurn() {
         if (redCount >= (spec.redThreshold ?? 3)) {
           const fuelStolen = Math.min(RUN.fuel, spec.fuelSteal ?? 1);
           RUN.fuel -= fuelStolen;
-          for (let i = 0; i < (spec.extraDraw ?? 1); i++) {
-            if (!BATTLE.oppDeck.length) { if (!BATTLE.oppDiscard.length) break; BATTLE.oppDeck = shuffle(BATTLE.oppDiscard); BATTLE.oppDiscard = []; }
-            const c = BATTLE.oppDeck.pop(); c.revealed = Math.random() < revealFraction(BATTLE.row); BATTLE.oppPool.push(c);
-          }
+          drawOpponentPoolCards(spec.extraDraw ?? 1);
           specialLog = ` It steals ${fuelStolen} fuel and draws an extra card!`;
         }
       }
@@ -2985,8 +3014,10 @@ function endTurn() {
   drawCards(RUN.drawPerTurn);
   resortHandAndRelink(RUN.handSortMode);
   // Some opponents discard their whole pool at the end of every turn instead of carrying cards
-  // forward - they draw a fresh, fixed-size hand each time regardless of what they used.
-  if (BATTLE.opponent.discardPoolEachTurn && BATTLE.oppPool.length) {
+  // forward - they draw a fresh, fixed-size hand each time regardless of what they used. A
+  // reckless opponent gets the identical treatment: it never carries cards, starting every turn
+  // completely from scratch.
+  if ((BATTLE.opponent.discardPoolEachTurn || BATTLE.opponent.reckless) && BATTLE.oppPool.length) {
     BATTLE.oppDiscard.push(...BATTLE.oppPool);
     BATTLE.oppPool = [];
   }
@@ -4604,20 +4635,19 @@ document.addEventListener('mouseover', (e) => {
     cards.forEach(c=>{if(c&&!BATTLE.stagedFireCards.includes(c))BATTLE.stagedFireCards.push(c);});
   }
 
-  /* Mid-turn draw protection: any card already staged this turn is removed from the
-     recycle pool before a reshuffle. It is not globally discarded until End Turn. */
+  /* Live Graveyard Shuffle: every draw action rebuilds the deck from scratch out of everything
+     that ISN'T currently live - the deck plus the whole discard pile - so a played card is back
+     in circulation the moment it's discarded. Only cards physically in hand (live) or staged for
+     this very action (about to be discarded, see stageCards) are protected from coming right back. */
   window.drawCards=function(n,enforceHandCap=false){
     ensureBattlePatchState();
-    const staged=stagedCards();
+    const exclude=new Set(BATTLE.hand);
+    stagedCards().forEach(c=>exclude.add(c));
+    BATTLE.deck=shuffle([...BATTLE.deck,...BATTLE.discard].filter(c=>!exclude.has(c)));
+    BATTLE.discard=[];
     for(let i=0;i<n;i++){
       if(enforceHandCap&&BATTLE.hand.length>=RUN.handSize)break;
-      if(!BATTLE.deck.length){
-        if(staged.length){
-          BATTLE.discard=BATTLE.discard.filter(c=>!staged.includes(c));
-        }
-        if(!BATTLE.discard.length)break;
-        BATTLE.deck=shuffle(BATTLE.discard);BATTLE.discard=[];
-      }
+      if(!BATTLE.deck.length)break;
       BATTLE.hand.push(BATTLE.deck.pop());
     }
   };
@@ -4705,7 +4735,7 @@ document.addEventListener('mouseover', (e) => {
        and adding a compact panel before the player Item grid. */
     const curseKeys=Object.keys(BATTLE.itemCurses||{});
     if(curseKeys.length){
-      const badges=curseKeys.map(k=>`<span class="curseBadge">CURSED: ${BATTLE.itemCurses[k]}</span>`).join(' ');
+      const badges=curseKeys.map(k=>`<span class="curseBadge">Cursed: ${BATTLE.itemCurses[k]}</span>`).join(' ');
       html=html.replace(/(<div class="panel">\s*<div class="note" style="margin:0 0 4px">Drag cards or tap to select<\/div>)/,`<div class="panel curseShield"><div class="note" style="margin:0 0 6px"><b>Active Curse Traps</b> ${badges}</div></div>$1`);
     }
     /* Manual slot targeting: firing a Curse or Burn item opens this picker instead of landing
@@ -4718,7 +4748,7 @@ document.addEventListener('mouseover', (e) => {
         const key=`${id}_${i}`;
         const curseAmt=BATTLE.opponentItemCurses&&BATTLE.opponentItemCurses[key];
         const burnAmt=BATTLE.opponentItemBurns&&BATTLE.opponentItemBurns[key];
-        const tag=curseAmt?` <span class="curseBadge">CURSED: ${curseAmt}</span>`:burnAmt?` <span class="curseBadge">BURN: ${burnAmt}</span>`:'';
+        const tag=curseAmt?` <span class="curseBadge">Cursed: ${curseAmt}</span>`:burnAmt?` <span class="curseBadge">Burn: ${burnAmt}</span>`:'';
         return `<button class="wo-btn ${isBurn?'amber':'purple'} targetSlotBtn" data-targetkey="${key}" style="width:100%;text-align:left;margin-bottom:6px">${it.name}${tag}</button>`;
       }).join('');
       const modal=`<div class="targetPickerOverlay" style="position:fixed;inset:0;background:#12163acc;display:flex;align-items:center;justify-content:center;z-index:110;padding:20px">

@@ -2010,10 +2010,12 @@ function castleInnScreen(message='') {
   </div>`; 
 }
 
-const MATCH_REWARD_TIERS = [
-  { coins: 20, gems: 1, label: '+20 coins, +1 gem' },
-  { coins: 35, gems: 2, label: '+35 coins, +2 gems' },
-];
+const MATCH_SUIT_REWARDS = {
+  '♦': { coins: 20, gems: 1, label: '+20 coins, +1 gem' },
+  '♣': { coins: 35, gems: 2, label: '+35 coins, +2 gems' },
+  '♥': { health: 20, label: '+20 health' },
+  '♠': { energy: 10, label: '+10 energy' },
+};
 let MATCH_POPUP = null; // { suitLabel, rewardLabel, boardCleared }
 let MATCH_RETURN_TO_MAP = false; // true when the matching game was entered from a map Grid Anomaly node instead of the Compound
 function castleMatchScreen() {
@@ -2041,7 +2043,6 @@ function castleMatchScreen() {
     );
     st.matchGuesses = 3;
     st.matchPick = [];
-    st.matchSuitClears = st.matchSuitClears || {};
   }
 
   if (MATCH_POPUP) {
@@ -2081,16 +2082,16 @@ function castleMatchScreen() {
           </div>
           <div class="panel" style="margin:0">
             <div class="hdr" style="margin-bottom:6px"><span>Pair Loot Index</span></div>
-            <div class="note" style="margin:0 0 8px">Matching a suit the 1st time pays ${MATCH_REWARD_TIERS[0].label}. Matching it a 2nd time pays ${MATCH_REWARD_TIERS[1].label}.</div>
+            <div class="note" style="margin:0 0 8px">Each suit always pays the same reward when matched.</div>
             <div style="display:flex;flex-direction:column;gap:5px;font-size:12px">
-              <div>♦ Diamonds</div>
-              <div>♣ Clubs</div>
-              <div>♥ Hearts</div>
-              <div>♠ Spades</div>
+              <div>♦ Diamonds - ${MATCH_SUIT_REWARDS['♦'].label}</div>
+              <div>♣ Clubs - ${MATCH_SUIT_REWARDS['♣'].label}</div>
+              <div>♥ Hearts - ${MATCH_SUIT_REWARDS['♥'].label}</div>
+              <div>♠ Spades - ${MATCH_SUIT_REWARDS['♠'].label}</div>
             </div>
           </div>
         </div>
-        <div class="note" style="margin:14px 0 10px; text-align:center">Each suit shows up twice. Matching a suit the 2nd time pays out a better prize than the 1st. A wrong guess costs an attempt.</div>
+        <div class="note" style="margin:14px 0 10px; text-align:center">Each suit shows up twice and always pays the same reward, shown in the Loot Index. A wrong guess costs an attempt.</div>
         <button class="wo-btn gray" id="leaveMatchBtn" style="width:100%">Back to Compound Menu</button>
       </div>
     </div>`;
@@ -4273,19 +4274,18 @@ function render(html) {
           st.matchCards[b].matched = true;
           st.matchPick = [];
 
-          // Escalating reward: the 1st time this suit is cleared pays the lesser tier, the
-          // 2nd (and any later) time pays a better tier. Tracked per-suit for the whole run.
-          st.matchSuitClears = st.matchSuitClears || {};
-          const clearCount = st.matchSuitClears[suit] || 0;
-          const tier = MATCH_REWARD_TIERS[Math.min(clearCount, MATCH_REWARD_TIERS.length - 1)];
-          st.matchSuitClears[suit] = clearCount + 1;
-          RUN.chips += tier.coins || 0;
-          RUN.gems = Math.min(RUN.maxGems, RUN.gems + (tier.gems || 0));
-          RUN.fuel = Math.min(RUN.maxFuel, RUN.fuel + (tier.fuel || 0));
+          // Fixed per-suit reward - every suit always pays the same thing when matched,
+          // rather than scaling with how many times it's been cleared this run.
+          const reward = MATCH_SUIT_REWARDS[suit] || {};
+          RUN.chips += reward.coins || 0;
+          RUN.gems = Math.min(RUN.maxGems, RUN.gems + (reward.gems || 0));
+          RUN.fuel = Math.min(RUN.maxFuel, RUN.fuel + (reward.fuel || 0));
+          RUN.health = Math.min(RUN.maxHealth, RUN.health + (reward.health || 0));
+          RUN.energy = Math.min(RUN.maxEnergy, RUN.energy + (reward.energy || 0));
           saveRun();
 
           const boardCleared = st.matchCards.every(c => c.matched);
-          MATCH_POPUP = { suitLabel: suit, rewardLabel: tier.label, boardCleared };
+          MATCH_POPUP = { suitLabel: suit, rewardLabel: reward.label || '', boardCleared };
           st.matchLock = false;
           render(castleMatchScreen());
 

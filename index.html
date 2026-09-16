@@ -1593,11 +1593,13 @@ function loadMeta() {
       if (parsed.bestWorld == null) parsed.bestWorld = 1;
       if (parsed.perfectWins == null) parsed.perfectWins = 0;
       if (parsed.world2Cleared == null) parsed.world2Cleared = false;
+      if (parsed.hasSeenTutorial == null) parsed.hasSeenTutorial = false;
+      if (parsed.hasSeenPoisonTutorial == null) parsed.hasSeenPoisonTutorial = false;
       return parsed;
     }
   } catch (e) {}
   const levels = {}; UPGRADE_DEFS.forEach(u => levels[u.id] = 0);
-  return { metaVersion: META_VERSION, points: 0, lifetimePoints: 0, highScore: 0, bestRun: 0, runsPlayed: 0, enemiesBeaten: 0, bestWorld: 1, perfectWins: 0, world2Cleared: false, levels };
+  return { metaVersion: META_VERSION, points: 0, lifetimePoints: 0, highScore: 0, bestRun: 0, runsPlayed: 0, enemiesBeaten: 0, bestWorld: 1, perfectWins: 0, world2Cleared: false, hasSeenTutorial: false, hasSeenPoisonTutorial: false, levels };
 }
 let META = loadMeta();
 function saveMeta() { try { META.metaVersion = META_VERSION; localStorage.setItem(META_KEY, JSON.stringify(META)); } catch (e) {} }
@@ -2116,6 +2118,15 @@ function startBattle(opponentDef, row, col, castleStage=0) {
     hand: [], oppPool: [], usedThisTurn: new Set(), scoutedThisTurn: false, abilityUsedThisTurn: false, opponentStunned: false, itemCooldowns: {},
     playerArmor: 0, turn: 1, slots: {}, turnDiscard: [], logLines: [], turnStartedAt: Date.now(),
   };
+  // The very first Stop of every world is a fixed introductory encounter - surface a one-time
+  // tutorial hint the first time each player reaches it, then never show it again.
+  if (row === 0 && col === 0) {
+    if (RUN.world === 1 && !META.hasSeenTutorial) BATTLE.showTutorialBanner = true;
+    else if (RUN.world >= 2 && !META.hasSeenPoisonTutorial) {
+      battleLog('WARNING: Poison slips past your Armor and deals damage at the end of your turn!');
+      META.hasSeenPoisonTutorial = true; saveMeta();
+    }
+  }
   BATTLE.deck.forEach(c => {
     let total = 0;
     RUN.cardBoosts.forEach(b => {
@@ -3334,6 +3345,7 @@ function battleScreen() {
     </div>
     <div class="duelBoard">
       <div class="panel">
+        ${BATTLE.showTutorialBanner ? `<div class="note" style="border:1px solid var(--amber);border-radius:6px;padding:8px 10px;margin-bottom:8px;text-align:center;color:var(--amber)">Click or drag cards from your hand, then click an Item Slot below to load your weapon.</div>` : ''}
         <div class="hand">${handHTML}</div>
         <div style="display:flex;gap:6px;flex-wrap:wrap">
           <button class="wo-btn gray" id="sortToggleBtn" style="padding:8px 8px;font-size:12px;width:88px;text-align:center;white-space:nowrap">Sort: ${(RUN.handSortMode || 'value') === 'value' ? 'Value' : 'Suit'}</button>
@@ -4349,6 +4361,7 @@ document.addEventListener('mouseover', (e) => {
   /* Every Item-use card is staged before the old action engine gets a chance to recycle it. */
   window.executePlayerAttack=function(itemId,index){
     ensureBattlePatchState();
+    if(BATTLE.showTutorialBanner){BATTLE.showTutorialBanner=false;META.hasSeenTutorial=true;saveMeta();}
     const item=ITEMS[itemId];
     const key=`${itemId}_${index}`;
     const idxs=(BATTLE.slots[key]||[]).slice();

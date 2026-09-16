@@ -179,6 +179,8 @@
   .mapnode-wrap{position:absolute;transform:translate(-50%,-50%);z-index:1}
   .mapnode-wrap:hover{z-index:80}
   .mapnode-wrap:hover .tooltip{display:block}.mapnode-wrap .tooltip{top:120%;bottom:auto}
+  @keyframes mapNodeWiggle{0%,100%{transform:translateX(-2px) rotate(-4deg)}50%{transform:translateX(2px) rotate(4deg)}}
+  .mapnode.type-match_hazard{animation:mapNodeWiggle 1.8s ease-in-out infinite}
   .tooltip{display:none;position:absolute;bottom:120%;left:50%;transform:translateX(-50%);z-index:90;
     background:#000000 !important;color:#ffffff !important;font-family:var(--mono);font-size:10.5px;line-height:1.5;
     padding:7px 10px;border-radius:6px;white-space:nowrap;z-index:5;box-shadow:0 0 8px rgba(31,182,166,0.4);border:1px solid #1fb6a6;text-align:left}
@@ -533,6 +535,7 @@ function opponentTraitTags(opp) {
   if ((opp.attacks || []).some(a => a.colorPunish)) tags.push('Rewards it for you holding one card color');
   if ((opp.attacks || []).some(a => a.exactSuitCount)) tags.push('Its attack strength depends on one suit in its hand');
   if ((opp.attacks || []).some(a => a.effect === 'reinforceArmor')) tags.push('Can reinforce its own armor');
+  if ((opp.items || []).some(id => ITEMS[id]?.unlockThreshold != null)) tags.push('Builds up a charge, then unleashes one big hit once it fully charges');
   return tags;
 }
 function isConsecutive(cards) {
@@ -1101,6 +1104,12 @@ const ITEMS = {
   opp_gas_ignition_major: { id: 'opp_gas_ignition_major', name: 'Massive Ignition', maxCards: 5, usesPerTurn: 1,
     condition: { type: 'sumThreshold', min: 25 }, flatAmount: 45,
     note: `Needs cards totaling ${SIGMA_TIP}25+. A massive flat hit.` },
+  opp_gas_leak: { id: 'opp_gas_leak', name: 'Gas Leak', maxCards: 5, usesPerTurn: 1,
+    condition: { type: 'any' }, baseMult: 0, kind: 'unlock', unlockThreshold: 55, flatAmount: 42,
+    note: `<span style="color:var(--purple)">Locked: Opponent cards deposit value to charge it. Once unlocked, fires a 42-damage Ignition Explosion.</span>` },
+  opp_major_gas_leak: { id: 'opp_major_gas_leak', name: 'Major Gas Leak', maxCards: 5, usesPerTurn: 1,
+    condition: { type: 'any' }, baseMult: 0, kind: 'unlock', unlockThreshold: 75, flatAmount: 65,
+    note: `<span style="color:var(--purple)">Locked: Opponent cards deposit value to charge it. Once unlocked, fires a 65-damage Massive Ignition.</span>` },
   opp_hearts_3: { id: 'opp_hearts_3', name: 'Royal Flush Strike', maxCards: 3, usesPerTurn: 1,
     condition: { type: 'suitCountExact', suit: '♥', count: 3 }, flatAmount: 32,
     note: 'Needs exactly 3 Hearts. Its hardest hit.' },
@@ -1499,7 +1508,7 @@ const OPPONENT_TIERS = [
     { id: 'evilMechanic1', name: 'Evil Mechanic', icon: '🔧', image: 'Hazards/evil-mechanic.jpg', hp: 95, minTier: 2, drawRate: 3, curse: { count: 1, amount: 10, chance: 0.6 }, items: ['opp_sabotage_engine'] },
     { id: 'streetFire', name: 'Street Fire', icon: '🔥', image: 'Hazards/street-fire.jpg', hp: 100, minTier: 3, drawRate: 3, special: { type: 'lifesteal', pct: 0.5 }, items: ['opp_scorching_wave'] },
     { id: 'sinkhole', name: 'Sinkhole', icon: '🕳️', image: 'Hazards/sinkhole.jpg', hp: 105, minTier: 1, drawRate: 3, items: ['opp_aftershock', 'opp_bulletin', 'opp_ground_collapse'] },
-    { id: 'gasLeak1', name: 'Gas Leak', icon: '⛽', image: 'Hazards/gas-leak.jpg', hp: 110, drawRate: 3, items: ['opp_gas_ignition', 'fender_bender'] },
+    { id: 'gasLeak1', name: 'Gas Leak', icon: '⛽', image: 'Hazards/gas-leak.jpg', hp: 110, drawRate: 3, items: ['opp_gas_leak'] },
     { id: 'kingOfHearts', name: 'King of Hearts', icon: '🃏', image: 'Hazards/angry-citizen.jpg', hp: 100, minTier: 0, drawRate: 3, discardPoolEachTurn: true, items: ['opp_hearts_3', 'opp_hearts_2', 'opp_hearts_1', 'opp_hearts_0'] },
     { id: 'roadblockSurge', name: 'Surge Roadblock', icon: '⚡', image: 'Hazards/sinkhole.jpg', hp: 105, minTier: 1, drawRate: 3, startPoolBonus: 2, items: ['opp_barrier_slam'] }
   ],
@@ -1519,7 +1528,7 @@ const OPPONENT_TIERS = [
     { id: 'buildingFire', name: 'Building Fire', icon: '🔥', image: 'Hazards/building-fire.jpg', hp: 135, minTier: 4, drawRate: 4, items: ['opp_inferno_blast', 'opp_structural_collapse'] },
     { id: 'evilMechanic2', name: 'Evil Mechanic (Repeat Offender)', icon: '🔧', image: 'Hazards/evil-mechanic-2.jpg', hp: 140, minTier: 2, drawRate: 4, curse: { count: 'all', amount: 12, chance: 0.6 }, items: ['opp_curse_all', 'opp_total_wreckage'] },
     { id: 'looseDog2', name: 'Loose Dog 2', icon: '🐕', image: 'Hazards/loose-dog-2.jpg', hp: 130, minTier: 0, drawRate: 2, items: ['opp_cornered_snarl', 'opp_snap_bite'] },
-    { id: 'gasLeak2', name: 'Major Gas Leak', icon: '⛽', image: 'Hazards/gas-leak-2.jpg', hp: 145, drawRate: 4, items: ['opp_gas_ignition_major', 'fender_bender'] },
+    { id: 'gasLeak2', name: 'Major Gas Leak', icon: '⛽', image: 'Hazards/gas-leak-2.jpg', hp: 145, drawRate: 4, items: ['opp_major_gas_leak'] },
     { id: 'streetlight_elite', name: 'Live Wire Street Light [Elite]', icon: '⚡', image: 'Hazards/downed-line.jpg', hp: 135, minTier: 2, drawRate: 4, items: ['opp_streetlight_shock', 'opp_ground_crackle'] },
     { id: 'sinkhole_elite', name: 'Crumbling Sinkhole [Elite]', icon: '🕳️', image: 'Hazards/sinkhole.jpg', hp: 140, minTier: 1, drawRate: 4, items: ['opp_corrosive_mud', 'opp_chasm_collapse'] }
   ],
@@ -1655,6 +1664,7 @@ function pickNodeType(forcedType) {
   if (r < 0.84) return 'blacksmith';
   if (r < 0.89) return 'chopshop';
   if (r < 0.95) return 'shop'; // Added extra loose dealerships on the highway
+  if (r < 0.98) return 'match_hazard'; // Rare Carnival Card matching node
   return 'treasure';
 }
 
@@ -1894,7 +1904,16 @@ function selectNode(row, col) {
   else if (node.type === 'rest') { GARAGE_POPUP = true; GARAGE_MESSAGE = ''; render(mapScreen()); }
   else if (node.type === 'blacksmith') { RETURN_TO_CASTLE_MENU = false; BLACKSMITH_OPTIONS = pickBlacksmithOptions(); BLACKSMITH_VISIT = { primary: null, secondary: null }; render(blacksmithScreen()); }
   else if (node.type === 'chopshop') { RETURN_TO_CASTLE_MENU = false; render(chopShopScreen('map')); }
-  else if (node.type === 'treasure') { const found = rollTreasure(node.big); playSfx('open'); TREASURE_POPUP = found; render(mapScreen()); }
+  else if (node.type === 'treasure') {
+    // Rare Supply Cache variant: instead of an automatic random reward, let the player pick.
+    if (!node.big && Math.random() < 0.15) { TREASURE_POPUP = { choice: true }; playSfx('open'); render(mapScreen()); }
+    else { const found = rollTreasure(node.big); playSfx('open'); TREASURE_POPUP = found; render(mapScreen()); }
+  }
+  else if (node.type === 'match_hazard') {
+    if (RUN.castleState?.matchPlayed) { RUN.lastNotice = 'This Grid Anomaly has already been hacked.'; render(mapScreen()); return; }
+    MATCH_RETURN_TO_MAP = true;
+    render(castleMatchScreen());
+  }
 }
 
 function reenterCurrentNode(row, col) {
@@ -1996,6 +2015,7 @@ const MATCH_REWARD_TIERS = [
   { coins: 35, gems: 2, label: '+35 coins, +2 gems' },
 ];
 let MATCH_POPUP = null; // { suitLabel, rewardLabel, boardCleared }
+let MATCH_RETURN_TO_MAP = false; // true when the matching game was entered from a map Grid Anomaly node instead of the Compound
 function castleMatchScreen() {
   if (!RUN.castleState) RUN.castleState = {};
   const st = RUN.castleState;
@@ -2055,8 +2075,20 @@ function castleMatchScreen() {
         <div class="wo-eyebrow">Fleet Compound</div>
         <h1>Fleet Carnival <em>Matching Game</em></h1>
         <div class="wo-sub">Attempts Left: ${st.matchGuesses}</div>
-        <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:10px; max-width:280px; margin:0 auto">
-          ${cards}
+        <div style="display:grid; grid-template-columns:minmax(0,1fr) minmax(140px,180px); gap:16px; align-items:start">
+          <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:10px; max-width:280px; margin:0 auto">
+            ${cards}
+          </div>
+          <div class="panel" style="margin:0">
+            <div class="hdr" style="margin-bottom:6px"><span>Pair Loot Index</span></div>
+            <div class="note" style="margin:0 0 8px">Matching a suit the 1st time pays ${MATCH_REWARD_TIERS[0].label}. Matching it a 2nd time pays ${MATCH_REWARD_TIERS[1].label}.</div>
+            <div style="display:flex;flex-direction:column;gap:5px;font-size:12px">
+              <div>♦ Diamonds</div>
+              <div>♣ Clubs</div>
+              <div>♥ Hearts</div>
+              <div>♠ Spades</div>
+            </div>
+          </div>
         </div>
         <div class="note" style="margin:14px 0 10px; text-align:center">Each suit shows up twice. Matching a suit the 2nd time pays out a better prize than the 1st. A wrong guess costs an attempt.</div>
         <button class="wo-btn gray" id="leaveMatchBtn" style="width:100%">Back to Compound Menu</button>
@@ -2696,6 +2728,29 @@ function endTurn() {
         const { item, best, cond } = itemPick;
         oppItemUsesThisTurn[item.id] = (oppItemUsesThisTurn[item.id] || 0) + 1;
         anyAttack = true;
+        // Lock items (Impound Release's engine, mirrored for opponents): while locked, cards
+        // routed through it only deposit their value toward the charge - no damage, no effect -
+        // until the threshold hits 0, at which point it unlocks permanently for this battle and
+        // starts firing its flatAmount like any other flat-damage Item.
+        if (item.unlockThreshold != null) {
+          BATTLE.opponentItemUnlockProgress = BATTLE.opponentItemUnlockProgress || {};
+          BATTLE.opponentItemUnlocked = BATTLE.opponentItemUnlocked || {};
+          if (!BATTLE.opponentItemUnlocked[item.id]) {
+            const rawSum = best.cards.reduce((a, c) => a + cardValue(c.rank), 0);
+            BATTLE.opponentItemUnlockProgress[item.id] = (BATTLE.opponentItemUnlockProgress[item.id] || 0) + rawSum;
+            const remaining = Math.max(0, item.unlockThreshold - BATTLE.opponentItemUnlockProgress[item.id]);
+            if (remaining <= 0) {
+              BATTLE.opponentItemUnlocked[item.id] = true;
+              battleLog(`${BATTLE.opponent.name}'s ${item.name} is fully charged and ready to fire!`);
+            } else {
+              battleLog(`${BATTLE.opponent.name}'s ${item.name} is charging - ${remaining} more needed.`);
+            }
+            BATTLE.oppDiscard.push(...best.cards);
+            BATTLE.oppPool = BATTLE.oppPool.filter(c => !best.cards.includes(c));
+            if (RUN.health <= 0) break;
+            continue;
+          }
+        }
         const { amount: baseAmount } = computeItemAmount(item, best.cards, 0, cond, true);
         let oppDmg = Math.round(baseAmount);
         const swingCap = OPPONENT_SWING_CAP[BATTLE.opponent.tier ?? OPPONENT_SWING_CAP.length - 1] ?? 60;
@@ -2755,11 +2810,7 @@ function endTurn() {
         if (a.minTurn != null && BATTLE.turn < a.minTurn) continue;
         let viable;
         if (a.autoFire) viable = true;
-        else if (a.sumThreshold) viable = best.cards.reduce((s,c)=>s+cardValue(c.rank),0) >= a.sumThreshold.min;
-        else if (a.fewCardsThreshold) viable = best.cards.length > 0 && best.cards.length <= a.fewCardsThreshold.max;
-        else if (a.perFaceCard) viable = best.cards.length > 0;
         else if (a.discardHand) viable = best.cards.length > 0;
-        else if (a.colorPunish) viable = true; // always available as a fallback-style attack; damage may be 0 if the pool is empty
         else if (a.exactSuitCount) viable = BATTLE.oppPool.filter(c => c.suit === a.exactSuitCount.suit).length === a.exactSuitCount.count;
         else viable = best.tier >= (a.minTier ?? BATTLE.opponent.minTier);
         if (viable) { pick = { a, best }; break; }
@@ -2771,24 +2822,8 @@ function endTurn() {
       let oppDmg;
       if (attackDef.autoFire) {
         oppDmg = Math.round(attackDef.autoFire.damage);
-      } else if (attackDef.sumThreshold) {
-        oppDmg = Math.round(attackDef.sumThreshold.damage);
-      } else if (attackDef.fewCardsThreshold) {
-        oppDmg = Math.round(attackDef.fewCardsThreshold.damage);
-      } else if (attackDef.perFaceCard) {
-        const faceCount = best.cards.filter(c => c.rank >= 11 && c.rank <= 13).length;
-        oppDmg = Math.round(faceCount * attackDef.perFaceCard.damage);
       } else if (attackDef.discardHand) {
         oppDmg = 0;
-      } else if (attackDef.suitPunish) {
-        const suitCount = BATTLE.discard.filter(c => c.suit === attackDef.suitPunish.suit).length;
-        const base = attackDef.suitPunish.base || 0;
-        oppDmg = Math.round((base + suitCount * attackDef.suitPunish.perCard));
-      } else if (attackDef.colorPunish) {
-        const isRed = c => c.suit === '♥' || c.suit === '♦';
-        const count = BATTLE.oppPool.filter(c => (attackDef.colorPunish.color === 'red') === isRed(c)).length;
-        const base = attackDef.colorPunish.base || 0;
-        oppDmg = Math.round((base + count * attackDef.colorPunish.perCard));
       } else if (attackDef.exactSuitCount) {
         oppDmg = Math.round(attackDef.exactSuitCount.damage);
       } else {
@@ -3029,6 +3064,7 @@ function nodePopupContent(r, c) {
   if (node.type === 'blacksmith') return { title: 'Tuning Garage', art: glyph(ICON.hammer), rows: [], extra: '<div class="note">Spend coins to permanently boost a card (or a whole rank/suit), for this run only.</div>', actionLabel: 'Go Here' };
   if (node.type === 'chopshop') return { title: 'Chop Shop', art: glyph(ICON.curse), rows: [], extra: '<div class="note">Spend coins to modify your equipped Items for this run: raise a bonus %, add uses per turn, add card slots, or convert a regular attack into poison, burn, or curse.</div>', actionLabel: 'Go Here' };
   if (node.type === 'treasure') return { title: node.big ? 'Big Supply Cache' : 'Supply Cache', art: glyph(ICON.gift), rows: [], extra: `<div class="note">${node.big ? 'A bigger haul for taking the risky route: double-value reward of coins, fuel, gems, energy, or Career Points.' : 'One random reward: coins, fuel, gems, energy, or Career Points.'}</div>`, actionLabel: 'Go Here' };
+  if (node.type === 'match_hazard') return { title: 'Grid Anomaly', art: glyph('🃏'), rows: [], extra: `<div class="note">Grid Anomaly Detected: Tap to hack the Carnival Board for extra fleet gear.</div>`, actionLabel: 'Go Here' };
   return { title: 'Fleet Compound', art: glyph(ICON.castle), rows: [], extra: '<div class="note">Battles, the Dealership, refueling, a card match game, and more.</div>', actionLabel: 'Go Here' };
 }
 function nodePopupScreen(r, c) {
@@ -3094,8 +3130,8 @@ function mapScreen() {
   }
 
   let nodesHTML='';
-    const NODE_ICON={shop:ICON.cart,rest:ICON.wrench,blacksmith:ICON.hammer,chopshop:ICON.curse,treasure:ICON.gift,castle:ICON.castle};
-    const NODE_TITLE={shop:'Dealership',rest:'Service Station',blacksmith:'Tuning Garage',chopshop:'Chop Shop',treasure:'Supply Cache',castle:'Fleet Compound'};
+    const NODE_ICON={shop:ICON.cart,rest:ICON.wrench,blacksmith:ICON.hammer,chopshop:ICON.curse,treasure:ICON.gift,castle:ICON.castle,match_hazard:'🃏'};
+    const NODE_TITLE={shop:'Dealership',rest:'Service Station',blacksmith:'Tuning Garage',chopshop:'Chop Shop',treasure:'Supply Cache',castle:'Fleet Compound',match_hazard:'Grid Anomaly'};
       for(let r=0;r<rows.length;r++) for(let c=0;c<rows[r].length;c++){
     const node=rows[r][c], x=25+r*colW+colW/2, y=rowY[Math.min(c,rowY.length-1)];
     const isDone=RUN.path.some(p=>p.row===r&&p.col===c);
@@ -3117,6 +3153,7 @@ function mapScreen() {
     else if(node.type==='blacksmith') tip='Spend coins to permanently boost a card, rank, or suit for this run.';
     else if(node.type==='chopshop') tip='Spend coins to modify your Items for this run: bonus %, uses per turn, max cards, or convert to poison/burn/curse.';
     else if(node.type==='castle') tip='Choose battles, shopping, refueling, a matching game, or other rewards.';
+    else if(node.type==='match_hazard') tip='Grid Anomaly Detected: Tap to hack the Carnival Board for extra fleet gear.';
     else tip='Find coins, fuel, and gems.';
 
     nodesHTML+=`<div class="mapnode-wrap ${isBoss?'bossnode ':''}${c===0?'toprow':c===1?'midrow':'bottomrow'}" style="left:${(x/totalW*100)}%;top:${y}px">
@@ -3692,6 +3729,29 @@ function blacksmithScreen() {
   `;
 }
 function treasureScreen(found) {
+  if (found.choice) {
+    const options = [
+      { kind: 'fuel', label: 'Refill 10 Fuel', amount: 10, icon: ICON.fuel, cur: 'fuel' },
+      { kind: 'gems', label: 'Extract 2 Gems', amount: 2, icon: ICON.gem, cur: 'gem' },
+      { kind: 'energy', label: 'Inject 8 Energy', amount: 8, icon: ICON.energy, cur: 'energy' },
+    ];
+    return `
+    <div class="map-popup-overlay">
+      <div class="wo" style="width:100%">
+        <div class="wo-stripe"></div>
+        <div class="wo-body">
+          <div class="wo-eyebrow">Supply Cache</div>
+          <h1>Choose Your <em>Reward</em></h1>
+          <div class="note" style="text-align:center;margin-bottom:10px">Pick one - the other two are left behind.</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            ${options.map(o => `<button class="wo-btn ${o.cur === 'fuel' ? 'green' : o.cur === 'gem' ? 'purple' : 'amber'}" data-cachechoice="${o.kind}" style="flex:1;min-width:110px;padding:14px 8px;display:flex;flex-direction:column;align-items:center;gap:6px">
+              <span class="vart" style="width:24px;height:24px;font-size:24px">${o.icon}</span>${o.label}
+            </button>`).join('')}
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }
   const curClass = { coins: 'chip', fuel: 'fuel', gems: 'gem', energy: 'energy', points: 'pts' }[found.kind] || '';
   const text = found.amount > 0 ? `You found ${found.amount} ${found.label.toLowerCase()}!` : `Your ${found.label.toLowerCase()} was already full.`;
   return `
@@ -4165,7 +4225,7 @@ function render(html) {
   });
 
   const castleDungeonNavBtn = document.getElementById('castleDungeonNavBtn'); if (castleDungeonNavBtn) castleDungeonNavBtn.onclick = () => render(castleDungeonScreen());
-  const castleWizardNavBtn = document.getElementById('castleWizardNavBtn'); if (castleWizardNavBtn) castleWizardNavBtn.onclick = () => { if (!RUN.castleState) RUN.castleState = {}; if (RUN.castleState.matchPlayed) return; render(castleMatchScreen()); };
+  const castleWizardNavBtn = document.getElementById('castleWizardNavBtn'); if (castleWizardNavBtn) castleWizardNavBtn.onclick = () => { if (!RUN.castleState) RUN.castleState = {}; if (RUN.castleState.matchPlayed) return; MATCH_RETURN_TO_MAP = false; render(castleMatchScreen()); };
   const castleBlacksmithNavBtn = document.getElementById('castleBlacksmithNavBtn'); if (castleBlacksmithNavBtn) castleBlacksmithNavBtn.onclick = () => { RETURN_TO_CASTLE_MENU = true; BLACKSMITH_OPTIONS = pickBlacksmithOptions(); BLACKSMITH_VISIT = { primary: null, secondary: null }; render(blacksmithScreen()); };
   const castleChopShopNavBtn = document.getElementById('castleChopShopNavBtn'); if (castleChopShopNavBtn) castleChopShopNavBtn.onclick = () => { RETURN_TO_CASTLE_MENU = true; render(chopShopScreen()); };
   const castleShopNavBtn = document.getElementById('castleShopNavBtn'); if (castleShopNavBtn) castleShopNavBtn.onclick = () => { RETURN_TO_CASTLE_MENU = true; render(shopScreen(true)); };
@@ -4176,7 +4236,7 @@ function render(html) {
   const castleBattle3Btn = document.getElementById('castleBattle3Btn'); if (castleBattle3Btn) castleBattle3Btn.onclick = () => { if (!RUN.castleState) RUN.castleState = {}; startBattle(CASTLE_THIRD, 10, 0, 3); };
   const dungeonWinContinueBtn = document.getElementById('dungeonWinContinueBtn'); if (dungeonWinContinueBtn) dungeonWinContinueBtn.onclick = () => { DUNGEON_WIN_POPUP = null; render(castleDungeonScreen()); };
   const leaveCastleBtn = document.getElementById('leaveCastleBtn'); if (leaveCastleBtn) leaveCastleBtn.onclick = () => render(mapScreen());
-  const leaveMatchBtn = document.getElementById('leaveMatchBtn'); if (leaveMatchBtn) leaveMatchBtn.onclick = () => render(castleMenuScreen());
+  const leaveMatchBtn = document.getElementById('leaveMatchBtn'); if (leaveMatchBtn) leaveMatchBtn.onclick = () => render(MATCH_RETURN_TO_MAP ? mapScreen() : castleMenuScreen());
   const matchPopupContinueBtn = document.getElementById('matchPopupContinueBtn');
   if (matchPopupContinueBtn) matchPopupContinueBtn.onclick = () => {
     const wasCleared = MATCH_POPUP && MATCH_POPUP.boardCleared;
@@ -4256,6 +4316,15 @@ function render(html) {
   const leaveShopBtn = document.getElementById('leaveShopBtn'); if (leaveShopBtn) leaveShopBtn.onclick = () => render(RETURN_TO_CASTLE_MENU ? castleMenuScreen() : mapScreen());
   const leaveBlacksmithBtn = document.getElementById('leaveBlacksmithBtn'); if (leaveBlacksmithBtn) leaveBlacksmithBtn.onclick = () => { BLACKSMITH_OPTIONS = null; BLACKSMITH_VISIT = null; render(RETURN_TO_CASTLE_MENU ? castleMenuScreen() : mapScreen()); };
   const leaveTreasureBtn = document.getElementById('leaveTreasureBtn'); if (leaveTreasureBtn) leaveTreasureBtn.onclick = () => { TREASURE_POPUP = null; render(mapScreen()); };
+  app.querySelectorAll('[data-cachechoice]').forEach(el => el.onclick = () => {
+    const kind = el.dataset.cachechoice;
+    if (kind === 'fuel') RUN.fuel = Math.min(RUN.maxFuel, RUN.fuel + 10);
+    else if (kind === 'gems') RUN.gems = Math.min(RUN.maxGems, RUN.gems + 2);
+    else if (kind === 'energy') RUN.energy = Math.min(RUN.maxEnergy, RUN.energy + 8);
+    saveRun();
+    TREASURE_POPUP = null;
+    render(mapScreen());
+  });
   app.querySelectorAll('[data-forge]').forEach(el => el.onclick = () => {
     const i = +el.dataset.forge;
     const opt = BLACKSMITH_OPTIONS[i];

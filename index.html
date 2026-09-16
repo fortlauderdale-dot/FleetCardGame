@@ -3947,7 +3947,7 @@ function render(html) {
   // produced the visible jump/disconnect when something as small as a fuel purchase re-rendered
   // the whole screen. The popup's own numbers (via its own currencyBar() call, same RUN state)
   // are already correct the instant app.innerHTML is replaced above; this only touches the map.
-  if (mw && !GARAGE_POPUP) { mw.scrollLeft = MAP_SCROLL_X; mw.onscroll = () => { MAP_SCROLL_X = mw.scrollLeft; }; if (RUN && mw.querySelector('.mapnode-wrap')) { requestAnimationFrame(()=>{ const row = Math.max(0,RUN.currentRow); const colW = 118; const target = Math.max(0, row*colW - mw.clientWidth*0.15); mw.scrollLeft = target; MAP_SCROLL_X = target; }); } }
+  if (mw && !GARAGE_POPUP && !TREASURE_POPUP) { mw.scrollLeft = MAP_SCROLL_X; mw.onscroll = () => { MAP_SCROLL_X = mw.scrollLeft; }; if (RUN && mw.querySelector('.mapnode-wrap')) { requestAnimationFrame(()=>{ const row = Math.max(0,RUN.currentRow); const colW = 118; const target = Math.max(0, row*colW - mw.clientWidth*0.15); mw.scrollLeft = target; MAP_SCROLL_X = target; }); } }
 
   app.querySelectorAll('[data-card]').forEach(el => el.onclick = () => toggleCardSelect(+el.dataset.card));
   app.querySelectorAll('[data-assign]').forEach(el => el.onclick = (e) => {

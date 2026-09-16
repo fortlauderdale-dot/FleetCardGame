@@ -141,7 +141,7 @@
   .itemCard{border-radius:8px;padding:6px 4px;background:rgba(10,14,26,0.9) !important;border:1px solid rgba(31,182,166,0.2);min-height:172px;display:flex;flex-direction:column;align-items:center;text-align:center;box-sizing:border-box;font-size:12px;position:relative;transition:box-shadow .15s ease}
   .itemCard:hover{box-shadow:0 0 14px rgba(31,182,166,0.35)}
   .itemCard-sec{width:100%;flex:0 0 auto}
-  .itemCard-cards-sec{flex:1 1 auto;display:flex;flex-direction:column;justify-content:center;align-items:center;width:100%;min-height:24px}
+  .itemCard-cards-sec{height:40px;display:flex;flex-direction:column;justify-content:center;align-items:center;width:100%;overflow:hidden}
   .usesBadge{position:absolute;top:4px;right:4px;font-size:9px;font-weight:800;background:none;color:#1fb6a6;border:none;padding:0;line-height:1.4}
   .usesBadge.depleted{background:none;color:var(--dim)}
   .itemCard.ready{border-color:var(--green) !important}
@@ -2231,8 +2231,8 @@ function startBattle(opponentDef, row, col, castleStage=0) {
   }
   render(battleScreen());
 }
-function drawCards(n) {
-  for (let i = 0; i < n && BATTLE.hand.length < RUN.handSize; i++) {
+function drawCards(n, allowOverflow = false) {
+  for (let i = 0; i < n && (allowOverflow || BATTLE.hand.length < RUN.handSize); i++) {
     if (!BATTLE.deck.length) { if (!BATTLE.discard.length) break; BATTLE.deck = shuffle(BATTLE.discard); BATTLE.discard = []; }
     BATTLE.hand.push(BATTLE.deck.pop());
   }
@@ -2901,7 +2901,12 @@ function endTurn() {
       BATTLE.oppPool = BATTLE.oppPool.filter(c => !best.cards.includes(c));
       if (RUN.health <= 0) break;
     }
-    if (!anyAttack) battleLog(`${BATTLE.opponent.name} didn't have enough to attack this turn.`);
+    if (!anyAttack) {
+      battleLog(`${BATTLE.opponent.name} didn't have enough to attack this turn.`);
+      // Intel reward: whiffing a turn entirely leaks 2 cards from its hidden pool to the player.
+      const stillHidden = BATTLE.oppPool.filter(c => !c.revealed);
+      shuffle(stillHidden).slice(0, 2).forEach(c => c.revealed = true);
+    }
     else opponentLandedHit = true;
     if (!attackDef || attackDef.effect !== 'curse') tryApplyCurse();
   }
@@ -3377,10 +3382,6 @@ function battleScreen() {
     <div>${rankLabel(c.rank)}</div><div>${c.suit}</div>
   </div>`;
   }).join('');
-  const discardStagedHTML = BATTLE.turnDiscard.map(i => {
-    const c = BATTLE.hand[i];
-    return `<div class="card mini ${suitColorClass(c.color, c.suit)}" data-undiscard="${i}" style="opacity:.6">${rankLabel(c.rank)}${c.suit}</div>`;
-  }).join('');
 
   return `
     <div class="panel">${currencyBar(`<div style="margin-left:auto;display:flex;gap:6px">
@@ -3435,7 +3436,7 @@ function battleScreen() {
           <button class="wo-btn purple" id="gemDrawBtn" style="padding:8px 10px;font-size:12px" ${RUN.gems < 1 ? 'disabled' : ''}>Draw ${1 + META.levels.gem + (RUN.runUpgrades?.gemDraw||0)} card${(1 + META.levels.gem + (RUN.runUpgrades?.gemDraw||0)) > 1 ? 's' : ''} = ${GEM_DRAW_COST} ${ICON.gem}</button>
           ${(() => { const sp = VEHICLE_SPECIALS[RUN.hero.heroId]; if (!sp) return ''; const minNeed = sp.energyCost ?? sp.energyPerUnit; return `<button class="wo-btn amber hoverTip" id="vehicleSpecialBtn" style="padding:8px 10px;font-size:12px" data-title="${sp.desc}" ${RUN.energy < minNeed ? 'disabled' : ''}>${sp.name} = ${minNeed} ${ICON.energy}</button>`; })()}
     </div>
-        ${BATTLE.turnDiscard.length ? `<div class="note" style="margin-top:8px">Discarding this turn (tap to undo):</div><div class="hand">${discardStagedHTML}</div>` : ''}
+        
       </div>
       <div class="deckStack" style="flex-direction:column;align-items:center;gap:10px">
         <div style="display:flex;align-items:center;gap:10px;justify-content:center">
@@ -4032,7 +4033,6 @@ function render(html) {
     saveRun(); render(battleScreen());
   };
   const discardSelectedBtn = document.getElementById('discardSelectedBtn'); if (discardSelectedBtn) discardSelectedBtn.onclick = markSelectedForDiscard;
-  app.querySelectorAll('[data-undiscard]').forEach(el => el.onclick = () => unmarkDiscard(+el.dataset.undiscard));
 
   app.querySelectorAll('[data-nodeinfo]').forEach(el => el.onclick = () => { const [r, c] = el.dataset.nodeinfo.split(':').map(Number); MAP_POPUP = { row: r, col: c }; render(mapScreen()); });
   const popupCloseBtn = document.getElementById('popupCloseBtn'); if (popupCloseBtn) popupCloseBtn.onclick = () => { MAP_POPUP = null; render(mapScreen()); };
@@ -4581,7 +4581,7 @@ document.addEventListener('mouseover', (e) => {
       BATTLE.itemUses=BATTLE.itemUses||{};
       const cap=item.usesPerTurn+(item.usesPerTurnPerLevel||0)*((RUN.itemUsesLevels&&RUN.itemUsesLevels[itemId])||0);
       if((BATTLE.itemUses[key]||0)<cap){
-        const drawn=[];for(let i=0;i<4;i++){const before=BATTLE.hand.length;window.drawCards(1,false);if(BATTLE.hand.length>before)drawn.push(BATTLE.hand[BATTLE.hand.length-1]);}
+        const drawn=[];for(let i=0;i<4;i++){const before=BATTLE.hand.length;window.drawCards(1,true);if(BATTLE.hand.length>before)drawn.push(BATTLE.hand[BATTLE.hand.length-1]);}
         BATTLE.itemUses[key]=(BATTLE.itemUses[key]||0)+1;
         battleLog(`${item.name} - Unlocked draw: ${drawn.map(c=>rankLabel(c.rank)+c.suit).join(' ')||'no cards'}.`);
         saveRun();render(battleScreen());
@@ -4739,6 +4739,7 @@ document.addEventListener('mouseover', (e) => {
   window.render=function(html){
     oldRender(html);
     document.body.classList.toggle('world-2', !!(RUN && RUN.world >= 2));
+    const battleLogEl=document.getElementById('battleLogEl'); if(battleLogEl) battleLogEl.scrollTop=battleLogEl.scrollHeight;
     const app=document.getElementById('app');
     app.querySelectorAll('[data-card]').forEach(el=>{let ph=false;el.onclick=()=>{if(ph){ph=false;return;}toggleCardSelect(+el.dataset.card);};el.onpointerdown=e=>{if(e.pointerType!=='mouse'||e.button===0){e.preventDefault();ph=true;toggleCardSelect(+el.dataset.card);}};});
     const name=document.getElementById('playerNameInput');

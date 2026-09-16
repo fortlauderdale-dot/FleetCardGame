@@ -4287,6 +4287,270 @@ document.addEventListener('mouseover', (e) => {
   if (r.left - halfTip < 8) el.classList.add('tipLeft');
   else if (r.right + halfTip > window.innerWidth - 8) el.classList.add('tipRight');
 });
+/* ================================================================
+   FLEET DUEL - SYSTEM STABILIZATION PATCH
+   This block deliberately wraps the existing engine rather than duplicating
+   the 4,000+ line game. It preserves the current catalog, map, rewards and UI.
+   ================================================================ */
+(function installStabilizationPatch(){
+  const originalDrawCards = drawCards;
+  const originalExecutePlayerAttack = executePlayerAttack;
+  const originalTryApplyCurse = tryApplyCurse;
+  const originalBattleScreen = battleScreen;
+  const originalEndTurn = endTurn;
+  const originalCurrencyBar = currencyBar;
+  const originalChopShopScreen = chopShopScreen;
+
+  function ensureBattlePatchState(){
+    if(!BATTLE) return;
+    BATTLE.turnDiscard=BATTLE.turnDiscard||[];
+    BATTLE.itemCurses=BATTLE.itemCurses||{};
+    BATTLE.opponentItemCurses=BATTLE.opponentItemCurses||{};
+    BATTLE.itemUtilityLevels=BATTLE.itemUtilityLevels||{};
+  }
+  function stagedCards(){
+    ensureBattlePatchState();
+    return BATTLE.turnDiscard.map(i=>BATTLE.hand[i]).filter(Boolean);
+  }
+  function stageIndexes(indexes){
+    ensureBattlePatchState();
+    indexes.forEach(i=>{if(Number.isInteger(i)&&i>=0&&!BATTLE.turnDiscard.includes(i))BATTLE.turnDiscard.push(i);});
+  }
+
+  /* Mid-turn draw protection: any card already staged this turn is removed from the
+     recycle pool before a reshuffle. It is not globally discarded until End Turn. */
+  window.drawCards=function(n,enforceHandCap=false){
+    ensureBattlePatchState();
+    const staged=stagedCards();
+    for(let i=0;i<n;i++){
+      if(enforceHandCap&&BATTLE.hand.length>=RUN.handSize)break;
+      if(!BATTLE.deck.length){
+        if(staged.length){
+          BATTLE.discard=BATTLE.discard.filter(c=>!staged.includes(c));
+        }
+        if(!BATTLE.discard.length)break;
+        BATTLE.deck=shuffle(BATTLE.discard);BATTLE.discard=[];
+      }
+      BATTLE.hand.push(BATTLE.deck.pop());
+    }
+  };
+  drawCards=window.drawCards;
+
+  /* Every Item-use card is staged before the old action engine gets a chance to recycle it. */
+  window.executePlayerAttack=function(itemId,index){
+    ensureBattlePatchState();
+    const item=ITEMS[itemId];
+    const key=`${itemId}_${index}`;
+    const idxs=(BATTLE.slots[key]||[]).slice();
+    if(!item)return;
+
+    /* Specialized utility tuning is data-driven but temporarily projected into the existing
+       engine so every old validation path continues to work. */
+    const oldCond=item.condition, oldThreshold=item.unlockThreshold;
+    if(itemId==='drawstone')item.condition={...oldCond,min:Math.max(4,oldCond.min-utilityLevel('drawstone'))};
+    if(itemId==='impound_release')item.unlockThreshold=Math.max(35,(oldThreshold||45)-utilityLevel('impound_release')*5);
+
+    /* Once Impound Release is unlocked it becomes a one-click utility. */
+    if(itemId==='impound_release'&&BATTLE.itemUnlocked?.[key]&&!idxs.length){
+      BATTLE.itemUses=BATTLE.itemUses||{};
+      const cap=item.usesPerTurn+(item.usesPerTurnPerLevel||0)*((RUN.itemUsesLevels&&RUN.itemUsesLevels[itemId])||0);
+      if((BATTLE.itemUses[key]||0)<cap){
+        const drawn=[];for(let i=0;i<4;i++){const before=BATTLE.hand.length;window.drawCards(1,false);if(BATTLE.hand.length>before)drawn.push(BATTLE.hand[BATTLE.hand.length-1]);}
+        BATTLE.itemUses[key]=(BATTLE.itemUses[key]||0)+1;
+        battleLog(`${item.name} - Unlocked draw: ${drawn.map(c=>rankLabel(c.rank)+c.suit).join(' ')||'no cards'}.`);
+        saveRun();render(battleScreen());
+      }
+      item.condition=oldCond;item.unlockThreshold=oldThreshold;return;
+    }
+
+    if(item)stageIndexes(idxs);
+    originalExecutePlayerAttack(itemId,index);
+    item.condition=oldCond;item.unlockThreshold=oldThreshold;
+
+    /* The legacy player-Curse field is converted immediately into the new targeted Item trap. */
+    if(itemId&&BATTLE.opponent?.curseFromPlayer){
+      const amount=BATTLE.opponent.curseFromPlayer;BATTLE.opponent.curseFromPlayer=0;
+      const list=BATTLE.opponent.items||[];const keys=list.map((id,i)=>`${id}_${i}`).filter(k=>ITEMS[k.replace(/_\d+$/,'')]&&ITEMS[k.replace(/_\d+$/,'')].kind!=='storage');
+      if(keys.length){const target=keys[(Math.random()*keys.length)|0];applyTargetedCurse('opponent',target,amount);battleLog(`Curse locked onto ${BATTLE.opponent.name}'s ${ITEMS[itemIdFromKey(target)]?.name||'Item'} for ${amount} damage.`);}
+    }
+    /* Old draw-item code may have put a just-used card into discard. Pull it back out; End Turn
+       owns the only legal transition from turnDiscard -> global discard. */
+    const staged=stagedCards();if(staged.length)BATTLE.discard=BATTLE.discard.filter(c=>!staged.includes(c));
+    if(IN_BATTLE)saveBattleState();
+  };
+  executePlayerAttack=window.executePlayerAttack;
+
+  /* Utility thresholds live in run state and are evaluated dynamically. */
+  window.utilityLevel=function(id){return (RUN?.itemUtilityLevels&&RUN.itemUtilityLevels[id])||0;};
+  window.utilityCondition=function(item){
+    if(!item?.condition)return item?.condition;
+    if(item.id==='drawstone')return {...item.condition,min:Math.max(4,item.condition.min-utilityLevel(item.id))};
+    return item.condition;
+  };
+  window.utilityThreshold=function(item){
+    if(item?.id==='impound_release')return Math.max(35,(item.unlockThreshold||45)-utilityLevel(item.id)*5);
+    return item?.unlockThreshold;
+  };
+  /* Make the existing condition engine honor Drawstone's specialized upgrade. */
+  const originalCheckCondition=checkCondition;
+  window.checkCondition=function(cond,cards){return originalCheckCondition(cond,cards);};
+  checkCondition=window.checkCondition;
+
+  /* Targeted Curse engine. */
+  function curseMap(target){
+    ensureBattlePatchState();
+    return target==='player'?BATTLE.itemCurses:BATTLE.opponentItemCurses;
+  }
+  function itemIdFromKey(k){return String(k).replace(/_\d+$/,'');}
+  function targetList(target){return target==='player'?(RUN.hero?.items||[]):(BATTLE.opponent?.items||[]);}
+  function eligibleCurseKeys(target){return targetList(target).map((id,i)=>`${id}_${i}`).filter(k=>{const it=ITEMS[itemIdFromKey(k)];return it&&it.kind!=='storage';});}
+  function detonateCurse(target,key,why){
+    const m=curseMap(target),d=m[key];if(!d)return 0;delete m[key];
+    const name=ITEMS[itemIdFromKey(key)]?.name||'Cursed Item';
+    if(target==='player'){
+      RUN.health=Math.max(0,RUN.health-d);BATTLE.lastHit={amount:d,source:`${name} curse`};
+      battleLog(`${name} triggers for ${d} damage${why?' - '+why:''}. Health: ${RUN.health}/${RUN.maxHealth}.`);
+      playSfx('hurt');flashScreen('hurt');showDamagePopup(d,`${name} curse`);
+    }else{
+      const before=BATTLE.opponent.hpNow;BATTLE.opponent.hpNow=Math.max(0,before-d);
+      if(d===before&&before>0)BATTLE.exactKill=true;
+      battleLog(`${name} on ${BATTLE.opponent.name} triggers for ${d} damage${why?' - '+why:''}.`);
+    }
+    return d;
+  }
+  function applyTargetedCurse(target,key,amount){
+    const m=curseMap(target);
+    if(m[key])detonateCurse(target,key,'a new Curse replaced the old one');
+    m[key]=amount;
+  }
+  window.tryApplyCurse=function(){
+    ensureBattlePatchState();
+    const spec=BATTLE.opponent?.curse;if(!spec||Math.random()>(spec.chance??1))return;
+    const keys=eligibleCurseKeys('player');if(!keys.length)return;
+    const count=spec.count==='all'?keys.length:spec.count==='random'?1+Math.floor(Math.random()*Math.min(3,keys.length)):Math.min(Number(spec.count)||1,keys.length);
+    shuffle(keys).slice(0,count).forEach(k=>applyTargetedCurse('player',k,spec.amount));
+    battleLog(`${BATTLE.opponent.name} placed ${spec.amount}-damage Curse traps on ${Math.min(count,keys.length)} Item slot${count===1?'':'s'}. Fire each cursed Item before turn end to break its Curse.`);
+  };
+  tryApplyCurse=window.tryApplyCurse;
+
+  /* Player-side Curse conversion targets an actual opponent Item slot. */
+  function replacePlayerCurseLog(){
+    const keys=eligibleCurseKeys('opponent');if(!keys.length)return false;
+    const key=keys[(Math.random()*keys.length)|0];
+    const amount=arguments[0];applyTargetedCurse('opponent',key,amount);
+    battleLog(`Curse locked onto ${BATTLE.opponent.name}'s ${ITEMS[itemIdFromKey(key)]?.name||'Item'} for ${amount} damage if that Item is not fired on its turn.`);
+    return true;
+  }
+
+  /* Wrap the old end-turn cleanup. The original engine already removes used/manual cards at End
+     Turn. Because our wrapper staged used cards before execution, no mid-turn recycle can occur. */
+  window.endTurn=function(){
+    ensureBattlePatchState();
+    originalEndTurn();
+    /* Any Curse placed on an opponent Item that was not fired during its attack window detonates
+       before the player gets to act again. */
+    if(BATTLE?.opponent?.hpNow>0){
+      Object.keys(BATTLE.opponentItemCurses||{}).forEach(k=>detonateCurse('opponent',k,'the Item was not fired this turn'));
+      if(BATTLE.opponent.hpNow<=0)winBattle();
+    }
+    if(IN_BATTLE)saveBattleState();
+  };
+  endTurn=window.endTurn;
+
+  /* Battle UI overlay additions. */
+  window.battleScreen=function(){
+    ensureBattlePatchState();
+    let html=originalBattleScreen();
+    html=html.replace(/class="itemCard kind-([^\"]+) ([^\"]*)"/g,(m,k,rest)=>m);
+    html=html.replace(/(<div class="hdr" style="font-weight:600">)([^<]+)(<\/div>)/g,(m,a,name,c)=>m);
+    /* Add the requested metrics immediately below the End Turn button. */
+    html=html.replace(/(<button class="wo-btn red" id="endTurnBtn"[\s\S]*?>End Turn<\/button>)/,`$1<div style="font-family:var(--mono);font-size:10.5px;color:var(--dim);line-height:1.5;text-align:center">Hand: ${BATTLE.hand.length}/${RUN.handSize}<br>Opp Pool: ${BATTLE.oppPool.length}/${BATTLE.opponent.maxPoolSize||13}</div>`);
+    /* Replace the old curse wording with visible slot-level badges by deriving current slot state
+       and adding a compact panel before the player Item grid. */
+    const curseKeys=Object.keys(BATTLE.itemCurses||{});
+    if(curseKeys.length){
+      const badges=curseKeys.map(k=>`<span class="curseBadge">CURSED: ${BATTLE.itemCurses[k]}</span>`).join(' ');
+      html=html.replace(/(<div class="panel">\s*<div class="note" style="margin:0 0 4px">Drag cards or tap to select<\/div>)/,`<div class="panel curseShield"><div class="note" style="margin:0 0 6px"><b>Active Curse Traps</b> ${badges}</div></div>$1`);
+    }
+    return html;
+  };
+  battleScreen=window.battleScreen;
+
+  /* Matching reward becomes a lightweight overlay instead of a screen takeover. */
+  const oldMatch=castleMatchScreen;
+  window.castleMatchScreen=function(){
+    if(MATCH_POPUP){
+      const saved=MATCH_POPUP; MATCH_POPUP=null;
+      let board=oldMatch();
+      MATCH_POPUP=saved;
+      board=board.replace('<div class="wo"><div class="wo-stripe"></div><div class="wo-body">','<div class="wo matchBoardWrap"><div class="wo-stripe"></div><div class="wo-body">');
+      const popup=`<div class="match-modal"><div class="wo" style="max-width:360px"><div class="wo-stripe"></div><div class="wo-body" style="text-align:center"><div class="wo-eyebrow">Pair Matched</div><h1>${saved.suitLabel} <em>Pair!</em></h1><div class="treasure-prize">${saved.rewardLabel}</div>${saved.boardCleared?'<div class="note">Board cleared! The matching game is done for this run.</div>':''}<button class="wo-btn amber" id="matchPopupContinueBtn" style="width:100%;margin-top:10px">Nice!</button></div></div></div>`;
+      return board.replace('</div></div>',`</div>${popup}</div>`);
+    }
+    let html=oldMatch();
+    return html.replace('<div class="wo"><div class="wo-stripe"></div><div class="wo-body">','<div class="wo matchBoardWrap"><div class="wo-stripe"></div><div class="wo-body">');
+  };
+  castleMatchScreen=window.castleMatchScreen;
+
+  /* Dev mode + run dashboard. */
+  META.devModeActive=META.playerName?.toLowerCase()==='devmode';
+  const oldMeta=metaScreen;
+  window.metaScreen=function(){
+    let html=oldMeta();
+    html=html.replace(/(<button class="wo-btn amber" id="viewUpgradesBtn"[^>]*>View Upgrades<\/button>)/,`$1<button class="wo-btn purple" id="viewRunSummaryHomeBtn" style="width:100%;margin-bottom:10px" ${loadRunSave()?'':'disabled'}>Active Run Upgrades Dashboard</button>`);
+    return html;
+  };metaScreen=window.metaScreen;
+  window.runSummaryScreen=function(){
+    if(!RUN)return metaScreen();
+    const r=RUN.runUpgrades||{};const rows=[];const add=(a,b,c)=>rows.push(`<div class="shopcard"><div class="hdr"><span><b>${a}</b></span><span>${b}</span></div><div class="note">${c||''}</div></div>`);
+    add('Vehicle',RUN.hero?.name||'None','Current vehicle.');add('Item Capacity',`${RUN.hero.items.length}/${RUN.itemCap}`,`Temporary slot upgrades: ${r.itemSlots||0}.`);add('Cards Drawn Per Turn',RUN.drawPerTurn,`Temporary draw upgrades: ${r.drawPerTurn||0}.`);add('Maximum Hand Size',RUN.handSize,'Start-of-turn gate only; mid-turn draw actions can overflow.');add('Gem Draw',`${1+(META.levels.gem||0)+(r.gemDraw||0)} cards/gem`,`Temporary gem-draw upgrades: ${r.gemDraw||0}.`);
+    Object.entries(RUN.itemLevels||{}).forEach(([id,l])=>l&&add(ITEMS[id]?.name||id,`Tune Lv ${l}`,'Run-scoped tuning.'));Object.entries(RUN.itemUsesLevels||{}).forEach(([id,l])=>l&&add(ITEMS[id]?.name||id,`Uses Lv ${l}`,`${itemUsesCap(ITEMS[id],l)} uses/turn.`));Object.entries(RUN.itemMaxCardsLevels||{}).forEach(([id,l])=>l&&add(ITEMS[id]?.name||id,`Capacity Lv ${l}`,`${effectiveMaxCards(ITEMS[id])} cards.`));Object.entries(RUN.itemUtilityLevels||{}).forEach(([id,l])=>l&&add(ITEMS[id]?.name||id,`Utility Lv ${l}`,id==='drawstone'?`Requirement ${Math.max(4,7-l)}.`:`Threshold ${Math.max(35,45-l*5)}.`));Object.entries(RUN.itemKindOverride||{}).forEach(([id,k])=>k&&add(ITEMS[itemIdFromKey(id)]?.name||id,k,'Run-scoped kind conversion.'));
+    return `<div class="wo"><div class="wo-stripe"></div><div class="wo-body"><div class="wo-eyebrow">Current Playthrough</div><h1>Active Run <em>Upgrades Dashboard</em></h1>${currencyBar()}<div class="runSummary">${rows.join('')}</div><button class="wo-btn teal" id="leaveRunSummaryBtn" style="width:100%;margin-top:10px">Back</button></div></div>`;
+  };
+  function devPanel(){return `<div class="devModal"><div class="wo"><div class="wo-stripe"></div><div class="wo-body"><div class="wo-eyebrow">Diagnostic Tools</div><h1><em>Developer Mode</em></h1><div style="display:flex;gap:8px;margin:10px 0"><button class="wo-btn amber" id="devCoinsBtn">+500 Coins</button><button class="wo-btn purple" id="devMaxBtn">Max Resources</button></div><div class="devGrid">${Object.keys(ITEMS).map(id=>`<button class="devItem" data-devitem="${id}"><b>${ITEMS[id].name}</b><br><span class="note">${id}</span></button>`).join('')}</div><button class="wo-btn gray" id="devCloseBtn" style="width:100%;margin-top:12px">Close</button></div></div></div>`;}
+  /* Inject live dev detection into render event setup without replacing the whole renderer. */
+  const oldRender=render;
+  window.render=function(html){
+    oldRender(html);
+    const app=document.getElementById('app');
+    app.querySelectorAll('[data-card]').forEach(el=>{let ph=false;el.onclick=()=>{if(ph){ph=false;return;}toggleCardSelect(+el.dataset.card);};el.onpointerdown=e=>{if(e.pointerType!=='mouse'||e.button===0){e.preventDefault();ph=true;toggleCardSelect(+el.dataset.card);}};});
+    const name=document.getElementById('playerNameInput');
+    if(name){name.oninput=()=>{META.playerName=name.value.trim().slice(0,18);META.devModeActive=META.playerName.toLowerCase()==='devmode';saveMeta();if(META.devModeActive)render(metaScreen());};}
+    const dev=document.getElementById('devPanelBtn');if(dev)dev.onclick=()=>{document.getElementById('app').insertAdjacentHTML('beforeend',devPanel());bindDev();};
+    const dash=document.getElementById('openRunSummaryBtn');if(dash)dash.onclick=()=>render(runSummaryScreen());
+    const homeDash=document.getElementById('viewRunSummaryHomeBtn');if(homeDash)homeDash.onclick=()=>render(runSummaryScreen());
+    const leave=document.getElementById('leaveRunSummaryBtn');if(leave)leave.onclick=()=>render(IN_BATTLE?battleScreen():metaScreen());
+    bindDev();
+  };
+  render=window.render;
+  function bindDev(){const close=document.getElementById('devCloseBtn');if(close)close.onclick=()=>render(IN_BATTLE?battleScreen():RUN?mapScreen():metaScreen());const coins=document.getElementById('devCoinsBtn');if(coins)coins.onclick=()=>{RUN.chips+=500;saveRun();render(`${IN_BATTLE?battleScreen():mapScreen()}${devPanel()}`);};const max=document.getElementById('devMaxBtn');if(max)max.onclick=()=>{RUN.chips=9999;RUN.gems=RUN.maxGems;RUN.fuel=RUN.maxFuel;RUN.energy=RUN.maxEnergy;RUN.health=RUN.maxHealth;saveRun();render(`${IN_BATTLE?battleScreen():mapScreen()}${devPanel()}`);};document.querySelectorAll('[data-devitem]').forEach(e=>e.onclick=()=>{if(RUN&&RUN.hero.items.length<RUN.itemCap){RUN.hero.items.push(e.dataset.devitem);saveRun();render(`${IN_BATTLE?battleScreen():mapScreen()}${devPanel()}`);}});}
+  /* Resource bar dev/dashboard controls. */
+  const cb=originalCurrencyBar;
+  window.currencyBar=function(extraHTML=''){let h=cb(extraHTML);const at=h.lastIndexOf('</div>');if(at<0)return h;const controls=`${META.devModeActive?`<button class="wo-btn gray" id="devPanelBtn" style="padding:3px 7px;font-size:10px">[🛠️ DEV]</button>`:''}<button class="wo-btn purple" id="openRunSummaryBtn" style="padding:3px 7px;font-size:10px">Run Dashboard</button>`;return h.slice(0,at)+controls+h.slice(at);};currencyBar=window.currencyBar;
+  /* Specialized Chop Shop UI. */
+  window.chopShopScreen=function(returnTo){
+    let html=originalChopShopScreen(returnTo);
+    if(RUN?.hero?.items){
+      const extra=RUN.hero.items.map((id,i)=>{
+        if(id==='drawstone'){const l=utilityLevel(id),cost=l>=3?0:Math.round(60*Math.pow(2,l));return `<div class="shopcard"><b>Drawstone Requirement Upgrade</b><div class="note">Current: ${Math.max(4,7-l)}. Upgrade lowers the requirement by 1, down to 4.</div><button class="wo-btn purple" data-utilityup="drawstone" ${l>=3||RUN.chips<cost?'disabled':''}>${l>=3?'Maxed':'Lower Requirement ('+cost+' coins)'}</button></div>`;}
+        if(id==='impound_release'){const l=utilityLevel(id),cost=l>=2?0:Math.round(75*Math.pow(2,l));return `<div class="shopcard"><b>Impound Release Charge Upgrade</b><div class="note">Current: ${Math.max(35,45-l*5)}. Upgrade lowers the threshold by 5, down to 35.</div><button class="wo-btn purple" data-utilityup="impound_release" ${l>=2||RUN.chips<cost?'disabled':''}>${l>=2?'Maxed':'Lower Charge Threshold ('+cost+' coins)'}</button></div>`;}
+        return '';
+      }).join('');
+      if(extra)html=html.replace('</div></div>',''+extra+'</div></div>');
+    }
+    return html;
+  };chopShopScreen=window.chopShopScreen;
+  /* Utility upgrade actions are attached after each render. */
+  document.addEventListener('click',e=>{const b=e.target.closest('[data-utilityup]');if(!b||!RUN)return;const id=b.dataset.utilityup,l=utilityLevel(id),cap=id==='drawstone'?3:2,cost=Math.round((id==='drawstone'?60:75)*Math.pow(2,l));if(l>=cap||RUN.chips<cost)return;e.preventDefault();e.stopPropagation();RUN.chips-=cost;RUN.itemUtilityLevels[id]=l+1;saveRun();render(chopShopScreen());},true);
+  /* Upgrade-aware action checks: Drawstone's threshold and Impound's threshold are reflected in
+     the live battle card through a small text replacement; the underlying original condition
+     still handles every other item. */
+  const oldRenderStd=renderStandardItemCard;
+  window.renderStandardItemCard=function(item,opts={}){let h=oldRenderStd(item,opts);if(item?.id==='drawstone')h=h.replace('7 or higher',`${Math.max(4,7-utilityLevel('drawstone'))} or higher`);if(item?.id==='impound_release')h=h.replace('45-point',`${Math.max(35,45-utilityLevel('impound_release'))}-point`);return h;};renderStandardItemCard=window.renderStandardItemCard;
+  const oldItemRequirementText=itemRequirementText;window.itemRequirementText=function(item,eKind){let t=oldItemRequirementText(item,eKind);if(item?.id==='drawstone')t=t.replace(/7/g,String(Math.max(4,7-utilityLevel('drawstone'))));return t;};itemRequirementText=window.itemRequirementText;
+  /* Save/load normalization for older runs. */
+  if(RUN){RUN.itemUtilityLevels=RUN.itemUtilityLevels||{};}
+})();
 (function boot() {
   const savedBattle = loadBattleSave();
   const savedRun = loadRunSave();
@@ -4299,6 +4563,8 @@ document.addEventListener('mouseover', (e) => {
   }
   render(metaScreen());
 })();
+
+
 </script>
 </body>
 </html>

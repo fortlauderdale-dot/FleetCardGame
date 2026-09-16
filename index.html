@@ -2015,57 +2015,66 @@ const MATCH_SUIT_REWARDS = {
   '♣': { coins: 35, gems: 2, label: '+35 coins, +2 gems' },
   '♥': { health: 20, label: '+20 health' },
   '♠': { energy: 10, label: '+10 energy' },
+  'RJ': { gems: 5, label: '+5 gems' },
+  'BJ': { energy: 15, label: '+15 energy' },
 };
-let MATCH_POPUP = null; // { suitLabel, rewardLabel, boardCleared }
+let MATCH_POPUP = null; // { suitLabel, rewardLabel, boardCleared, jackpot }
 let MATCH_RETURN_TO_MAP = false; // true when the matching game was entered from a map Grid Anomaly node instead of the Compound
 function castleMatchScreen() {
   if (!RUN.castleState) RUN.castleState = {};
   const st = RUN.castleState;
 
   if (st.matchPlayed) {
+    const closedMsg = st.matchLockReason === 'glitch' ? 'CRITICAL GLITCH! A Red Joker and a Black Joker were flipped together. Grid Anomaly Closed.'
+      : st.matchLockReason === 'boardlimit' ? 'Two boards cleared this visit. Grid Anomaly Closed.'
+      : st.matchLockReason === 'outofattempts' ? 'Out of attempts! The matching session is over for this run.'
+      : "You've already played this round. Come back on your next run.";
     return `<div class="wo"><div class="wo-stripe"></div><div class="wo-body">
       <div class="wo-eyebrow">Fleet Compound</div>
       <h1>Fleet Carnival <em>Matching Game</em></h1>
-      <div class="note">You've already played this round. Come back on your next run.</div>
+      <div class="note">${closedMsg}</div>
       <button class="wo-btn gray" id="leaveMatchBtn" style="width:100%">Back to Compound Menu</button>
     </div></div>`;
   }
 
-  // 4 suits, each appearing twice (2 pairs per suit = 8 pairs, 16 cards). Matching the same
-  // suit a 2nd time pays out a better prize than the 1st, tracked per-suit for the whole run.
+  // 6 groups of 4 identical cards (Diamonds, Clubs, Hearts, Spades, Red Jokers, Black Jokers) -
+  // 24 cards total in a 4x6 grid. Any two cards from the same group score a match; each group
+  // therefore clears across two separate successful matches, not one.
   if (!st.matchCards) {
-    const suits = ['\u2666', '\u2663', '\u2665', '\u2660', '\u2666', '\u2663', '\u2665', '\u2660'];
+    const groups = ['♦', '♣', '♥', '♠', 'RJ', 'BJ'];
     st.matchCards = shuffle(
-      suits.flatMap((suitSymbol, i) => [
-        { id: i * 2, suit: suitSymbol, color: (suitSymbol === '\u2665' || suitSymbol === '\u2666') ? 'red' : 'blk', flipped: false, matched: false },
-        { id: i * 2 + 1, suit: suitSymbol, color: (suitSymbol === '\u2665' || suitSymbol === '\u2666') ? 'red' : 'blk', flipped: false, matched: false }
-      ])
+      groups.flatMap((g, gi) => Array.from({ length: 4 }, (_, k) => ({
+        id: gi * 4 + k, group: g,
+        color: (g === '♥' || g === '♦' || g === 'RJ') ? 'red' : 'blk',
+        flipped: false, matched: false,
+      })))
     );
-    st.matchGuesses = 3;
+    st.matchGuesses = 6;
     st.matchPick = [];
+    st.matchBoardsCleared = st.matchBoardsCleared || 0;
   }
 
   if (MATCH_POPUP) {
     return `<div class="treasure-modal"><div class="wo" style="max-width:420px">
       <div class="wo-stripe"></div>
       <div class="wo-body" style="text-align:center">
-        <div class="wo-eyebrow">Pair Matched</div>
-        <h1>${MATCH_POPUP.suitLabel} <em>Pair!</em></h1>
+        <div class="wo-eyebrow">${MATCH_POPUP.jackpot ? 'Board Cleared' : 'Pair Matched'}</div>
+        <h1>${MATCH_POPUP.suitLabel} <em>${MATCH_POPUP.jackpot ? 'Jackpot!' : 'Pair!'}</em></h1>
         <div class="treasure-prize">${MATCH_POPUP.rewardLabel}</div>
-        ${MATCH_POPUP.boardCleared ? `<div class="note">Board cleared! The matching game is done for this run.</div>` : ''}
         <button class="wo-btn amber" id="matchPopupContinueBtn" style="width:100%;margin-top:10px">Nice!</button>
       </div>
     </div></div>`;
   }
 
+  const groupSymbol = { '♦': '♦', '♣': '♣', '♥': '♥', '♠': '♠', 'RJ': '🃏', 'BJ': '🃏' };
   const cards = st.matchCards.map((c, i) => {
     const isRed = c.color === 'red' ? 'red' : '';
-    const isClub = (c.suit === '\u2663' && (c.flipped || c.matched)) ? 'club-card' : '';
+    const isClub = (c.group === '♣' && (c.flipped || c.matched)) ? 'club-card' : '';
     const displayState = (c.flipped || c.matched) ? '' : 'back';
     const isDisabled = (c.flipped || c.matched || st.matchLock) ? 'disabled' : '';
-    return `<button class="card ${isRed} ${isClub} ${displayState}" data-match="${i}" ${isDisabled}>
+    return `<button class="card mini ${isRed} ${isClub} ${displayState}" data-match="${i}" ${isDisabled}>
               <div>${(c.flipped || c.matched) ? '' : '?'}</div>
-              <div>${(c.flipped || c.matched) ? c.suit : ''}</div>
+              <div>${(c.flipped || c.matched) ? groupSymbol[c.group] : ''}</div>
             </button>`;
   }).join('');
 
@@ -2075,23 +2084,26 @@ function castleMatchScreen() {
       <div class="wo-body">
         <div class="wo-eyebrow">Fleet Compound</div>
         <h1>Fleet Carnival <em>Matching Game</em></h1>
-        <div class="wo-sub">Attempts Left: ${st.matchGuesses}</div>
-        <div style="display:grid; grid-template-columns:minmax(0,1fr) minmax(140px,180px); gap:16px; align-items:start">
-          <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:10px; max-width:280px; margin:0 auto">
+        <div class="wo-sub">Attempts Left: ${st.matchGuesses} &nbsp;&middot;&nbsp; Boards Cleared: ${st.matchBoardsCleared}/2</div>
+        <div style="display:grid; grid-template-columns:minmax(0,1fr) minmax(150px,190px); gap:16px; align-items:start">
+          <div style="display:grid; grid-template-columns:repeat(6, 1fr); gap:6px; max-width:320px; margin:0 auto">
             ${cards}
           </div>
           <div class="panel" style="margin:0">
             <div class="hdr" style="margin-bottom:6px"><span>Pair Loot Index</span></div>
-            <div class="note" style="margin:0 0 8px">Each suit always pays the same reward when matched.</div>
+            <div class="note" style="margin:0 0 8px">Each group always pays the same reward when matched.</div>
             <div style="display:flex;flex-direction:column;gap:5px;font-size:12px">
               <div>♦ Diamonds - ${MATCH_SUIT_REWARDS['♦'].label}</div>
               <div>♣ Clubs - ${MATCH_SUIT_REWARDS['♣'].label}</div>
               <div>♥ Hearts - ${MATCH_SUIT_REWARDS['♥'].label}</div>
               <div>♠ Spades - ${MATCH_SUIT_REWARDS['♠'].label}</div>
+              <div style="color:var(--red)">🃏 Red Joker - ${MATCH_SUIT_REWARDS['RJ'].label}</div>
+              <div>🃏 Black Joker - ${MATCH_SUIT_REWARDS['BJ'].label}</div>
             </div>
+            <div class="note" style="margin-top:10px;color:var(--red);font-weight:700">⚠️ WARNING: Flipping a Red Joker and a Black Joker together triggers an instant CRITICAL GLITCH board reset!</div>
           </div>
         </div>
-        <div class="note" style="margin:14px 0 10px; text-align:center">Each suit shows up twice and always pays the same reward, shown in the Loot Index. A wrong guess costs an attempt.</div>
+        <div class="note" style="margin:14px 0 10px; text-align:center">Clear the whole board for a Grand Jackpot. Up to 2 boards can be cleared per visit before the anomaly closes. A wrong guess costs an attempt.</div>
         <button class="wo-btn gray" id="leaveMatchBtn" style="width:100%">Back to Compound Menu</button>
       </div>
     </div>`;
@@ -2189,7 +2201,15 @@ function startBattle(opponentDef, row, col, castleStage=0) {
     });
     if (total) c.bonus = total;
   });
-  drawCards(Math.min(5 + (RUN.drawPerTurn - 2), RUN.handSize));
+  // "Suppressed Hand Glitch" debuff (from the Cyber Siphon cache option): slashes the very
+  // next battle's opening draw by 3, then clears itself so it never leaks into a later fight.
+  let openingDraw = 5 + (RUN.drawPerTurn - 2);
+  if (RUN.suppressedHandGlitch) {
+    openingDraw = Math.max(0, openingDraw - 3);
+    RUN.suppressedHandGlitch = false;
+    battleLog('Suppressed Hand Glitch! Your opening draw this fight is short 3 cards.');
+  }
+  drawCards(Math.min(openingDraw, RUN.handSize));
   resortHandAndRelink(RUN.handSortMode);
   drawOpponentStartingHand();
   // Optional: some opponents start with extra cards already in their pool on top of their
@@ -3731,11 +3751,11 @@ function blacksmithScreen() {
 }
 function treasureScreen(found) {
   if (found.choice) {
-    const options = [
-      { kind: 'fuel', label: 'Refill 10 Fuel', amount: 10, icon: ICON.fuel, cur: 'fuel' },
-      { kind: 'gems', label: 'Extract 2 Gems', amount: 2, icon: ICON.gem, cur: 'gem' },
-      { kind: 'energy', label: 'Inject 8 Energy', amount: 8, icon: ICON.energy, cur: 'energy' },
-    ];
+    const fuelRatio = RUN.fuel / RUN.maxFuel, gemRatio = RUN.gems / RUN.maxGems, energyRatio = RUN.energy / RUN.maxEnergy;
+    const safeKind = fuelRatio <= gemRatio ? 'fuel' : 'gems';
+    const safeLabel = safeKind === 'fuel' ? '+4 Fuel' : '+2 Gems';
+    const siphonKind = [['fuel', fuelRatio], ['gems', gemRatio], ['energy', energyRatio]].sort((a, b) => a[1] - b[1])[0][0];
+    const siphonLabel = siphonKind === 'fuel' ? '+15 Fuel' : siphonKind === 'gems' ? '+6 Gems' : '+12 Energy';
     return `
     <div class="map-popup-overlay">
       <div class="wo" style="width:100%">
@@ -3745,9 +3765,15 @@ function treasureScreen(found) {
           <h1>Choose Your <em>Reward</em></h1>
           <div class="note" style="text-align:center;margin-bottom:10px">Pick one - the other two are left behind.</div>
           <div style="display:flex;gap:8px;flex-wrap:wrap">
-            ${options.map(o => `<button class="wo-btn ${o.cur === 'fuel' ? 'green' : o.cur === 'gem' ? 'purple' : 'amber'}" data-cachechoice="${o.kind}" style="flex:1;min-width:110px;padding:14px 8px;display:flex;flex-direction:column;align-items:center;gap:6px">
-              <span class="vart" style="width:24px;height:24px;font-size:24px">${o.icon}</span>${o.label}
-            </button>`).join('')}
+            <button class="wo-btn green" data-cachechoice="safe" data-safekind="${safeKind}" style="flex:1;min-width:120px;padding:14px 8px;display:flex;flex-direction:column;align-items:center;gap:6px">
+              <b>The Safe Ration</b><span>${safeLabel}</span><span class="note" style="margin:0;font-size:10px">No side effects</span>
+            </button>
+            <button class="wo-btn amber" data-cachechoice="siphon" data-siphonkind="${siphonKind}" style="flex:1;min-width:120px;padding:14px 8px;display:flex;flex-direction:column;align-items:center;gap:6px">
+              <b>The Cyber Siphon</b><span>${siphonLabel}</span><span class="note" style="margin:0;font-size:10px;color:var(--red)">Slashes your next battle's opening draw by 3</span>
+            </button>
+            <button class="wo-btn purple" data-cachechoice="overclock" style="flex:1;min-width:120px;padding:14px 8px;display:flex;flex-direction:column;align-items:center;gap:6px" ${RUN.chips < 25 ? 'disabled' : ''}>
+              <b>The Overclocked Core</b><span>25 Coins</span><span class="note" style="margin:0;font-size:10px">70% chance +20 Max HP, 30% chance -15 HP</span>
+            </button>
           </div>
         </div>
       </div>
@@ -4244,9 +4270,16 @@ function render(html) {
     MATCH_POPUP = null;
     const st = RUN.castleState;
     if (wasCleared) {
-      st.matchCards = null;
-      st.matchPlayed = true;
-      render(castleMenuScreen('Jackpot! You cleared the entire board!'));
+      if (st.matchBoardsCleared >= 2) {
+        st.matchCards = null;
+        st.matchPlayed = true;
+        st.matchLockReason = 'boardlimit';
+        if (MATCH_RETURN_TO_MAP) { RUN.lastNotice = 'Two boards cleared this visit. Grid Anomaly Closed.'; render(mapScreen()); }
+        else render(castleMenuScreen('Two boards cleared this visit. Grid Anomaly Closed.'));
+      } else {
+        st.matchCards = null; // Fresh 24-card shuffle generated on next castleMatchScreen() call
+        render(castleMatchScreen());
+      }
     } else {
       render(castleMatchScreen());
     }
@@ -4266,17 +4299,30 @@ function render(html) {
       if (st.matchPick.length === 2) {
         const [a, b] = st.matchPick;
         st.matchLock = true; // Engage execution lock so they can't spam other hidden items
-        const suit = st.matchCards[a].suit;
+        const ga = st.matchCards[a].group, gb = st.matchCards[b].group;
+        const isJokerGlitch = (ga === 'RJ' && gb === 'BJ') || (ga === 'BJ' && gb === 'RJ');
 
-        if (suit === st.matchCards[b].suit) {
+        if (isJokerGlitch) {
+          // CRITICAL GLITCH: a Red Joker and a Black Joker flipped together instantly ends the
+          // session for this run - no popup, no further play, board discarded on the spot.
+          st.matchCards = null;
+          st.matchPick = [];
+          st.matchLock = false;
+          st.matchPlayed = true;
+          st.matchLockReason = 'glitch';
+          playSfx('hurt');
+          if (MATCH_RETURN_TO_MAP) { RUN.lastNotice = 'CRITICAL GLITCH! A Red Joker and a Black Joker were flipped together. Grid Anomaly Closed.'; render(mapScreen()); }
+          else render(castleMenuScreen('CRITICAL GLITCH! A Red Joker and a Black Joker were flipped together. Grid Anomaly Closed.'));
+          return;
+        }
+
+        if (ga === gb) {
           // A MATCH IS FOUND! Set status flags
           st.matchCards[a].matched = true;
           st.matchCards[b].matched = true;
           st.matchPick = [];
 
-          // Fixed per-suit reward - every suit always pays the same thing when matched,
-          // rather than scaling with how many times it's been cleared this run.
-          const reward = MATCH_SUIT_REWARDS[suit] || {};
+          const reward = MATCH_SUIT_REWARDS[ga] || {};
           RUN.chips += reward.coins || 0;
           RUN.gems = Math.min(RUN.maxGems, RUN.gems + (reward.gems || 0));
           RUN.fuel = Math.min(RUN.maxFuel, RUN.fuel + (reward.fuel || 0));
@@ -4285,7 +4331,16 @@ function render(html) {
           saveRun();
 
           const boardCleared = st.matchCards.every(c => c.matched);
-          MATCH_POPUP = { suitLabel: suit, rewardLabel: reward.label || '', boardCleared };
+          if (boardCleared) {
+            st.matchBoardsCleared = (st.matchBoardsCleared || 0) + 1;
+            RUN.chips += 100;
+            RUN.gems = Math.min(RUN.maxGems, RUN.gems + 3);
+            RUN.fuel = Math.min(RUN.maxFuel, RUN.fuel + 15);
+            saveRun();
+            MATCH_POPUP = { suitLabel: 'Grand', rewardLabel: 'Grand Jackpot: +100 coins, +3 gems, +15 fuel', boardCleared: true, jackpot: true };
+          } else {
+            MATCH_POPUP = { suitLabel: ga === 'RJ' ? 'Red Joker' : ga === 'BJ' ? 'Black Joker' : ga, rewardLabel: reward.label || '', boardCleared: false };
+          }
           st.matchLock = false;
           render(castleMatchScreen());
 
@@ -4303,7 +4358,9 @@ function render(html) {
             if (st.matchGuesses <= 0) {
               st.matchCards = null; // Wipe out the board
               st.matchPlayed = true; // Lock the node for the rest of this run
-              render(castleMenuScreen('Out of attempts! The matching session is over for this run.'));
+              st.matchLockReason = 'outofattempts';
+              if (MATCH_RETURN_TO_MAP) { RUN.lastNotice = 'Out of attempts! The matching session is over for this run.'; render(mapScreen()); }
+              else render(castleMenuScreen('Out of attempts! The matching session is over for this run.'));
             } else {
               render(castleMatchScreen());
             }
@@ -4318,9 +4375,36 @@ function render(html) {
   const leaveTreasureBtn = document.getElementById('leaveTreasureBtn'); if (leaveTreasureBtn) leaveTreasureBtn.onclick = () => { TREASURE_POPUP = null; render(mapScreen()); };
   app.querySelectorAll('[data-cachechoice]').forEach(el => el.onclick = () => {
     const kind = el.dataset.cachechoice;
-    if (kind === 'fuel') RUN.fuel = Math.min(RUN.maxFuel, RUN.fuel + 10);
-    else if (kind === 'gems') RUN.gems = Math.min(RUN.maxGems, RUN.gems + 2);
-    else if (kind === 'energy') RUN.energy = Math.min(RUN.maxEnergy, RUN.energy + 8);
+    if (kind === 'safe') {
+      const safeKind = el.dataset.safekind;
+      if (safeKind === 'fuel') RUN.fuel = Math.min(RUN.maxFuel, RUN.fuel + 4);
+      else RUN.gems = Math.min(RUN.maxGems, RUN.gems + 2);
+      RUN.lastNotice = `Safe Ration claimed: ${safeKind === 'fuel' ? '+4 Fuel' : '+2 Gems'}.`;
+    } else if (kind === 'siphon') {
+      const siphonKind = el.dataset.siphonkind;
+      if (siphonKind === 'fuel') RUN.fuel = Math.min(RUN.maxFuel, RUN.fuel + 15);
+      else if (siphonKind === 'gems') RUN.gems = Math.min(RUN.maxGems, RUN.gems + 6);
+      else RUN.energy = Math.min(RUN.maxEnergy, RUN.energy + 12);
+      RUN.suppressedHandGlitch = true;
+      RUN.lastNotice = `Cyber Siphon claimed: ${siphonKind === 'fuel' ? '+15 Fuel' : siphonKind === 'gems' ? '+6 Gems' : '+12 Energy'}. Your next battle's opening draw is slashed by 3.`;
+    } else if (kind === 'overclock') {
+      if (RUN.chips < 25) return;
+      RUN.chips -= 25;
+      if (Math.random() < 0.7) {
+        RUN.maxHealth += 20; RUN.health += 20;
+        RUN.lastNotice = 'Overclocked Core succeeded: +20 Max HP for the rest of this run.';
+      } else {
+        RUN.health = Math.max(0, RUN.health - 15);
+        if (RUN.health <= 0) {
+          saveRun();
+          TREASURE_POPUP = null;
+          RUN.lastNotice = 'Overclocked Core backfired fatally! Your fleet collapsed.';
+          endRun(false);
+          return;
+        }
+        RUN.lastNotice = 'Overclocked Core backfired: -15 health.';
+      }
+    }
     saveRun();
     TREASURE_POPUP = null;
     render(mapScreen());

@@ -23,7 +23,7 @@
   body.world-2 .panel{border-color:rgba(0,230,118,0.35)}
   body.world-2 .wo{box-shadow:0 0 20px rgba(0,230,118,0.3),6px 6px 0 #1a2038}
   button{font-family:var(--disp);cursor:pointer}
-  #app{max-width:1180px;margin:0 auto;padding:14px 18px 100px}
+  #app{max-width:1180px;margin:0 auto;padding:60px 18px 100px}
   .game-stage{}
   .treasure-modal{position:fixed;inset:0;background:#12163acc;display:flex;align-items:center;justify-content:center;z-index:100;padding:20px}
   .treasure-modal .wo{max-width:560px;width:100%;margin:0}
@@ -61,6 +61,11 @@
 
   .grid{display:flex;flex-wrap:wrap;gap:10px}
   .currencies{display:flex;gap:10px;flex-wrap:wrap;align-items:center;font-family:var(--mono);font-size:11.5px}
+  /* The one instance of .currencies that IS the persistent top resource bar gets this second,
+     header-only class - kept separate from the base .currencies row style used elsewhere
+     (reward previews, popups) so pinning the header doesn't also pin those unrelated rows. */
+  .currencyHeader{position:fixed;top:0;left:0;right:0;z-index:9999;max-width:1180px;margin:0 auto;box-sizing:border-box;
+    padding:9px 18px;background:#12163a;border-bottom:1px solid rgba(31,182,166,0.3);box-shadow:0 2px 10px rgba(0,0,0,0.35)}
   .cur{border:1px solid var(--blue-light);border-radius:6px;padding:4px 8px}
   .cur.gem{color:var(--purple);border-color:var(--purple);background:#f5effd} .cur.fuel{color:var(--green);border-color:var(--green);background:#eef9ee} .cur.energy{color:var(--energy);border-color:var(--energy);background:rgba(0,245,212,0.08)} .cur.chip{color:#a35f00;border-color:var(--amber);background:#fff4e0} .cur.pts{color:#ffd54a;border:1px solid #ffd54a;background:#1a2038} .cur.health{color:var(--red);border-color:var(--red);background:#fdecec}
   .cur{position:relative;cursor:help}[data-title]:hover::after{content:attr(data-title);position:absolute;z-index:50;left:50%;transform:translateX(-50%);top:calc(100% + 6px);width:max-content;max-width:220px;background:#000000;color:#ffffff;padding:7px 9px;border-radius:6px;font:12px var(--disp);white-space:normal;box-shadow:0 0 8px rgba(31,182,166,0.4);border:1px solid #1fb6a6;text-align:left;pointer-events:none}[data-title]{position:relative;cursor:help}.bossPreview{border:2px solid var(--red);background:#1a0e0e}.mapboss{font-size:12px;font-family:var(--mono);color:var(--dim);margin-top:8px}
@@ -253,6 +258,11 @@
     .itemCard{min-height:150px;font-size:11.5px}
     .currencies{gap:6px}
     .cur{font-size:11px}
+  }
+  @media (max-width:480px){
+    /* Narrow phones wrap the fixed resource bar onto two lines - give #app enough clearance
+       so screen content never starts underneath it. */
+    #app{padding-top:92px}
   }
   .status{font-weight:800}.poisonText{color:#3f8f4f}.burnText{color:#c53d2f}.curseText{color:#7a45b5}.poisonStatus{color:#3f8f4f}.burnStatus{color:#c53d2f}.curseStatus{color:#7a45b5}
   .club-card{color:#0b6b3a !important;border:3px solid #16834a !important;background:#e8f7ee;box-shadow:inset 0 0 0 1px #8bd0a8}
@@ -1689,9 +1699,14 @@ function generateMap() {
   // per tier, refilled only once fully drained. Previously every node picked independently at
   // random, so a small tier could hand you the same opponent five times before moving on.
   const tierQueues = {};
+  // Alligator Alley (World 2+): reuse the existing hazard roster and art, just re-equip roughly
+  // half of them with a Poison-flavored loadout instead of inventing new hazards from scratch.
+  const WORLD2_POISON_ITEMS = ['opp_aftershock', 'opp_toxic_spray', 'opp_corrosive_mud'];
   function pickOpponentForTier(tier) {
     if (!tierQueues[tier] || !tierQueues[tier].length) tierQueues[tier] = shuffle([...OPPONENT_TIERS[tier]]);
-    return tierQueues[tier].pop();
+    const picked = tierQueues[tier].pop();
+    if (RUN.world >= 2 && Math.random() < 0.5) return { ...picked, items: WORLD2_POISON_ITEMS };
+    return picked;
   }
 
   for (let r=0;r<rowCounts.length;r++) {
@@ -2933,7 +2948,7 @@ function noticeHTML() {
   return `<div class="panel" style="border-color:var(--red)"><div class="note" style="color:var(--red);margin:0">${msg}</div></div>`;
 }
 function currencyBar(extraHTML = '') {
-  return `<div class="currencies">
+  return `<div class="currencies currencyHeader">
     <div class="cur health" data-title="Your health. Runs out and the run ends.">${ICON.heart} ${RUN.health}/${RUN.maxHealth} Health</div>
     <div class="cur chip" data-title="Coins are used to buy vehicles and pay for certain services.">${ICON.coin} ${RUN.chips} Coins</div>
     <div class="cur gem" data-title="Gems let you draw extra cards during a battle.">${ICON.gem} ${RUN.gems}/${RUN.maxGems} Gems</div>
@@ -3665,7 +3680,7 @@ function blacksmithScreen() {
         <div class="wo-sub">${visitNote}</div>
         ${currencyBar()}
         <div style="display:flex;gap:8px;margin:10px 0">
-          <button class="wo-btn teal" id="leaveBlacksmithBtn" style="flex:1">${roadExitLabel()}</button>
+          <button class="wo-btn teal" id="leaveBlacksmithBtn" style="flex:1">${RETURN_TO_CASTLE_MENU ? 'Back to Compound' : roadExitLabel()}</button>
           <button class="wo-btn purple" id="openRunUpgradeFromBlacksmithBtn" style="flex:1">Upgrades</button>
         </div>
         <div style="margin:12px 0">${rows}</div>

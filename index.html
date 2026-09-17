@@ -89,8 +89,24 @@
   .bigicon{font-size:30px;line-height:1}
   .duelBoard{display:grid;grid-template-columns:1fr 90px 1fr;gap:8px;align-items:start}
   @media (max-width:700px){ .duelBoard{grid-template-columns:1fr} .duelHead{grid-template-columns:1fr 1fr} .vsMark{display:none} }
-  @media (max-width:700px){
-    /* Split-view battle layout: opponent locked to a top band, player fills the rest, both visible with no page-level scroll */
+  @media (max-width:600px) and (orientation:portrait){
+    /* Portrait phones: standard document flow, opponent on top, deck in the middle, player at the bottom. No height caps, no internal scroll traps - the page scrolls naturally if content runs long. */
+    .duelHead{grid-template-columns:1fr}
+    .game-stage:has(.duelHead){ display:flex; flex-direction:column }
+    .game-stage:has(.duelHead) .duelHead,
+    .game-stage:has(.duelHead) .duelBoard,
+    .game-stage:has(.duelHead) .duelMatchup{ display:contents; }
+    .game-stage:has(.duelHead) .duelHead .duelSide.opp{ order:1 }
+    .game-stage:has(.duelHead) .duelBoard > div:last-of-type{ order:2 }
+    .game-stage:has(.duelHead) .duelMatchup .matchupSide.opponentSide{ order:3 }
+    .game-stage:has(.duelHead) .duelBoard > .deckStack{ order:4 }
+    .game-stage:has(.duelHead) .duelHead .duelSide.you{ order:5 }
+    .game-stage:has(.duelHead) .duelBoard > div:first-of-type{ order:6 }
+    .game-stage:has(.duelHead) .duelMatchup .matchupSide.playerSide{ order:7 }
+    .game-stage:has(.duelHead) .panel:has(> .log){ order:8 }
+  }
+  @media (max-width:950px) and (orientation:landscape){
+    /* Landscape phones/tablets: keep the fixed-height split-view band so opponent and player stay simultaneously visible without page scroll */
     .game-stage:has(.duelHead){
       display:grid;
       grid-template-rows:14vh 13vh 10vh auto auto auto minmax(0,1fr) auto;
@@ -101,11 +117,9 @@
     .game-stage:has(.duelHead) .duelHead,
     .game-stage:has(.duelHead) .duelBoard,
     .game-stage:has(.duelHead) .duelMatchup{ display:contents; }
-    /* opponent zone - top ~40%, internally scrollable, never pushes the player off screen */
     .game-stage:has(.duelHead) .duelHead .duelSide.opp{ grid-row:1; min-height:0; overflow-y:auto }
     .game-stage:has(.duelHead) .duelBoard > div:last-of-type{ grid-row:2; min-height:0; overflow-y:auto }
     .game-stage:has(.duelHead) .duelMatchup .matchupSide.opponentSide{ grid-row:3; min-height:0; overflow-y:auto }
-    /* player zone - remaining ~60%, hand/controls fixed height, item grid takes the flexible space */
     .game-stage:has(.duelHead) .duelHead .duelSide.you{ grid-row:4 }
     .game-stage:has(.duelHead) .duelBoard > div:first-of-type{ grid-row:5 }
     .game-stage:has(.duelHead) .duelBoard > .deckStack{ grid-row:6 }
@@ -717,8 +731,6 @@ function checkCondition(cond, cards) {
     result = { met: n === cond.count, label: `${n} of ${cond.suit}`, count: n };
   }
   else result = { met: false, label: '' };
-  
-  
   if (cond && cond.exactCount != null) result.met = result.met && cards.length === cond.exactCount;
   return result;
 }
@@ -2214,6 +2226,7 @@ function assignSelectedTo(slotKey) {
     });
   }
   const take = candidates.slice(0, room);
+
   BATTLE.slots[slotKey].push(...take);
   selectedIdx = [];
   render(battleScreen());
@@ -2270,7 +2283,9 @@ function executePlayerAttack(itemId, index) {
   const item = ITEMS[itemId];
   const slotKey = `${itemId}_${index}`;
   const idxs = BATTLE.slots[slotKey] || [];
+
   if (item.kind === 'storage') { render(battleScreen()); return; } 
+
   if (!idxs.length) {
     battleLog(`${item.name} has no cards assigned.`);
     render(battleScreen());
@@ -2482,6 +2497,7 @@ function endTurn() {
     });
     BATTLE.itemCurses = {};
   }
+
   if (BATTLE.turnDiscard.length) battleLog(`Discarded ${BATTLE.turnDiscard.length} card${BATTLE.turnDiscard.length > 1 ? 's' : ''}.`);
   const preservedStorage = {};
   Object.entries(BATTLE.slots).forEach(([key, idxs]) => {
@@ -3000,7 +3016,6 @@ function mapScreen() {
     else if(node.type==='castle') tip='Choose battles, shopping, refueling, a matching game, or other rewards.';
     else if(node.type==='match_hazard') tip='Grid Anomaly Detected: Tap to hack the Carnival Board for extra fleet gear.';
     else tip='Find coins, fuel, and gems.';
-
     nodesHTML+=`<div class="mapnode-wrap ${isBoss?'bossnode ':''}${c===0?'toprow':c===1?'midrow':'bottomrow'}" style="left:${(x/totalW*100)}%;top:${y}px">
       ${isCurrent?'<div class="hereTag">You Are Here</div>':''}
       <button class="mapnode ${cls} type-${node.type}" ${showReal?`data-nodeinfo="${r}:${c}"`:''} ${showReal?'':'disabled'}>${icon}</button>
@@ -3073,7 +3088,6 @@ function battleScreen() {
   const opp = BATTLE.opponent;
   const hpPct = Math.max(0, (opp.hpNow / opp.hp) * 100);
   const healthPct = Math.max(0, (RUN.health / RUN.maxHealth) * 100);
-
   const poolHTML = BATTLE.oppPool.map(c => c.revealed
     ? `<div class="card ${suitColorClass(c.color, c.suit)}"><div>${rankLabel(c.rank)}</div><div>${c.suit}</div></div>`
     : `<div class="card back"></div>`).join('') || '<span class="note" style="margin:0">empty</span>';
@@ -3133,7 +3147,6 @@ function battleScreen() {
     const bonusLine = item.bonus && bonusPct > 0 ? `<div class="itemBonusLine">Bonus <b>+${bonusPct}%</b> if ${bonusConditionText(item.bonus.condition || item.condition)}</div>` : '';
     const drawNPreview = item.drawUsesCardCount ? (cards.length + (item.drawBonusFlat||0) + (item.drawPerLevel||0)*level) : (item.drawAmount ? item.drawAmount + (item.drawPerLevel||0)*level : 0);
     const drawBonusLine = (item.drawAmount || item.drawUsesCardCount) ? `<div class="itemBonusLine hoverTip" data-title="Draws ${drawNPreview} card${drawNPreview===1?'':'s'} immediately after this item is used."><b>Draw</b> ${drawNPreview} card${drawNPreview===1?'':'s'}</div>` : '';
-
     const usesBadgeText = isChargingUnlockItem ? '∞' : cap === Infinity ? '∞' : `${Math.max(0, usesLeft)}/${cap}`;
     const cooldownLeft = item.cooldown != null ? (BATTLE.itemCooldowns?.[slotKey] || 0) : 0;
     const isDepletedThisTurn = !isChargingUnlockItem && cap !== Infinity && usesLeft <= 0;
@@ -3239,12 +3252,13 @@ function battleScreen() {
       <div class="panel">
         ${BATTLE.showTutorialBanner ? `<div class="note" style="border:1px solid var(--amber);border-radius:6px;padding:8px 10px;margin-bottom:8px;text-align:center;color:var(--amber)">Click or drag cards from your hand, then click an Item Slot below to load your weapon.</div>` : ''}
         <div class="hand">${handHTML}</div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap">
-          <button class="wo-btn gray" id="sortToggleBtn" style="padding:8px 8px;font-size:12px;width:88px;text-align:center;white-space:nowrap">Sort: ${(RUN.handSortMode || 'value') === 'value' ? 'Value' : 'Suit'}</button>
-          <button class="wo-btn gray" id="discardSelectedBtn" style="padding:8px 10px;font-size:12px" data-title="Fold selected cards face-down instead of playing them." ${!selectedIdx.length ? 'disabled' : ''}>Discard</button>
-          <button class="wo-btn purple" id="gemDrawBtn" style="padding:8px 10px;font-size:12px" ${RUN.gems < 1 ? 'disabled' : ''}>Draw = ${GEM_DRAW_COST} ${ICON.gem}</button>
-          ${(() => { const sp = VEHICLE_SPECIALS[RUN.hero.heroId]; if (!sp) return ''; const minNeed = sp.energyCost ?? sp.energyPerUnit; return `<button class="wo-btn amber hoverTip" id="vehicleSpecialBtn" style="padding:8px 10px;font-size:12px" data-title="${sp.desc}" ${RUN.energy < minNeed ? 'disabled' : ''}>${sp.name} = ${minNeed} ${ICON.energy}</button>`; })()}
+        <div style="display:flex;gap:5px;flex-wrap:nowrap;align-items:center">
+          <button class="wo-btn gray" id="discardSelectedBtn" style="padding:7px 8px;font-size:11px;flex:1 1 0;min-width:0" data-title="Fold selected cards face-down instead of playing them." ${!selectedIdx.length ? 'disabled' : ''}>Discard</button>
+          <button class="wo-btn purple" id="gemDrawBtn" style="padding:7px 8px;font-size:11px;flex:1 1 0;min-width:0;white-space:nowrap" ${RUN.gems < 1 ? 'disabled' : ''}>Draw = ${GEM_DRAW_COST} ${ICON.gem}</button>
+          ${(() => { const sp = VEHICLE_SPECIALS[RUN.hero.heroId]; if (!sp) return ''; const minNeed = sp.energyCost ?? sp.energyPerUnit; return `<button class="wo-btn amber hoverTip" id="vehicleSpecialBtn" style="padding:7px 8px;font-size:11px;flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" data-title="${sp.desc}" ${RUN.energy < minNeed ? 'disabled' : ''}>${sp.name} = ${minNeed} ${ICON.energy}</button>`; })()}
+          <button class="wo-btn gray" id="sortToggleBtn" style="padding:7px 6px;font-size:11px;flex:0 0 auto;white-space:nowrap">Sort: ${(RUN.handSortMode || 'value') === 'value' ? 'Value' : 'Suit'}</button>
     </div>
+        
       </div>
       <div class="deckStack" style="flex-direction:column;align-items:center;gap:10px">
         <div style="display:flex;align-items:center;gap:4px;justify-content:center;flex-wrap:wrap">
@@ -3431,7 +3445,6 @@ function garageScreen(message='') {
           <button class="wo-btn purple" id="openRunUpgradeFromRestBtn" style="flex:1">Upgrades</button>
         </div>
         ${message ? `<div class="panel"><div class="note">${message}</div></div>` : ''}
-
         <div class="shopcard">
           <h3>Fleet Maintenance</h3>
           <button class="wo-btn" id="restBtn" ${restAvailable ? '' : 'disabled'}>Rest (+30 Health)</button>
@@ -3595,6 +3608,7 @@ function runEndScreen(won, bonus) {
     </div>
   `;
 }
+
 function starterSelectScreen() {
   const rows = STARTERS.map(id => {
     if (id === 'comingsoon1' || id === 'comingsoon2') {
@@ -3685,7 +3699,6 @@ function upgradeScreen() {
     </div>
   `;
 }
-
 /****************************************************************************
 * OVERDRIVE BAY                                                            *
 ****************************************************************************/
@@ -3734,6 +3747,7 @@ function chopShopScreen(returnTo) {
     const alreadyModified=!!current;
     const original = renderStandardItemCard(item, {});
     const convertCost = itemKindConvertCost();
+
     let convertBlockHTML;
     if (item.kind === 'storage') {
       convertBlockHTML = `<div class="note" style="text-align:center;width:100%">Stash Items can't be converted to an element.</div>`;
@@ -3797,6 +3811,10 @@ function metaScreen() {
     <div class="wo">
       <div class="wo-stripe"></div>
       <div class="wo-body">
+      <div class="note" style="position: absolute; top: 14px; right: 14px; margin: 0; text-align: right; opacity: 0.9; font-size: 14px; font-weight: 600; line-height: 1.3; max-width: 280px; color: var(--amber);">
+          Made by Drew.<br>
+          🏆 Haley is the first person to beat World 2! 🏆
+        </div>
         <div class="wo-eyebrow">Home Base</div>
         <h1>Fleet <em>Duel</em></h1>
         <div class="wo-sub">Career Points: ${META.points} &middot; Best route: ${META.bestRun}/21 &middot; High score: ${META.highScore} &middot; Runs played: ${META.runsPlayed}</div>
@@ -3807,7 +3825,7 @@ function metaScreen() {
         ${hasSave ? `<button class="wo-btn" id="continueRunBtn" style="margin-bottom:10px;width:100%">Continue Run</button>` : `<button class="wo-btn" id="startRunBtn" style="margin-bottom:10px;width:100%">New Run</button>`}
         ${hasSave ? `<button class="wo-btn gray" id="startRunBtn" style="width:100%;margin-bottom:10px">New Run (overwrites save)</button>` : ''}
         <button class="wo-btn amber" id="viewUpgradesBtn" style="width:100%">Career Point Upgrades</button>
-        <div class="note" style="text-align:center;margin-top:16px;opacity:0.75">Made by Drew. Please send Drew your feedback, high scores, bug findings, or confusing areas so he can update the master registry leaderboard. Work in Progress.</div>
+        <div class="note" style="text-align:center;margin-top:16px;opacity:0.75">Please send Drew your feedback, high scores, bug findings, or confusing areas so he can update the master registry leaderboard. Work in Progress.</div>
       </div>
     </div>
   `;
@@ -3819,7 +3837,6 @@ function render(html) {
   app.innerHTML = `<div class="game-stage">${html}</div>`;
   if (IN_BATTLE) saveBattleState();
   const mw = app.querySelector('.mapwrap');
-
   if (mw && !GARAGE_POPUP && !TREASURE_POPUP) { mw.scrollLeft = MAP_SCROLL_X; mw.onscroll = () => { MAP_SCROLL_X = mw.scrollLeft; }; if (RUN && mw.querySelector('.mapnode-wrap')) { requestAnimationFrame(()=>{ const row = Math.max(0,RUN.currentRow); const colW = 118; const target = Math.max(0, row*colW - mw.clientWidth*0.15); mw.scrollLeft = target; MAP_SCROLL_X = target; }); } }
   app.querySelectorAll('[data-card]').forEach(el => el.onclick = () => toggleCardSelect(+el.dataset.card));
   app.querySelectorAll('[data-assign]').forEach(el => el.onclick = (e) => {
@@ -4120,7 +4137,6 @@ function render(html) {
     MATCH_POPUP = null;
     const st = RUN.castleState;
     if (wasCleared) {
-      
       st.matchCards = null;
       st.matchGuesses = 4;
       st.matchPick = [];
@@ -4143,7 +4159,6 @@ function render(html) {
         const [a, b] = st.matchPick;
         const ga = st.matchCards[a].group, gb = st.matchCards[b].group;
         const isJokerGlitch = (ga === 'RJ' && gb === 'BJ') || (ga === 'BJ' && gb === 'RJ');
-
         if (isJokerGlitch) {
           st.matchCards = null;
           st.matchPick = [];
@@ -4155,7 +4170,6 @@ function render(html) {
           renderMatchOverlay();
           return;
         }
-
         if (ga === gb) {
           st.matchCards[a].matched = true;
           st.matchCards[b].matched = true;
@@ -4186,7 +4200,6 @@ function render(html) {
           st.matchLock = false;
           renderMatchOverlay();
         } else {
-          
           st.matchGuesses--;
           renderMatchOverlay();
           setTimeout(() => {
@@ -4194,6 +4207,7 @@ function render(html) {
             st.matchCards[b].flipped = false;
             st.matchPick = [];
             st.matchLock = false;
+
             if (st.matchGuesses <= 0) {
               st.matchCards = null;
               st.matchPlayed = true;
@@ -4327,7 +4341,6 @@ document.addEventListener('mouseover', (e) => {
   const originalEndTurn = endTurn;
   const originalCurrencyBar = currencyBar;
   const originalChopShopScreen = chopShopScreen;
-
   function ensureBattlePatchState(){
     if(!BATTLE) return;
     BATTLE.turnDiscard=BATTLE.turnDiscard||[];
@@ -4338,7 +4351,7 @@ document.addEventListener('mouseover', (e) => {
     BATTLE.itemUtilityLevels=BATTLE.itemUtilityLevels||{};
     BATTLE.stagedFireCards=BATTLE.stagedFireCards||[];
   }
-  function stagedCards(){
+   function stagedCards(){
     ensureBattlePatchState();
     return BATTLE.stagedFireCards.filter(Boolean);
   }
@@ -4457,8 +4470,6 @@ document.addEventListener('mouseover', (e) => {
     return html.replace('<div class="wo"><div class="wo-stripe"></div><div class="wo-body">','<div class="wo matchBoardWrap"><div class="wo-stripe"></div><div class="wo-body">');
   };
   castleMatchScreen=window.castleMatchScreen;
-
-  
   META.devModeActive=META.playerName?.toLowerCase()==='devmode';
   /****************************************************************************
 * RUN DASHBOARD SYSTEM                                                     *

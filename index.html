@@ -219,6 +219,7 @@
   .vslot.dragover{box-shadow:0 0 0 3px var(--amber);border-color:var(--amber)}
   .card[draggable]{cursor:grab}
   .card.dragging{opacity:.4}
+  .depleted-lockout{filter:grayscale(1);pointer-events:none}
   .attackChip{display:inline-block;margin-top:6px;padding:5px 10px;font-size:11px;font-weight:800;letter-spacing:.04em;
     background:var(--green);color:#fff;border-radius:6px;cursor:pointer;border:2px solid #1e8a4f}
   .attackChip:active{transform:translate(1px,1px)}
@@ -2368,16 +2369,16 @@ if (idxs.some(i => BATTLE.usedThisTurn.has(i))) {
   if (item.drawAmount || item.drawUsesCardCount) {
     const slotCardMap = {}; Object.entries(BATTLE.slots).forEach(([key, ix]) => { slotCardMap[key] = ix.map(i => BATTLE.hand[i]); });
     const stillUsedCards = [...BATTLE.usedThisTurn].map(i => BATTLE.hand[i]).filter(c => !cards.includes(c));
-    const sortedOut = [...idxs].sort((a, b) => b - a);
-    for (const i of sortedOut) { BATTLE.turnSpentDiscard.push(BATTLE.hand[i]); BATTLE.hand.splice(i, 1); }
-    Object.entries(slotCardMap).forEach(([key, cs]) => { BATTLE.slots[key] = cs.map(c => BATTLE.hand.indexOf(c)).filter(i => i !== -1); });
-    BATTLE.usedThisTurn = new Set(stillUsedCards.map(c => BATTLE.hand.indexOf(c)).filter(i => i !== -1));
     const drawN = item.drawUsesCardCount
       ? cards.length + (item.drawBonusFlat || 0) + (item.drawPerLevel || 0) * level
       : item.drawAmount + (item.drawPerLevel || 0) * level;
     const beforeDraw = BATTLE.hand.length;
     drawCards(drawN, true);
     const drawn = BATTLE.hand.slice(beforeDraw);
+    const sortedOut = [...idxs].sort((a, b) => b - a);
+    for (const i of sortedOut) { BATTLE.turnSpentDiscard.push(BATTLE.hand[i]); BATTLE.hand.splice(i, 1); }
+    Object.entries(slotCardMap).forEach(([key, cs]) => { BATTLE.slots[key] = cs.map(c => BATTLE.hand.indexOf(c)).filter(i => i !== -1); });
+    BATTLE.usedThisTurn = new Set(stillUsedCards.map(c => BATTLE.hand.indexOf(c)).filter(i => i !== -1));
     battleLog(`${item.name} - Discarded ${cardsStr}, drew ${drawn.map(c=>rankLabel(c.rank)+c.suit).join(' ') || 'no cards'}.`);
     resortHandAndRelink(RUN.handSortMode);
   }
@@ -3150,9 +3151,10 @@ function battleScreen() {
 
     const usesBadgeText = isChargingUnlockItem ? '∞' : cap === Infinity ? '∞' : `${Math.max(0, usesLeft)}/${cap}`;
     const cooldownLeft = item.cooldown != null ? (BATTLE.itemCooldowns?.[slotKey] || 0) : 0;
-    return `<div class="itemCard kind-${eKind} ${ready ? 'ready' : ''} ${cursedAmt ? 'cursed' : ''}" data-assign="${slotKey}" style="border-style:dashed;border-width:2px"
+    const isDepletedThisTurn = !isChargingUnlockItem && cap !== Infinity && usesLeft <= 0;
+    return `<div class="itemCard kind-${eKind} ${ready ? 'ready' : ''} ${cursedAmt ? 'cursed' : ''} ${isDepletedThisTurn ? 'depleted-lockout' : ''}" data-assign="${slotKey}" style="border-style:dashed;border-width:2px"
         ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleCardDrop(event,'${slotKey}',${effectiveMaxCards(item)})">
-      <div class="usesBadge ${(!isChargingUnlockItem && usesLeft <= 0) ? 'depleted' : ''} hoverTip" data-title="Uses left this turn">${usesBadgeText}</div>
+      ${isDepletedThisTurn ? '' : `<div class="usesBadge hoverTip" data-title="Uses left this turn">${usesBadgeText}</div>`}
       <div class="itemCard-sec">
         <div class="hdr" style="font-weight:600">${item.name}${cursedAmt ? ` <span class="vart" style="width:12px;height:12px;font-size:12px;color:var(--purple)">${ICON.curse}</span> cursed` : ''}</div>
         <div class="itemReqLine">${itemRequirementText(item, eKind)}</div>
@@ -4687,8 +4689,6 @@ document.addEventListener('mouseover', (e) => {
   }
   render(metaScreen());
 })();
-
-
 </script>
 </body>
 </html>

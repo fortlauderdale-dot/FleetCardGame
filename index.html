@@ -74,7 +74,7 @@
   
 
 
-  .currencyHeader #openRunSummaryBtn{margin-left:auto;flex-shrink:0}
+  .panel:has(> .currencyHeader){padding:0;border:none;background:transparent !important;box-shadow:none;min-height:0;margin:0}
   .cur.gem{color:var(--purple);border-color:var(--purple);background:#f5effd} .cur.fuel{color:var(--green);border-color:var(--green);background:#eef9ee} .cur.energy{color:var(--energy);border-color:var(--energy);background:rgba(0,245,212,0.08)} .cur.chip{color:#a35f00;border-color:var(--amber);background:#fff4e0} .cur.pts{color:#ffd54a;border:1px solid #ffd54a;background:#1a2038} .cur.health{color:var(--red);border-color:var(--red);background:#fdecec}
   .cur{position:relative;cursor:help}[data-title]:hover::after{content:attr(data-title);position:absolute;z-index:50;left:50%;transform:translateX(-50%);top:calc(100% + 6px);width:max-content;max-width:220px;background:#000000;color:#ffffff;padding:7px 9px;border-radius:6px;font:12px var(--disp);white-space:normal;box-shadow:0 0 8px rgba(31,182,166,0.4);border:1px solid #1fb6a6;text-align:left;pointer-events:none}[data-title]{position:relative;cursor:help}.bossPreview{border:2px solid var(--red);background:#1a0e0e}.mapboss{font-size:12px;font-family:var(--mono);color:var(--dim);margin-top:8px}
   .hoverTip{position:relative;cursor:help;text-decoration:underline dotted;text-underline-offset:2px}
@@ -131,28 +131,27 @@
   .vslot .vreq{font-family:var(--mono);font-size:10.5px;color:var(--dim);margin:3px 0}
   .vslot .vcards{display:flex;gap:3px;flex-wrap:wrap;min-height:30px;margin-top:6px}
 
-  .itemGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+  .itemGrid{display:grid;grid-template-columns:repeat(auto-fill,140px);justify-content:center;gap:6px}
   @media (max-width:700px){
-    .itemGrid{grid-template-columns:repeat(2,1fr);gap:5px}
+    .itemGrid{grid-template-columns:repeat(auto-fill,130px);gap:5px}
     .itemGrid .itemCard{font-size:11px;padding:6px}
   }
-  @media (max-width:700px) and (min-resolution:2dppx){.itemGrid{grid-template-columns:repeat(3,1fr)}}
   
 
 
 
-  .popupItemRow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
-  .popupItemRow .itemCard{width:100%;min-width:0}
+  .popupItemRow{display:grid;grid-template-columns:repeat(auto-fill,140px);justify-content:center;gap:8px}
   .pickItemRow{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-start}
-  .pickItemRow .itemCard{flex:0 0 130px;width:130px;min-height:120px}
+  .pickItemRow .itemCard{flex:0 0 140px;width:140px}
   .dealerRow{display:flex;gap:12px;overflow-x:auto;padding-bottom:6px;-webkit-overflow-scrolling:touch}
-  .dealerCardPanel{flex:0 0 150px;width:150px;display:flex;flex-direction:column;padding:8px}
+  .dealerCardPanel{flex:0 0 156px;width:156px;display:flex;flex-direction:column;padding:8px}
   .dealerMetaDivider{height:1px;background:rgba(31,182,166,0.2);margin:8px 0 6px;flex-shrink:0}
   .dealerMeta{display:flex;flex-direction:column;align-items:center;gap:4px}
-  .itemCard{border-radius:8px;padding:6px 4px;background:rgba(10,14,26,0.9) !important;border:1px solid rgba(31,182,166,0.2);min-height:172px;display:flex;flex-direction:column;align-items:center;text-align:center;box-sizing:border-box;font-size:12px;position:relative;transition:box-shadow .15s ease}
+  .itemCard{border-radius:8px;padding:6px 4px;background:rgba(10,14,26,0.9) !important;border:1px solid rgba(31,182,166,0.2);width:100%;height:190px;overflow:hidden;display:flex;flex-direction:column;align-items:center;text-align:center;box-sizing:border-box;font-size:12px;position:relative;transition:box-shadow .15s ease}
   .itemCard:hover{box-shadow:0 0 14px rgba(31,182,166,0.35)}
   .itemCard-sec{width:100%;flex:0 0 auto}
-  .itemCard-cards-sec{height:40px;display:flex;flex-direction:column;justify-content:center;align-items:center;width:100%;overflow:hidden}
+  .itemCard-footer{margin-top:auto;width:100%;flex:0 0 auto}
+  .itemCard-cards-sec{min-height:58px;display:flex;flex-direction:column;justify-content:center;align-items:center;width:100%;overflow:visible}
   .usesBadge{position:absolute;top:4px;right:4px;font-size:9px;font-weight:800;background:none;color:#1fb6a6;border:none;padding:0;line-height:1.4}
   .usesBadge.depleted{background:none;color:var(--dim)}
   .itemCard.ready{border-color:var(--green) !important}
@@ -251,6 +250,8 @@
   .itemCard.kind-burn .hdr{color:#e5484d !important}
   .itemCard.kind-curse{background:rgba(22,14,30,0.85) !important;border-color:#8a4fe0 !important;box-shadow:inset 0 0 12px rgba(138,79,224,0.25)}
   .itemCard.kind-curse .hdr{color:#8a4fe0 !important}
+  .itemCard.kind-storage{background:rgba(12,22,28,0.85) !important;border-color:#3d8fa8 !important;box-shadow:inset 0 0 12px rgba(61,143,168,0.25)}
+  .itemCard.kind-storage .hdr{color:#3d8fa8 !important}
   .itemCard.kind-defense{background:rgba(14,22,36,0.85) !important;border-color:#2563a8 !important;box-shadow:inset 0 0 12px rgba(37,99,168,0.3)}
   .itemCard.kind-defense .hdr{color:#6a94c4 !important}
   .itemCard.cursed{border-color:var(--purple) !important;box-shadow:inset 0 0 12px rgba(138,79,224,0.3)}
@@ -334,6 +335,12 @@ const SIGMA_TIP = `<span class="hoverTip" data-title="Summation: The total face 
 function suitMicroCardHTML(suit) {
   const cls = suitColorClass(suit === '♥' || suit === '♦' ? 'red' : 'black', suit);
   return `<span class="suitMicroCard ${cls}">${suit}</span>`;
+}
+function stashHoldsLineHTML(item) {
+  const holdsWord = `<span class="hoverTip" data-title="Click a stored card to take it back.">Holds</span>`;
+  if (item.acceptFilter?.suit) return `${holdsWord} up to ${item.maxStore} ${suitMicroCardHTML(item.acceptFilter.suit)}`;
+  if (item.acceptFilter?.color) return `${holdsWord} up to ${item.maxStore} ${item.acceptFilter.color === 'red' ? 'Red' : 'Black'} cards`;
+  return `${holdsWord} up to ${item.maxStore} cards of any kind`;
 }
 function cardValue(r) { if (r === 14) return 11; if (r >= 11) return 10; return r; }
 function freshDeck() {
@@ -1420,17 +1427,17 @@ function renderStandardItemCard(item, opts = {}) {
       const handIdx = opts.idxs ? opts.idxs[i] : i;
       return `<div class="card mini ${suitColorClass(c.color, c.suit)}" ${interactive ? `data-unassign="${slotKey}|${handIdx}" data-title="Click to take this card back"` : ''}><div>${rankLabel(c.rank)}</div><div>${c.suit}</div></div>`;
     }).join('');
-    return `<div class="itemCard kind-curse"${dragAttrs}>
+    return `<div class="itemCard kind-storage"${dragAttrs}>
       ${interactive ? `<div class="usesBadge hoverTip" data-title="Cards currently held">${cards.length}/${effectiveMaxCards(item)}</div>` : ''}
       <div class="itemCard-sec">
-        <div class="hdr" style="font-weight:600;color:var(--purple)">${item.name}</div>
-        <div class="note" style="font-size:11px">${item.note || ''}</div>
+        <div class="hdr" style="font-weight:600">${item.name}</div>
+        <div class="note" style="font-size:11px">${stashHoldsLineHTML(item)}</div>
       </div>
       <div class="itemDivider"></div>
       <div class="itemCard-cards-sec">
         ${interactive ? `<div class="vcards">${cardHTML}</div>${cards.length > 0 ? `<button class="wo-btn gray" style="padding:3px 6px;font-size:10px;margin-top:6px" data-clear="${slotKey}">Release All</button>` : ''}` : ''}
       </div>
-      ${footerHTML != null ? `<div class="itemDivider"></div><div class="itemCard-sec">${footerHTML}</div>` : ''}
+      ${footerHTML != null ? `<div class="itemCard-footer"><div class="itemDivider"></div><div class="itemCard-sec">${footerHTML}</div></div>` : ''}
     </div>`;
   }
 
@@ -1461,9 +1468,11 @@ function renderStandardItemCard(item, opts = {}) {
       ${bonusLine}${drawBonusLine}${hypPreviewHTML}
       ${interactive ? `<div class="vcards">${cardHTML}</div>` : ''}
     </div>
-    <div class="itemDivider"></div>
-    <div class="itemCard-sec">
-      ${footerHTML != null ? footerHTML : `${staticKindLine}${unlockLine}`}
+    <div class="itemCard-footer">
+      <div class="itemDivider"></div>
+      <div class="itemCard-sec">
+        ${footerHTML != null ? footerHTML : `${staticKindLine}${unlockLine}`}
+      </div>
     </div>
   </div>`;
 }
@@ -2530,7 +2539,7 @@ function drawWithGem() {
   RUN.gems -= 1;
   const n = 1 + META.levels.gem + Number(RUN.runUpgrades?.gemDraw || 0);
   const before = BATTLE.hand.length;
-  drawCards(n, true);
+  drawCards(n, false);
   const drawn = BATTLE.hand.slice(before).map(c => `${rankLabel(c.rank)}${c.suit}`).join(' ');
   battleLog(`Spent a gem: Drew ${drawn || 'no cards'}.`);
   resortHandAndRelink(RUN.handSortMode);
@@ -3239,6 +3248,7 @@ function currencyBar(extraHTML = '') {
     <div class="cur fuel" data-title="Fuel is spent when you travel to another stop.">${ICON.fuel} ${RUN.fuel}/${RUN.maxFuel} Fuel</div>
     <div class="cur energy" data-title="Energy powers vehicle abilities.">${ICON.energy} ${RUN.energy}/${RUN.maxEnergy} Energy</div>
     <div class="cur pts" data-title="Career Points carry over between playthroughs and only buy Permanent Upgrades.">${ICON.star} ${META.points} Career Points</div>
+    <!--RUNCONTROLS-->
     ${extraHTML}
   </div>`;
 }
@@ -3500,12 +3510,12 @@ function battleScreen() {
         const c = BATTLE.hand[cardHandIdx];
         return `<div class="card mini ${suitColorClass(c.color, c.suit)}" data-unassign="${slotKey}|${cardHandIdx}" data-title="Click to take this card back"><div>${rankLabel(c.rank)}</div><div>${c.suit}</div></div>`;
       }).join('');
-      return `<div class="itemCard" data-assign="${slotKey}" style="border:2px dashed var(--purple)"
+      return `<div class="itemCard kind-storage" data-assign="${slotKey}" style="border-style:dashed;border-width:2px"
           ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleCardDrop(event,'${slotKey}',${effectiveMaxCards(item)})">
         <div class="usesBadge hoverTip" data-title="Cards currently held">${idxs.length}/${effectiveMaxCards(item)}</div>
         <div class="itemCard-sec">
-          <div class="hdr" style="font-weight:600;color:var(--purple)">${item.name}</div>
-          <div class="note" style="font-size:11px">${item.note}</div>
+          <div class="hdr" style="font-weight:600">${item.name}</div>
+          <div class="note" style="font-size:11px">${stashHoldsLineHTML(item)}</div>
         </div>
         <div class="itemDivider"></div>
         <div class="itemCard-cards-sec">
@@ -3565,6 +3575,7 @@ function battleScreen() {
         ${hypPreviewHTML}
         <div class="vcards">${cardHTML}</div>
       </div>
+      <div class="itemCard-footer">
       <div class="itemDivider"></div>
       <div class="itemCard-sec">
       ${cooldownLeft > 0 ? `<div class="note" style="margin:4px 0 0"><span class="hoverTip" data-title="This item can't be used again until its cooldown runs out.">On cooldown: ${cooldownLeft} turn${cooldownLeft > 1 ? 's' : ''} left</span></div>` : ''}
@@ -3589,6 +3600,7 @@ function battleScreen() {
           ${idxs.length ? `<button class="wo-btn gray" style="padding:3px 6px;font-size:10px" data-clear="${slotKey}">Clear</button>` : ''}
           ${ready && (usesLeft > 0 || isChargingUnlockItem) && cooldownLeft <= 0 ? `<span class="attackChip ${eKind==='defense' ? 'defendChip' : ''}" data-attack="${slotKey}" style="font-size:10px; padding:3px 6px">${item.unlockThreshold != null ? (isChargingUnlockItem ? 'Deposit Card(s) ▶' : 'Draw ▶') : eKind==='defense' ? 'Defend ▶' : (item.flatAmount==null && (item.baseMult ?? 1)===0 && (item.drawAmount || item.drawUsesCardCount)) ? 'Draw ▶' : 'Attack ▶'}</span>` : ''}
         </div>
+      </div>
       </div>
       </div>
     </div>`;
@@ -4981,7 +4993,7 @@ document.addEventListener('mouseover', (e) => {
   function bindDev(){const close=document.getElementById('devCloseBtn');if(close)close.onclick=()=>render(IN_BATTLE?battleScreen():RUN?mapScreen():metaScreen());const coins=document.getElementById('devCoinsBtn');if(coins)coins.onclick=()=>{RUN.chips+=500;saveRun();render(`${IN_BATTLE?battleScreen():mapScreen()}${devPanel()}`);};const max=document.getElementById('devMaxBtn');if(max)max.onclick=()=>{RUN.chips=9999;RUN.gems=RUN.maxGems;RUN.fuel=RUN.maxFuel;RUN.energy=RUN.maxEnergy;RUN.health=RUN.maxHealth;saveRun();render(`${IN_BATTLE?battleScreen():mapScreen()}${devPanel()}`);};document.querySelectorAll('[data-devitem]').forEach(e=>e.onclick=()=>{if(RUN&&equippedItemCount(RUN.hero)<RUN.itemCap){RUN.hero.items.push(e.dataset.devitem);saveRun();render(`${IN_BATTLE?battleScreen():mapScreen()}${devPanel()}`);}});}
   
   const cb=originalCurrencyBar;
-  window.currencyBar=function(extraHTML=''){let h=cb(extraHTML);const at=h.lastIndexOf('</div>');if(at<0)return h;const controls=`${META.devModeActive?`<button class="wo-btn gray" id="devPanelBtn" style="padding:3px 7px;font-size:10px">[🛠️ DEV]</button>`:''}<button class="wo-btn purple" id="openRunSummaryBtn" style="padding:3px 7px;font-size:10px">Run Dashboard</button>`;return h.slice(0,at)+controls+h.slice(at);};currencyBar=window.currencyBar;
+  window.currencyBar=function(extraHTML=''){let h=cb(extraHTML);const controls=`${META.devModeActive?`<button class="wo-btn gray" id="devPanelBtn" style="padding:3px 7px;font-size:10px">[🛠️ DEV]</button>`:''}<button class="wo-btn purple" id="openRunSummaryBtn" style="padding:3px 7px;font-size:10px">Run Dashboard</button>`;if(h.includes('<!--RUNCONTROLS-->'))return h.replace('<!--RUNCONTROLS-->',controls);const at=h.lastIndexOf('</div>');if(at<0)return h;return h.slice(0,at)+controls+h.slice(at);};currencyBar=window.currencyBar;
   
   window.chopShopScreen=function(returnTo){
     let html=originalChopShopScreen(returnTo);

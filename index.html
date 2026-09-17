@@ -151,7 +151,7 @@
   .pickItemRow{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-start}
   .pickItemRow .itemCard{flex:0 0 140px;width:140px}
   .dealerRow{display:flex;gap:12px;overflow-x:auto;padding-bottom:6px;-webkit-overflow-scrolling:touch}
-  .dealerCardPanel{flex:0 0 156px;width:156px;display:flex;flex-direction:column;padding:8px}
+  .dealerCardPanel{flex:0 0 140px;width:140px;display:flex;flex-direction:column;padding:8px}
   .dealerMetaDivider{height:1px;background:rgba(31,182,166,0.2);margin:8px 0 6px;flex-shrink:0}
   .dealerMeta{display:flex;flex-direction:column;align-items:center;gap:4px}
   .itemCard{border-radius:8px;padding:6px 4px;background:rgba(10,14,26,0.9) !important;border:1px solid rgba(31,182,166,0.2);width:100%;height:190px;overflow:hidden;display:flex;flex-direction:column;align-items:center;text-align:center;box-sizing:border-box;font-size:12px;position:relative;transition:box-shadow .15s ease}
@@ -261,6 +261,8 @@
   .itemCard.kind-storage .hdr{color:#3d8fa8 !important}
   .itemCard.kind-defense{background:rgba(205,127,50,0.12) !important;border-color:#cd7f32 !important;box-shadow:none}
   .itemCard.kind-defense .hdr{color:#cd7f32 !important}
+  .itemCard.kind-weightless{background:#f5f7fa !important;border:2px solid #ffffff !important;box-shadow:0 0 0 1px rgba(0,0,0,0.15)}
+  .itemCard.kind-weightless .hdr,.itemCard.kind-weightless .note{color:#1a1a2e !important;font-weight:700}
   .itemCard.cursed{border-color:var(--purple) !important;box-shadow:inset 0 0 12px rgba(138,79,224,0.3)}
   .defenseText,.armorText{color:var(--defense) !important}
   .defenseText{font-weight:800}
@@ -277,7 +279,7 @@
 
     .hand .card:not(.mini){width:40px;height:54px;font-size:14px}
     .hand .card:not(.mini) div:last-child{font-size:19px}
-    .itemCard{min-height:150px;font-size:11.5px}
+    .itemCard{font-size:11.5px}
     .currencies{gap:6px}
     .cur{font-size:11px}
   }
@@ -312,7 +314,9 @@
 <body>
 <div id="app"></div>
 <script>
-/* ========== WORLD NAMING ========== */
+/****************************************************************************
+* WORLD NAMING                                                             *
+****************************************************************************/
 
 
 const WORLD_NAMES = {
@@ -325,7 +329,9 @@ const WORLD_NAMES = {
   7: 'Port Everglades',
   8: 'The Fleet Compound',
 };
-/* ========== CARD MODEL ========== */
+/****************************************************************************
+* CARD MODEL                                                               *
+****************************************************************************/
 const SUITS = [{ s: '♦', color: 'red' }, { s: '♣', color: 'blk' }, { s: '♥', color: 'red' }, { s: '♠', color: 'blk' }];
 const RANK_LABEL = { 11: 'J', 12: 'Q', 13: 'K', 14: 'A' };
 function rankLabel(r) { return RANK_LABEL[r] || String(r); }
@@ -357,7 +363,9 @@ function freshDeck() {
 }
 function shuffle(arr) { for (let i = arr.length - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0; [arr[i], arr[j]] = [arr[j], arr[i]]; } return arr; }
 
-/* ========== HAND EVALUATION ========== */
+/****************************************************************************
+* HAND EVALUATION                                                          *
+****************************************************************************/
 const TIERS = ['High Card', 'Pair', 'Two Pair', 'Three of a Kind', 'Straight', 'Flush', 'Full House', 'Four of a Kind', 'Straight Flush'];
 const TIER_MULT = [1.0, 1.5, 1.7, 2.0, 2.5, 2.8, 3.2, 4.0, 5.0];
 function evaluateHand(cards) {
@@ -579,7 +587,9 @@ function isConsecutive(cards) {
 }
 function straightMult(len) { return 1 + (len - 2) * 0.45; }
 
-/* ========== ICON SYSTEM ========== */
+/****************************************************************************
+* ICON SYSTEM                                                              *
+****************************************************************************/
 
 const ICON = {
   coin:   `💰`,
@@ -711,7 +721,9 @@ function opponentAttackBoxHTML(opp) {
   }).join('');
 }
 
-/* ========== ATTACK CATALOG REGISTRY ========== */
+/****************************************************************************
+* ATTACK CATALOG REGISTRY                                                  *
+****************************************************************************/
 /* ========== CONDITION ENGINE ========== */
 
 
@@ -1437,10 +1449,12 @@ function renderStandardItemCard(item, opts = {}) {
       const handIdx = opts.idxs ? opts.idxs[i] : i;
       return `<div class="card mini ${suitColorClass(c.color, c.suit)}" ${interactive ? `data-unassign="${slotKey}|${handIdx}" data-title="Click to take this card back"` : ''}><div>${rankLabel(c.rank)}</div><div>${c.suit}</div></div>`;
     }).join('');
-    return `<div class="itemCard kind-storage"${dragAttrs}>
+    const weightlessTag = item.weightless ? `<span class="effectTip" style="color:#1a1a2e" data-tip="Doesn't consume an item card slot">Weightless</span>` : '';
+    return `<div class="itemCard kind-storage${item.weightless ? ' kind-weightless' : ''}"${dragAttrs}>
       ${interactive ? `<div class="usesBadge hoverTip" data-title="Cards currently held">${cards.length}/${effectiveMaxCards(item)}</div>` : ''}
       <div class="itemCard-sec">
         <div class="hdr" style="font-weight:600">${item.name}</div>
+        ${weightlessTag ? `<div class="note" style="margin:2px 0">${weightlessTag}</div>` : ''}
         <div class="note" style="font-size:11px">${stashHoldsLineHTML(item)}</div>
       </div>
       <div class="itemDivider"></div>
@@ -1516,7 +1530,9 @@ function starterLockNote(id) {
   return '';
 }
 
-/* ========== OPPONENT ROSTER - CITY HAZARD EVENTS (World 1) ========== */
+/****************************************************************************
+* OPPONENT ROSTER                                                          *
+****************************************************************************/
 
 const OPPONENT_TIERS = [
   
@@ -1705,12 +1721,13 @@ const WORLD_COUNT = 1;
 function pickNodeType(forcedType) {
   if (forcedType) return forcedType;
   const r = Math.random();
-  if (r < 0.65) return 'battle';
-  if (r < 0.75) return 'rest';
-  if (r < 0.84) return 'blacksmith';
-  if (r < 0.89) return 'chopshop';
-  if (r < 0.95) return 'shop'; 
-  if (r < 0.98) return 'match_hazard'; 
+  if (r < 0.62) return 'battle';
+  if (r < 0.71) return 'rest';
+  if (r < 0.79) return 'blacksmith';
+  if (r < 0.84) return 'chopshop';
+  if (r < 0.88) return 'overdrive';
+  if (r < 0.94) return 'shop'; 
+  if (r < 0.97) return 'match_hazard'; 
   return 'treasure';
 }
 
@@ -1956,6 +1973,7 @@ function selectNode(row, col) {
   else if (node.type === 'rest') { GARAGE_POPUP = true; GARAGE_MESSAGE = ''; render(mapScreen()); }
   else if (node.type === 'blacksmith') { RETURN_TO_CASTLE_MENU = false; BLACKSMITH_OPTIONS = pickBlacksmithOptions(); BLACKSMITH_VISIT = { primary: null, secondary: null }; render(blacksmithScreen()); }
   else if (node.type === 'chopshop') { RETURN_TO_CASTLE_MENU = false; render(chopShopScreen('map')); }
+  else if (node.type === 'overdrive') { RETURN_TO_CASTLE_MENU = false; render(overdriveBayScreen('map')); }
   else if (node.type === 'treasure') {
     
     if (!node.big && Math.random() < 0.15) { TREASURE_POPUP = { choice: true }; playSfx('open'); render(mapScreen()); }
@@ -1976,6 +1994,7 @@ function reenterCurrentNode(row, col) {
   if (node.type === 'rest') { GARAGE_POPUP = true; GARAGE_MESSAGE = ''; render(mapScreen()); return; }
   if (node.type === 'blacksmith') { RETURN_TO_CASTLE_MENU = false; BLACKSMITH_OPTIONS = pickBlacksmithOptions(); BLACKSMITH_VISIT = { primary: null, secondary: null }; render(blacksmithScreen()); return; }
   if (node.type === 'chopshop') { RETURN_TO_CASTLE_MENU = false; render(chopShopScreen('map')); return; }
+  if (node.type === 'overdrive') { RETURN_TO_CASTLE_MENU = false; render(overdriveBayScreen('map')); return; }
   
   render(mapScreen());
 }
@@ -1999,6 +2018,7 @@ function castleMenuScreen(message='') {
         <button class="castleBtn" id="castleWizardNavBtn" ${RUN.castleState?.matchPlayed ? 'disabled' : ''}>${RUN.castleState?.matchPlayed ? 'Matching Game Played' : 'Visit the Fleet Carnival Matching Game.'}</button>
         <button class="castleBtn" id="castleBlacksmithNavBtn">Visit the Tuning Garage.</button>
         <button class="castleBtn" id="castleChopShopNavBtn">Visit the Chop Shop.</button>
+        <button class="castleBtn" id="castleOverdriveNavBtn">Visit the Overdrive Bay.</button>
         <button class="castleBtn" id="castleShopNavBtn">Visit the Dealership.</button>
         <button class="castleBtn" id="castleInnNavBtn">Visit the Inn.</button>
         <button class="castleBtn" id="leaveCastleBtn">Leave this area.</button>
@@ -2203,8 +2223,10 @@ let BLACKSMITH_OPTIONS = null;
 
 let GARAGE_SELECTED_ITEM = null;
 let BLACKSMITH_VISIT = null; 
-function scopeCostMult(scope) { return scope === 'card' ? 1 : scope === 'rank' ? 3 : 4; } 
-function tuneCost(bonus, isSecondary, scope) { const base = 20 * Math.pow(2, bonus / 3) * scopeCostMult(scope); return Math.round(isSecondary ? base * 1.5 : base); }
+const SCOPE_TUNE_COST = { card: 30, rank: 60, suit: 90 };
+const SCOPE_TUNE_DAMAGE = { card: 10, rank: 5, suit: 3 };
+const SCOPE_TUNE_MAX_STACKS = 3;
+function tuneCost(bonus, isSecondary, scope) { return SCOPE_TUNE_COST[scope] || 30; }
 function pickBlacksmithOptions() {
   
   const su1 = SUITS[Math.floor(Math.random() * SUITS.length)];
@@ -2220,9 +2242,10 @@ function pickBlacksmithOptions() {
 function findBoost(opt) { return RUN.cardBoosts.find(b => b.scope === opt.scope && b.rank === opt.rank && b.suit === opt.suit); }
 function boostCard(opt) {
   let b = findBoost(opt);
-  if (!b) { b = { scope: opt.scope, rank: opt.rank, suit: opt.suit, bonus: 0 }; RUN.cardBoosts.push(b); }
-  if (b.bonus >= 9) return;
-  b.bonus += 3;
+  if (!b) { b = { scope: opt.scope, rank: opt.rank, suit: opt.suit, bonus: 0, count: 0 }; RUN.cardBoosts.push(b); }
+  if ((b.count || 0) >= SCOPE_TUNE_MAX_STACKS) return;
+  b.bonus += SCOPE_TUNE_DAMAGE[opt.scope] || 0;
+  b.count = (b.count || 0) + 1;
   saveRun();
 }
 function rollTreasure(big=false) {
@@ -2556,7 +2579,7 @@ function drawWithGem() {
   RUN.gems -= 1;
   const n = 1 + META.levels.gem + Number(RUN.runUpgrades?.gemDraw || 0);
   const before = BATTLE.hand.length;
-  drawCards(n, false);
+  drawCards(n, true);
   const drawn = BATTLE.hand.slice(before).map(c => `${rankLabel(c.rank)}${c.suit}`).join(' ');
   battleLog(`Spent a gem: Drew ${drawn || 'no cards'}.`);
   resortHandAndRelink(RUN.handSortMode);
@@ -3338,7 +3361,8 @@ function nodePopupContent(r, c) {
   if (node.type === 'shop') return { title: 'Dealership', art: glyph(ICON.cart), rows: [], extra: '<div class="note">Buy a vehicle with coins.</div>', actionLabel: 'Go Here' };
   if (node.type === 'rest') return { title: 'Pit Stop', art: glyph(ICON.wrench), rows: [], extra: '<div class="note">Restore 30 health.</div>', actionLabel: 'Go Here' };
   if (node.type === 'blacksmith') return { title: 'Tuning Garage', art: glyph(ICON.hammer), rows: [], extra: '<div class="note">Spend coins to permanently boost a card (or a whole rank/suit), for this run only.</div>', actionLabel: 'Go Here' };
-  if (node.type === 'chopshop') return { title: 'Chop Shop', art: glyph(ICON.curse), rows: [], extra: '<div class="note">Spend coins to modify your equipped Items for this run: raise a bonus %, add uses per turn, add card slots, or convert a regular attack into poison, burn, or curse.</div>', actionLabel: 'Go Here' };
+  if (node.type === 'chopshop') return { title: 'Chop Shop', art: glyph(ICON.curse), rows: [], extra: '<div class="note">Spend coins to convert an Item to poison, burn, or curse, or add card slots.</div>', actionLabel: 'Go Here' };
+  if (node.type === 'overdrive') return { title: 'Overdrive Bay', art: glyph(ICON.energy), rows: [], extra: '<div class="note">Spend coins to add uses per turn to your equipped Items.</div>', actionLabel: 'Go Here' };
   if (node.type === 'treasure') return { title: node.big ? 'Big Supply Cache' : 'Supply Cache', art: glyph(ICON.gift), rows: [], extra: `<div class="note">${node.big ? 'A bigger haul for taking the risky route: double-value reward of coins, fuel, gems, energy, or Career Points.' : 'One random reward: coins, fuel, gems, energy, or Career Points.'}</div>`, actionLabel: 'Go Here' };
   if (node.type === 'match_hazard') return { title: 'Grid Anomaly', art: glyph('🃏'), rows: [], extra: `<div class="note">Grid Anomaly Detected: Tap to hack the Carnival Board for extra fleet gear.</div>`, actionLabel: 'Go Here' };
   return { title: 'Fleet Compound', art: glyph(ICON.castle), rows: [], extra: '<div class="note">Battles, the Dealership, refueling, a card match game, and more.</div>', actionLabel: 'Go Here' };
@@ -3406,8 +3430,8 @@ function mapScreen() {
   }
 
   let nodesHTML='';
-    const NODE_ICON={shop:ICON.cart,rest:ICON.wrench,blacksmith:ICON.hammer,chopshop:ICON.curse,treasure:ICON.gift,castle:ICON.castle,match_hazard:'🃏'};
-    const NODE_TITLE={shop:'Dealership',rest:'Service Station',blacksmith:'Tuning Garage',chopshop:'Chop Shop',treasure:'Supply Cache',castle:'Fleet Compound',match_hazard:'Grid Anomaly'};
+    const NODE_ICON={shop:ICON.cart,rest:ICON.wrench,blacksmith:ICON.hammer,chopshop:ICON.curse,overdrive:ICON.energy,treasure:ICON.gift,castle:ICON.castle,match_hazard:'🃏'};
+    const NODE_TITLE={shop:'Dealership',rest:'Service Station',blacksmith:'Tuning Garage',chopshop:'Chop Shop',overdrive:'Overdrive Bay',treasure:'Supply Cache',castle:'Fleet Compound',match_hazard:'Grid Anomaly'};
       for(let r=0;r<rows.length;r++) for(let c=0;c<rows[r].length;c++){
     const node=rows[r][c], x=25+r*colW+colW/2, y=rowY[Math.min(c,rowY.length-1)];
     const isDone=RUN.path.some(p=>p.row===r&&p.col===c);
@@ -3427,7 +3451,8 @@ function mapScreen() {
     } else if(node.type==='shop') tip='Dealership - buy and sell Items.';
     else if(node.type==='rest') tip='Restore 30 health.';
     else if(node.type==='blacksmith') tip='Spend coins to permanently boost a card, rank, or suit for this run.';
-    else if(node.type==='chopshop') tip='Spend coins to modify your Items for this run: bonus %, uses per turn, max cards, or convert to poison/burn/curse.';
+    else if(node.type==='chopshop') tip='Spend coins to convert an Item to poison, burn, or curse, or add card slots.';
+    else if(node.type==='overdrive') tip='Spend coins to add uses per turn to your equipped Items.';
     else if(node.type==='castle') tip='Choose battles, shopping, refueling, a matching game, or other rewards.';
     else if(node.type==='match_hazard') tip='Grid Anomaly Detected: Tap to hack the Carnival Board for extra fleet gear.';
     else tip='Find coins, fuel, and gems.';
@@ -3494,6 +3519,7 @@ function runUpgradeScreen() {
     : RUN_UPGRADE_RETURN === 'blacksmith' ? 'Back to Tuning Garage'
     : RUN_UPGRADE_RETURN === 'rest' ? 'Back to Service Station'
     : RUN_UPGRADE_RETURN === 'chopshop' ? 'Back to Chop Shop'
+    : RUN_UPGRADE_RETURN === 'overdrive' ? 'Back to Overdrive Bay'
     : roadExitLabel();
   return `${noticeHTML()}<div class="wo" style="max-width:640px;margin-left:auto;margin-right:auto"><div class="wo-stripe"></div><div class="wo-body">
     <div class="wo-eyebrow">Run Upgrade</div><h1>Run <em>Upgrades</em></h1>${currencyBar()}
@@ -3527,11 +3553,12 @@ function battleScreen() {
         const c = BATTLE.hand[cardHandIdx];
         return `<div class="card mini ${suitColorClass(c.color, c.suit)}" data-unassign="${slotKey}|${cardHandIdx}" data-title="Click to take this card back"><div>${rankLabel(c.rank)}</div><div>${c.suit}</div></div>`;
       }).join('');
-      return `<div class="itemCard kind-storage" data-assign="${slotKey}" style="border-style:dashed;border-width:2px"
+      return `<div class="itemCard kind-storage${item.weightless ? ' kind-weightless' : ''}" data-assign="${slotKey}" style="border-style:dashed;border-width:2px"
           ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleCardDrop(event,'${slotKey}',${effectiveMaxCards(item)})">
         <div class="usesBadge hoverTip" data-title="Cards currently held">${idxs.length}/${effectiveMaxCards(item)}</div>
         <div class="itemCard-sec">
           <div class="hdr" style="font-weight:600">${item.name}</div>
+          ${item.weightless ? `<div class="note" style="margin:2px 0"><span class="effectTip" style="color:#1a1a2e" data-tip="Doesn't consume an item card slot">Weightless</span></div>` : ''}
           <div class="note" style="font-size:11px">${stashHoldsLineHTML(item)}</div>
         </div>
         <div class="itemDivider"></div>
@@ -3907,112 +3934,56 @@ function blacksmithScreen() {
   const rows = BLACKSMITH_OPTIONS.map((opt, i) => {
     const b = findBoost(opt);
     const bonus = b ? b.bonus : 0;
-    const maxed = bonus >= 9;
+    const count = b ? (b.count || 0) : 0;
+    const maxed = count >= SCOPE_TUNE_MAX_STACKS;
     const isPrimary = BLACKSMITH_VISIT.primary === i;
     const isSecondary = BLACKSMITH_VISIT.secondary === i;
     const primaryTaken = BLACKSMITH_VISIT.primary !== null;
     const secondaryTaken = BLACKSMITH_VISIT.secondary !== null;
+    const cost = SCOPE_TUNE_COST[opt.scope];
     let btnHTML;
     if (isPrimary || isSecondary) {
       btnHTML = `<button class="wo-btn gray" disabled style="padding:8px 12px;font-size:13px">Upgraded ✓</button>`;
     } else if (maxed) {
       btnHTML = `<button class="wo-btn gray" disabled style="padding:8px 12px;font-size:13px">Maxed out</button>`;
-    } else if (!primaryTaken) {
-      const cost = tuneCost(bonus, false, opt.scope);
-      btnHTML = `<button class="wo-btn amber" data-forge="${i}" style="padding:8px 12px;font-size:13px" ${RUN.chips < cost ? 'disabled' : ''}>Upgrade (+3, ${cost} coins)</button>`;
-    } else if (!secondaryTaken) {
-      const cost = tuneCost(bonus, true, opt.scope);
-      btnHTML = `<button class="wo-btn purple" data-forge="${i}" style="padding:8px 12px;font-size:13px" ${RUN.chips < cost ? 'disabled' : ''}>Also upgrade (+3, ${cost} coins)</button>`;
+    } else if (!primaryTaken || !secondaryTaken) {
+      btnHTML = `<button class="wo-btn amber" data-forge="${i}" style="padding:6px 14px;font-size:14px;font-weight:800" ${RUN.chips < cost ? 'disabled' : ''}>Upgrade</button>`;
     } else {
       btnHTML = `<button class="wo-btn gray" disabled style="padding:8px 12px;font-size:13px">Visit's extra upgrade used</button>`;
     }
-    const visual = opt.scope === 'card'
+    const leftVisual = opt.scope === 'card'
       ? `<div class="card ${suitColorClass(SUITS.find(s=>s.s===opt.suit)?.color, opt.suit)}"><div>${rankLabel(opt.rank)}</div><div style="font-size:16px">${opt.suit}</div></div>`
       : `<span class="vart" style="width:38px;height:52px;font-size:22px;border:2px solid var(--blue);border-radius:5px;background:var(--white)">${opt.scope === 'rank' ? rankLabel(opt.rank) : opt.suit}</span>`;
-    
-    
     const badge = (amt) => amt > 0 ? `<span style="position:absolute;top:-6px;right:-6px;background:#2fae66;color:#fff;font-size:10px;font-weight:800;border-radius:10px;padding:1px 5px;box-shadow:0 0 0 2px #12163a">+${amt}</span>` : '';
-    const beforeMini = `<div style="position:relative;display:inline-block">${visual}${badge(bonus)}</div>`;
-    const afterMini = maxed || (isPrimary || isSecondary) ? '' : `<div style="position:relative;display:inline-block">${visual}${badge(bonus + 3)}</div>`;
-    const previewCost = maxed || isPrimary || isSecondary ? null : (!primaryTaken ? tuneCost(bonus, false, opt.scope) : !secondaryTaken ? tuneCost(bonus, true, opt.scope) : null);
+    const leftMini = `<div style="position:relative;display:inline-block">${leftVisual}${badge(bonus)}</div>`;
+    const rightMini = `<div style="position:relative;display:inline-block">${leftVisual}${badge(maxed ? bonus : bonus + SCOPE_TUNE_DAMAGE[opt.scope])}</div>`;
     return `<div class="shopcard">
-      <div class="hdr"><span>Tune: ${opt.label} ${bonus ? `(currently +${bonus})` : ''}</span><span></span></div>
-      <div style="margin:6px 0;display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center">
-        ${beforeMini}
-        ${afterMini ? `<div style="display:flex;flex-direction:column;align-items:center;gap:2px"><span style="color:#00e676;font-weight:800;font-size:12px;white-space:nowrap">Upgrade ➔</span><span class="price" style="white-space:nowrap">${previewCost} coins</span></div>${afterMini}` : ''}
+      <div style="display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:nowrap">
+        ${leftMini}
+        <span style="font-size:20px;color:var(--dim)">➔</span>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:3px">
+          ${btnHTML}
+          ${maxed || isPrimary || isSecondary ? '' : `<span class="price" style="font-size:11px">${cost} coins</span>`}
+        </div>
+        <span style="font-size:20px;color:var(--dim)">➔</span>
+        ${rightMini}
       </div>
-      <div class="note" style="margin:0 0 6px">${opt.scope === 'card' ? `${rankLabel(opt.rank)}${opt.suit} gets +3 damage.` : opt.scope === 'rank' ? `All ${rankLabel(opt.rank)} cards get +3 damage.` : `All ${opt.suit} cards get +3 damage.`}</div>
-      ${btnHTML}
     </div>`;
   }).join('');
-  const uniqueItemIds = [...new Set(RUN.hero.items)];
-  if (!GARAGE_SELECTED_ITEM || !uniqueItemIds.includes(GARAGE_SELECTED_ITEM)) {
-    GARAGE_SELECTED_ITEM = uniqueItemIds.includes('fender_bender') ? 'fender_bender' : (uniqueItemIds[0] || null);
-  }
-  const directoryHTML = uniqueItemIds.map(id => {
+  const equippedChecklist = [...new Set(RUN.hero.items)].map(id => {
     const item = ITEMS[id]; if (!item) return '';
-    const active = id === GARAGE_SELECTED_ITEM;
-    return `<button class="wo-btn ${active ? 'amber' : 'gray'}" data-garageselect="${id}" style="width:100%;text-align:left;margin-bottom:6px;padding:8px 10px;font-size:12px">${item.name}</button>`;
-  }).join('');
-  
-  
-  
-  const holoCompareBlock = (beforeHTML, afterHTML, cost) => `<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center;margin:8px 0">
-      <div>${beforeHTML}</div>
-      <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
-        <span style="color:#00e676;font-weight:800;font-size:13px;white-space:nowrap">Upgrade ➔</span>
-        <span class="price" style="white-space:nowrap">${cost} coins</span>
-      </div>
-      <div>${afterHTML}</div>
+    const lvlCap = itemLevelCap(item);
+    if (lvlCap <= 0) return '';
+    const lvl = itemLevel(id), maxed = lvl >= lvlCap;
+    const cost = maxed ? 0 : itemTuneCost(item, lvl);
+    return `<div class="shopcard" style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+      <span><b>${item.name}</b> <span class="note" style="margin:0">Bonus Lv ${lvl}/${lvlCap}</span></span>
+      <span style="display:flex;gap:6px;align-items:center">
+        ${lvl > 0 ? `<button class="wo-btn gray" data-bonusdown="${id}" style="padding:4px 8px;font-size:11px">Refund</button>` : ''}
+        ${maxed ? `<span class="note" style="margin:0">Maxed</span>` : `<button class="wo-btn amber" data-bonusup="${id}" style="padding:4px 8px;font-size:11px" ${RUN.chips < cost ? 'disabled' : ''}>Level Up (${cost})</button>`}
+      </span>
     </div>`;
-  let holoHTML = '<div class="note">No item selected.</div>';
-  const selectedItem = GARAGE_SELECTED_ITEM ? ITEMS[GARAGE_SELECTED_ITEM] : null;
-  if (selectedItem) {
-    const id = selectedItem.id;
-    const sections = [];
-
-    const lvlCap = itemLevelCap(selectedItem);
-    if (lvlCap > 0) {
-      const lvl = itemLevel(id), maxed = lvl >= lvlCap;
-      const cost = maxed ? 0 : itemTuneCost(selectedItem, lvl);
-      const before = renderStandardItemCard(selectedItem, { level: lvl });
-      const after = maxed ? before : renderStandardItemCard(selectedItem, { level: lvl + 1 });
-      sections.push(`<div class="hdr" style="margin-top:10px"><span>Bonus Level (Lv ${lvl}/${lvlCap})</span></div>
-        ${holoCompareBlock(before, after, maxed ? 'MAX' : cost)}
-        <div style="display:flex;justify-content:center;gap:6px">
-          ${lvl > 0 ? `<button class="wo-btn gray" data-bonusdown="${id}" style="padding:6px 10px;font-size:12px">Refund</button>` : ''}
-          ${maxed ? '' : `<button class="wo-btn amber" data-bonusup="${id}" style="padding:6px 10px;font-size:12px" ${RUN.chips < cost ? 'disabled' : ''}>Level Up</button>`}
-        </div>`);
-    }
-
-    const capLvl = itemMaxCardsLevel(id), capMaxed = capLvl >= ITEM_MAX_CARDS_BONUS_CAP;
-    const capCost = capMaxed ? 0 : itemMaxCardsTuneCost(capLvl);
-    const capBefore = renderStandardItemCard(selectedItem, {});
-    let capAfter = capBefore;
-    if (!capMaxed) { RUN.itemMaxCardsLevels[id] = capLvl + 1; capAfter = renderStandardItemCard(selectedItem, {}); RUN.itemMaxCardsLevels[id] = capLvl; }
-    sections.push(`<div class="hdr" style="margin-top:14px"><span>Card Capacity (Lv ${capLvl}/${ITEM_MAX_CARDS_BONUS_CAP})</span></div>
-      ${holoCompareBlock(capBefore, capAfter, capMaxed ? 'MAX' : capCost)}
-      <div style="display:flex;justify-content:center;gap:6px">
-        ${capLvl > 0 ? `<button class="wo-btn gray" data-cardsdown="${id}" style="padding:6px 10px;font-size:12px">Refund</button>` : ''}
-        ${capMaxed ? '' : `<button class="wo-btn amber" data-cardsup="${id}" style="padding:6px 10px;font-size:12px" ${RUN.chips < capCost ? 'disabled' : ''}>+1 Capacity</button>`}
-      </div>`);
-
-    if (selectedItem.kind !== 'storage' && selectedItem.usesPerTurnPerLevel) {
-      const usesLvl = itemUsesLevel(id), usesMaxed = usesLvl >= ITEM_MAX_USES_LEVEL;
-      const usesCost = usesMaxed ? 0 : itemUsesTuneCost(usesLvl);
-      const usesBefore = renderStandardItemCard(selectedItem, {});
-      let usesAfter = usesBefore;
-      if (!usesMaxed) { RUN.itemUsesLevels[id] = usesLvl + 1; usesAfter = renderStandardItemCard(selectedItem, {}); RUN.itemUsesLevels[id] = usesLvl; }
-      sections.push(`<div class="hdr" style="margin-top:14px"><span>Uses Per Turn (Lv ${usesLvl}/${ITEM_MAX_USES_LEVEL})</span></div>
-        ${holoCompareBlock(usesBefore, usesAfter, usesMaxed ? 'MAX' : usesCost)}
-        <div style="display:flex;justify-content:center;gap:6px">
-          ${usesLvl > 0 ? `<button class="wo-btn gray" data-usesdown="${id}" style="padding:6px 10px;font-size:12px">Refund</button>` : ''}
-          ${usesMaxed ? '' : `<button class="wo-btn amber" data-usesup="${id}" style="padding:6px 10px;font-size:12px" ${RUN.chips < usesCost ? 'disabled' : ''}>+1 Use Per Turn</button>`}
-        </div>`);
-    }
-
-    holoHTML = sections.join('') || '<div class="note">This item has no run-scoped upgrades available.</div>';
-  }
+  }).filter(Boolean).join('');
   const visitNote = BLACKSMITH_VISIT.primary === null
     ? `Pick one card to pay for a main upgrade. You can pay a bit more to also upgrade a second card in the same visit.`
     : (BLACKSMITH_VISIT.secondary === null ? `You can pay extra to also upgrade one more card this visit, or move on.` : `You've used both upgrades this visit. Come back another time to tune more.`);
@@ -4029,14 +4000,8 @@ function blacksmithScreen() {
           <button class="wo-btn purple" id="openRunUpgradeFromBlacksmithBtn" style="flex:1">Upgrades</button>
         </div>
         <div style="margin:12px 0">${rows}</div>
-        <div class="hdr" style="margin-top:14px"><span>Equipped Items</span></div>
-        <div style="display:grid;grid-template-columns:150px 1fr;gap:14px;align-items:start;margin-top:8px">
-          <div class="panel" style="margin:0">${directoryHTML || '<div class="note">No items equipped.</div>'}</div>
-          <div class="panel" style="margin:0">
-            <div class="hdr"><span>Holo-Viewer${selectedItem ? `: ${selectedItem.name}` : ''}</span></div>
-            ${holoHTML}
-          </div>
-        </div>
+        <div class="hdr" style="margin-top:14px"><span>Equipped Items - Bonus Level</span></div>
+        <div style="margin-top:8px">${equippedChecklist || '<div class="note">No items with a Bonus Level track equipped.</div>'}</div>
       </div>
     </div>
   `;
@@ -4211,15 +4176,104 @@ function upgradeScreen() {
   `;
 }
 
+/****************************************************************************
+* OVERDRIVE BAY                                                            *
+****************************************************************************/
+function overdriveBayScreen() {
+  const holoCompareBlock = (beforeHTML, afterHTML, cost) => `<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center;margin:8px 0">
+      <div>${beforeHTML}</div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+        <span style="color:#00e676;font-weight:800;font-size:13px;white-space:nowrap">Upgrade ➔</span>
+        <span class="price" style="white-space:nowrap">${cost} coins</span>
+      </div>
+      <div>${afterHTML}</div>
+    </div>`;
+  const uniqueItemIds = [...new Set(RUN.hero.items)].filter(id => ITEMS[id] && ITEMS[id].kind !== 'storage' && ITEMS[id].usesPerTurnPerLevel);
+  const rows = uniqueItemIds.map(id => {
+    const item = ITEMS[id];
+    const usesLvl = itemUsesLevel(id), usesMaxed = usesLvl >= ITEM_MAX_USES_LEVEL;
+    const usesCost = usesMaxed ? 0 : itemUsesTuneCost(usesLvl);
+    const before = renderStandardItemCard(item, {});
+    let after = before;
+    if (!usesMaxed) { RUN.itemUsesLevels[id] = usesLvl + 1; after = renderStandardItemCard(item, {}); RUN.itemUsesLevels[id] = usesLvl; }
+    return `<div class="shopcard">
+      <div class="hdr"><span>${item.name}</span><span>Uses Per Turn (Lv ${usesLvl}/${ITEM_MAX_USES_LEVEL})</span></div>
+      ${holoCompareBlock(before, after, usesMaxed ? 'MAX' : usesCost)}
+      <div style="display:flex;justify-content:center;gap:6px">
+        ${usesLvl > 0 ? `<button class="wo-btn gray" data-usesdown="${id}" style="padding:6px 10px;font-size:12px">Refund</button>` : ''}
+        ${usesMaxed ? '' : `<button class="wo-btn amber" data-usesup="${id}" style="padding:6px 10px;font-size:12px" ${RUN.chips < usesCost ? 'disabled' : ''}>+1 Use Per Turn</button>`}
+      </div>
+    </div>`;
+  }).join('');
+  return `${noticeHTML()}<div class="wo"><div class="wo-stripe"></div><div class="wo-body">
+    <div class="wo-eyebrow">Overdrive Bay &middot; Run Upgrade (resets next run)</div><h1>Boost <em>Uses Per Turn</em></h1>${currencyBar()}
+    <div style="display:flex;gap:8px;margin:10px 0">
+      <button class="wo-btn teal" id="leaveOverdriveBtn" style="flex:1">${RETURN_TO_CASTLE_MENU ? 'Back to Compound' : roadExitLabel()}</button>
+      <button class="wo-btn purple" id="openRunUpgradeFromOverdriveBtn" style="flex:1">Upgrades</button>
+    </div>
+    <div style="margin:12px 0">${rows || '<div class="note">No eligible Items equipped.</div>'}</div>
+  </div></div>`;
+}
+
+/****************************************************************************
+* CHOP SHOP PREVIEWS                                                       *
+****************************************************************************/
 function chopShopScreen(returnTo) {
   const rows = RUN.hero.items.map((itemId,index)=>{
     const item=ITEMS[itemId]; if(!item) return '';
     const instanceKey=`${itemId}_${index}`; const current=RUN.itemKindOverride[instanceKey] || RUN.itemKindOverride[itemId];
-    const baseKind=item.kind;
     const alreadyModified=!!current;
-    const buttons=alreadyModified ? `<span class="note">Already modified to <b>${current}</b>. No further modification this run.</span>` :
-      ['poison','burn','curse'].map(k=>`<button class="wo-btn ${k==='poison'?'':'purple'}" data-kindconvert="${itemId}" data-item-index="${index}" data-kindto="${k}" style="padding:7px 10px;font-size:12px" ${RUN.chips<itemKindConvertCost()?'disabled':''}>Convert to ${k[0].toUpperCase()+k.slice(1)} (${itemKindConvertCost()} coins)</button>`).join('');
-    return `<div class="shopcard"><div class="hdr"><span>${item.name}</span><span>Item ${index+1}</span></div><div class="note">Add one special effect to this Item only. This cannot be refunded or changed during the run.</div><div style="display:flex;gap:8px;flex-wrap:wrap">${buttons}</div></div>`;
+    const original = renderStandardItemCard(item, {});
+    const convertCost = itemKindConvertCost();
+
+    let convertBlockHTML;
+    if (item.kind === 'storage') {
+      convertBlockHTML = `<div class="note" style="text-align:center;width:100%">Stash Items can't be converted to an element.</div>`;
+    } else if (alreadyModified) {
+      convertBlockHTML = `<div class="note" style="text-align:center;width:100%">Already modified to <b>${current}</b>. No further modification this run.</div>`;
+    } else {
+      const previewCols = ['poison','burn','curse'].map(k => {
+        RUN.itemKindOverride[instanceKey] = k;
+        const previewCard = renderStandardItemCard(item, {});
+        delete RUN.itemKindOverride[instanceKey];
+        return `<div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+          ${previewCard}
+          <button class="wo-btn ${k==='poison'?'green':k==='burn'?'red':'purple'}" data-kindconvert="${itemId}" data-item-index="${index}" data-kindto="${k}" style="padding:6px 10px;font-size:11px" ${RUN.chips<convertCost?'disabled':''}>Convert to ${k[0].toUpperCase()+k.slice(1)}</button>
+          <span class="price" style="font-size:10px">${convertCost} coins</span>
+        </div>`;
+      }).join('');
+      convertBlockHTML = `<div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">${previewCols}</div>`;
+    }
+
+    let capacityHTML = '';
+    if (item.kind !== 'storage') {
+      const capLvl = itemMaxCardsLevel(itemId), capMaxed = capLvl >= ITEM_MAX_CARDS_BONUS_CAP;
+      const capCost = capMaxed ? 0 : itemMaxCardsTuneCost(capLvl);
+      let capAfterHTML = original;
+      if (!capMaxed) { RUN.itemMaxCardsLevels[itemId] = capLvl + 1; capAfterHTML = renderStandardItemCard(item, {}); RUN.itemMaxCardsLevels[itemId] = capLvl; }
+      capacityHTML = `<div style="margin-top:10px">
+        <div class="hdr" style="justify-content:center"><span>Card Capacity (Lv ${capLvl}/${ITEM_MAX_CARDS_BONUS_CAP})</span></div>
+        <div style="display:flex;align-items:center;gap:10px;justify-content:center;margin-top:6px">
+          ${original}
+          <span style="font-size:18px;color:var(--dim)">➔</span>
+          ${capAfterHTML}
+        </div>
+        <div style="text-align:center;margin-top:6px">
+          ${capLvl > 0 ? `<button class="wo-btn gray" data-cardsdown="${itemId}" style="padding:5px 10px;font-size:11px;margin-right:6px">Refund</button>` : ''}
+          ${capMaxed ? `<span class="note">Maxed</span>` : `<button class="wo-btn amber" data-cardsup="${itemId}" style="padding:5px 10px;font-size:11px" ${RUN.chips<capCost?'disabled':''}>+1 Capacity (${capCost} coins)</button>`}
+        </div>
+      </div>`;
+    }
+
+    return `<div class="shopcard">
+      <div class="hdr"><span>${item.name}</span><span>Item ${index+1}</span></div>
+      <div style="display:flex;align-items:center;gap:12px;justify-content:center;flex-wrap:wrap;margin:8px 0">
+        ${original}
+        ${item.kind !== 'storage' ? `<span style="font-size:20px;color:var(--dim)">➔</span>` : ''}
+        ${convertBlockHTML}
+      </div>
+      ${capacityHTML}
+    </div>`;
   }).join('');
   return `${noticeHTML()}<div class="wo"><div class="wo-stripe"></div><div class="wo-body">
     <div class="wo-eyebrow">Chop Shop</div><h1>Special <em>Modifications</em></h1>${currencyBar()}
@@ -4227,7 +4281,7 @@ function chopShopScreen(returnTo) {
       <button class="wo-btn teal" id="leaveChopShopBtn" style="flex:1">${RETURN_TO_CASTLE_MENU?'Back to Compound':roadExitLabel()}</button>
       <button class="wo-btn purple" id="openRunUpgradeFromChopShopBtn" style="flex:1">Upgrades</button>
     </div>
-    <div class="note" style="margin:10px 0">Only Items you currently own can be modified. One special effect per Item.</div>
+    <div class="note" style="margin:10px 0">Convert an Item to poison, burn, or curse (one per Item, run only), or add card slots.</div>
     <div style="margin:12px 0">${rows || '<div class="note">No Items available.</div>'}</div>
   </div></div>`;
 }
@@ -4342,6 +4396,7 @@ function render(html) {
   if (playerNameInput) playerNameInput.onchange = () => { META.playerName = playerNameInput.value.trim().slice(0, 18); saveMeta(); };
   const viewUpgradesBtn = document.getElementById('viewUpgradesBtn'); if (viewUpgradesBtn) viewUpgradesBtn.onclick = () => render(upgradeScreen());
   const leaveChopShopBtn = document.getElementById('leaveChopShopBtn'); if (leaveChopShopBtn) leaveChopShopBtn.onclick = () => render(RETURN_TO_CASTLE_MENU ? castleMenuScreen() : mapScreen());
+  const leaveOverdriveBtn = document.getElementById('leaveOverdriveBtn'); if (leaveOverdriveBtn) leaveOverdriveBtn.onclick = () => render(RETURN_TO_CASTLE_MENU ? castleMenuScreen() : mapScreen());
     
   const stationFuelBtn = document.getElementById('stationFuelBtn');
   if (stationFuelBtn) {
@@ -4443,7 +4498,7 @@ function render(html) {
     RUN.chips -= cost;
     RUN.itemUsesLevels[item.id] = lvl + 1;
     saveRun();
-    render(blacksmithScreen());
+    render(overdriveBayScreen());
   });
   app.querySelectorAll('[data-usesdown]').forEach(el => el.onclick = () => {
     const item = ITEMS[el.dataset.usesdown];
@@ -4453,7 +4508,7 @@ function render(html) {
     RUN.itemUsesLevels[item.id] = lvl - 1;
     RUN.chips += refund;
     saveRun();
-    render(blacksmithScreen());
+    render(overdriveBayScreen());
   });
   app.querySelectorAll('[data-cardsup]').forEach(el => el.onclick = () => {
     const item = ITEMS[el.dataset.cardsup];
@@ -4464,7 +4519,7 @@ function render(html) {
     RUN.chips -= cost;
     RUN.itemMaxCardsLevels[item.id] = lvl + 1;
     saveRun();
-    render(blacksmithScreen());
+    render(chopShopScreen());
   });
   app.querySelectorAll('[data-cardsdown]').forEach(el => el.onclick = () => {
     const item = ITEMS[el.dataset.cardsdown];
@@ -4474,7 +4529,7 @@ function render(html) {
     RUN.itemMaxCardsLevels[item.id] = lvl - 1;
     RUN.chips += refund;
     saveRun();
-    render(blacksmithScreen());
+    render(chopShopScreen());
   });
   app.querySelectorAll('[data-kindconvert]').forEach(el => el.onclick = () => {
     const itemId = el.dataset.kindconvert; const to = el.dataset.kindto;
@@ -4519,6 +4574,7 @@ function render(html) {
       RUN_UPGRADE_RETURN === 'shop' ? shopScreen(RUN_UPGRADE_RETURN_FROMCASTLE) :
       RUN_UPGRADE_RETURN === 'blacksmith' ? blacksmithScreen() :
       RUN_UPGRADE_RETURN === 'chopshop' ? chopShopScreen() :
+      RUN_UPGRADE_RETURN === 'overdrive' ? overdriveBayScreen() :
       mapScreen());
   };
   const openRunUpgradeFromMapBtn = document.getElementById('openRunUpgradeFromMapBtn'); if (openRunUpgradeFromMapBtn) openRunUpgradeFromMapBtn.onclick = () => { RUN_UPGRADE_RETURN = 'map'; render(runUpgradeScreen()); };
@@ -4527,6 +4583,7 @@ function render(html) {
   const openRunUpgradeFromBlacksmithBtn = document.getElementById('openRunUpgradeFromBlacksmithBtn'); if (openRunUpgradeFromBlacksmithBtn) openRunUpgradeFromBlacksmithBtn.onclick = () => { RUN_UPGRADE_RETURN = 'blacksmith'; render(runUpgradeScreen()); };
   const openRunUpgradeFromRestBtn = document.getElementById('openRunUpgradeFromRestBtn'); if (openRunUpgradeFromRestBtn) openRunUpgradeFromRestBtn.onclick = () => { RUN_UPGRADE_RETURN = 'rest'; render(runUpgradeScreen()); };
   const openRunUpgradeFromChopShopBtn = document.getElementById('openRunUpgradeFromChopShopBtn'); if (openRunUpgradeFromChopShopBtn) openRunUpgradeFromChopShopBtn.onclick = () => { RUN_UPGRADE_RETURN = 'chopshop'; render(runUpgradeScreen()); };
+  const openRunUpgradeFromOverdriveBtn = document.getElementById('openRunUpgradeFromOverdriveBtn'); if (openRunUpgradeFromOverdriveBtn) openRunUpgradeFromOverdriveBtn.onclick = () => { RUN_UPGRADE_RETURN = 'overdrive'; render(runUpgradeScreen()); };
   app.querySelectorAll('[data-levelup]').forEach(el => el.onclick = () => {
     const u = UPGRADE_DEFS.find(x => x.id === el.dataset.levelup);
     if (!upgradeUnlocked(u)) return;
@@ -4553,6 +4610,7 @@ function render(html) {
   const castleWizardNavBtn = document.getElementById('castleWizardNavBtn'); if (castleWizardNavBtn) castleWizardNavBtn.onclick = () => { if (!RUN.castleState) RUN.castleState = {}; if (RUN.castleState.matchPlayed) return; MATCH_RETURN_TO_MAP = false; MATCH_OVERLAY_ACTIVE = true; renderMatchOverlay(); };
   const castleBlacksmithNavBtn = document.getElementById('castleBlacksmithNavBtn'); if (castleBlacksmithNavBtn) castleBlacksmithNavBtn.onclick = () => { RETURN_TO_CASTLE_MENU = true; BLACKSMITH_OPTIONS = pickBlacksmithOptions(); BLACKSMITH_VISIT = { primary: null, secondary: null }; render(blacksmithScreen()); };
   const castleChopShopNavBtn = document.getElementById('castleChopShopNavBtn'); if (castleChopShopNavBtn) castleChopShopNavBtn.onclick = () => { RETURN_TO_CASTLE_MENU = true; render(chopShopScreen()); };
+  const castleOverdriveNavBtn = document.getElementById('castleOverdriveNavBtn'); if (castleOverdriveNavBtn) castleOverdriveNavBtn.onclick = () => { RETURN_TO_CASTLE_MENU = true; render(overdriveBayScreen()); };
   const castleShopNavBtn = document.getElementById('castleShopNavBtn'); if (castleShopNavBtn) castleShopNavBtn.onclick = () => { RETURN_TO_CASTLE_MENU = true; render(shopScreen(true)); };
   const castleInnNavBtn = document.getElementById('castleInnNavBtn'); if (castleInnNavBtn) castleInnNavBtn.onclick = () => render(castleInnScreen());
   const backToCastleMenuBtn = document.getElementById('backToCastleMenuBtn'); if (backToCastleMenuBtn) backToCastleMenuBtn.onclick = () => render(castleMenuScreen());
@@ -4726,11 +4784,11 @@ function render(html) {
     const i = +el.dataset.forge;
     const opt = BLACKSMITH_OPTIONS[i];
     const b = findBoost(opt);
-    const bonus = b ? b.bonus : 0;
-    if (bonus >= 9) return;
+    const count = b ? (b.count || 0) : 0;
+    if (count >= SCOPE_TUNE_MAX_STACKS) return;
     const isSecondary = BLACKSMITH_VISIT.primary !== null;
     if (isSecondary && BLACKSMITH_VISIT.secondary !== null) return;
-    const cost = tuneCost(bonus, isSecondary, opt.scope);
+    const cost = tuneCost(b ? b.bonus : 0, isSecondary, opt.scope);
     if (RUN.chips < cost) return;
     RUN.chips -= cost;
     boostCard(opt);
@@ -4979,6 +5037,9 @@ document.addEventListener('mouseover', (e) => {
 
   
   META.devModeActive=META.playerName?.toLowerCase()==='devmode';
+  /****************************************************************************
+* RUN DASHBOARD SYSTEM                                                     *
+****************************************************************************/
   window.runSummaryScreen=function(){
     if(!RUN)return metaScreen();
     const r=RUN.runUpgrades||{};const rows=[];
@@ -5027,7 +5088,7 @@ document.addEventListener('mouseover', (e) => {
         if(id==='impound_release'){const l=utilityLevel(id),cost=l>=2?0:Math.round(75*Math.pow(2,l));return `<div class="shopcard"><b>Impound Release Charge Upgrade</b><div class="note">Current: ${Math.max(35,45-l*5)}. Upgrade lowers the threshold by 5, down to 35.</div><button class="wo-btn purple" data-utilityup="impound_release" ${l>=2||RUN.chips<cost?'disabled':''}>${l>=2?'Maxed':'Lower Charge Threshold ('+cost+' coins)'}</button></div>`;}
         return '';
       }).join('');
-      if(extra)html=html.replace('</div></div>',''+extra+'</div></div>');
+      if(extra){const at=html.lastIndexOf('</div></div>');if(at>=0)html=html.slice(0,at)+extra+html.slice(at);}
     }
     return html;
   };chopShopScreen=window.chopShopScreen;

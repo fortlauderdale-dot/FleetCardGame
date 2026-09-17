@@ -17,8 +17,6 @@
   }
   *{box-sizing:border-box}
   html,body{margin:0;min-height:100vh;background:var(--bg);background-attachment:fixed;color:var(--ink);font-family:var(--disp);font-size:16px;overflow-x:hidden}
-  
-
   body.world-2{--bg:linear-gradient(135deg, #1c2a1c 0%, #23241f 55%, #14261f 100%)}
   body.world-2 .panel{border-color:#00e676}
   body.world-2 .wo{box-shadow:0 0 20px rgba(0,230,118,0.3),6px 6px 0 #1a2038}
@@ -31,7 +29,6 @@
   .map-popup-overlay .wo{max-width:400px;width:100%;margin:0}
   .map-popup-overlay .wo.wide{max-width:640px}
   .treasure-prize{font-size:28px;font-weight:800;color:var(--blue);text-align:center;margin:16px 0}
-
   .wo{background:var(--white);color:var(--ink);border:3px solid var(--blue-dark);border-radius:12px;box-shadow:0 0 20px rgba(31,182,166,0.25),6px 6px 0 #1a2038;padding:0;margin:16px 0;overflow:hidden}
   .wo-stripe{height:10px;background:linear-gradient(90deg,#2b3350 0%,#3d4a72 50%,#1fb6a6 100%)}
   .wo-body{padding:20px 22px 24px}
@@ -44,14 +41,11 @@
   .wo-btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--blue-dark)}
   .wo-btn.amber{background:var(--amber);color:#062622;border-color:#0d8377}
   .wo-btn.gray{background:#3a4160;border-color:#252b46}
-  
-
   #backToCastleMenuBtn{border:1px solid #1fb6a6;box-shadow:0 0 6px rgba(31,182,166,0.5)}
   .wo-btn.purple{background:var(--purple);border-color:#5c2ea0}
   .wo-btn.green{background:var(--green);border-color:#1f7a48}
   .wo-btn:disabled{opacity:.4;cursor:default}
   .wo-btn.half{width:48%}
-
   h1,h3{color:#1fb6a6;text-shadow:0 1px 0 #0b0f19}
   .wo h1 em{text-shadow:0 1px 0 #0b0f19}
   .panel{background:rgba(21,27,45,0.85) !important;border:1px solid rgba(31,182,166,0.3);border-radius:10px;padding:14px;margin-bottom:12px;box-shadow:none}
@@ -62,18 +56,11 @@
   .bar-hp{background:var(--red)} .bar-health{background:var(--blue)}
   .bar-text{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#ffffff;font-family:var(--mono);pointer-events:none}
   .duelSide .bar-text{font-size:14px}
-
   .grid{display:flex;flex-wrap:wrap;gap:10px}
   .currencies{display:flex;gap:10px;flex-wrap:wrap;align-items:center;font-family:var(--mono);font-size:11.5px}
-  
-
-
   .currencyHeader{position:fixed;top:0;left:0;right:0;z-index:9999;max-width:1180px;margin:0 auto;box-sizing:border-box;
     padding:9px 18px;background:#12163a;border-bottom:1px solid rgba(31,182,166,0.3);box-shadow:0 2px 10px rgba(0,0,0,0.35)}
   .cur{border:1px solid var(--blue-light);border-radius:6px;padding:4px 8px}
-  
-
-
   .panel:has(> .currencyHeader){padding:0;border:none;background:transparent !important;box-shadow:none;min-height:0;margin:0}
   .cur.gem{color:var(--purple);border-color:var(--purple);background:#f5effd} .cur.fuel{color:var(--green);border-color:var(--green);background:#eef9ee} .cur.energy{color:var(--energy);border-color:var(--energy);background:rgba(0,245,212,0.08)} .cur.chip{color:#a35f00;border-color:var(--amber);background:#fff4e0} .cur.pts{color:#ffd54a;border:1px solid #ffd54a;background:#1a2038} .cur.health{color:var(--red);border-color:var(--red);background:#fdecec}
   .cur{position:relative;cursor:help}[data-title]:hover::after{content:attr(data-title);position:absolute;z-index:50;left:50%;transform:translateX(-50%);top:calc(100% + 6px);width:max-content;max-width:220px;background:#000000;color:#ffffff;padding:7px 9px;border-radius:6px;font:12px var(--disp);white-space:normal;box-shadow:0 0 8px rgba(31,182,166,0.4);border:1px solid #1fb6a6;text-align:left;pointer-events:none}[data-title]{position:relative;cursor:help}.bossPreview{border:2px solid var(--red);background:#1a0e0e}.mapboss{font-size:12px;font-family:var(--mono);color:var(--dim);margin-top:8px}
@@ -88,7 +75,6 @@
     .matchGrid{max-width:520px !important}
     .matchGrid .card.mini{height:76px;font-size:15px}
   }
-
   .duelHead{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:flex-start}
   .vsMark{align-self:center}
   .duelSide{display:flex;align-items:center;gap:8px}
@@ -101,14 +87,12 @@
   .rewardRow .cur{font-size:9px;padding:2px 5px;white-space:nowrap}
   .vsMark{font-family:var(--mono);font-weight:800;color:var(--dim);font-size:13px}
   .bigicon{font-size:30px;line-height:1}
-
   .duelBoard{display:grid;grid-template-columns:1fr 160px 1fr;gap:8px;align-items:start}
   @media (max-width:700px){ .duelBoard{grid-template-columns:1fr} .duelHead{grid-template-columns:1fr 1fr} .vsMark{display:none} }
   .deckStack{text-align:center;padding-top:20px;display:flex;flex-direction:column;align-items:center;gap:10px;width:100%;box-sizing:border-box}.deckStack .card.back{cursor:default;pointer-events:none}
   .deckStack .card.back::after{content:none}
   .wo-btn.red{background:var(--red);border-color:#a83236}
   .wo-btn.teal{background:transparent;border:2px solid #1fb6a6;color:#1fb6a6;box-shadow:none}
-
   .duelMatchup {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -137,16 +121,11 @@
   .vslot .vname{font-weight:700;font-size:15px;color:var(--blue)}
   .vslot .vreq{font-family:var(--mono);font-size:10.5px;color:var(--dim);margin:3px 0}
   .vslot .vcards{display:flex;gap:3px;flex-wrap:wrap;min-height:30px;margin-top:6px}
-
   .itemGrid{display:grid;grid-template-columns:repeat(auto-fill,140px);justify-content:center;gap:6px}
   @media (max-width:700px){
     .itemGrid{grid-template-columns:repeat(auto-fill,130px);gap:5px}
     .itemGrid .itemCard{font-size:11px;padding:6px}
   }
-  
-
-
-
   .popupItemRow{display:grid;grid-template-columns:repeat(auto-fill,140px);justify-content:center;gap:8px}
   .pickItemRow{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-start}
   .pickItemRow .itemCard{flex:0 0 140px;width:140px}
@@ -275,8 +254,6 @@
   @media (max-width:600px){
     .log{height:204px;max-height:204px;font-size:11px}
     
-
-
     .hand .card:not(.mini){width:40px;height:54px;font-size:14px}
     .hand .card:not(.mini) div:last-child{font-size:19px}
     .itemCard{font-size:11.5px}
@@ -285,7 +262,6 @@
   }
   @media (max-width:480px){
     
-
     #app{padding-top:92px}
   }
   .status{font-weight:800}.poisonText{color:#3f8f4f}.burnText{color:#c53d2f}.curseText{color:#7a45b5}.poisonStatus{color:#3f8f4f}.burnStatus{color:#c53d2f}.curseStatus{color:#7a45b5}
@@ -317,8 +293,6 @@
 /****************************************************************************
 * WORLD NAMING                                                             *
 ****************************************************************************/
-
-
 const WORLD_NAMES = {
   1: 'A1A Coastline',
   2: 'Alligator Alley',
@@ -335,16 +309,9 @@ const WORLD_NAMES = {
 const SUITS = [{ s: '♦', color: 'red' }, { s: '♣', color: 'blk' }, { s: '♥', color: 'red' }, { s: '♠', color: 'blk' }];
 const RANK_LABEL = { 11: 'J', 12: 'Q', 13: 'K', 14: 'A' };
 function rankLabel(r) { return RANK_LABEL[r] || String(r); }
-
-
 function suitColorClass(color, suit) { return color === 'red' ? 'red' : (suit === '♣' ? 'suit-club' : ''); }
 
-
-
 const SIGMA_TIP = `<span class="hoverTip" data-title="Summation: The total face value of all cards used to satisfy this item's requirements.">Σ</span>`;
-
-
-
 function suitMicroCardHTML(suit) {
   const cls = suitColorClass(suit === '♥' || suit === '♦' ? 'red' : 'black', suit);
   return `<span class="suitMicroCard ${cls}">${suit}</span>`;
@@ -419,7 +386,6 @@ function formatRewardParts(reward, labels = { coins: 'coins', gems: 'gems', fuel
     .join(', ');
 }
 
-
 let AUDIO_CTX = null;
 function getAudioCtx() {
   if (AUDIO_CTX) return AUDIO_CTX;
@@ -461,15 +427,6 @@ function playSfx(kind) {
   else fire();
 }
 
-
-
-
-
-
-
-
-
-
 function unlockAudioCtx() {
   const ctx = getAudioCtx();
   if (ctx && ctx.state === 'suspended') ctx.resume().catch(() => {});
@@ -492,8 +449,6 @@ function flashScreen(kind) {
     setTimeout(() => { el.style.opacity = '0'; }, 90);
   } catch (e) {}
 }
-
-
 function showDamagePopup(amount, sourceName) {
   try {
     const el = document.createElement('div');
@@ -504,19 +459,8 @@ function showDamagePopup(amount, sourceName) {
     setTimeout(() => { el.remove(); }, 1400);
   } catch (e) {}
 }
-
-
-
-
-
-
-
-
 function avgCardValue() { let total = 0; for (let r = 2; r <= 14; r++) total += cardValue(r); return total / 13; }
 const AVG_CARD_VALUE = avgCardValue(); 
-
-
-
 
 function expectedMultForPoolSize(poolSize) {
   if (poolSize <= 1) return 1.0;
@@ -525,10 +469,6 @@ function expectedMultForPoolSize(poolSize) {
   if (poolSize <= 4) return 1.4;
   return 1.55;
 }
-
-
-
-
 function opponentPowerScore(opp, turn = 3) {
   const attacks = (opp.attacks && opp.attacks.length) ? opp.attacks : [{ maxCards: 3 }];
   const avgMaxCards = attacks.reduce((a, x) => a + (x.maxCards || 3), 0) / attacks.length;
@@ -537,10 +477,6 @@ function opponentPowerScore(opp, turn = 3) {
   const usesPerTurn = opp.usesPerTurn || 1;
   return Math.round(usesPerTurn * avgMaxCards * AVG_CARD_VALUE * mult);
 }
-
-
-
-
 function itemPowerScore(item) {
   if (item.kind === 'defense' || item.kind === 'storage' || item.kind === 'poison' || item.kind === 'burn') return 0;
   const maxCards = item.maxCards || 1;
@@ -548,10 +484,6 @@ function itemPowerScore(item) {
   const bonusMult = 1 + (item.bonus ? (item.bonus.base || 0) : 0);
   return Math.round(usesPerTurn * maxCards * AVG_CARD_VALUE * (item.baseMult ?? 1) * bonusMult);
 }
-
-
-
-
 function opponentTraitTags(opp) {
   const tags = [];
   if (opp.boss) tags.push('Boss - multiple attacks per turn, can curse your Items');
@@ -614,33 +546,16 @@ const ICON = {
   palm:   `🌴`,
   sun:    `☀️`,
 };
-
-
 function art(entity, px) {
   const fb = (entity && entity.icon) || ICON.truck;
-  
-  
-  
-  
-  
-  
-  
   return `<span class="vart" style="width:${px}px;height:${px}px;font-size:${px}px">${fb}</span>`;
 }
 const PLAYER_ART = { name: 'Your Fleet', icon: '🚚', image: 'vehicles/work-truck.jpg' };
 function fleetLabel() { return META.playerName ? `${META.playerName}'s Fleet` : 'Your Fleet'; }
-
-
-
 function roadExitLabel() { return `Back to ${WORLD_NAMES[RUN && RUN.world] || WORLD_NAMES[1]}`; }
-
-
 function opponentAttackBoxHTML(opp) {
   const rawAttacks = (opp.attacks && opp.attacks.length ? opp.attacks : [{}]);
   const swings = opp.usesPerTurn ?? OPPONENT_USES_PER_TURN_DEFAULT;
-  
-  
-  
   if (opp.items && opp.items.length) {
     return opp.items.map(itemId => {
       const item = ITEMS[itemId];
@@ -664,13 +579,8 @@ function opponentAttackBoxHTML(opp) {
     const minTier = a.minTier ?? opp.minTier ?? 0;
     const cap = a.maxCards ?? opponentMaxCards(opp);
     const effect = a.effect || 'damage';
-
-    
     const flatCapMatch = a.fewCardsThreshold && cap === a.fewCardsThreshold.max;
     const capLine = a.autoFire ? 'No card needed' : a.straightLen ? `Any ${a.straightLen} cards in a row` : (minTier > 0 ? `${TIERS[minTier]} to Attack` : (flatCapMatch ? (cap === 1 ? 'Any card' : `Any ${cap} cards`) : (cap === 1 ? '1 card' : `Up to ${cap} cards`)));
-
-    
-    
     let bonusLine = '';
     let damageLine = '';
     if (a.autoFire) {
@@ -725,10 +635,6 @@ function opponentAttackBoxHTML(opp) {
 * ATTACK CATALOG REGISTRY                                                  *
 ****************************************************************************/
 /* ========== CONDITION ENGINE ========== */
-
-
-
-
 function checkCondition(cond, cards) {
   let result;
   if (!cond || cond.type === 'any') result = { met: cards.length > 0, label: '' };
@@ -758,11 +664,6 @@ function checkCondition(cond, cards) {
     result = { met: !!hit, label: hit ? `${rankLabel(hit.rank)}${hit.suit}` : '' };
   }
   else if (cond.type === 'parity') {
-    
-    
-    
-    
-    
     const ODD_RANKS = [14, 3, 5, 7, 9];
     const EVEN_RANKS = [2, 4, 6, 8, 10];
     const matchFn = cond.parity === 'even' ? (c => EVEN_RANKS.includes(c.rank)) : (c => ODD_RANKS.includes(c.rank));
@@ -793,11 +694,6 @@ function checkCondition(cond, cards) {
   if (cond && cond.exactCount != null) result.met = result.met && cards.length === cond.exactCount;
   return result;
 }
-
-
-
-
-
 function bonusConditionText(cond) {
   if (cond?.type === 'suitCount') return `${cond.count}${suitMicroCardHTML(cond.suit)}!`;
   return `${describeCondition(cond)}!`;
@@ -818,10 +714,6 @@ function describeCondition(cond) {
   return '';
 }
 /* ========== GLOSSARY (hoverable keywords) ========== */
-
-
-
-
 const GLOSSARY = {
   attack: 'Deals damage straight to the opponent.',
   defense: 'Blocks incoming damage instead of dealing damage (adds Armor).',
@@ -859,10 +751,6 @@ function itemRequirementText(item) {
   const base = max === 1 ? '1 card' : `Up to ${max} cards`;
   return specific || base;
 }
-
-
-
-
 function formatKindAmount(item, kindTagHTML) {
   const hasKindAmount = item.flatAmount != null || (item.baseMult ?? 1) > 0;
   if (!hasKindAmount) return '';
@@ -872,28 +760,16 @@ function formatKindAmount(item, kindTagHTML) {
   if (!amountText) return kindTagHTML || '';
   return kindTagHTML ? [kindTagHTML, amountText].filter(Boolean).join(' ') : `<b>Attack</b> ${amountText}`;
 }
-
-
-
-
-
 function computeItemAmount(item, cards, level, condResult, isOpponent) {
   const worldMult = isOpponent ? (RUN.worldMultiplier || 1.0) : 1;
-  
-  
   if (item.perFaceCardDamage != null) {
     const faceCount = cards.filter(c => c.rank >= 11 && c.rank <= 13).length;
     const amount = Math.round(faceCount * item.perFaceCardDamage * worldMult);
     return { amount, breakdown: `${faceCount} face card${faceCount === 1 ? '' : 's'} × ${item.perFaceCardDamage} = ${amount}` };
   }
-  
-  
   if (item.utilityEffect) {
     return { amount: 0, breakdown: item.utilityEffect };
   }
-  
-  
-  
   if (item.suitPunish) {
     const suitCount = BATTLE.discard.filter(c => c.suit === item.suitPunish.suit).length;
     const amount = Math.round(((item.suitPunish.base || 0) + suitCount * item.suitPunish.perCard) * worldMult);
@@ -912,8 +788,6 @@ function computeItemAmount(item, cards, level, condResult, isOpponent) {
   let mult = item.baseMult ?? (condResult.mult ?? 1);
   let bonusApplied = false;
   if (item.bonus) {
-    
-    
     const bonusMet = !item.bonus.condition || checkCondition(item.bonus.condition, cards).met;
     if (bonusMet) {
       const lvl = Math.min(level, item.bonus.maxLevel ?? level);
@@ -927,21 +801,13 @@ function computeItemAmount(item, cards, level, condResult, isOpponent) {
   
   if (item.id === 'fender_bender' && !isOpponent && RUN.hero?.heroId === 'admin' && META.levels.adminTune) mult += 0.1 * META.levels.adminTune;
   const rawSum = cards.reduce((a, c) => a + cardValue(c.rank) + (c.bonus || 0), 0);
-  
-  
   const flatBonus = (item.flatBonus || 0) + (item.flatBonusPerLevel || 0) * level;
   const amount = Math.round((Math.round(rawSum * mult) + flatBonus) * worldMult);
   const breakdown = `${rawSum} × ${mult.toFixed(2).replace(/^0/, '').replace(/\.?0+$/, '')}${flatBonus ? ` +${flatBonus}` : ''}${bonusApplied ? ' (bonus)' : ''} = ${amount}`;
   return { amount, breakdown };
 }
-
-
-
-
 function itemLevel(itemId) { return (RUN && RUN.itemLevels && RUN.itemLevels[itemId]) || 0; }
 function itemTuneCost(item, lvl) { return 40 * Math.pow(2, lvl); } 
-
-
 function itemLevelCap(item) { if (item.bonus) return item.bonus.maxLevel ?? 0; if (item.drawPerLevel) return item.levelCap || 0; return 0; }
 function itemUsesLevel(itemId) { return (RUN.itemUsesLevels && RUN.itemUsesLevels[itemId]) || 0; }
 function itemUsesTuneCost(lvl) { return Math.round(50 * Math.pow(2.5, lvl)); } 
@@ -949,28 +815,13 @@ const ITEM_MAX_USES_LEVEL = 2;
 function itemMaxCardsLevel(itemId) { return (RUN && RUN.itemMaxCardsLevels && RUN.itemMaxCardsLevels[itemId]) || 0; }
 function itemMaxCardsTuneCost(lvl) { return Math.round(60 * Math.pow(2.5, lvl)); } 
 const ITEM_MAX_CARDS_BONUS_CAP = 2; 
-
-
-
-
 const POKER_TIER_CARD_COUNT = { 0: 1, 1: 2, 2: 4, 3: 3, 5: 5, 6: 5, 7: 4 };
-
-
-
-
-
-
 function pokerTierNaturalCap(item) {
   const cond = item && item.condition;
-  if (!cond) return null;
-  
-  
+  if (!cond) return null; 
   if (cond.type === 'suitCountExact') return cond.count;
   if (cond.type !== 'pokerTier') return null;
   let natural = POKER_TIER_CARD_COUNT[cond.tier] ?? null;
-  
-  
-  
   if (item.bonus && item.bonus.condition && item.bonus.condition.type === 'pokerTier') {
     const bonusNatural = POKER_TIER_CARD_COUNT[item.bonus.condition.tier];
     if (bonusNatural != null) natural = natural != null ? Math.max(natural, bonusNatural) : bonusNatural;
@@ -982,9 +833,6 @@ function effectiveMaxCards(item) {
   const natural = pokerTierNaturalCap(item);
   return natural != null ? Math.min(raw, natural) : raw;
 }
-
-
-
 function normalizeItemKind(kind) {
   const k = String(kind || 'damage').toLowerCase();
   return k.includes('defend') || k === 'defense' ? 'defense' : k;
@@ -1000,18 +848,10 @@ function itemKindConvertCost() { return 100; }
 function itemUsesCap(item, usesLevel) { return item.usesPerTurn + (item.usesPerTurnPerLevel || 0) * usesLevel; }
 
 /* ========== ITEM CATALOG ========== */
-
-
-
-
 function equippedItemCount(hero) { return (hero.items || []).filter(id => !ITEMS[id]?.weightless).length; }
 const ITEMS = {
   card_draw: { id: 'card_draw', name: 'Quick Draw', cost: 0, maxCards: 2, usesPerTurn: 1, condition: { type: 'pokerTier', tier: 1 }, baseMult: 0, drawAmount: 2, drawPerLevel: 1, levelCap: 3, note: 'Needs a Pair. Draw 2 additional cards.' },
-  
-  
-  
-  
-  pair_draw: { id: 'pair_draw', name: 'Draw & Dash', cost: 40, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+ pair_draw: { id: 'pair_draw', name: 'Draw & Dash', cost: 40, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'pokerTier', tier: 1 }, baseMult: 1,
     drawAmount: 2, drawPerLevel: 0,
     note: 'Needs a Pair. Deals damage and draws 2 cards immediately.' },
@@ -1023,8 +863,6 @@ const ITEMS = {
     condition: { type: 'suitCount', suit: '♦', count: 1 }, baseMult: 1,
     drawAmount: 1, drawPerLevel: 0,
     note: `Needs at least 1 ${kw('Diamond')}. Deals damage and draws 1 card immediately.` },
-
-  
   all_points: { id: 'all_points', name: 'All-Points Bulletin', cost: 70, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1, minRow: 3,
     condition: { type: 'allSuits' }, flatAmount: 40, flatAmountPerLevel: 5,
     note: `Needs one of each ${kw('Suit')} (4 cards). Flat ${kw('Attack')} for 40 damage.` },
@@ -1039,8 +877,6 @@ const ITEMS = {
     flatBonus: 16, flatBonusPerLevel: 0, kind: 'poison',
     drawAmount: 1, drawPerLevel: 0,
     note: `Needs the ${rankLabel(3)}${suitMicroCardHTML('♣')} or ${rankLabel(4)}${suitMicroCardHTML('♣')}. Poison damage for ${SIGMA_TIP} of cards played + 16, then draw 1 card immediately.` },
-
-  
   heart_inferno: { id: 'heart_inferno', name: 'Heart Inferno', cost: 65, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'exactCount', count: 4 }, baseMult: 1, kind: 'burn',
     bonus: { condition: { type: 'suitCount', suit: '♥', count: 4 }, base: 0.5, perLevel: 0, maxLevel: 0 },
@@ -1057,25 +893,20 @@ const ITEMS = {
     condition: { type: 'exactCount', count: 4 }, baseMult: 1, kind: 'burn',
     bonus: { condition: { type: 'suitCount', suit: '♠', count: 4 }, base: 0.5, perLevel: 0, maxLevel: 0 },
     note: `Needs exactly 4 cards. Flame damage for ${SIGMA_TIP}, +50% if all 4 are ${kw('Spade')}.` },
-
   five_alarm_flush: { id: 'five_alarm_flush', name: 'Five-Alarm Flush', cost: 90, maxCards: 5, usesPerTurn: 2, usesPerTurnPerLevel: 1, minRow: 3,
     condition: { type: 'pokerTier', tier: 5, exactCount: 5 }, baseMult: 1.5,
     note: `Needs exactly 5 cards making a ${kw('Flush')}. ${SIGMA_TIP} +50% damage. 2 uses per turn.` },
-
   exact_change: { id: 'exact_change', name: 'Exact Change', cost: 35, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'sumExact', value: 4 }, baseMult: 0,
     drawAmount: 0, drawUsesCardCount: true, drawBonusFlat: 2, drawPerLevel: 0,
     note: `Cards played must add up to exactly 4 (example: 2+2, or a single 4). Draws a card for each card played, +2. Draws immediately.` },
-
   chain_starter: { id: 'chain_starter', name: 'Chain Starter', cost: 50, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1, minRow: 2,
     condition: { type: 'straightLen', len: 3 }, baseMult: 2.5,
     note: `Needs a 3-card ${kw('Straight')} (example: 6, 7, 8). ${SIGMA_TIP} +150% damage.` },
-
   drawstone: { id: 'drawstone', name: 'Drawstone', cost: 40, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'sumThreshold', min: 7 }, baseMult: 0,
     drawAmount: 2, drawPerLevel: 0,
     note: `Cards played must add up to 7+. Draws 2 cards immediately.` },
-
   impound_release: { id: 'impound_release', name: 'Impound Release', cost: 85, maxCards: 5, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'any' }, baseMult: 0, kind: 'unlock', unlockThreshold: 45,
     note: `Deals no damage. Playing cards through it counts down from 45 to 0 (based on the cards' value). Once fully charged, playing cards through it instead draws you 4 fresh cards, once per turn, for the rest of this battle - it never re-locks. Charge resets at the start of your next battle.` },
@@ -1083,9 +914,6 @@ const ITEMS = {
     condition: { type: 'pokerTier', tier: 0 }, baseMult: 1,
     bonus: { condition: { type: 'pokerTier', tier: 1 }, base: 0.5, perLevel: 0.25, maxLevel: 2 }, 
     note: 'Up to 2 cards. A Pair adds a bonus that grows the more you tune it.' },
-  
-
-
   opp_pair_curse: { id: 'opp_pair_curse', name: 'Repo Notice', maxCards: 2, usesPerTurn: 1,
     condition: { type: 'pokerTier', tier: 1 }, baseMult: 1, kind: 'curse',
     note: `Needs a Pair. Curses one of your Items for ${SIGMA_TIP} of the cards played.` },
@@ -1101,10 +929,6 @@ const ITEMS = {
   high_card_gate: { id: 'high_card_gate', name: 'Ember Flare', maxCards: 1, usesPerTurn: 1,
     condition: { type: 'any', exactCount: 1 }, flatAmount: 10,
     note: 'Needs exactly 1 card. Flat attack for 10 damage - the simplest hazard in the game.' },
-
-  
-
-
   opp_harassment: { id: 'opp_harassment', name: 'Harassment', maxCards: 2, usesPerTurn: 1,
     condition: { type: 'pokerTier', tier: 1 }, baseMult: 1, kind: 'curse',
     note: 'Needs a Pair. Curses one of your Items.' },
@@ -1264,7 +1088,6 @@ const ITEMS = {
   opp_early_escape_hatch: { id: 'opp_early_escape_hatch', name: 'Early Escape Hatch', maxCards: 4, usesPerTurn: 1,
     condition: { type: 'colorCount', color: 'blk', count: 4, exactCount: 4 }, flatAmount: 0, opponentEffect: 'earlyEscape',
     note: 'Needs exactly 4 Black cards. Instantly ends the fight - you clear the stop, but it flees with your fuel, costing you 3 Fuel.' },
-
   triple_threat: { id: 'triple_threat', name: 'Triple Threat', cost: 45, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'pokerTier', tier: 3, exactTier: true }, baseMult: 1,
     bonus: { base: 1.0, perLevel: 1.0, maxLevel: 3 }, 
@@ -1346,10 +1169,6 @@ const HEROES = {
   towtruck:   { id: 'towtruck',   name: 'Tow Truck',  icon: '🚨', image: 'vehicles/tow-truck.jpg', starterItems: ['escort_wall','toxic_spill'] },
   tanker:     { id: 'tanker',     name: 'Fuel Tanker', icon: '⛽', image: 'vehicles/fuel-tanker.jpg', starterItems: ['fender_bender','drawstone'] },
 };
-
-
-
-
 const VEHICLE_SPECIALS = {
   sidebyside: { name: 'Quick Shield', type: 'shield', energyPerUnit: 4, amountPerUnit: 20, desc: 'Spend Energy for armor - every 4 Energy grants +20 armor. Spend as much as you have at once.' },
   admin:      { name: 'Roadside Patch', type: 'heal', energyPerUnit: 5, amountPerUnit: 15, desc: 'Spend Energy to heal - every 5 Energy restores 15 health. Spend as much as you have at once.' },
@@ -1400,8 +1219,6 @@ function useVehicleSpecial() {
   saveRun();
   render(battleScreen());
 }
-
-
 function applyDodgeIfActive(oppDmg) {
   if (!BATTLE.dodgeChance) return oppDmg;
   const chance = BATTLE.dodgeChance;
@@ -1414,24 +1231,11 @@ function applyDodgeIfActive(oppDmg) {
   return oppDmg;
 }
 const STARTERS = ['sidebyside', 'admin', 'interstate', 'convoy', 'towtruck', 'tanker', 'comingsoon1', 'comingsoon2'];
-
-
-
 function heroItemCardPreviewHTML(itemId) {
   const item = ITEMS[itemId];
   if (!item) return '';
   return renderStandardItemCard(item, {});
 }
-
-
-
-
-
-
-
-
-
-
 function renderStandardItemCard(item, opts = {}) {
   const {
     interactive = false, slotKey = null, cards = [], cursedAmt = null, ready = false,
@@ -1443,7 +1247,6 @@ function renderStandardItemCard(item, opts = {}) {
     ? ` data-assign="${slotKey}" style="border-style:dashed;border-width:2px" ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleCardDrop(event,'${slotKey}',${effectiveMaxCards(item)})"`
     : ` style="cursor:default"`;
   const usesBadge = usesBadgeText != null ? `<div class="usesBadge ${usesDepleted ? 'depleted' : ''} hoverTip" data-title="Uses left this turn">${usesBadgeText}</div>` : '';
-
   if (item.kind === 'storage') {
     const cardHTML = cards.map((c, i) => {
       const handIdx = opts.idxs ? opts.idxs[i] : i;
@@ -1464,7 +1267,6 @@ function renderStandardItemCard(item, opts = {}) {
       ${footerHTML != null ? `<div class="itemCard-footer"><div class="itemDivider"></div><div class="itemCard-sec">${footerHTML}</div></div>` : ''}
     </div>`;
   }
-
   const drawN = item.drawUsesCardCount ? (cards.length ? cards.length : item.maxCards) + (item.drawBonusFlat || 0) + (item.drawPerLevel || 0) * level : (item.drawAmount ? item.drawAmount + (item.drawPerLevel || 0) * level : 0);
   const drawBonusLine = (item.drawAmount || item.drawUsesCardCount) ? `<div class="itemBonusLine hoverTip" data-title="Draws ${drawN} card${drawN === 1 ? '' : 's'} immediately after this item is used."><b>Draw</b> ${drawN} card${drawN === 1 ? '' : 's'}</div>` : '';
   const bonusPct = item.bonus ? Math.round((item.bonus.base + (item.bonus.perLevel || 0) * level) * 100) : 0;
@@ -1533,29 +1335,20 @@ function starterLockNote(id) {
 /****************************************************************************
 * OPPONENT ROSTER                                                          *
 ****************************************************************************/
-
 const OPPONENT_TIERS = [
   
   [ 
     { id: 'trashfire', name: 'Trash Can Fire', icon: '🔥', image: 'Hazards/trash-fire.jpg', hp: 35, minTier: 0, drawRate: 1, items: ['high_card_gate'] },
     { id: 'pothole', name: 'Nasty Pothole', icon: '🕳️', image: 'Hazards/pothole.jpg', hp: 34, minTier: 0, drawRate: 2, startHandSize: 1, items: ['fender_bender'] },
-    
-    
-    
-    
     { id: 'flickerlight', name: 'Flickering Street Light', icon: '💡', image: 'Hazards/flicker-light.jpg', hp: 36, minTier: 0, drawRate: 2, startHandSize: 1, rewardMult: 1.6, items: ['fender_bender', 'heart_inferno'] },
     { id: 'potholeAmbush', name: 'Ambush Pothole Cluster', icon: '⚡', image: 'Hazards/pothole.jpg', hp: 35, minTier: 0, drawRate: 2, startHandSize: 1, items: ['fender_bender'] }
   ],
-
-  
   [ 
     { id: 'jaywalker', name: 'Jaywalker', icon: '🚶', image: 'Hazards/jaywalker.jpg', hp: 55, minTier: 1, drawRate: 2, items: ['opp_sudden_dash', 'fender_bender'] },
     { id: 'grumpyMeter', name: 'Broken Meter', icon: '🅿️', image: 'Hazards/broken-meter.jpg', hp: 60, minTier: 1, drawRate: 2, items: ['opp_pair_curse', 'opp_single_steal'] },
     { id: 'looseWire', name: 'Downed Power Line', icon: '⚡', image: 'Hazards/downed-line.jpg', hp: 65, minTier: 0, drawRate: 2, items: ['low_tier_threshold'] },
     { id: 'meterBox', name: 'Reinforced Meter Box', icon: '🛡️', image: 'Hazards/broken-meter.jpg', hp: 45, minTier: 1, drawRate: 2, startArmor: 15, items: ['fender_bender'] }
   ],
-
-  
   [ 
     { id: 'angryCitizen', name: 'Angry Citizen', icon: '😠', image: 'Hazards/angry-citizen.jpg', hp: 75, minTier: 1, drawRate: 3, items: ['opp_harassment', 'opp_shouting_match', 'opp_grudge_match'] },
     { id: 'hydrant', name: 'Burst Hydrant', icon: '💦', image: 'Hazards/burst-hydrant.jpg', hp: 80, minTier: 0, drawRate: 3, items: ['opp_hydrant_blast'] },
@@ -1563,8 +1356,6 @@ const OPPONENT_TIERS = [
     { id: 'scrapHeap', name: 'Shifting Scrap Heap', icon: '🗑️', image: 'Hazards/scrap-heap.jpg', hp: 90, minTier: 1, drawRate: 2, special: { type: 'drawOnHit', amount: 1 }, items: ['opp_debris_slam'] },
     { id: 'twoToneHauler', name: 'Two-Tone Hauler', icon: '🚚', image: 'Hazards/dumpster-fire.jpg', hp: 95, minTier: 1, drawRate: 4, items: ['opp_patch_job', 'opp_red_alert', 'opp_black_ice'] }
   ],
-
-  
   [ 
     { id: 'evilMechanic1', name: 'Evil Mechanic', icon: '🔧', image: 'Hazards/evil-mechanic.jpg', hp: 95, minTier: 2, drawRate: 3, curse: { count: 1, amount: 10, chance: 0.6 }, items: ['opp_sabotage_engine'] },
     { id: 'streetFire', name: 'Street Fire', icon: '🔥', image: 'Hazards/street-fire.jpg', hp: 100, minTier: 3, drawRate: 3, special: { type: 'lifesteal', pct: 0.5 }, items: ['opp_scorching_wave'] },
@@ -1573,8 +1364,6 @@ const OPPONENT_TIERS = [
     { id: 'kingOfHearts', name: 'King of Hearts', icon: '🃏', image: 'Hazards/angry-citizen.jpg', hp: 100, minTier: 0, drawRate: 3, discardPoolEachTurn: true, items: ['opp_hearts_3', 'opp_hearts_2', 'opp_hearts_1', 'opp_hearts_0'] },
     { id: 'roadblockSurge', name: 'Surge Roadblock', icon: '⚡', image: 'Hazards/sinkhole.jpg', hp: 105, minTier: 1, drawRate: 3, startPoolBonus: 2, items: ['opp_barrier_slam'] }
   ],
-
-  
   [ 
     { id: 'flashFlood', name: 'Flash Flood', icon: '🌊', image: 'Hazards/flash-flood.jpg', hp: 115, minTier: 3, drawRate: 4, items: ['opp_toxic_spray', 'opp_flash_deluge', 'opp_rising_waters'] },
     { id: 'riot', name: 'Angry Mob', icon: '📢', image: 'Hazards/angry-mob.jpg', hp: 120, minTier: 2, drawRate: 4, usesPerTurn: 2, items: ['opp_crowd_pressure', 'opp_crowd_surge', 'opp_mob_pileon'] },
@@ -1582,8 +1371,6 @@ const OPPONENT_TIERS = [
     { id: 'hardenedBarricade', name: 'Hardened Barricade', icon: '🛡️', image: 'Hazards/sinkhole.jpg', hp: 130, minTier: 1, drawRate: 3, startArmor: 35, items: ['opp_ram_plate', 'opp_weld_patch'] },
     { id: 'compactingWreckage', name: 'Compacting Wreckage', icon: '🗑️', image: 'Hazards/scrap-heap.jpg', hp: 135, minTier: 2, drawRate: 3, special: { type: 'drawOnHit', amount: 1 }, items: ['opp_crush_cycle'] }
   ],
-
-  
   [ 
     { id: 'stormSurge', name: 'Storm Surge', icon: '🌊', image: 'Hazards/storm-surge.jpg', hp: 130, minTier: 3, drawRate: 4, items: ['opp_tidal_slam', 'opp_undertow'] },
     { id: 'buildingFire', name: 'Building Fire', icon: '🔥', image: 'Hazards/building-fire.jpg', hp: 135, minTier: 4, drawRate: 4, items: ['opp_inferno_blast', 'opp_structural_collapse'] },
@@ -1596,16 +1383,10 @@ const OPPONENT_TIERS = [
 ];
 
 const BOSS = { id: 'wildfire', name: 'Wildfire', tier: 6, icon: '🔥', image: 'Hazards/wildfire.jpg', hp: 160, minTier: 3, drawRate: 4, boss: true, usesPerTurn: 2, curse: { count: 2, amount: 12, chance: 0.55 }, items: ['opp_firestorm_surge', 'opp_ashfall', 'opp_total_engulfment'], attackInfo: 'Attack: uses its best poker hand for about 10-35 damage, depending on the hand, and can hit twice a turn. Can also curse your equipped Items - an Item that doesn\'t fire before turn end takes its curse damage.' };
-
-
 const OPPONENT_SWING_CAP = [22, 28, 34, 40, 46, 52, 60];
-
 function revealFraction(row) { return [1.0, 0.8, 0.6, 0.4, 0.25, 0.1, 0][Math.min(row, 6)]; }
 
-/* ========== LEVELED UPGRADE TREE (permanent, up to 20 levels each) ========== */
-
-
-
+  /* ========== LEVELED UPGRADE TREE (permanent, up to 20 levels each) ========== */
 const UPGRADE_TIERS = {
   high:   { baseCost: 50, growth: 1.55 },
   medium: { baseCost: 30, growth: 1.5 },
@@ -1654,15 +1435,12 @@ const UPGRADE_DEFS = [
     unlock: { desc: 'Complete 5 runs', check: () => (META.runsPlayed || 0) >= 5 } },
 ];
 const MAX_LEVEL = 10; 
-
-
-
 function upgradeCost(def, atLevel) {
   const t = UPGRADE_TIERS[def.tier] || UPGRADE_TIERS.medium;
   return Math.round(t.baseCost * Math.pow(t.growth, atLevel));
 }
 function upgradeUnlocked(def) { return !def.unlock || def.unlock.check(); }
-
+  
 /* ========== META (persists forever) ========== */
 const META_KEY = 'fleetduel-meta-v7';
 const META_VERSION = 2; 
@@ -1695,8 +1473,6 @@ const RUN_KEY = 'fleetduel-run-v81-scorereset';
 function saveRun() { try { localStorage.setItem(RUN_KEY, JSON.stringify(RUN)); } catch (e) {} }
 function loadRunSave() { try { const raw = localStorage.getItem(RUN_KEY); if (raw) return JSON.parse(raw); } catch (e) {} return null; }
 function clearRunSave() { try { localStorage.removeItem(RUN_KEY); } catch (e) {} }
-
-
 
 /* ========== BATTLE SAVE ========== */
 const BATTLE_KEY = 'fleetduel-battle-v1';
@@ -1732,17 +1508,10 @@ function pickNodeType(forcedType) {
 }
 
 /* ========== MONSTER REPURPOSING SCALER ========== */
-
-
 function scaleMonsterForNewWorld(baseMonster, worldMultiplier, tier) {
   const scaled = JSON.parse(JSON.stringify(baseMonster)); 
   if (tier != null) scaled.tier = tier;
-
   scaled.hp = Math.round(scaled.hp * worldMultiplier);
-  
-  
-  
-
   if (scaled.attacks) {
     scaled.attacks.forEach(a => {
       if (a.autoFire) a.autoFire.damage = Math.round(a.autoFire.damage * worldMultiplier);
@@ -1756,24 +1525,12 @@ function scaleMonsterForNewWorld(baseMonster, worldMultiplier, tier) {
 }
 function generateMap() {
   const nodes = [], edges = [];
-  const tierForRow = r => Math.min(OPPONENT_TIERS.length - 1, Math.floor(r / 3));
-  
-  
-  
+  const tierForRow = r => Math.min(OPPONENT_TIERS.length - 1, Math.floor(r / 3)); 
   const tierDifficultyMult = tier => 1 + tier * 0.12;
   const castleRow = 10;
   const rowCounts = [1,2,1,2,3,1,2,3,2,2,1,2,3,2,2,3,2,2,3,2];
-
-  
-  
   const worldMultiplier = RUN.worldMultiplier || 1.0; 
-
-  
-  
-  
   const tierQueues = {};
-  
-  
   const WORLD2_POISON_ITEMS = ['opp_aftershock', 'opp_toxic_spray', 'opp_corrosive_mud'];
   function pickOpponentForTier(tier) {
     if (!tierQueues[tier] || !tierQueues[tier].length) tierQueues[tier] = shuffle([...OPPONENT_TIERS[tier]]);
@@ -1781,39 +1538,30 @@ function generateMap() {
     if (RUN.world >= 2 && Math.random() < 0.5) return { ...picked, items: WORLD2_POISON_ITEMS };
     return picked;
   }
-
   for (let r=0;r<rowCounts.length;r++) {
     const row=[];
-    
     const tier = tierForRow(r);
     for(let c=0;c<rowCounts[r];c++) {
-      
       const baseOpp = pickOpponentForTier(tier);
       row.push({type:'pending', opponent: scaleMonsterForNewWorld(baseOpp, worldMultiplier * tierDifficultyMult(tier), tier)});
     }
     nodes.push(row);
   }
-  
-  
   nodes[0][0].type='battle';
   nodes[1].forEach(n=>n.type='battle');
   nodes[2][0]={type:'shop'};
   nodes[5][0]={type:'rest'};
   nodes[castleRow][0]={type:'castle'};
-
   const eligible=[];
   for(let r=0;r<nodes.length;r++) for(let c=0;c<nodes[r].length;c++)
     if(nodes[r][c].type==='pending') eligible.push({r,c});
   shuffle(eligible);
-  
-  
   const needBattles=29-3; 
   eligible.slice(0,needBattles).forEach(({r,c})=> {
     const tier = tierForRow(r);
     const baseOpp = pickOpponentForTier(tier);
     nodes[r][c]={type:'battle', opponent: scaleMonsterForNewWorld(baseOpp, worldMultiplier * tierDifficultyMult(tier), tier)};
   });
-  
   eligible.slice(needBattles).forEach(({r,c})=>{
     const t=pickNodeType();
     if (t==='battle') {
@@ -1824,13 +1572,7 @@ function generateMap() {
       nodes[r][c]={type:t};
     }
   });
-  
-  
   nodes.push([{type:'battle', opponent: scaleMonsterForNewWorld(BOSS, worldMultiplier * 1.3, 6)}]);
-
-  
-  
-  
   for(let r=0;r<nodes.length-1;r++){
     const cur=nodes[r], next=nodes[r+1];
     const add=(a,b)=>{if(!edges.some(e=>e.fromRow===r&&e.fromCol===a&&e.toRow===r+1&&e.toCol===b))edges.push({fromRow:r,fromCol:a,toRow:r+1,toCol:b});};

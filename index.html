@@ -2258,8 +2258,14 @@ window.forfeitRun = function() {
 function startBattle(opponentDef, row, col, castleStage=0) {
   IN_BATTLE = true;
   const nodeDef = RUN.map?.nodes?.[row]?.[col];
+  let oppDef = opponentDef;
+  if (RUN.world === 1 && castleStage === 0) {
+    const cappedHp = Math.min(oppDef.hp, 60);
+    const cleanItems = (oppDef.items || []).filter(id => (ITEMS[id] && ITEMS[id].kind) !== 'curse');
+    oppDef = { ...oppDef, hp: cappedHp, items: cleanItems, curse: undefined };
+  }
   BATTLE = {
-    opponent: { ...opponentDef, hpNow: opponentDef.hp, poisonStacks: [], armor: opponentDef.startArmor || 0 }, row, col, castleStage,
+    opponent: { ...oppDef, hpNow: oppDef.hp, poisonStacks: [], armor: oppDef.startArmor || 0 }, row, col, castleStage,
     deck: shuffle(freshDeck()), discard: [],
     oppDeck: shuffle(freshDeck()), oppDiscard: [],
     hand: [], oppPool: [], usedThisTurn: new Set(), scoutedThisTurn: false, abilityUsedThisTurn: false, opponentStunned: false, itemCooldowns: {},

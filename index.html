@@ -43,6 +43,9 @@
   .wo-btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--blue-dark)}
   .wo-btn.amber{background:var(--amber);color:#062622;border-color:#0d8377}
   .wo-btn.gray{background:#3a4160;border-color:#252b46}
+  /* "Back to Compound/Castle Menu" exits were blending invisibly into the dark backgrounds -
+     give them a neon accent line so they stay visible wherever they're used. */
+  #backToCastleMenuBtn{border:1px solid #1fb6a6;box-shadow:0 0 6px rgba(31,182,166,0.5)}
   .wo-btn.purple{background:var(--purple);border-color:#5c2ea0}
   .wo-btn.green{background:var(--green);border-color:#1f7a48}
   .wo-btn:disabled{opacity:.4;cursor:default}
@@ -67,6 +70,10 @@
   .currencyHeader{position:fixed;top:0;left:0;right:0;z-index:9999;max-width:1180px;margin:0 auto;box-sizing:border-box;
     padding:9px 18px;background:#12163a;border-bottom:1px solid rgba(31,182,166,0.3);box-shadow:0 2px 10px rgba(0,0,0,0.35)}
   .cur{border:1px solid var(--blue-light);border-radius:6px;padding:4px 8px}
+  /* Keep the Run Dashboard button pinned to the right edge of the currency header even when the
+     currency chips wrap onto a second line on narrow screens - margin-left:auto pushes it to the
+     end of whichever line it lands on instead of it sitting flush-left after a wrap. */
+  .currencyHeader #openRunSummaryBtn{margin-left:auto;flex-shrink:0}
   .cur.gem{color:var(--purple);border-color:var(--purple);background:#f5effd} .cur.fuel{color:var(--green);border-color:var(--green);background:#eef9ee} .cur.energy{color:var(--energy);border-color:var(--energy);background:rgba(0,245,212,0.08)} .cur.chip{color:#a35f00;border-color:var(--amber);background:#fff4e0} .cur.pts{color:#ffd54a;border:1px solid #ffd54a;background:#1a2038} .cur.health{color:var(--red);border-color:var(--red);background:#fdecec}
   .cur{position:relative;cursor:help}[data-title]:hover::after{content:attr(data-title);position:absolute;z-index:50;left:50%;transform:translateX(-50%);top:calc(100% + 6px);width:max-content;max-width:220px;background:#000000;color:#ffffff;padding:7px 9px;border-radius:6px;font:12px var(--disp);white-space:normal;box-shadow:0 0 8px rgba(31,182,166,0.4);border:1px solid #1fb6a6;text-align:left;pointer-events:none}[data-title]{position:relative;cursor:help}.bossPreview{border:2px solid var(--red);background:#1a0e0e}.mapboss{font-size:12px;font-family:var(--mono);color:var(--dim);margin-top:8px}
   .hoverTip{position:relative;cursor:help;text-decoration:underline dotted;text-underline-offset:2px}
@@ -124,8 +131,11 @@
   .vslot .vcards{display:flex;gap:3px;flex-wrap:wrap;min-height:30px;margin-top:6px}
 
   .itemGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
-  @media (max-width:700px){.itemGrid{grid-template-columns:repeat(2,1fr)}}
-  @media (max-width:420px){.itemGrid{grid-template-columns:1fr}}
+  @media (max-width:700px){
+    .itemGrid{grid-template-columns:repeat(2,1fr);gap:5px}
+    .itemGrid .itemCard{font-size:11px;padding:6px}
+  }
+  @media (max-width:700px) and (min-resolution:2dppx){.itemGrid{grid-template-columns:repeat(3,1fr)}}
   /* Used for opponent attack cards inside the (narrower) pre-battle popup - a plain grid here
      would stretch a single card to the full popup width or force 3 cramped columns regardless
      of the popup's own narrower size. Fixed-width flex items keep each card the same size it
@@ -205,7 +215,8 @@
   .pickrow{border:2px solid var(--blue-dark);background:var(--bg);border-radius:10px}
   .pickrow.locked{opacity:.55}
   .pickcard .picon{font-size:46px;display:flex;align-items:center;justify-content:center}
-  .pname{font-weight:700;font-size:17px;letter-spacing:.01em;color:var(--blue)}
+  .pname{font-weight:700;font-size:17px;letter-spacing:.01em;color:var(--blue);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  @media (max-width:420px){.pname{font-size:13px}}
   .ptag{font-family:var(--mono);font-size:11px;color:var(--dim);margin:4px 0 0}
   .pickcard .ptag{margin:4px 0 10px}
   .pickcard.locked{opacity:.55}
@@ -247,11 +258,11 @@
   .attackChip.defendChip{background:var(--defense);border-color:#075e57}
   .effectTip{font-weight:800;text-decoration:underline dotted;cursor:help;position:relative}
   .effectTip:hover::after{content:attr(data-tip);position:absolute;z-index:60;left:50%;transform:translateX(-50%);top:calc(100% + 5px);width:230px;background:#000000;color:#ffffff;padding:8px;border-radius:6px;font:11px var(--disp);text-align:left;box-shadow:3px 3px 0 #1fb6a6;pointer-events:none;border:1px solid #1fb6a6}
-  .log{font-family:var(--mono);font-size:11.5px;color:var(--dim);height:240px;max-height:240px;overflow-y:auto;
+  .log{font-family:var(--mono);font-size:11.5px;color:var(--dim);height:408px;max-height:408px;overflow-y:auto;
     border-top:1px dashed var(--blue-light);padding:8px 6px;margin-top:8px}
   .log div{padding:4px 0;border-bottom:1px solid #edf0f8;word-break:break-word;line-height:1.4}
   @media (max-width:600px){
-    .log{height:120px;max-height:120px;font-size:11px}
+    .log{height:204px;max-height:204px;font-size:11px}
     /* Battle hand cards were rendering visually much taller than the item cards next to them,
        which made it unclear which was which to tap - shrink the hand cards specifically on
        narrow screens without touching the desktop card size used everywhere else. */
@@ -1159,7 +1170,7 @@ const ITEMS = {
   opp_ram_plate: { id: 'opp_ram_plate', name: 'Ram Plate', maxCards: 3, usesPerTurn: 1,
     condition: { type: 'pokerTier', tier: 1 }, baseMult: 1,
     note: 'Needs a Pair. A plain, reliable poke.' },
-  opp_weld_patch: { id: 'opp_weld_patch', name: 'Weld A Patch', maxCards: 2, usesPerTurn: 1,
+  opp_weld_patch: { id: 'opp_weld_patch', name: 'Weld A Patch', maxCards: 2, usesPerTurn: 1, kind: 'defense',
     condition: { type: 'any' }, flatAmount: 0, opponentEffect: 'reinforceArmor',
     note: 'Needs any card. Deals no damage, but reinforces its own armor by 15.' },
   opp_crush_cycle: { id: 'opp_crush_cycle', name: 'Crush Cycle', maxCards: 4, usesPerTurn: 1,
@@ -1244,9 +1255,9 @@ const ITEMS = {
     bonus: { base: 0, perLevel: 0.2, maxLevel: 3 },
     note: 'Needs at least 3 Hearts among your played cards.' },
   odd_job: { id: 'odd_job', name: 'Odd Job', cost: 40, maxCards: 5, usesPerTurn: 1, usesPerTurnPerLevel: 1,
-    condition: { type: 'parity', parity: 'odd', mode: 'count', count: 3 }, baseMult: 1.2,
+    condition: { type: 'parity', parity: 'odd', mode: 'count', count: 1 }, baseMult: 1.2,
     bonus: { base: 0, perLevel: 0.25, maxLevel: 3 },
-    note: 'Needs at least 3 odd cards among your played cards.' },
+    note: 'Needs at least 1 odd card among your played cards (up to 5).' },
   lucky_seven: { id: 'lucky_seven', name: 'Lucky Seven', cost: 60, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1, minRow: 2,
     condition: { type: 'exactRank', rank: 7 }, baseMult: 2.2,
     bonus: { base: 0, perLevel: 0.4, maxLevel: 3 },
@@ -1884,18 +1895,12 @@ function payTravelCost() {
   if (RUN.fuel < 0) {
     RUN.fuel = 0; // Keep the tank clamped at zero
     
-    // Out of gas: Player suffers a physical breakdown penalty instead of losing score points
+    // Out of gas: Player suffers a physical breakdown penalty instead of losing score points.
+    // Clamped to a floor of 1 HP so running dry never ends the run outright - they can always
+    // crawl into the next stop alive and refuel or rest from there.
     const fuelPenalty = Math.max(0, 10 - (META.levels.fuelpen || 0) * 2);
-    RUN.health = Math.max(0, RUN.health - fuelPenalty);
+    RUN.health = Math.max(1, RUN.health - fuelPenalty);
     RUN.lastNotice = fuelPenalty > 0 ? `Out of fuel! Pushing your fleet manually to the next stop cost you ${fuelPenalty} HP.` : `Out of fuel! Your Fuel Efficiency training kept the walk from costing you any health this time.`;
-    
-    // Immediate check: If the travel toll drops them to zero, the run crashes out right here
-    if (RUN.health <= 0) {
-      RUN.lastNotice = `Out of fuel and out of health! Your fleet collapsed on the open highway.`;
-      saveRun();
-      endRun(false); // Triggers the Run Lost summary screen
-      return;
-    }
   }
 }
 
@@ -1960,6 +1965,7 @@ function castleMenuScreen(message='') {
     </div>
   </div>`;
 }
+let DUNGEON_CONTINUE_POPUP = null; // { stage, reward } - shown after winning Battle 1 or 2, before the next stage unlocks
 function castleDungeonScreen(message='') {
   if (DUNGEON_WIN_POPUP) {
     const p = DUNGEON_WIN_POPUP;
@@ -1974,6 +1980,24 @@ function castleDungeonScreen(message='') {
       </div>
     </div></div>`;
   }
+  // A dungeon run is single-shot once started: winning Battle 1 or 2 pauses here with a choice
+  // to press on for a bigger payout or cash out what's already been earned. There's no path
+  // back to the Compound Menu in between, so the run can't be left and resumed stage by stage.
+  if (DUNGEON_CONTINUE_POPUP) {
+    const p = DUNGEON_CONTINUE_POPUP;
+    const nextLabel = p.stage === 1 ? 'the High-Roller Battle' : 'the Overlord Battle';
+    return `<div class="treasure-modal"><div class="wo" style="max-width:440px">
+      <div class="wo-stripe"></div>
+      <div class="wo-body" style="text-align:center">
+        <div class="wo-eyebrow">Battle ${p.stage} Won</div>
+        <h1>Good <em>Job!</em></h1>
+        <div class="note">You earned ${formatRewardParts({ coins: p.reward.coins, gems: p.reward.gems, fuel: p.reward.fuel })}. Are you willing to risk your earnings and continue on?</div>
+        <button class="wo-btn amber" id="dungeonContinueBtn" style="width:100%;margin-top:10px">Continue to ${nextLabel}</button>
+        <button class="wo-btn gray" id="dungeonCashOutBtn" style="width:100%;margin-top:8px">Cash Out and Leave</button>
+      </div>
+    </div></div>`;
+  }
+  const locked = RUN.castleState?.dungeonLocked;
   return `${noticeHTML()}
   <div class="wo">
     <div class="wo-stripe"></div><div class="wo-body">
@@ -1982,12 +2006,10 @@ function castleDungeonScreen(message='') {
       ${currencyBar()}
       <button class="wo-btn gray" id="backToCastleMenuBtn" style="width:100%;margin-bottom:10px">Back to Compound Menu</button>
       ${message ? `<div class="panel"><div class="note">${message}</div></div>` : ''}
-      <div class="shopcard"><h3>Battle Challenge</h3><div class="note">Win the first battle to earn the listed reward, then choose whether to risk a second, harder battle for a larger reward.</div>
-        <div class="currencies"><div class="cur chip">${ICON.coin} 45 coins</div><div class="cur gem">${ICON.gem} 3 gems</div><div class="cur fuel">${ICON.fuel} 8 fuel</div></div><button class="wo-btn amber" id="castleBattle1Btn" ${RUN.castleState?.firstDone?'disabled':''}>${RUN.castleState?.firstDone?'First Battle Won':'Battle 1'}</button>
-      </div>
-      ${RUN.castleState?.firstDone && !RUN.castleState?.secondDone ? `<div class="shopcard"><h3>High-Roller Battle</h3><div class="note">The second fight is harder.</div><div class="currencies"><div class="cur chip">${ICON.coin} 100 coins</div><div class="cur gem">${ICON.gem} 6 gems</div><div class="cur fuel">${ICON.fuel} 14 fuel</div></div><button class="wo-btn amber" id="castleBattle2Btn">Battle 2</button></div>` : ''}
-      ${RUN.castleState?.secondDone && !RUN.castleState?.thirdDone ? `<div class="shopcard"><h3>Overlord Battle</h3><div class="note">Twice as hard as Battle 2, but it's the one that actually pays out an Item Card.</div><div class="currencies"><div class="cur chip">${ICON.coin} 160 coins</div><div class="cur gem">${ICON.gem} 10 gems</div><div class="cur fuel">${ICON.fuel} 20 fuel</div><div class="cur pts">Guaranteed Item Card</div></div><button class="wo-btn amber" id="castleBattle3Btn">Battle 3</button></div>` : ''}
-      ${RUN.castleState?.thirdDone ? `<div class="note" style="margin-top:8px">Dungeon cleared for this run.</div>` : ''}
+      ${locked ? `<div class="note" style="margin-top:8px">Dungeon closed for this run. You cashed out after Battle ${RUN.castleState?.secondDone ? 2 : 1}.</div>` : !RUN.castleState?.firstDone ? `
+      <div class="shopcard"><h3>Battle Challenge</h3><div class="note">Win the first battle to earn the listed reward, then choose whether to risk a second, harder battle for a larger reward. The dungeon must be cleared in one sitting - leaving locks it for the rest of this run.</div>
+        <div class="currencies"><div class="cur chip">${ICON.coin} 45 coins</div><div class="cur gem">${ICON.gem} 3 gems</div><div class="cur fuel">${ICON.fuel} 8 fuel</div></div><button class="wo-btn amber" id="castleBattle1Btn">Battle 1</button>
+      </div>` : RUN.castleState?.thirdDone ? `<div class="note" style="margin-top:8px">Dungeon cleared for this run.</div>` : ''}
     </div>
   </div>`;
 }
@@ -2027,9 +2049,21 @@ const MATCH_SUIT_REWARDS = {
 };
 let MATCH_POPUP = null; // { suitLabel, rewardLabel, boardCleared, jackpot }
 let MATCH_RETURN_TO_MAP = false; // true when the matching game was entered from a map Grid Anomaly node instead of the Compound
+let JOKER_GLITCH_POPUP = null; // { returnToMap } - shown when a Red Joker and Black Joker are flipped together
 function castleMatchScreen() {
   if (!RUN.castleState) RUN.castleState = {};
   const st = RUN.castleState;
+
+  if (JOKER_GLITCH_POPUP) {
+    return `<div class="treasure-modal"><div class="wo" style="max-width:440px;border-color:#7a0000">
+      <div class="wo-stripe" style="background:#7a0000"></div>
+      <div class="wo-body" style="text-align:center;background:#1a0000;color:#ffbdbd;border-radius:0 0 8px 8px">
+        <div class="wo-eyebrow" style="color:#ff5c5c">⚠️ Critical System Glitch Detected!</div>
+        <div class="note" style="color:#ffbdbd;margin-top:8px">You flipped a Red Joker and a Black Joker together. The Carnival Board has overloaded, scrambled its data core, and safely locked down for this stop.</div>
+        <button class="wo-btn red" id="jokerGlitchReRouteBtn" style="width:100%;margin-top:14px">[ Re-Route Systems ]</button>
+      </div>
+    </div></div>`;
+  }
 
   if (st.matchPlayed) {
     const closedMsg = st.matchLockReason === 'glitch' ? 'CRITICAL GLITCH! A Red Joker and a Black Joker were flipped together. Grid Anomaly Closed.'
@@ -2148,7 +2182,7 @@ function rollTreasure(big=false) {
   const mult = big ? 2 : 1;
   const choices = [
     { kind:'coins', label:'Coins', amount:(20 + Math.floor(Math.random()*31))*mult, icon: ICON.coin },
-    { kind:'fuel', label:'Fuel', amount:(6 + Math.floor(Math.random()*7))*mult, icon: ICON.fuel },
+    { kind:'fuel', label:'Fuel', amount:1*mult, icon: ICON.fuel },
     { kind:'gems', label:'Gems', amount:(1 + Math.floor(Math.random()*2))*mult, icon: ICON.gem },
     { kind:'energy', label:'Energy', amount:(5 + Math.floor(Math.random()*6))*mult, icon: ICON.energy },
     { kind:'points', label:'Career Points', amount:(10 + Math.floor(Math.random()*16))*mult, icon: ICON.star }
@@ -2192,7 +2226,7 @@ function startBattle(opponentDef, row, col, castleStage=0) {
     deck: shuffle(freshDeck()), discard: [],
     oppDeck: shuffle(freshDeck()), oppDiscard: [],
     hand: [], oppPool: [], usedThisTurn: new Set(), scoutedThisTurn: false, abilityUsedThisTurn: false, opponentStunned: false, itemCooldowns: {},
-    playerArmor: 0, turn: 1, slots: {}, turnDiscard: [], logLines: [], turnStartedAt: Date.now(),
+    playerArmor: 0, turn: 1, slots: {}, turnDiscard: [], turnSpentDiscard: [], logLines: [], turnStartedAt: Date.now(),
   };
   // The very first Stop of every world is a fixed introductory encounter - surface a one-time
   // tutorial hint the first time each player reaches it, then never show it again.
@@ -2464,7 +2498,7 @@ function scoutOpponent() {
 function drawWithGem() {
   if (RUN.gems < 1) return;
   RUN.gems -= 1;
-  const n = 1 + META.levels.gem + (RUN.runUpgrades?.gemDraw || 0);
+  const n = 1 + META.levels.gem + Number(RUN.runUpgrades?.gemDraw || 0);
   const before = BATTLE.hand.length;
   drawCards(n, true);
   const drawn = BATTLE.hand.slice(before).map(c => `${rankLabel(c.rank)}${c.suit}`).join(' ');
@@ -2641,23 +2675,23 @@ function executePlayerAttack(itemId, index) {
   BATTLE.slots[slotKey] = [];
 
   if (item.drawAmount || item.drawUsesCardCount) {
-    // Discard the cards that were just played into this Item immediately, so a "draw" Item
+    // Set aside the cards that were just played into this Item immediately, so a "draw" Item
     // hands back fresh cards instead of leaving the played cards sitting in the hand until
-    // end of turn (which looked like the same cards coming right back).
+    // end of turn (which looked like the same cards coming right back). These go into
+    // BATTLE.turnSpentDiscard rather than the live BATTLE.discard pile - if the deck runs dry
+    // and drawCards() has to reshuffle mid-turn (here or from a later item fired this same
+    // turn), it can't pull these exact cards straight back since they're not in the shuffle
+    // pool yet. They rejoin BATTLE.discard for good at endTurn() cleanup.
     const slotCardMap = {}; Object.entries(BATTLE.slots).forEach(([key, ix]) => { slotCardMap[key] = ix.map(i => BATTLE.hand[i]); });
     const stillUsedCards = [...BATTLE.usedThisTurn].map(i => BATTLE.hand[i]).filter(c => !cards.includes(c));
     const sortedOut = [...idxs].sort((a, b) => b - a);
-    for (const i of sortedOut) { BATTLE.discard.push(BATTLE.hand[i]); BATTLE.hand.splice(i, 1); }
+    for (const i of sortedOut) { BATTLE.turnSpentDiscard.push(BATTLE.hand[i]); BATTLE.hand.splice(i, 1); }
     Object.entries(slotCardMap).forEach(([key, cs]) => { BATTLE.slots[key] = cs.map(c => BATTLE.hand.indexOf(c)).filter(i => i !== -1); });
     BATTLE.usedThisTurn = new Set(stillUsedCards.map(c => BATTLE.hand.indexOf(c)).filter(i => i !== -1));
 
     const drawN = item.drawUsesCardCount
       ? cards.length + (item.drawBonusFlat || 0) + (item.drawPerLevel || 0) * level
       : item.drawAmount + (item.drawPerLevel || 0) * level;
-    // The just-used cards were already pushed into BATTLE.discard immediately above. Drawing
-    // through the shared drawCards() (rather than reimplementing the deck/discard cycle here)
-    // means a reshuffle triggered by this very draw can't pull those same cards straight back
-    // into the hand that fired them.
     const beforeDraw = BATTLE.hand.length;
     drawCards(drawN, true);
     const drawn = BATTLE.hand.slice(beforeDraw);
@@ -2774,6 +2808,12 @@ function endTurn() {
     BATTLE.slots[key] = cards.map(c => BATTLE.hand.indexOf(c)).filter(i => i !== -1);
   });
   BATTLE.turnDiscard = [];
+  // Cards item-fired-and-drawn away earlier this turn were held out of BATTLE.discard so a
+  // mid-turn reshuffle couldn't hand them straight back; they rejoin the discard pile now.
+  if (BATTLE.turnSpentDiscard && BATTLE.turnSpentDiscard.length) {
+    BATTLE.discard.push(...BATTLE.turnSpentDiscard);
+    BATTLE.turnSpentDiscard = [];
+  }
   BATTLE.usedThisTurn = new Set();
   BATTLE.itemUses = {};
   if (BATTLE.itemCooldowns) {
@@ -2825,6 +2865,7 @@ function endTurn() {
         // would be - same checkCondition, same computeItemAmount, same ITEMS catalog - just
         // scanned left to right, first Item whose condition the current pool satisfies wins.
         let itemPick = null;
+        let burnBlockedPick = null;
         for (let slotPos = 0; slotPos < BATTLE.opponent.items.length; slotPos++) {
           const itemId = BATTLE.opponent.items[slotPos];
           const item = ITEMS[itemId];
@@ -2833,11 +2874,35 @@ function endTurn() {
           if ((oppItemUsesThisTurn[itemId] || 0) >= cap) continue;
           const slotKeyForBurn = `${itemId}_${slotPos}`;
           // A burned slot is a trap: a smart opponent recognizes firing it means self-damage
-          // and skips it entirely, moving right to look for a safer item instead.
-          if (BATTLE.opponentItemBurns && BATTLE.opponentItemBurns[slotKeyForBurn]) continue;
+          // and skips it entirely, moving right to look for a safer item instead - but only if
+          // one exists. If every condition-met item this turn is burned, it has no safer poke
+          // and fires its best option anyway, taking the backfire (see below).
+          if (BATTLE.opponentItemBurns && BATTLE.opponentItemBurns[slotKeyForBurn]) {
+            if (!burnBlockedPick) {
+              const bestBurn = bestHandFromPool(BATTLE.oppPool, effectiveMaxCards(item) ?? maxCards);
+              const condBurn = checkCondition(item.condition, bestBurn.cards);
+              if (condBurn.met) burnBlockedPick = { item, best: bestBurn, cond: condBurn, key: slotKeyForBurn };
+            }
+            continue;
+          }
           const best = bestHandFromPool(BATTLE.oppPool, effectiveMaxCards(item) ?? maxCards);
           const cond = checkCondition(item.condition, best.cards);
           if (cond.met) { itemPick = { item, best, cond, key: slotKeyForBurn }; break; }
+        }
+        if (!itemPick && burnBlockedPick) {
+          // No safer fallback existed - it has to fire the burned item and the trap goes off,
+          // dealing the burn's damage straight into the opponent's own health instead of the
+          // player's. A knockout here cancels this swing's incoming strike entirely.
+          const { item, key } = burnBlockedPick;
+          const amt = BATTLE.opponentItemBurns[key] || 0;
+          delete BATTLE.opponentItemBurns[key];
+          oppItemUsesThisTurn[item.id] = (oppItemUsesThisTurn[item.id] || 0) + 1;
+          const before = BATTLE.opponent.hpNow;
+          BATTLE.opponent.hpNow = Math.max(0, before - amt);
+          if (amt === before && before > 0) BATTLE.exactKill = true;
+          battleLog(`${BATTLE.opponent.name} had no safer option and fires the burned ${item.name} - it backfires for ${amt} damage!`);
+          if (BATTLE.opponent.hpNow <= 0) { winBattle(); return; }
+          continue;
         }
         if (!itemPick) break;
         const { item, best, cond, key } = itemPick;
@@ -3064,17 +3129,27 @@ function winBattle(outlast) {
     if (stage === 2) RUN.castleState.secondDone = true;
     if (stage === 3) {
       RUN.castleState.thirdDone = true;
-      const ownedIds = new Set(RUN.hero.items);
-      const pool = Object.values(ITEMS).filter(it => it.kind !== 'storage' && !ownedIds.has(it.id));
-      const wonItem = (pool.length ? pool : Object.values(ITEMS))[Math.floor(Math.random() * (pool.length ? pool.length : Object.values(ITEMS).length))];
-      RUN.hero.items.push(wonItem.id);
-      DUNGEON_WIN_POPUP = { reward, itemName: wonItem.name };
+      // If the player's item loadout is already full, don't waste the reward on a card they
+      // can't equip - award a straight +100 coin salvage bonus instead.
+      if (RUN.hero.items.length >= RUN.itemCap) {
+        RUN.chips += 100;
+        DUNGEON_WIN_POPUP = { reward, itemName: '+100 Coin Vehicle Salvage (item slots were full)' };
+      } else {
+        const ownedIds = new Set(RUN.hero.items);
+        const pool = Object.values(ITEMS).filter(it => it.kind !== 'storage' && !ownedIds.has(it.id));
+        const wonItem = (pool.length ? pool : Object.values(ITEMS))[Math.floor(Math.random() * (pool.length ? pool.length : Object.values(ITEMS).length))];
+        RUN.hero.items.push(wonItem.id);
+        DUNGEON_WIN_POPUP = { reward, itemName: wonItem.name };
+      }
       saveRun();
       render(castleDungeonScreen());
       return;
     }
+    // Battle 1 or 2 won - pause on the risk-it-or-cash-out decision rather than dropping back
+    // to a menu the player could freely leave and return to later.
+    DUNGEON_CONTINUE_POPUP = { stage, reward };
     saveRun();
-    render(castleDungeonScreen(`You won Battle ${stage}. Reward: ${formatRewardParts({ coins: reward.coins, gems: reward.gems, fuel: reward.fuel })}.`));
+    render(castleDungeonScreen());
     return;
   }
   const scale = outlast ? 0.7 : 1;
@@ -3528,7 +3603,7 @@ function battleScreen() {
         <div style="display:flex;gap:6px;flex-wrap:wrap">
           <button class="wo-btn gray" id="sortToggleBtn" style="padding:8px 8px;font-size:12px;width:88px;text-align:center;white-space:nowrap">Sort: ${(RUN.handSortMode || 'value') === 'value' ? 'Value' : 'Suit'}</button>
           <button class="wo-btn gray" id="discardSelectedBtn" style="padding:8px 10px;font-size:12px" data-title="Fold selected cards face-down instead of playing them." ${!selectedIdx.length ? 'disabled' : ''}>Discard Selected</button>
-          <button class="wo-btn purple" id="gemDrawBtn" style="padding:8px 10px;font-size:12px" ${RUN.gems < 1 ? 'disabled' : ''}>Draw ${1 + META.levels.gem + (RUN.runUpgrades?.gemDraw||0)} card${(1 + META.levels.gem + (RUN.runUpgrades?.gemDraw||0)) > 1 ? 's' : ''} = ${GEM_DRAW_COST} ${ICON.gem}</button>
+          <button class="wo-btn purple" id="gemDrawBtn" style="padding:8px 10px;font-size:12px" ${RUN.gems < 1 ? 'disabled' : ''}>Draw ${1 + META.levels.gem + Number(RUN.runUpgrades?.gemDraw||0)} card${(1 + META.levels.gem + Number(RUN.runUpgrades?.gemDraw||0)) > 1 ? 's' : ''} = ${GEM_DRAW_COST} ${ICON.gem}</button>
           ${(() => { const sp = VEHICLE_SPECIALS[RUN.hero.heroId]; if (!sp) return ''; const minNeed = sp.energyCost ?? sp.energyPerUnit; return `<button class="wo-btn amber hoverTip" id="vehicleSpecialBtn" style="padding:8px 10px;font-size:12px" data-title="${sp.desc}" ${RUN.energy < minNeed ? 'disabled' : ''}>${sp.name} = ${minNeed} ${ICON.energy}</button>`; })()}
     </div>
         
@@ -4074,9 +4149,10 @@ function metaScreen() {
           <div class="hdr"><span>Fleet Name</span><span></span></div>
           <input id="playerNameInput" type="text" maxlength="18" placeholder="Your name" value="${(META.playerName||'').replace(/"/g,'&quot;')}" style="width:100%;padding:9px 10px;border:2px solid #1fb6a6;border-radius:6px;font-family:var(--disp);font-size:15px;color:#ffffff;background:#1a2038">
         </div>
-        <button class="wo-btn amber" id="viewUpgradesBtn" style="width:100%;margin-bottom:10px">View Upgrades</button>
-        ${hasSave ? `<button class="wo-btn" id="continueRunBtn" style="margin-bottom:10px;width:100%">Continue Run</button>` : ''}
-        <button class="wo-btn ${hasSave ? 'gray' : ''}" id="startRunBtn" style="width:100%">${hasSave ? 'Start New Run (overwrites save)' : 'Start Run'}</button>
+        ${hasSave ? `<button class="wo-btn" id="continueRunBtn" style="margin-bottom:10px;width:100%">Continue Run</button>` : `<button class="wo-btn" id="startRunBtn" style="margin-bottom:10px;width:100%">New Run</button>`}
+        ${hasSave ? `<button class="wo-btn gray" id="startRunBtn" style="width:100%;margin-bottom:10px">New Run (overwrites save)</button>` : ''}
+        <button class="wo-btn amber" id="viewUpgradesBtn" style="width:100%">Career Point Upgrades</button>
+        <div class="note" style="text-align:center;margin-top:16px;opacity:0.75">Made by Drew. Please send Drew your feedback, high scores, bug findings, or confusing areas so he can update the master registry leaderboard. Work in Progress.</div>
       </div>
     </div>
   `;
@@ -4384,11 +4460,21 @@ function render(html) {
   const castleInnNavBtn = document.getElementById('castleInnNavBtn'); if (castleInnNavBtn) castleInnNavBtn.onclick = () => render(castleInnScreen());
   const backToCastleMenuBtn = document.getElementById('backToCastleMenuBtn'); if (backToCastleMenuBtn) backToCastleMenuBtn.onclick = () => render(castleMenuScreen());
   const castleBattle1Btn = document.getElementById('castleBattle1Btn'); if (castleBattle1Btn) castleBattle1Btn.onclick = () => { if (!RUN.castleState) RUN.castleState = {}; startBattle(CASTLE_FIRST, 10, 0, 1); };
-  const castleBattle2Btn = document.getElementById('castleBattle2Btn'); if (castleBattle2Btn) castleBattle2Btn.onclick = () => { if (!RUN.castleState) RUN.castleState = {}; startBattle(CASTLE_SECOND, 10, 0, 2); };
-  const castleBattle3Btn = document.getElementById('castleBattle3Btn'); if (castleBattle3Btn) castleBattle3Btn.onclick = () => { if (!RUN.castleState) RUN.castleState = {}; startBattle(CASTLE_THIRD, 10, 0, 3); };
+  const dungeonContinueBtn = document.getElementById('dungeonContinueBtn'); if (dungeonContinueBtn) dungeonContinueBtn.onclick = () => {
+    const p = DUNGEON_CONTINUE_POPUP; DUNGEON_CONTINUE_POPUP = null; if (!p) { render(castleDungeonScreen()); return; }
+    if (p.stage === 1) startBattle(CASTLE_SECOND, 10, 0, 2); else startBattle(CASTLE_THIRD, 10, 0, 3);
+  };
+  const dungeonCashOutBtn = document.getElementById('dungeonCashOutBtn'); if (dungeonCashOutBtn) dungeonCashOutBtn.onclick = () => {
+    DUNGEON_CONTINUE_POPUP = null; if (!RUN.castleState) RUN.castleState = {}; RUN.castleState.dungeonLocked = true; saveRun(); render(castleDungeonScreen());
+  };
   const dungeonWinContinueBtn = document.getElementById('dungeonWinContinueBtn'); if (dungeonWinContinueBtn) dungeonWinContinueBtn.onclick = () => { DUNGEON_WIN_POPUP = null; render(castleDungeonScreen()); };
   const leaveCastleBtn = document.getElementById('leaveCastleBtn'); if (leaveCastleBtn) leaveCastleBtn.onclick = () => render(mapScreen());
   const leaveMatchBtn = document.getElementById('leaveMatchBtn'); if (leaveMatchBtn) leaveMatchBtn.onclick = () => render(MATCH_RETURN_TO_MAP ? mapScreen() : castleMenuScreen());
+  const jokerGlitchReRouteBtn = document.getElementById('jokerGlitchReRouteBtn'); if (jokerGlitchReRouteBtn) jokerGlitchReRouteBtn.onclick = () => {
+    const returnToMap = JOKER_GLITCH_POPUP?.returnToMap; JOKER_GLITCH_POPUP = null;
+    if (returnToMap) { RUN.lastNotice = 'CRITICAL GLITCH! A Red Joker and a Black Joker were flipped together. Grid Anomaly Closed.'; render(mapScreen()); }
+    else render(castleMenuScreen('CRITICAL GLITCH! A Red Joker and a Black Joker were flipped together. Grid Anomaly Closed.'));
+  };
   const matchPopupContinueBtn = document.getElementById('matchPopupContinueBtn');
   if (matchPopupContinueBtn) matchPopupContinueBtn.onclick = () => {
     const wasCleared = MATCH_POPUP && MATCH_POPUP.boardCleared;
@@ -4429,15 +4515,16 @@ function render(html) {
 
         if (isJokerGlitch) {
           // CRITICAL GLITCH: a Red Joker and a Black Joker flipped together instantly ends the
-          // session for this run - no popup, no further play, board discarded on the spot.
+          // session for this run. Freeze input behind a dedicated warning popup instead of
+          // silently bouncing the player to another screen - they have to acknowledge it.
           st.matchCards = null;
           st.matchPick = [];
           st.matchLock = false;
           st.matchPlayed = true;
           st.matchLockReason = 'glitch';
           playSfx('hurt');
-          if (MATCH_RETURN_TO_MAP) { RUN.lastNotice = 'CRITICAL GLITCH! A Red Joker and a Black Joker were flipped together. Grid Anomaly Closed.'; render(mapScreen()); }
-          else render(castleMenuScreen('CRITICAL GLITCH! A Red Joker and a Black Joker were flipped together. Grid Anomaly Closed.'));
+          JOKER_GLITCH_POPUP = { returnToMap: MATCH_RETURN_TO_MAP };
+          render(castleMatchScreen());
           return;
         }
 
@@ -4624,6 +4711,7 @@ document.addEventListener('mouseover', (e) => {
   function ensureBattlePatchState(){
     if(!BATTLE) return;
     BATTLE.turnDiscard=BATTLE.turnDiscard||[];
+    BATTLE.turnSpentDiscard=BATTLE.turnSpentDiscard||[];
     BATTLE.itemCurses=BATTLE.itemCurses||{};
     BATTLE.opponentItemCurses=BATTLE.opponentItemCurses||{};
     BATTLE.opponentItemBurns=BATTLE.opponentItemBurns||{};
@@ -4736,8 +4824,6 @@ document.addEventListener('mouseover', (e) => {
     let html=originalBattleScreen();
     html=html.replace(/class="itemCard kind-([^\"]+) ([^\"]*)"/g,(m,k,rest)=>m);
     html=html.replace(/(<div class="hdr" style="font-weight:600">)([^<]+)(<\/div>)/g,(m,a,name,c)=>m);
-    /* Add the requested metrics immediately below the End Turn button. */
-    html=html.replace(/(<button class="wo-btn red" id="endTurnBtn"[\s\S]*?>End Turn<\/button>)/,`$1<div style="font-family:var(--mono);font-size:10.5px;color:var(--dim);line-height:1.5;text-align:center">Hand: ${BATTLE.hand.length}/${RUN.handSize}<br>Opp Pool: ${BATTLE.oppPool.length}/${BATTLE.opponent.maxPoolSize||13}</div>`);
     /* Replace the old curse wording with visible slot-level badges by deriving current slot state
        and adding a compact panel before the player Item grid. */
     const curseKeys=Object.keys(BATTLE.itemCurses||{});
@@ -4791,12 +4877,6 @@ document.addEventListener('mouseover', (e) => {
 
   /* Dev mode + run dashboard. */
   META.devModeActive=META.playerName?.toLowerCase()==='devmode';
-  const oldMeta=metaScreen;
-  window.metaScreen=function(){
-    let html=oldMeta();
-    html=html.replace(/(<button class="wo-btn amber" id="viewUpgradesBtn"[^>]*>View Upgrades<\/button>)/,`$1<button class="wo-btn purple" id="viewRunSummaryHomeBtn" style="width:100%;margin-bottom:10px" ${loadRunSave()?'':'disabled'}>Active Run Upgrades Dashboard</button>`);
-    return html;
-  };metaScreen=window.metaScreen;
   window.runSummaryScreen=function(){
     if(!RUN)return metaScreen();
     const r=RUN.runUpgrades||{};const rows=[];const add=(a,b,c)=>rows.push(`<div class="shopcard"><div class="hdr"><span><b>${a}</b></span><span>${b}</span></div><div class="note">${c||''}</div></div>`);
@@ -4817,7 +4897,6 @@ document.addEventListener('mouseover', (e) => {
     if(name){name.oninput=()=>{META.playerName=name.value.trim().slice(0,18);META.devModeActive=META.playerName.toLowerCase()==='devmode';saveMeta();if(META.devModeActive)render(metaScreen());};}
     const dev=document.getElementById('devPanelBtn');if(dev)dev.onclick=()=>{document.getElementById('app').insertAdjacentHTML('beforeend',devPanel());bindDev();};
     const dash=document.getElementById('openRunSummaryBtn');if(dash)dash.onclick=()=>render(runSummaryScreen());
-    const homeDash=document.getElementById('viewRunSummaryHomeBtn');if(homeDash)homeDash.onclick=()=>render(runSummaryScreen());
     const leave=document.getElementById('leaveRunSummaryBtn');if(leave)leave.onclick=()=>render(IN_BATTLE?battleScreen():metaScreen());
     app.querySelectorAll('[data-targetkey]').forEach(el=>el.onclick=()=>{
       const k=el.dataset.targetkey;

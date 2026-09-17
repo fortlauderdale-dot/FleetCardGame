@@ -89,6 +89,29 @@
   .bigicon{font-size:30px;line-height:1}
   .duelBoard{display:grid;grid-template-columns:1fr 160px 1fr;gap:8px;align-items:start}
   @media (max-width:700px){ .duelBoard{grid-template-columns:1fr} .duelHead{grid-template-columns:1fr 1fr} .vsMark{display:none} }
+  @media (max-width:700px){
+    /* Split-view battle layout: opponent locked to a top band, player fills the rest, both visible with no page-level scroll */
+    .game-stage:has(.duelHead){
+      display:grid;
+      grid-template-rows:14vh 13vh 10vh auto auto auto minmax(0,1fr) auto;
+      grid-template-columns:1fr;
+      height:calc(100dvh - 96px);
+      overflow:hidden;
+    }
+    .game-stage:has(.duelHead) .duelHead,
+    .game-stage:has(.duelHead) .duelBoard,
+    .game-stage:has(.duelHead) .duelMatchup{ display:contents; }
+    /* opponent zone - top ~40%, internally scrollable, never pushes the player off screen */
+    .game-stage:has(.duelHead) .duelHead .duelSide.opp{ grid-row:1; min-height:0; overflow-y:auto }
+    .game-stage:has(.duelHead) .duelBoard > div:last-of-type{ grid-row:2; min-height:0; overflow-y:auto }
+    .game-stage:has(.duelHead) .duelMatchup .matchupSide.opponentSide{ grid-row:3; min-height:0; overflow-y:auto }
+    /* player zone - remaining ~60%, hand/controls fixed height, item grid takes the flexible space */
+    .game-stage:has(.duelHead) .duelHead .duelSide.you{ grid-row:4 }
+    .game-stage:has(.duelHead) .duelBoard > div:first-of-type{ grid-row:5 }
+    .game-stage:has(.duelHead) .duelBoard > .deckStack{ grid-row:6 }
+    .game-stage:has(.duelHead) .duelMatchup .matchupSide.playerSide{ grid-row:7; min-height:0; overflow-y:auto }
+    .game-stage:has(.duelHead) .panel:has(> .log){ grid-row:8; min-height:0 }
+  }
   .deckStack{text-align:center;padding-top:20px;display:flex;flex-direction:column;align-items:center;gap:10px;width:100%;box-sizing:border-box}.deckStack .card.back{cursor:default;pointer-events:none}
   .deckStack .card.back::after{content:none}
   .wo-btn.red{background:var(--red);border-color:#a83236}
@@ -133,19 +156,19 @@
   .dealerCardPanel{flex:0 0 140px;width:140px;display:flex;flex-direction:column;padding:8px}
   .dealerMetaDivider{height:1px;background:rgba(31,182,166,0.2);margin:8px 0 6px;flex-shrink:0}
   .dealerMeta{display:flex;flex-direction:column;align-items:center;gap:4px}
-  .itemCard{border-radius:8px;padding:6px 4px;background:rgba(10,14,26,0.9) !important;border:1px solid rgba(31,182,166,0.2);width:100%;height:190px;overflow:hidden;display:flex;flex-direction:column;align-items:center;text-align:center;box-sizing:border-box;font-size:12px;position:relative;transition:box-shadow .15s ease}
+  .itemCard{border-radius:8px;padding:6px 4px;background:rgba(10,14,26,0.9) !important;border:1px solid rgba(31,182,166,0.2);width:100%;height:150px;overflow:hidden;display:flex;flex-direction:column;align-items:center;text-align:center;box-sizing:border-box;font-size:12px;position:relative;transition:box-shadow .15s ease}
   .itemCard:hover{box-shadow:0 0 14px rgba(31,182,166,0.35)}
   .itemCard-sec{width:100%;flex:0 0 auto}
   .itemCard-footer{margin-top:auto;width:100%;flex:0 0 auto}
-  .itemCard-cards-sec{min-height:58px;display:flex;flex-direction:column;justify-content:center;align-items:center;width:100%;overflow:visible}
+  .itemCard-cards-sec{min-height:34px;display:flex;flex-direction:column;justify-content:center;align-items:center;width:100%;overflow:visible}
   .usesBadge{position:absolute;top:4px;right:4px;font-size:9px;font-weight:800;background:none;color:#1fb6a6;border:none;padding:0;line-height:1.4}
   .usesBadge.depleted{background:none;color:var(--dim)}
   .itemCard.ready{border-color:var(--green) !important}
   .itemCard .hdr{width:100%;justify-content:center;text-align:center}
   .itemCard .vcards{display:flex;gap:3px;flex-wrap:wrap;justify-content:center;min-height:26px;margin-top:4px}
-  .itemReqLine{font-size:12px;font-weight:700;color:#f0f3f8;margin:4px 0 2px;line-height:1.25}
+  .itemReqLine{font-size:12px;font-weight:700;color:#f0f3f8;margin:2px 0 1px;line-height:1.2}
   .itemCard .note{color:#f0f3f8}
-  .itemBonusLine{font-size:10.5px;color:var(--purple);margin:1px 0 0;line-height:1.25}
+  .itemBonusLine{font-size:10.5px;color:var(--purple);margin:0;line-height:1.2}
   .itemBonusLine b{font-weight:800;cursor:help;position:relative}
 
   .card{width:48px;height:64px;border-radius:5px;background:#ffffff;color:#12163a;display:flex;
@@ -228,7 +251,7 @@
   .resourceCount{font-size:12px;font-weight:800;letter-spacing:.03em}
   .resourceAction.gemAction{border-color:#5c2ea0}
   .resourceAction.fuelAction{border-color:#1f7a48}
-  .itemDivider{border-top:1px solid transparent;margin:5px 0 4px;width:100%}
+  .itemDivider{border-top:1px solid transparent;margin:3px 0 2px;width:100%}
   .itemCard.kind-damage{background:rgba(139,147,196,0.10) !important;border-color:#8b93c4 !important;box-shadow:none}
   .itemCard.kind-damage .hdr{color:#8b93c4 !important}
   .itemCard.kind-poison{background:rgba(47,174,102,0.12) !important;border-color:#2fae66 !important;box-shadow:none}
@@ -257,7 +280,9 @@
     
     .hand .card:not(.mini){width:40px;height:54px;font-size:14px}
     .hand .card:not(.mini) div:last-child{font-size:19px}
-    .itemCard{font-size:11.5px}
+    .itemCard{font-size:11px}
+    .itemCard .itemReqLine{font-size:11px}
+    .itemCard .itemBonusLine{font-size:10px}
     .currencies{gap:6px}
     .cur{font-size:11px}
   }
@@ -4624,10 +4649,8 @@ document.addEventListener('mouseover', (e) => {
   };
   render=window.render;
   function bindDev(){const close=document.getElementById('devCloseBtn');if(close)close.onclick=()=>render(IN_BATTLE?battleScreen():RUN?mapScreen():metaScreen());const coins=document.getElementById('devCoinsBtn');if(coins)coins.onclick=()=>{RUN.chips+=500;saveRun();render(`${IN_BATTLE?battleScreen():mapScreen()}${devPanel()}`);};const max=document.getElementById('devMaxBtn');if(max)max.onclick=()=>{RUN.chips=9999;RUN.gems=RUN.maxGems;RUN.fuel=RUN.maxFuel;RUN.energy=RUN.maxEnergy;RUN.health=RUN.maxHealth;saveRun();render(`${IN_BATTLE?battleScreen():mapScreen()}${devPanel()}`);};document.querySelectorAll('[data-devitem]').forEach(e=>e.onclick=()=>{if(RUN&&equippedItemCount(RUN.hero)<RUN.itemCap){RUN.hero.items.push(e.dataset.devitem);saveRun();render(`${IN_BATTLE?battleScreen():mapScreen()}${devPanel()}`);}});}
-  
   const cb=originalCurrencyBar;
   window.currencyBar=function(extraHTML=''){let h=cb(extraHTML);const controls=`${META.devModeActive?`<button class="wo-btn gray" id="devPanelBtn" style="padding:3px 7px;font-size:10px">[🛠️ DEV]</button>`:''}<button class="wo-btn purple" id="openRunSummaryBtn" style="padding:3px 7px;font-size:10px">Run Dashboard</button>`;if(h.includes('<!--RUNCONTROLS-->'))return h.replace('<!--RUNCONTROLS-->',controls);const at=h.lastIndexOf('</div>');if(at<0)return h;return h.slice(0,at)+controls+h.slice(at);};currencyBar=window.currencyBar;
-  
   window.chopShopScreen=function(returnTo){
     let html=originalChopShopScreen(returnTo);
     if(RUN?.hero?.items){
@@ -4640,11 +4663,7 @@ document.addEventListener('mouseover', (e) => {
     }
     return html;
   };chopShopScreen=window.chopShopScreen;
-  
   document.addEventListener('click',e=>{const b=e.target.closest('[data-utilityup]');if(!b||!RUN)return;const id=b.dataset.utilityup,l=utilityLevel(id),cap=id==='drawstone'?3:2,cost=Math.round((id==='drawstone'?60:75)*Math.pow(2,l));if(l>=cap||RUN.chips<cost)return;e.preventDefault();e.stopPropagation();RUN.chips-=cost;RUN.itemUtilityLevels[id]=l+1;saveRun();render(chopShopScreen());},true);
-  
-
-
   const oldRenderStd=renderStandardItemCard;
   window.renderStandardItemCard=function(item,opts={}){let h=oldRenderStd(item,opts);if(item?.id==='drawstone')h=h.replace('7 or higher',`${Math.max(4,7-utilityLevel('drawstone'))} or higher`);if(item?.id==='impound_release')h=h.replace('45-point',`${Math.max(35,45-utilityLevel('impound_release'))}-point`);return h;};renderStandardItemCard=window.renderStandardItemCard;
   const oldItemRequirementText=itemRequirementText;window.itemRequirementText=function(item,eKind){let t=oldItemRequirementText(item,eKind);if(item?.id==='drawstone')t=t.replace(/7/g,String(Math.max(4,7-utilityLevel('drawstone'))));return t;};itemRequirementText=window.itemRequirementText;

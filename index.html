@@ -3811,9 +3811,9 @@ function metaScreen() {
     <div class="wo" style="position: relative;">
       <div class="wo-stripe"></div>
       <div class="wo-body">
-        <div class="note" style="position: absolute; top: 14px; right: 54px; margin: 0; text-align: left; opacity: 0.9; font-size: 16px; font-weight: 600; line-height: 1.4; max-width: 320px; color: var(--amber);">
+        <div class="note" style="position: absolute; top: 36px; right: 54px; margin: 0; text-align: left; opacity: 0.9; font-size: 16px; font-weight: 600; line-height: 1.4; max-width: 320px; color: var(--amber);">
           🥇 JJ was first to beat World 1!<br>
-          🏆 Haley was first to beat World 2! 🏆
+          <div style="margin-top: 4px;">🏆 Haley was first to beat World 2! 🏆</div>
         </div>
         <div class="wo-eyebrow">Home Base</div>
         <h1>Fleet <em>Duel</em></h1>
@@ -3825,15 +3825,14 @@ function metaScreen() {
         ${hasSave ? `<button class="wo-btn" id="continueRunBtn" style="margin-bottom:10px;width:100%">Continue Run</button>` : `<button class="wo-btn" id="startRunBtn" style="margin-bottom:10px;width:100%">New Run</button>`}
         ${hasSave ? `<button class="wo-btn gray" id="startRunBtn" style="width:100%;margin-bottom:10px">New Run (overwrites save)</button>` : ''}
         <button class="wo-btn amber" id="viewUpgradesBtn" style="width:100%">Career Point Upgrades</button>
-        <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-top:16px;">
-          <div class="note" style="margin: 0; opacity: 0.85; font-size: 22px; font-weight: 600; color: var(--dim);">
-            Made by Drew.
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; gap:16px;">
+          <div class="note" style="margin: 0; opacity: 0.95; font-size: 22px; font-weight: 600; color: var(--dim); white-space: nowrap; flex-shrink: 0;">
+            Made by Drew
           </div>
-          <div class="note" style="margin: 0; text-align: right; opacity: 0.75; max-width: 70%;">
+          <div class="note" style="margin: 0; text-align: right; opacity: 0.75; font-size: 13px; line-height: 1.4; max-width: 70%;">
             Please send Drew your feedback, high scores, bug findings, or confusing areas so he can update the master registry leaderboard. Work in Progress.
           </div>
         </div>
-
       </div>
     </div>
   `;

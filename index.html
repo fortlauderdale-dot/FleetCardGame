@@ -768,10 +768,7 @@ function checkCondition(cond, cards) {
     const ok = cards.length === cond.len && isConsecutive(cards);
     result = { met: ok, label: `${cond.len}-Card Straight` };
   }
-  else if (cond.type === 'suitCount') {
-    const n = cards.filter(c => c.suit === cond.suit).length;
-    result = { met: n >= cond.count, label: `${n} of ${cond.suit}`, count: n };
-  }
+    else if (cond.type === 'suitCount') { const n = cards.filter(c => c.suit === cond.suit).length; result = { met: n >= 1, label: `${n} of ${cond.suit}`, count: n }; } else if (cond.type === 'colorCount') { const n = cards.filter(c => c.color === cond.color).length; result = { met: n >= 1, label: `${n} ${cond.color === 'red' ? 'Red' : 'Black'}`, count: n }; }
   else if (cond.type === 'colorCount') {
     const n = cards.filter(c => c.color === cond.color).length;
     result = { met: n >= cond.count, label: `${n} ${cond.color === 'red' ? 'Red' : 'Black'}`, count: n };
@@ -804,10 +801,6 @@ function checkCondition(cond, cards) {
   else if (cond.type === 'sumExact') {
     const sum = cards.reduce((a, c) => a + cardValue(c.rank) + (c.bonus || 0), 0);
     result = { met: cards.length > 0 && Math.round(sum) === cond.value, label: `${SIGMA_TIP}${sum}`, sum };
-  }
-  else if (cond.type === 'suitCountExact') {
-    const n = cards.filter(c => c.suit === cond.suit).length;
-    result = { met: n === cond.count, label: `${n} of ${cond.suit}`, count: n };
   }
   else result = { met: false, label: '' };
   

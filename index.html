@@ -75,8 +75,12 @@
     .matchGrid{max-width:520px !important}
     .matchGrid .card.mini{height:76px;font-size:15px}
   }
-  .matchGrid .card.mini.matchTile{width:100%;aspect-ratio:3/4;height:auto;max-width:56px;max-height:74px;margin:0 auto}
-  .matchTileJoker{font-size:10px !important;font-weight:800;letter-spacing:0.02em}
+  .matchGrid .card.mini.matchTile{width:75px;height:100px;max-width:75px;max-height:100px;margin:0 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;box-sizing:border-box}
+  .matchGrid .card.mini.matchTile:not(.back){background:#ffffff !important;color:#1a1a2e}
+  .matchGrid .card.mini.matchTile:not(.back) div:nth-child(2){font-size:34px;line-height:1;font-weight:800}
+  .matchGrid .card.mini.matchTile.red:not(.back) div:nth-child(2){color:#c62828}
+  .matchGrid .card.mini.matchTile:not(.back):not(.red) div:nth-child(2){color:#1a1a2e}
+  .matchTileJoker{font-size:15px !important;font-weight:800;letter-spacing:0.02em}
   .joker-outline-red{outline:3px solid #e5484d !important}
   .joker-outline-black{outline:3px solid #12163a !important}
   .glitchWarningBanner{margin-top:10px;padding:6px 8px;border-radius:5px;background:rgba(229,72,77,0.12);border:1px solid var(--red);color:var(--red);font-weight:700;font-size:11px;text-align:center}
@@ -133,10 +137,11 @@
   .pickItemRow{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-start}
   .pickItemRow .itemCard{flex:0 0 125px;width:125px}
   .dealerRow{display:flex;gap:12px;overflow-x:auto;padding-bottom:6px;-webkit-overflow-scrolling:touch}
-  .dealerCardPanel{flex:0 0 125px;width:125px;display:flex;flex-direction:column;padding:8px}
+  .dealerCardPanel{flex:0 0 145px;width:145px;margin:0 auto;overflow:hidden;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:8px;box-sizing:border-box}
   .dealerMetaDivider{height:1px;background:rgba(31,182,166,0.2);margin:8px 0 6px;flex-shrink:0}
   .dealerMeta{display:flex;flex-direction:column;align-items:center;gap:4px}
   .itemCard{border-radius:8px;padding:6px 4px;background:rgba(10,14,26,0.9) !important;border:1px solid rgba(31,182,166,0.2);width:125px;min-width:125px;max-width:125px;min-height:150px;height:auto;display:flex;flex-direction:column;align-items:center;text-align:center;box-sizing:border-box;font-size:12px;position:relative;transition:box-shadow .15s ease}
+  .emptyItemSlot{border-radius:8px;padding:6px 4px;background:transparent !important;border:2px dashed rgba(31,182,166,0.3);width:125px;min-width:125px;max-width:125px;min-height:150px;height:auto;box-sizing:border-box;display:flex;align-items:center;justify-content:center;color:rgba(31,182,166,0.35);font-size:11px;font-weight:700}
   .itemCard:hover{box-shadow:0 0 14px rgba(31,182,166,0.35)}
   .itemCard-sec{width:100%;flex:0 0 auto}
   .itemCard>.itemCard-sec:first-of-type{flex:0 0 auto;min-height:38px;display:flex;flex-direction:column;justify-content:center}
@@ -197,7 +202,7 @@
     padding:2px 6px;border-radius:4px;pointer-events:none}
   .hereTag::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:4px solid transparent;border-top-color:var(--blue-dark)}
 
-  .shopcard{border:1px solid var(--blue-light);background:var(--bg);border-radius:6px;padding:10px;margin-bottom:8px}
+  .shopcard{border:1px solid var(--blue-light);background:var(--bg);border-radius:6px;padding:10px;margin-bottom:8px;box-sizing:border-box;width:100%}
   .shopGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
   .shopGrid .shopcard{margin-bottom:0}
   @media (max-width:600px){.shopGrid{grid-template-columns:1fr}}
@@ -1971,7 +1976,7 @@ function castleMatchScreen() {
       <div class="wo-body">
         <h1>Fleet Carnival <em>Matching Game</em></h1>
         <div class="wo-sub">Attempts Left: ${st.matchGuesses}</div>
-        <div class="matchGrid" style="display:grid; grid-template-columns:repeat(6, 1fr); gap:6px; max-width:340px; margin:0 auto">
+        <div class="matchGrid" style="display:grid; grid-template-columns:repeat(6, 75px); gap:8px; max-width:490px; margin:0 auto">
           ${cards}
         </div>
         <div class="matchBottomGrid" style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:16px; align-items:start">
@@ -1997,7 +2002,7 @@ function castleMatchScreen() {
     </div>
     </div>`;
   if (MATCH_POPUP) {
-    return `${board}<div class="match-modal"><div class="wo" style="max-width:360px"><div class="wo-stripe"></div><div class="wo-body" style="text-align:center"><div class="wo-eyebrow">${MATCH_POPUP.jackpot ? 'Board Cleared' : 'Pair Matched'}</div><h1>${MATCH_POPUP.suitLabel} <em>${MATCH_POPUP.jackpot ? 'Jackpot!' : 'Pair!'}</em></h1><div class="treasure-prize">${MATCH_POPUP.rewardLabel}</div>${MATCH_POPUP.boardCleared ? '<div class="note">Board cleared! The matching game is done for this run.</div>' : ''}<button class="wo-btn amber" id="matchPopupContinueBtn" style="width:100%;margin-top:10px;pointer-events:auto">Nice!</button></div></div></div>`;
+    return `${board}<div class="match-modal"><div class="wo" style="max-width:360px"><div class="wo-stripe"></div><div class="wo-body" style="text-align:center"><div class="wo-eyebrow">${MATCH_POPUP.jackpot ? 'Board Cleared' : 'Pair Matched'}</div><h1>${MATCH_POPUP.suitLabel} <em>${MATCH_POPUP.jackpot ? 'Jackpot!' : 'Pair!'}</em></h1>${MATCH_POPUP.cardHTML ? `<div style="display:flex;justify-content:center;margin:8px 0">${MATCH_POPUP.cardHTML}</div>` : ''}<div class="treasure-prize">${MATCH_POPUP.rewardLabel}</div>${MATCH_POPUP.boardCleared ? '<div class="note">Board cleared! The matching game is done for this run.</div>' : ''}<button class="wo-btn amber" id="matchPopupContinueBtn" style="width:100%;margin-top:10px;pointer-events:auto">Nice!</button></div></div></div>`;
   }
   return board;
 }
@@ -3585,6 +3590,9 @@ function dealerItemCardHTML(item, opts) {
     </div>
   </div>`;
 }
+function emptyItemSlotHTML() {
+  return `<div class="dealerCardPanel panel"><div class="emptyItemSlot">Open Slot</div></div>`;
+}
 function shopScreen(fromCastle=false) {
   if (!RUN.shopStock) RUN.shopStock = pickShopStock().map(it => it.id);
   const options = RUN.shopStock.map(id => ITEMS[id]).filter(Boolean);
@@ -3599,6 +3607,8 @@ function shopScreen(fromCastle=false) {
     const sell=it.sellValue != null ? it.sellValue + Math.floor(modCost/2) : Math.floor((it.cost+modCost)/2);
     return dealerItemCardHTML(it, { mode: 'sell', sell, index: i });
   }).join('');
+  const emptyCount = Math.max(0, RUN.itemCap - equippedItemCount(RUN.hero));
+  const emptySlotRows = Array.from({ length: emptyCount }, emptyItemSlotHTML).join('');
   return `${noticeHTML()}
     <div class="wo">
       <div class="wo-stripe"></div><div class="wo-body">
@@ -3609,7 +3619,7 @@ function shopScreen(fromCastle=false) {
         </div>
         <div class="dealerRow" style="margin:10px 0 12px">${itemRows || '<div class="note">No items in this category.</div>'}</div>
         <div class="hdr" style="margin-top:14px;font-weight:800;font-size:14px"><span>Equipped Items</span><span>${equippedItemCount(RUN.hero)}/${RUN.itemCap}</span></div>
-        ${ownedRows ? `<div class="dealerRow" style="margin-top:8px">${ownedRows}</div>` : `<div class="note" style="margin-top:6px">Nothing equipped yet.</div>`}
+        ${(ownedRows || emptySlotRows) ? `<div class="dealerRow" style="margin-top:8px">${ownedRows}${emptySlotRows}</div>` : `<div class="note" style="margin-top:6px">Nothing equipped yet.</div>`}
       </div>
     </div>`;
 }
@@ -3717,7 +3727,7 @@ function blacksmithScreen() {
         <div class="wo-sub">${visitNote}</div>
         ${currencyBar()}
         <div style="display:flex;gap:8px;margin:10px 0">
-          <button class="wo-btn teal" id="leaveBlacksmithBtn" style="flex:1">${RETURN_TO_CASTLE_MENU ? 'Back to Compound' : roadExitLabel()}</button>
+          <button class="wo-btn" id="leaveBlacksmithBtn" style="flex:1;background:#ffc44d;color:#12163a;border-color:#ffc44d;font-weight:800">${RETURN_TO_CASTLE_MENU ? 'Back to Compound' : roadExitLabel()}</button>
           <button class="wo-btn purple" id="openRunUpgradeFromBlacksmithBtn" style="flex:1">Upgrades</button>
         </div>
         <div class="hdr"><span>[ Card Tuning Upgrades ]</span></div>
@@ -3902,14 +3912,14 @@ function upgradeScreen() {
 * OVERDRIVE BAY                                                            *
 ****************************************************************************/
 function overdriveBayScreen() {
-  const holoCompareBlock = (beforeHTML, afterHTML, cost, cta) => `<div style="display:flex;align-items:center;gap:16px;justify-content:space-between;margin:10px 0">
-      <div>${beforeHTML}</div>
-      <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0">
-        <span style="font-size:28px;color:var(--amber);line-height:1">➔</span>
+  const holoCompareBlock = (beforeHTML, afterHTML, cost, cta) => `<div style="display:flex;align-items:center;gap:28px;justify-content:space-between;width:100%;margin:14px 0">
+      <div style="flex:0 0 auto">${beforeHTML}</div>
+      <div style="display:flex;flex:1 1 auto;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-width:120px">
+        <span style="font-size:32px;color:var(--amber);line-height:1">➔</span>
         ${cta}
         <span class="price" style="white-space:nowrap">${cost} coins</span>
       </div>
-      <div>${afterHTML}</div>
+      <div style="flex:0 0 auto">${afterHTML}</div>
     </div>`;
   const uniqueItemIds = [...new Set(RUN.hero.items)].filter(id => ITEMS[id] && ITEMS[id].kind !== 'storage' && ITEMS[id].usesPerTurnPerLevel);
   const rows = uniqueItemIds.map(id => {
@@ -3925,7 +3935,7 @@ function overdriveBayScreen() {
       RUN.itemUsesLevels[id] = usesLvl;
     }
     const cta = usesMaxed ? `<span class="note">Maxed</span>` : `<button class="wo-btn amber" data-usesup="${id}" style="padding:6px 10px;font-size:12px;white-space:nowrap" ${RUN.chips < usesCost ? 'disabled' : ''}>[ +1 Use Per Turn ]</button>`;
-    return `<div class="shopcard" style="padding:14px">
+    return `<div class="shopcard" style="padding:18px 22px">
       <div class="hdr" style="justify-content:center"><span>${item.name}</span></div>
       ${holoCompareBlock(before, after, usesMaxed ? '—' : usesCost, cta)}
       ${usesLvl > 0 ? `<div style="text-align:center"><button class="wo-btn gray" data-usesdown="${id}" style="padding:6px 10px;font-size:12px">Refund</button></div>` : ''}
@@ -3934,7 +3944,7 @@ function overdriveBayScreen() {
   return `${noticeHTML()}<div class="wo"><div class="wo-stripe"></div><div class="wo-body">
     <div class="wo-eyebrow">Overdrive Bay &middot; Run Upgrade (resets next run)</div><h1>Boost <em>Uses Per Turn</em></h1>${currencyBar()}
     <div style="display:flex;gap:8px;margin:10px 0">
-      <button class="wo-btn teal" id="leaveOverdriveBtn" style="flex:1">${RETURN_TO_CASTLE_MENU ? 'Back to Compound' : roadExitLabel()}</button>
+      <button class="wo-btn" id="leaveOverdriveBtn" style="flex:1;background:#ffc44d;color:#12163a;border-color:#ffc44d;font-weight:800">${RETURN_TO_CASTLE_MENU ? 'Back to Compound' : roadExitLabel()}</button>
       <button class="wo-btn purple" id="openRunUpgradeFromOverdriveBtn" style="flex:1">Upgrades</button>
     </div>
     <div style="margin:12px 0">${rows || '<div class="note">No eligible Items equipped.</div>'}</div>
@@ -3959,19 +3969,19 @@ function chopShopScreen(returnTo) {
     } else {
       const previewCols = ['poison','burn','curse'].map(k => {
         const previewCard = renderStandardItemCard(item, { kindOverride: k });
-        return `<div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+        return `<div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:0 0 auto">
           ${previewCard}
           <button class="wo-btn ${k==='poison'?'green':k==='burn'?'red':'purple'}" data-kindconvert="${itemId}" data-item-index="${index}" data-kindto="${k}" style="padding:6px 10px;font-size:11px" ${RUN.chips<convertCost?'disabled':''}>Convert to ${k[0].toUpperCase()+k.slice(1)}</button>
           <span class="price" style="font-size:10px">${convertCost} coins</span>
         </div>`;
       }).join('');
-      convertBlockHTML = `<div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">${previewCols}</div>`;
+      convertBlockHTML = `<div style="display:flex;gap:8px;flex-wrap:nowrap">${previewCols}</div>`;
     }
 
     return `<div class="shopcard">
-      <div style="display:flex;align-items:center;gap:12px;justify-content:center;flex-wrap:wrap;margin:8px 0">
+      <div style="display:flex;align-items:center;gap:12px;justify-content:flex-start;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;margin:8px 0;padding-bottom:4px">
         ${original}
-        <span style="font-size:20px;color:var(--dim)">➔</span>
+        <span style="font-size:20px;color:var(--dim);flex:0 0 auto">➔</span>
         ${convertBlockHTML}
       </div>
     </div>`;
@@ -3990,7 +4000,7 @@ function chopShopScreen(returnTo) {
   return `${noticeHTML()}<div class="wo"><div class="wo-stripe"></div><div class="wo-body">
     <div class="wo-eyebrow">Chop Shop</div><h1>Special <em>Modifications</em></h1>${currencyBar()}
     <div style="display:flex;gap:8px;margin:10px 0">
-      <button class="wo-btn teal" id="leaveChopShopBtn" style="flex:1">${RETURN_TO_CASTLE_MENU?'Back to Compound':roadExitLabel()}</button>
+      <button class="wo-btn" id="leaveChopShopBtn" style="flex:1;background:#ffc44d;color:#12163a;border-color:#ffc44d;font-weight:800">${RETURN_TO_CASTLE_MENU?'Back to Compound':roadExitLabel()}</button>
       <button class="wo-btn purple" id="openRunUpgradeFromChopShopBtn" style="flex:1">Upgrades</button>
     </div>
     <div class="note" style="margin:10px 0">Convert an Item to poison, burn, or curse (one per Item, run only), or add card slots.</div>
@@ -4401,8 +4411,9 @@ function render(html) {
             const jackpotItem = ITEMS[st.matchJackpotItemId] || ITEMS['supply_bag'];
             RUN.hero.items.push(jackpotItem.id);
             const clearLabel = `${jackpotItem.name} added to your Fleet`;
+            const clearCardHTML = renderStandardItemCard(jackpotItem, {});
             saveRun();
-            MATCH_POPUP = { suitLabel: 'Board', rewardLabel: clearLabel, boardCleared: true, jackpot: true };
+            MATCH_POPUP = { suitLabel: 'Board', rewardLabel: clearLabel, cardHTML: clearCardHTML, boardCleared: true, jackpot: true };
           } else {
             MATCH_POPUP = { suitLabel: ga === 'RJ' ? 'Red Joker' : ga === 'BJ' ? 'Black Joker' : ga, rewardLabel: reward.label || '', boardCleared: false };
           }

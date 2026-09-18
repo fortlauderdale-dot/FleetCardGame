@@ -20,6 +20,14 @@
   body.world-2{--bg:linear-gradient(135deg, #1c2a1c 0%, #23241f 55%, #14261f 100%)}
   body.world-2 .panel{border-color:#00e676}
   body.world-2 .wo{box-shadow:0 0 20px rgba(0,230,118,0.3),6px 6px 0 #1a2038}
+  body.world-1{--bg:linear-gradient(135deg,#061b36 0%,#0a3552 48%,#087f86 100%);--blue:#16b8d4;--blue-dark:#06243d;--blue-light:#123e5c;--white:#f8fcff;--ink:#ffffff;--dim:#a9dce3;--amber:#ffc44d;--green:#48d6ad;--energy:#66ffe5}
+  body.world-1 .panel{border-color:rgba(72,214,173,.45)}
+  body.world-1 .wo{box-shadow:0 0 24px rgba(22,184,212,.28),6px 6px 0 #06243d}
+  body.world-3{--bg:linear-gradient(135deg,#070b16 0%,#15172a 48%,#24143a 100%);--blue:#62c9ff;--blue-dark:#090d1b;--blue-light:#272b46;--white:#111522;--ink:#ffffff;--dim:#a8afc9;--amber:#ffbf4a;--green:#42d6a2;--energy:#65e6ff}
+  body.world-3 .panel{border-color:rgba(98,201,255,.35)}
+  body.world-3 .wo{box-shadow:0 0 26px rgba(98,201,255,.18),6px 6px 0 #090d1b}
+  body.world-3 .mapwrap{background:linear-gradient(0deg,rgba(98,201,255,.06) 1px,transparent 1px) 0 0/100% 32px,linear-gradient(90deg,rgba(98,201,255,.06) 1px,transparent 1px) 0 0/32px 100%,#070b16;border-color:#252a44}
+  body.world-1,body.world-2,body.world-3{transition:background .35s ease}
   button{font-family:var(--disp);cursor:pointer}
   #app{max-width:1180px;margin:0 auto;padding:60px 18px 100px}
   .game-stage{}
@@ -122,15 +130,15 @@
   .vslot .vreq{font-family:var(--mono);font-size:10.5px;color:var(--dim);margin:3px 0}
   .vslot .vcards{display:flex;gap:3px;flex-wrap:wrap;min-height:30px;margin-top:6px}
   .itemGrid{display:flex;flex-wrap:wrap;justify-content:center;width:100%;gap:6px}
-  .itemGrid .itemCard{flex:0 0 140px}
-  .popupItemRow{display:grid;grid-template-columns:repeat(auto-fill,140px);justify-content:center;gap:8px}
+  .itemGrid .itemCard{flex:0 0 125px}
+  .popupItemRow{display:grid;grid-template-columns:repeat(auto-fill,125px);justify-content:center;gap:8px}
   .pickItemRow{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-start}
-  .pickItemRow .itemCard{flex:0 0 140px;width:140px}
+  .pickItemRow .itemCard{flex:0 0 125px;width:125px}
   .dealerRow{display:flex;gap:12px;overflow-x:auto;padding-bottom:6px;-webkit-overflow-scrolling:touch}
-  .dealerCardPanel{flex:0 0 140px;width:140px;display:flex;flex-direction:column;padding:8px}
+  .dealerCardPanel{flex:0 0 125px;width:125px;display:flex;flex-direction:column;padding:8px}
   .dealerMetaDivider{height:1px;background:rgba(31,182,166,0.2);margin:8px 0 6px;flex-shrink:0}
   .dealerMeta{display:flex;flex-direction:column;align-items:center;gap:4px}
-  .itemCard{border-radius:8px;padding:6px 4px;background:rgba(10,14,26,0.9) !important;border:1px solid rgba(31,182,166,0.2);width:140px;min-width:140px;max-width:140px;min-height:150px;height:auto;display:flex;flex-direction:column;align-items:center;text-align:center;box-sizing:border-box;font-size:12px;position:relative;transition:box-shadow .15s ease}
+  .itemCard{border-radius:8px;padding:6px 4px;background:rgba(10,14,26,0.9) !important;border:1px solid rgba(31,182,166,0.2);width:125px;min-width:125px;max-width:125px;min-height:150px;height:auto;display:flex;flex-direction:column;align-items:center;text-align:center;box-sizing:border-box;font-size:12px;position:relative;transition:box-shadow .15s ease}
   .itemCard:hover{box-shadow:0 0 14px rgba(31,182,166,0.35)}
   .itemCard-sec{width:100%;flex:0 0 auto}
   .itemCard>.itemCard-sec:first-of-type{flex:0 0 auto;min-height:38px;display:flex;flex-direction:column;justify-content:center}
@@ -139,7 +147,7 @@
   .usesBadge{position:absolute;top:4px;right:4px;font-size:9px;font-weight:800;background:none;color:#1fb6a6;border:none;padding:0;line-height:1.4}
   .usesBadge.depleted{background:none;color:var(--dim)}
   .itemCard.ready{border-color:var(--green) !important}
-  .itemCard .hdr{width:100%;justify-content:center;text-align:center;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+  .itemCard .hdr{width:100%;justify-content:center;text-align:center;overflow:visible;white-space:normal;text-overflow:clip;overflow-wrap:anywhere;word-break:break-word;line-height:1.15}
   .itemCard .vcards{display:flex;gap:2px;flex-wrap:wrap;justify-content:center;min-height:22px;margin-top:4px}
   .itemReqLine{font-size:11.5px;font-weight:700;color:#f0f3f8;margin:3px 0 2px;line-height:1.3;overflow:visible;white-space:normal;text-overflow:clip;width:100%}
   .itemCard .note{color:#f0f3f8}
@@ -293,6 +301,34 @@
     background:linear-gradient(180deg,#ecd6ab,#d8b077);border:2px solid #8a5a2b;border-radius:8px;box-shadow:0 3px 0 #6b431d}
   .castleBtn:active{transform:translateY(2px);box-shadow:0 1px 0 #6b431d}
   .castleBtn:disabled{opacity:.5;cursor:default}
+  .castleMenuExit{margin-top:8px;padding-top:10px;border-top:1px solid rgba(31,182,166,.25)}
+  .castleMenuExit .castleBtn{background:#20263b;color:#fff;border-color:#4d587a;box-shadow:3px 3px 0 #0b0f19}
+  .handWorkspace{position:relative}
+  .handCapacity{position:absolute;top:0;right:0;font:600 10px var(--mono);color:var(--dim);cursor:help;z-index:2}
+  .playerActionGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:3px;width:100%;align-items:stretch}
+  .playerActionGrid .wo-btn{min-width:0}
+  @media (max-width:900px){
+    .duelBoard{grid-template-columns:minmax(0,1fr) 74px minmax(0,1fr);gap:6px}
+    .playerActionGrid{grid-template-columns:repeat(4,minmax(0,1fr))}
+    .duelBoard>.panel{min-width:0}
+    .hand{padding-right:0}
+  }
+  @media (max-width:740px) and (orientation:landscape){
+    html,body{min-height:100%;overflow-y:auto}
+    #app{padding-bottom:18px}
+    .duelBoard{grid-template-columns:minmax(0,1fr) 66px minmax(0,1fr);gap:5px}
+    .duelBoard .panel{padding:9px}
+    .playerActionGrid{gap:2px}
+    .playerActionGrid .wo-btn{padding:6px 2px !important;font-size:9px !important}
+    .deckStack{padding-top:8px;gap:6px}
+    .deckStack #endTurnBtn{padding:10px 3px !important}
+    .log{height:180px;max-height:180px}
+  }
+  @media (max-width:700px){
+    .playerActionGrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:4px}
+    .duelBoard{grid-template-columns:1fr}
+    .deckStack{order:2;padding-top:6px}
+  }
 </style>
 </head>
 <body>
@@ -342,7 +378,7 @@ function shuffle(arr) { for (let i = arr.length - 1; i > 0; i--) { const j = (Ma
 * HAND EVALUATION                                                          *
 ****************************************************************************/
 const TIERS = ['High Card', 'Pair', 'Two Pair', 'Three of a Kind', 'Straight', 'Flush', 'Full House', 'Four of a Kind', 'Straight Flush'];
-const TIER_MULT = [1.0, 1.5, 1.7, 2.0, 2.5, 2.8, 3.2, 4.0, 5.0];
+const TIER_MULT = [1.0, 1.5, 1.7, 3.0, 2.5, 2.8, 3.2, 4.0, 5.0];
 function evaluateHand(cards) {
   if (!cards.length) return { tier: 0, label: 'No Cards', mult: 0 };
   const ranks = cards.map(c => c.rank);
@@ -1656,6 +1692,11 @@ function initRunWithStarter(id) {
   const baseHero = HEROES[id];
   DUNGEON_WIN_POPUP = null;
   DUNGEON_CONTINUE_POPUP = null;
+  MATCH_POPUP = null;
+  MATCH_RETURN_TO_MAP = false;
+  MATCH_OVERLAY_ACTIVE = false;
+  JOKER_GLITCH_POPUP = null;
+  RETURN_TO_CASTLE_MENU = false;
   
   RUN = {
     worldMultiplier: 1.0, 
@@ -1688,7 +1729,7 @@ function initRunWithStarter(id) {
     handSortMode: 'value', 
     innSleeps: 0,
     runUpgrades: { itemSlots: 0, drawPerTurn: 0, sightRange: 0, gemDraw: 0, health: 0 },
-    castleState: {},
+    castleState: { firstDone:false, secondDone:false, thirdDone:false, dungeonLocked:false, matchPlayed:false, matchLockReason:null, matchCards:null, matchGuesses:4, matchPick:[] },
   };
   RUN.world = 1;
   RUN.map = generateMap();
@@ -1757,7 +1798,6 @@ function castleMenuScreen(message='') {
       ${currencyBar()}
       ${message ? `<div class="panel"><div class="note">${message}</div></div>` : ''}
       <div class="castleMenu">
-        <button class="castleBtn" id="leaveCastleBtn" style="background:var(--red);color:#fff;font-weight:800;border-color:#a83236">Back to World Map.</button>
         <button class="castleBtn" id="castleDungeonNavBtn">Visit the Fleet Compound Dungeon.</button>
         <button class="castleBtn" id="castleWizardNavBtn" ${RUN.castleState?.matchPlayed ? 'disabled' : ''}>${RUN.castleState?.matchPlayed ? 'Matching Game Played' : 'Visit the Fleet Carnival Matching Game.'}</button>
         <button class="castleBtn" id="castleBlacksmithNavBtn">Visit the Tuning Garage.</button>
@@ -1765,6 +1805,9 @@ function castleMenuScreen(message='') {
         <button class="castleBtn" id="castleOverdriveNavBtn">Visit the Overdrive Bay.</button>
         <button class="castleBtn" id="castleShopNavBtn">Visit the Dealership.</button>
         <button class="castleBtn" id="castleInnNavBtn">Visit the Inn.</button>
+        <div class="castleMenuExit">
+          <button class="castleBtn" id="leaveCastleBtn">Back to World Map.</button>
+        </div>
       </div>
     </div>
   </div>
@@ -2486,6 +2529,18 @@ function resolveOpponentAttackEffect(attack, oppDmg) {
   }
   return '';
 }
+function opponentHasExactPokerTier(pool, tier, maxCards) {
+  const cap = Math.min(maxCards, pool.length);
+  if (cap <= 0) return false;
+  return combinations(pool, cap).some(combo => evaluateHand(combo).tier === tier);
+}
+function opponentAttackIsValid(attack, best, pool, cap) {
+  if (!attack || attack.autoFire) return true;
+  if (attack.id === 'opp_castle_poke_t3' || attack.name === 'Champion Strike') {
+    return opponentHasExactPokerTier(pool, 3, cap);
+  }
+  return true;
+}
 function endTurn() {
   BATTLE.stagedFireCards = [];
   if (BATTLE.opponent.boss && BATTLE.turnStartedAt) {
@@ -2610,9 +2665,13 @@ function endTurn() {
             }
             continue;
           }
-          const best = bestHandFromPool(BATTLE.oppPool, effectiveMaxCards(item) ?? maxCards);
+          const itemCap = effectiveMaxCards(item) ?? maxCards;
+          const best = bestHandFromPool(BATTLE.oppPool, itemCap);
           const cond = checkCondition(item.condition, best.cards);
-          if (cond.met) { itemPick = { item, best, cond, key: slotKeyForBurn }; break; }
+          const validPokerAttack = item.id === 'opp_castle_poke_t3'
+            ? opponentHasExactPokerTier(BATTLE.oppPool, 3, itemCap)
+            : true;
+          if (cond.met && validPokerAttack) { itemPick = { item, best, cond, key: slotKeyForBurn }; break; }
         }
         if (!itemPick && burnBlockedPick) {
           const { item, key } = burnBlockedPick;
@@ -2710,6 +2769,7 @@ function endTurn() {
         else if (a.discardHand) viable = best.cards.length > 0;
         else if (a.exactSuitCount) viable = BATTLE.oppPool.filter(c => c.suit === a.exactSuitCount.suit).length === a.exactSuitCount.count;
         else viable = best.tier >= (a.minTier ?? BATTLE.opponent.minTier);
+        if (viable && !opponentAttackIsValid(a, best, BATTLE.oppPool, a.maxCards ?? maxCards)) viable = false;
         if (viable) { pick = { a, best }; break; }
       }
       if (!pick) break;
@@ -2859,8 +2919,13 @@ function winBattle(outlast) {
           const pool = eligiblePool.length ? eligiblePool : fullPool;
           wonItem = (pool.length ? pool : Object.values(ITEMS))[Math.floor(Math.random() * (pool.length ? pool.length : Object.values(ITEMS).length))];
         }
-        RUN.hero.items.push(wonItem.id);
-        DUNGEON_WIN_POPUP = { reward, itemName: wonItem.name };
+        if (wonItem.weightless || equippedItemCount(RUN.hero) < RUN.itemCap) {
+          RUN.hero.items.push(wonItem.id);
+          DUNGEON_WIN_POPUP = { reward, itemName: wonItem.name };
+        } else {
+          RUN.chips += 100;
+          DUNGEON_WIN_POPUP = { reward, itemName: '100 coins', convertedItem: true };
+        }
       }
       saveRun();
       render(castleDungeonScreen());
@@ -3322,8 +3387,8 @@ function battleScreen() {
     <div class="duelBoard">
       <div class="panel">
         ${BATTLE.showTutorialBanner ? `<div class="note" style="border:1px solid var(--amber);border-radius:6px;padding:8px 10px;margin-bottom:8px;text-align:center;color:var(--amber)">Click or drag cards from your hand, then click an Item Slot below to load your weapon.</div>` : ''}
-        <div class="hand">${handHTML}</div>
-        <div style="display:flex;gap:3px;flex-wrap:nowrap;align-items:center;width:100%">
+        <div class="handWorkspace"><div class="handCapacity hoverTip" data-title="Your Maximum Hand Size. New cards cannot be drawn past this cap.">Hand: ${BATTLE.hand.length} / Max ${RUN.handSize}</div><div class="hand">${handHTML}</div></div>
+        <div class="playerActionGrid">
           <button class="wo-btn gray" id="sortToggleBtn" style="padding:6px 3px;font-size:10px;flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Sort: ${(RUN.handSortMode || 'value') === 'value' ? 'Value' : 'Suit'}</button>
           ${(() => { const sp = VEHICLE_SPECIALS[RUN.hero.heroId]; if (!sp) return ''; const minNeed = sp.energyCost ?? sp.energyPerUnit; return `<button class="wo-btn amber hoverTip" id="vehicleSpecialBtn" style="padding:6px 3px;font-size:10px;flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" data-title="${sp.desc}" ${RUN.energy < minNeed ? 'disabled' : ''}>${sp.name} = ${minNeed} ${ICON.energy}</button>`; })()}
           <button class="wo-btn purple" id="gemDrawBtn" style="padding:6px 3px;font-size:10px;flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" ${RUN.gems < 1 ? 'disabled' : ''}>Draw = ${GEM_DRAW_COST} ${ICON.gem}</button>
@@ -4465,7 +4530,7 @@ function render(html) {
  RUN.itemUnlocked=RUN.itemUnlocked||{}; RUN.itemUnlockPending=RUN.itemUnlockPending||{}; 
  RUN.castleState=RUN.castleState||{}; RUN.world=RUN.world||1; RUN.bossRow=(RUN.bossRow!=null)?RUN.bossRow:(RUN.map.nodes.length-1); saveRun(); const savedBattle = loadBattleSave(); if (savedBattle) { BATTLE = savedBattle; IN_BATTLE = true; render(battleScreen()); } else { render(mapScreen()); } };
   app.querySelectorAll('[data-pick]').forEach(el => el.onclick = () => initRunWithStarter(el.dataset.pick));
-  document.body.classList.toggle('world-2', !!(RUN && RUN.world >= 2));
+  document.body.classList.toggle('world-1', !!(RUN && RUN.world === 1)); document.body.classList.toggle('world-2', !!(RUN && RUN.world === 2)); document.body.classList.toggle('world-3', !!(RUN && RUN.world >= 3));
   const battleLogEl = document.getElementById('battleLogEl'); if (battleLogEl) battleLogEl.scrollTop = battleLogEl.scrollHeight;
   const devPanelBtn = document.getElementById('devPanelBtn'); if (devPanelBtn) devPanelBtn.onclick = () => { app.insertAdjacentHTML('beforeend', devPanel()); bindDev(); };
   const openRunSummaryBtn = document.getElementById('openRunSummaryBtn'); if (openRunSummaryBtn) openRunSummaryBtn.onclick = () => render(runSummaryScreen());

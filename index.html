@@ -1268,10 +1268,9 @@ function useVehicleSpecial() {
     battleLog(`${special.name}! Spent ${special.energyCost} Energy to refill ${RUN.fuel - before} fuel.`);
     playSfx('heal'); flashScreen('heal');
   } else {
-    const units = Math.floor(RUN.energy / special.energyPerUnit);
-    if (units < 1) { battleLog(`Not enough Energy for ${special.name} (needs ${special.energyPerUnit} per use).`); render(battleScreen()); return; }
-    const cost = units * special.energyPerUnit;
-    const amount = units * special.amountPerUnit;
+    const cost = special.energyPerUnit;
+    const amount = special.amountPerUnit;
+    if (RUN.energy < cost) { battleLog(`Not enough Energy for ${special.name} (needs ${cost} per use).`); render(battleScreen()); return; }
     RUN.energy -= cost;
     if (special.type === 'shield') {
       BATTLE.playerArmor += amount;

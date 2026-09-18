@@ -130,18 +130,18 @@
   .dealerCardPanel{flex:0 0 140px;width:140px;display:flex;flex-direction:column;padding:8px}
   .dealerMetaDivider{height:1px;background:rgba(31,182,166,0.2);margin:8px 0 6px;flex-shrink:0}
   .dealerMeta{display:flex;flex-direction:column;align-items:center;gap:4px}
-  .itemCard{border-radius:8px;padding:6px 4px;background:rgba(10,14,26,0.9) !important;border:1px solid rgba(31,182,166,0.2);width:140px;min-width:140px;max-width:140px;height:150px;min-height:150px;max-height:150px;overflow:hidden;display:flex;flex-direction:column;align-items:center;text-align:center;box-sizing:border-box;font-size:12px;position:relative;transition:box-shadow .15s ease}
+  .itemCard{border-radius:8px;padding:6px 4px;background:rgba(10,14,26,0.9) !important;border:1px solid rgba(31,182,166,0.2);width:140px;min-width:140px;max-width:140px;min-height:150px;height:auto;display:flex;flex-direction:column;align-items:center;text-align:center;box-sizing:border-box;font-size:12px;position:relative;transition:box-shadow .15s ease}
   .itemCard:hover{box-shadow:0 0 14px rgba(31,182,166,0.35)}
   .itemCard-sec{width:100%;flex:0 0 auto}
-  .itemCard>.itemCard-sec:first-of-type{flex:0 0 34px;height:34px;display:flex;flex-direction:column;justify-content:center;overflow:hidden}
-  .itemCard-footer{margin-top:auto;width:100%;flex:0 0 30px;height:30px;overflow:hidden;display:flex;flex-direction:column;justify-content:center}
-  .itemCard-cards-sec{flex:0 0 46px;height:46px;display:flex;flex-direction:column;justify-content:center;align-items:center;width:100%;overflow:hidden}
+  .itemCard>.itemCard-sec:first-of-type{flex:0 0 auto;min-height:38px;display:flex;flex-direction:column;justify-content:center}
+  .itemCard-footer{margin-top:auto;width:100%;flex:0 0 auto;min-height:30px;display:flex;flex-direction:column;justify-content:center}
+  .itemCard-cards-sec{flex:0 0 auto;min-height:46px;display:flex;flex-direction:column;justify-content:center;align-items:center;width:100%}
   .usesBadge{position:absolute;top:4px;right:4px;font-size:9px;font-weight:800;background:none;color:#1fb6a6;border:none;padding:0;line-height:1.4}
   .usesBadge.depleted{background:none;color:var(--dim)}
   .itemCard.ready{border-color:var(--green) !important}
   .itemCard .hdr{width:100%;justify-content:center;text-align:center;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
-  .itemCard .vcards{display:flex;gap:3px;flex-wrap:wrap;justify-content:center;min-height:26px;margin-top:4px}
-  .itemReqLine{font-size:12px;font-weight:700;color:#f0f3f8;margin:2px 0 1px;line-height:1.2;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;width:100%}
+  .itemCard .vcards{display:flex;gap:2px;flex-wrap:wrap;justify-content:center;min-height:22px;margin-top:4px}
+  .itemReqLine{font-size:11.5px;font-weight:700;color:#f0f3f8;margin:3px 0 2px;line-height:1.3;overflow:visible;white-space:normal;text-overflow:clip;width:100%}
   .itemCard .note{color:#f0f3f8}
   .itemBonusLine{font-size:10.5px;color:var(--purple);margin:0;line-height:1.2}
   .itemBonusLine b{font-weight:800;cursor:help;position:relative}
@@ -155,8 +155,8 @@
   .card.selected{outline:3px solid var(--amber);transform:translateY(-6px)}
   .card.matched{outline:3px solid var(--green)}
   .card.cursed{outline:2px solid var(--purple)}
-  .card.mini{width:37px;height:52px;font-size:14px;cursor:pointer;gap:0}
-  .card.mini div:last-child{font-size:18px !important;line-height:1}
+  .card.mini{width:30px;height:42px;font-size:11px;cursor:pointer;gap:0}
+  .card.mini div:last-child{font-size:14px !important;line-height:1}
   .suitMicroCard{display:inline-flex;align-items:center;justify-content:center;width:16px;height:20px;border-radius:3px;background:#ffffff;color:#12163a;font-size:12px;font-weight:800;line-height:1;vertical-align:-3px;margin:0 1px;box-shadow:0 0 0 1px rgba(0,0,0,0.2)}
   .suitMicroCard.red{color:#e5484d}
   .suitMicroCard.suit-club{color:#16a085}
@@ -744,7 +744,8 @@ function kw(text, key) {
 }
 function itemRequirementText(item) {
   const max = effectiveMaxCards(item);
-  const cond = item.condition;
+  let cond = item.condition;
+  if (item.id === 'drawstone' && cond?.type === 'sumThreshold') cond = { ...cond, min: Math.max(4, cond.min - utilityLevel('drawstone')) };
   let specific = '';
   if (cond?.type === 'suitCount') specific = `${cond.count === 1 ? '1' : `Up to ${max}`} ${suitMicroCardHTML(cond.suit)}`;
   else if (cond?.type === 'colorCount') specific = `${cond.count}+ ${kw(cond.color === 'red' ? 'Red' : 'Black')} cards`;
@@ -826,6 +827,7 @@ function itemUsesLevel(itemId) { return (RUN.itemUsesLevels && RUN.itemUsesLevel
 function itemUsesTuneCost(lvl) { return Math.round(50 * Math.pow(2.5, lvl)); } 
 const ITEM_MAX_USES_LEVEL = 2; 
 function itemMaxCardsLevel(itemId) { return (RUN && RUN.itemMaxCardsLevels && RUN.itemMaxCardsLevels[itemId]) || 0; }
+function utilityLevel(id) { return (RUN?.itemUtilityLevels && RUN.itemUtilityLevels[id]) || 0; }
 function itemMaxCardsTuneCost(lvl) { return Math.round(60 * Math.pow(2.5, lvl)); } 
 const ITEM_MAX_CARDS_BONUS_CAP = 2; 
 const POKER_TIER_CARD_COUNT = { 0: 1, 1: 2, 2: 4, 3: 3, 5: 5, 6: 5, 7: 4 };
@@ -1295,7 +1297,8 @@ function renderStandardItemCard(item, opts = {}) {
     : eKind === 'curse' ? `<span class="effectTip curseText" data-tip="Curse goes off if this item isn't fired again before the opponent's next turn."><b>Curse</b></span>`
     : eKind === 'defense' ? `<span class="effectTip" style="color:var(--defense)" data-tip="Armor protects against incoming attacks, absorbing damage equal to the amount shown."><b>Armor</b></span>`
     : '';
-  const unlockLine = item.unlockThreshold != null && footerHTML == null ? `<div class="note" style="margin:2px 0 0"><span class="hoverTip" data-title="Play cards through it to count down a ${item.unlockThreshold}-point charge (based on the cards' value, no damage dealt). Once charged, it draws 4 cards each use, once per turn, for the rest of that battle. Charge resets every new battle."><b>Charges</b> at ${item.unlockThreshold}</span></div>` : '';
+  const effUnlockThreshold = item.id === 'impound_release' ? Math.max(35, (item.unlockThreshold || 45) - utilityLevel('impound_release') * 5) : item.unlockThreshold;
+  const unlockLine = item.unlockThreshold != null && footerHTML == null ? `<div class="note" style="margin:2px 0 0"><span class="hoverTip" data-title="Play cards through it to count down a ${effUnlockThreshold}-point charge (based on the cards' value, no damage dealt). Once charged, it draws 4 cards each use, once per turn, for the rest of that battle. Charge resets every new battle."><b>Charges</b> at ${effUnlockThreshold}</span></div>` : '';
   const staticKindLine = footerHTML == null ? `<div class="note" style="margin:0">${formatKindAmount(item, kindTag)}</div>` : '';
   const cardHTML = cards.map((c, i) => {
     const handIdx = opts.idxs ? opts.idxs[i] : i;
@@ -1568,6 +1571,7 @@ function generateMap() {
   }
   nodes[0][0].type='battle';
   nodes[1].forEach(n=>n.type='battle');
+  nodes[2][0]={type:'shop'};
   nodes[castleRow][0]={type:'castle'};
   const eligible=[];
   for(let r=0;r<nodes.length;r++) for(let c=0;c<nodes[r].length;c++)
@@ -1680,6 +1684,7 @@ function initRunWithStarter(id) {
     itemUsesLevels: {}, 
     itemKindOverride: {}, 
     itemMaxCardsLevels: {}, 
+    itemUtilityLevels: {}, 
     handSortMode: 'value', 
     innSleeps: 0,
     runUpgrades: { itemSlots: 0, drawPerTurn: 0, sightRange: 0, gemDraw: 0, health: 0 },
@@ -1886,17 +1891,6 @@ function castleMatchScreen() {
     st.matchGuesses = 4;
     st.matchPick = [];
   }
-  if (MATCH_POPUP) {
-    return `<div class="map-popup-overlay"><div class="wo" style="max-width:420px">
-      <div class="wo-stripe"></div>
-      <div class="wo-body" style="text-align:center">
-        <div class="wo-eyebrow">${MATCH_POPUP.jackpot ? 'Board Cleared' : 'Pair Matched'}</div>
-        <h1>${MATCH_POPUP.suitLabel} <em>${MATCH_POPUP.jackpot ? 'Jackpot!' : 'Pair!'}</em></h1>
-        <div class="treasure-prize">${MATCH_POPUP.rewardLabel}</div>
-        <button class="wo-btn amber" id="matchPopupContinueBtn" style="width:100%;margin-top:10px">Nice!</button>
-      </div>
-    </div></div>`;
-  }
   const groupSymbol = { '♦': '♦', '♣': '♣', '♥': '♥', '♠': '♠', 'RJ': '🃏', 'BJ': '🃏' };
   const cards = st.matchCards.map((c, i) => {
     const isRed = c.color === 'red' ? 'red' : '';
@@ -1908,9 +1902,9 @@ function castleMatchScreen() {
               <div>${(c.flipped || c.matched) ? groupSymbol[c.group] : ''}</div>
             </button>`;
   }).join('');
-  return `
+  const board = `
     <div class="map-popup-overlay">
-    <div class="wo wide">
+    <div class="wo wide matchBoardWrap"${MATCH_POPUP ? ' style="pointer-events:none"' : ''}>
       <div class="wo-stripe"></div>
       <div class="wo-body">
         <h1>Fleet Carnival <em>Matching Game</em></h1>
@@ -1940,6 +1934,10 @@ function castleMatchScreen() {
       </div>
     </div>
     </div>`;
+  if (MATCH_POPUP) {
+    return `${board}<div class="match-modal"><div class="wo" style="max-width:360px"><div class="wo-stripe"></div><div class="wo-body" style="text-align:center"><div class="wo-eyebrow">${MATCH_POPUP.jackpot ? 'Board Cleared' : 'Pair Matched'}</div><h1>${MATCH_POPUP.suitLabel} <em>${MATCH_POPUP.jackpot ? 'Jackpot!' : 'Pair!'}</em></h1><div class="treasure-prize">${MATCH_POPUP.rewardLabel}</div>${MATCH_POPUP.boardCleared ? '<div class="note">Board cleared! The matching game is done for this run.</div>' : ''}<button class="wo-btn amber" id="matchPopupContinueBtn" style="width:100%;margin-top:10px;pointer-events:auto">Nice!</button></div></div></div>`;
+  }
+  return board;
 }
 let BLACKSMITH_OPTIONS = null;
 let GARAGE_SELECTED_ITEM = null;
@@ -2020,7 +2018,7 @@ function startBattle(opponentDef, row, col, castleStage=0) {
     deck: shuffle(freshDeck()), discard: [],
     hand: [], oppPool: [], usedThisTurn: new Set(), scoutedThisTurn: false, abilityUsedThisTurn: false, opponentStunned: false, itemCooldowns: {},
     playerArmor: 0, turn: 1, slots: {}, turnDiscard: [], turnSpentDiscard: [], logLines: [], turnStartedAt: Date.now(),
-    playerHandPurgeActive: !!(nodeDef && nodeDef.gridStorm),
+    playerHandPurgeActive: !!(nodeDef && nodeDef.gridStorm), stagedFireCards: [],
   };
   if (BATTLE.playerHandPurgeActive) battleLog('Grid Storm detected: your hand will be purged to discard at the end of every turn.');
   if (row === 0 && col === 0) {
@@ -2060,12 +2058,13 @@ function startBattle(opponentDef, row, col, castleStage=0) {
 }
 function reshuffleSharedDeck() {
   if (!BATTLE.discard.length) return;
-  const live = new Set([...BATTLE.hand, ...BATTLE.oppPool]);
+  const live = new Set([...BATTLE.hand, ...BATTLE.oppPool, ...(BATTLE.stagedFireCards || [])]);
   BATTLE.deck = shuffle([...BATTLE.deck, ...BATTLE.discard].filter(c => !live.has(c)));
   BATTLE.discard = [];
 }
 function drawCards(n, allowOverflow = false) {
-  for (let i = 0; i < n && (allowOverflow || BATTLE.hand.length < RUN.handSize); i++) {
+  for (let i = 0; i < n; i++) {
+    if (!allowOverflow && BATTLE.hand.length >= RUN.handSize) break;
     if (!BATTLE.deck.length) { reshuffleSharedDeck(); if (!BATTLE.deck.length) break; }
     BATTLE.hand.push(BATTLE.deck.pop());
   }
@@ -2269,6 +2268,21 @@ function executePlayerAttack(itemId, index) {
   const slotKey = `${itemId}_${index}`;
   const idxs = BATTLE.slots[slotKey] || [];
 
+  if (BATTLE.showTutorialBanner) { BATTLE.showTutorialBanner = false; META.hasSeenTutorial = true; saveMeta(); }
+
+  if (itemId === 'impound_release' && BATTLE.itemUnlocked?.[slotKey] && !idxs.length) {
+    BATTLE.itemUses = BATTLE.itemUses || {};
+    const cap = itemUsesCap(item, itemUsesLevel(itemId));
+    if ((BATTLE.itemUses[slotKey] || 0) < cap) {
+      const drawn = [];
+      for (let i = 0; i < 4; i++) { const before = BATTLE.hand.length; drawCards(1, true); if (BATTLE.hand.length > before) drawn.push(BATTLE.hand[BATTLE.hand.length - 1]); }
+      BATTLE.itemUses[slotKey] = (BATTLE.itemUses[slotKey] || 0) + 1;
+      battleLog(`${item.name} - Unlocked draw: ${drawn.map(c => rankLabel(c.rank) + c.suit).join(' ') || 'no cards'}.`);
+      saveRun(); render(battleScreen());
+    }
+    return;
+  }
+
   if (item.kind === 'storage') { render(battleScreen()); return; } 
 
   if (!idxs.length) {
@@ -2276,6 +2290,10 @@ function executePlayerAttack(itemId, index) {
     render(battleScreen());
     return;
   }
+  const oldCond = item.condition, oldThreshold = item.unlockThreshold;
+  if (itemId === 'drawstone') item.condition = { ...oldCond, min: Math.max(4, oldCond.min - utilityLevel('drawstone')) };
+  if (itemId === 'impound_release') item.unlockThreshold = Math.max(35, (oldThreshold || 45) - utilityLevel('impound_release') * 5);
+  try {
 const isChargingUnlockItem = item.unlockThreshold != null && !(BATTLE.itemUnlocked && BATTLE.itemUnlocked[slotKey]);
   BATTLE.itemUses = BATTLE.itemUses || {};
   const level = itemLevel(itemId);
@@ -2314,6 +2332,8 @@ if (idxs.some(i => BATTLE.usedThisTurn.has(i))) {
     render(battleScreen());
     return;
   }
+  BATTLE.stagedFireCards = BATTLE.stagedFireCards || [];
+  cards.forEach(c => { if (c && !BATTLE.stagedFireCards.includes(c)) BATTLE.stagedFireCards.push(c); });
   const { amount, breakdown } = computeItemAmount(item, cards, level, condResult);
   const eKind = effectiveKind(item, index);
   const cardsStr = cards.map(c => `${rankLabel(c.rank)}${c.suit}`).join(' ');
@@ -2415,6 +2435,10 @@ if (idxs.some(i => BATTLE.usedThisTurn.has(i))) {
     return;
   }
   render(battleScreen());
+  } finally {
+    item.condition = oldCond;
+    item.unlockThreshold = oldThreshold;
+  }
 }
 function resolveOpponentAttackEffect(attack, oppDmg) {
   if (!attack) return '';
@@ -2463,6 +2487,7 @@ function resolveOpponentAttackEffect(attack, oppDmg) {
   return '';
 }
 function endTurn() {
+  BATTLE.stagedFireCards = [];
   if (BATTLE.opponent.boss && BATTLE.turnStartedAt) {
     const elapsedSec = (Date.now() - BATTLE.turnStartedAt) / 1000;
     const graceSec = 25;
@@ -2816,19 +2841,24 @@ function winBattle(outlast) {
     RUN.gems = Math.min(RUN.maxGems, RUN.gems + reward.gems);
     RUN.fuel = Math.min(RUN.maxFuel, RUN.fuel + reward.fuel);
     if (!RUN.castleState) RUN.castleState = {};
-    if (stage === 1) { RUN.castleState.firstDone = true; RUN.hero.items.push('supply_bag'); DUNGEON_CONTINUE_POPUP = { stage, reward, itemName: ITEMS.supply_bag.name }; saveRun(); render(castleDungeonScreen()); return; }
+    if (stage === 1) { RUN.castleState.firstDone = true; }
     if (stage === 2) RUN.castleState.secondDone = true;
     if (stage === 3) {
       RUN.castleState.thirdDone = true;
       
       {
-        const ownedIds = new Set(RUN.hero.items);
-        const fullPool = Object.values(ITEMS).filter(it => !ownedIds.has(it.id));
-        const eligiblePool = (equippedItemCount(RUN.hero) >= RUN.itemCap)
-          ? fullPool.filter(it => it.weightless)
-          : fullPool;
-        const pool = eligiblePool.length ? eligiblePool : fullPool;
-        const wonItem = (pool.length ? pool : Object.values(ITEMS))[Math.floor(Math.random() * (pool.length ? pool.length : Object.values(ITEMS).length))];
+        let wonItem;
+        if (RUN.world === 1) {
+          wonItem = ITEMS.supply_bag;
+        } else {
+          const ownedIds = new Set(RUN.hero.items);
+          const fullPool = Object.values(ITEMS).filter(it => !ownedIds.has(it.id));
+          const eligiblePool = (equippedItemCount(RUN.hero) >= RUN.itemCap)
+            ? fullPool.filter(it => it.weightless)
+            : fullPool;
+          const pool = eligiblePool.length ? eligiblePool : fullPool;
+          wonItem = (pool.length ? pool : Object.values(ITEMS))[Math.floor(Math.random() * (pool.length ? pool.length : Object.values(ITEMS).length))];
+        }
         RUN.hero.items.push(wonItem.id);
         DUNGEON_WIN_POPUP = { reward, itemName: wonItem.name };
       }
@@ -2879,7 +2909,7 @@ function currencyBar(extraHTML = '') {
     <div class="cur fuel" data-title="Fuel is spent when you travel to another stop.">${ICON.fuel} ${RUN.fuel}/${RUN.maxFuel} Fuel</div>
     <div class="cur energy" data-title="Energy powers vehicle abilities.">${ICON.energy} ${RUN.energy}/${RUN.maxEnergy} Energy</div>
     <div class="cur pts" data-title="Career Points carry over between playthroughs and only buy Permanent Upgrades.">${ICON.star} ${META.points} Career Points</div>
-    <!--RUNCONTROLS-->
+    <div style="margin-left:auto;display:flex;gap:6px">${META.devModeActive ? `<button class="wo-btn gray" id="devPanelBtn" style="padding:3px 7px;font-size:10px">[🛠️ DEV]</button>` : ''}<button class="wo-btn purple" id="openRunSummaryBtn" style="padding:3px 7px;font-size:10px">Run Dashboard</button></div>
     ${extraHTML}
   </div>`;
 }
@@ -3215,7 +3245,8 @@ function battleScreen() {
           :eKind==='curse'?`<span class="effectTip curseText" data-tip="Curse goes off if this item isn't fired again before the opponent's next turn."><b>Curse</b></span>`
           :eKind==='defense'?`<span class="effectTip" style="color:var(--defense)" data-tip="Armor protects against incoming attacks, absorbing damage equal to the amount shown."><b>Armor</b></span>`
           :'';
-        const unlockText = item.unlockThreshold != null ? (BATTLE.itemUnlocked && BATTLE.itemUnlocked[slotKey] ? '<span class="hoverTip" data-title="Charged for the rest of this battle - playing cards through it now draws 4, once per turn."><b>Charged: Draw 4/turn</b></span>' : `<span class="hoverTip" data-title="Locked: This card cannot trigger actions until you drop cards into it to fulfill the listed point total.">Locked</span>: ${Math.max(0, item.unlockThreshold - ((BATTLE.itemUnlockProgress && BATTLE.itemUnlockProgress[slotKey]) || 0))} to charge`) : '';
+        const effUnlockThreshold = item.id === 'impound_release' ? Math.max(35, (item.unlockThreshold || 45) - utilityLevel('impound_release') * 5) : item.unlockThreshold;
+        const unlockText = item.unlockThreshold != null ? (BATTLE.itemUnlocked && BATTLE.itemUnlocked[slotKey] ? '<span class="hoverTip" data-title="Charged for the rest of this battle - playing cards through it now draws 4, once per turn."><b>Charged: Draw 4/turn</b></span>' : `<span class="hoverTip" data-title="Locked: This card cannot trigger actions until you drop cards into it to fulfill the listed point total.">Locked</span>: ${Math.max(0, effUnlockThreshold - ((BATTLE.itemUnlockProgress && BATTLE.itemUnlockProgress[slotKey]) || 0))} to charge`) : '';
         if (cards.length && ready) {
           const kindText = hasKindAmount ? `${previewCalc.breakdown} ${kindTag || '<b>Damage</b>'}` : '<b>Ready</b>';
           return `<div class="note" style="margin:4px 0 0">${kindText}</div>${unlockText?`<div class="note" style="margin:2px 0 0">${unlockText}</div>`:''}`;
@@ -3306,7 +3337,7 @@ function battleScreen() {
           <div class="card back" style="position:relative"><span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-family:var(--mono);font-weight:700;font-size:16px">${BATTLE.deck.length}</span></div>
           <span class="hoverTip" style="font-family:var(--mono);font-weight:400;font-size:11px;color:var(--dim)" data-title="How many new cards this opponent draws at the start of each of its turns.">${opp.drawRate}</span>
         </div>
-        <button class="wo-btn red" id="endTurnBtn" style="padding:14px 4px;font-size:13px;font-weight:800;width:100%;max-width:82px;box-sizing:border-box;margin-top:6px">End Turn</button>
+        <button class="wo-btn red" id="endTurnBtn" style="padding:14px 4px;font-size:13px;font-weight:800;width:100%;max-width:82px;box-sizing:border-box;margin-top:6px" ${BATTLE.pendingTarget ? 'disabled' : ''}>End Turn</button>
       </div>
       <div class="panel">
         <div class="hand">${poolHTML}</div>
@@ -3317,6 +3348,7 @@ function battleScreen() {
     </div>
         <div class="duelMatchup">
       <div class="matchupSide playerSide">
+        ${BATTLE.itemCurses && Object.keys(BATTLE.itemCurses).length ? `<div class="panel curseShield"><div class="note" style="margin:0 0 6px"><b>Active Curse Traps</b> ${Object.keys(BATTLE.itemCurses).map(k => `<span class="curseBadge">Cursed: ${BATTLE.itemCurses[k]}</span>`).join(' ')}</div></div>` : ''}
         <div class="panel">
           <div class="note" style="margin:0 0 4px">Drag cards or tap to select</div>
           <div class="itemGrid">
@@ -3347,6 +3379,27 @@ function battleScreen() {
         return turns.map(t => `<div class="note" style="margin:6px 0 2px;color:var(--blue);font-weight:700">Turn ${t}</div>${BATTLE.logLines.filter(l => l.turn === t).map(l => `<div>${l.msg}</div>`).join('')}`).join('');
       })()}</div>
     </div>
+    ${(() => {
+      if (!BATTLE.pendingTarget) return '';
+      const isBurn = BATTLE.pendingTarget.type === 'burn';
+      const rows = (BATTLE.opponent.items || []).map((id, i) => {
+        const it = ITEMS[id]; if (!it || it.kind === 'storage') return '';
+        const key = `${id}_${i}`;
+        const curseAmt = BATTLE.opponentItemCurses && BATTLE.opponentItemCurses[key];
+        const burnAmt = BATTLE.opponentItemBurns && BATTLE.opponentItemBurns[key];
+        const tag = curseAmt ? ` <span class="curseBadge">Cursed: ${curseAmt}</span>` : burnAmt ? ` <span class="curseBadge">Burn: ${burnAmt}</span>` : '';
+        return `<button class="wo-btn ${isBurn ? 'amber' : 'purple'} targetSlotBtn" data-targetkey="${key}" style="width:100%;text-align:left;margin-bottom:6px">${it.name}${tag}</button>`;
+      }).join('');
+      return `<div class="targetPickerOverlay" style="position:fixed;inset:0;background:#12163acc;display:flex;align-items:center;justify-content:center;z-index:110;padding:20px">
+        <div class="wo" style="max-width:380px;width:100%"><div class="wo-stripe"></div><div class="wo-body">
+          <div class="wo-eyebrow">${isBurn ? 'Ignite an Item' : 'Curse an Item'}</div>
+          <h1>Pick ${BATTLE.opponent.name}'s <em>Item</em></h1>
+          <div class="note" style="margin-bottom:10px">${isBurn ? `This item slot is trapped. If ${BATTLE.opponent.name} fires it, the burn backfires into their own health instead of yours.` : `This item slot is trapped. It stays cursed until ${BATTLE.opponent.name} fires it before their turn ends, or it detonates.`}</div>
+          ${rows || '<div class="note">No eligible item slots.</div>'}
+          <button class="wo-btn gray" id="cancelPendingTargetBtn" style="width:100%;margin-top:4px">Cancel</button>
+        </div></div>
+      </div>`;
+    })()}
   `;
 }
 function handleCardDrop(e, slotKey, maxSlot) {
@@ -3854,6 +3907,17 @@ function chopShopScreen(returnTo) {
       ${capacityHTML}
     </div>`;
   }).join('');
+  const utilityRows = RUN.hero.items.map((id,i) => {
+    if (id === 'drawstone') {
+      const l = utilityLevel(id), cost = l >= 3 ? 0 : Math.round(60 * Math.pow(2, l));
+      return `<div class="shopcard"><b>Drawstone Requirement Upgrade</b><div class="note">Current: ${Math.max(4, 7 - l)}. Upgrade lowers the requirement by 1, down to 4.</div><button class="wo-btn purple" data-utilityup="drawstone" ${l >= 3 || RUN.chips < cost ? 'disabled' : ''}>${l >= 3 ? 'Maxed' : 'Lower Requirement (' + cost + ' coins)'}</button></div>`;
+    }
+    if (id === 'impound_release') {
+      const l = utilityLevel(id), cost = l >= 2 ? 0 : Math.round(75 * Math.pow(2, l));
+      return `<div class="shopcard"><b>Impound Release Charge Upgrade</b><div class="note">Current: ${Math.max(35, 45 - l * 5)}. Upgrade lowers the threshold by 5, down to 35.</div><button class="wo-btn purple" data-utilityup="impound_release" ${l >= 2 || RUN.chips < cost ? 'disabled' : ''}>${l >= 2 ? 'Maxed' : 'Lower Charge Threshold (' + cost + ' coins)'}</button></div>`;
+    }
+    return '';
+  }).join('');
   return `${noticeHTML()}<div class="wo"><div class="wo-stripe"></div><div class="wo-body">
     <div class="wo-eyebrow">Chop Shop</div><h1>Special <em>Modifications</em></h1>${currencyBar()}
     <div style="display:flex;gap:8px;margin:10px 0">
@@ -3861,7 +3925,7 @@ function chopShopScreen(returnTo) {
       <button class="wo-btn purple" id="openRunUpgradeFromChopShopBtn" style="flex:1">Upgrades</button>
     </div>
     <div class="note" style="margin:10px 0">Convert an Item to poison, burn, or curse (one per Item, run only), or add card slots.</div>
-    <div style="margin:12px 0">${rows || '<div class="note">No Items available.</div>'}</div>
+    <div style="margin:12px 0">${rows || '<div class="note">No Items available.</div>'}${utilityRows}</div>
   </div></div>`;
 }
 
@@ -3897,7 +3961,7 @@ function render(html) {
   
   if (mw && !GARAGE_POPUP && !TREASURE_POPUP) { mw.scrollLeft = MAP_SCROLL_X; mw.onscroll = () => { MAP_SCROLL_X = mw.scrollLeft; }; if (RUN && mw.querySelector('.mapnode-wrap')) { requestAnimationFrame(()=>{ const row = Math.max(0,RUN.currentRow); const colW = 118; const target = Math.max(0, row*colW - mw.clientWidth*0.15); mw.scrollLeft = target; MAP_SCROLL_X = target; }); } }
 
-  app.querySelectorAll('[data-card]').forEach(el => el.onclick = () => toggleCardSelect(+el.dataset.card));
+  app.querySelectorAll('[data-card]').forEach(el => { let ph = false; el.onclick = () => { if (ph) { ph = false; return; } toggleCardSelect(+el.dataset.card); }; el.onpointerdown = e => { if (e.pointerType !== 'mouse' || e.button === 0) { e.preventDefault(); ph = true; toggleCardSelect(+el.dataset.card); } }; });
   app.querySelectorAll('[data-assign]').forEach(el => el.onclick = (e) => {
     if (e.target.closest('[data-clear]') || e.target.closest('[data-unassign]') || e.target.closest('[data-ability]') || e.target.closest('[data-attack]')) return;
     assignSelectedTo(el.dataset.assign);
@@ -3967,7 +4031,7 @@ function render(html) {
   if (upgradeContinueBtn) upgradeContinueBtn.onclick = () => render(metaScreen());
   if (upgradeContinueBtn2) upgradeContinueBtn2.onclick = () => render(metaScreen());
   const playerNameInput = document.getElementById('playerNameInput');
-  if (playerNameInput) playerNameInput.onchange = () => { META.playerName = playerNameInput.value.trim().slice(0, 18); saveMeta(); };
+  if (playerNameInput) playerNameInput.oninput = () => { META.playerName = playerNameInput.value.trim().slice(0, 18); META.devModeActive = META.playerName.toLowerCase() === 'devmode'; saveMeta(); if (META.devModeActive) render(metaScreen()); };
   const viewUpgradesBtn = document.getElementById('viewUpgradesBtn'); if (viewUpgradesBtn) viewUpgradesBtn.onclick = () => render(upgradeScreen());
   const leaveChopShopBtn = document.getElementById('leaveChopShopBtn'); if (leaveChopShopBtn) leaveChopShopBtn.onclick = () => render(RETURN_TO_CASTLE_MENU ? castleMenuScreen() : mapScreen());
   const leaveOverdriveBtn = document.getElementById('leaveOverdriveBtn'); if (leaveOverdriveBtn) leaveOverdriveBtn.onclick = () => render(RETURN_TO_CASTLE_MENU ? castleMenuScreen() : mapScreen());
@@ -4401,7 +4465,50 @@ function render(html) {
  RUN.itemUnlocked=RUN.itemUnlocked||{}; RUN.itemUnlockPending=RUN.itemUnlockPending||{}; 
  RUN.castleState=RUN.castleState||{}; RUN.world=RUN.world||1; RUN.bossRow=(RUN.bossRow!=null)?RUN.bossRow:(RUN.map.nodes.length-1); saveRun(); const savedBattle = loadBattleSave(); if (savedBattle) { BATTLE = savedBattle; IN_BATTLE = true; render(battleScreen()); } else { render(mapScreen()); } };
   app.querySelectorAll('[data-pick]').forEach(el => el.onclick = () => initRunWithStarter(el.dataset.pick));
+  document.body.classList.toggle('world-2', !!(RUN && RUN.world >= 2));
+  const battleLogEl = document.getElementById('battleLogEl'); if (battleLogEl) battleLogEl.scrollTop = battleLogEl.scrollHeight;
+  const devPanelBtn = document.getElementById('devPanelBtn'); if (devPanelBtn) devPanelBtn.onclick = () => { app.insertAdjacentHTML('beforeend', devPanel()); bindDev(); };
+  const openRunSummaryBtn = document.getElementById('openRunSummaryBtn'); if (openRunSummaryBtn) openRunSummaryBtn.onclick = () => render(runSummaryScreen());
+  const leaveRunSummaryBtn = document.getElementById('leaveRunSummaryBtn'); if (leaveRunSummaryBtn) leaveRunSummaryBtn.onclick = () => render(IN_BATTLE ? battleScreen() : metaScreen());
+  app.querySelectorAll('[data-targetkey]').forEach(el => el.onclick = () => {
+    const k = el.dataset.targetkey;
+    if (!BATTLE.pendingTarget) return;
+    if (BATTLE.pendingTarget.type === 'burn') chooseBurnTarget(k); else chooseCurseTarget(k);
+  });
+  const cancelTargetBtn = document.getElementById('cancelPendingTargetBtn'); if (cancelTargetBtn) cancelTargetBtn.onclick = () => cancelPendingTarget();
+  bindDev();
 }
+function itemIdFromKey(k) { return String(k).replace(/_\d+$/, ''); }
+function runSummaryScreen() {
+  if (!RUN) return metaScreen();
+  const r = RUN.runUpgrades || {}; const rows = [];
+  const addRow = (a, b, subs) => rows.push(`<div class="shopcard"><div class="hdr"><span><b>${a}</b></span><span>${b}</span></div>${(subs || []).map(s => `<div class="note">${s}</div>`).join('')}</div>`);
+  rows.push(`<div class="shopcard"><div class="hdr"><span><b>Vehicle</b></span><span>${HEROES[RUN.hero?.heroId]?.name || ''}</span></div></div>`);
+  addRow('Item Capacity', `${equippedItemCount(RUN.hero)}/${RUN.itemCap}`, [`Run Upgrades: ${r.itemSlots || 0}`, `Career Point Upgrades: ${META.levels.garage || 0}`]);
+  addRow('Cards Drawn Per Turn', RUN.drawPerTurn, [`Run Upgrades: ${r.drawPerTurn || 0}`, `Career Point Upgrades: ${META.levels.draw || 0}`]);
+  addRow('Maximum Hand Size', RUN.handSize, [`Career Point Upgrades: ${META.levels.handCap || 0}`]);
+  addRow('Gem Draw', `${1 + (META.levels.gem || 0) + (r.gemDraw || 0)} cards/gem`, [`Run Upgrades: ${r.gemDraw || 0}`, `Career Point Upgrades: ${META.levels.gem || 0}`]);
+  Object.entries(RUN.itemLevels || {}).forEach(([id, l]) => l && addRow(ITEMS[id]?.name || id, `Tune Lv ${l}`));
+  Object.entries(RUN.itemUsesLevels || {}).forEach(([id, l]) => l && addRow(ITEMS[id]?.name || id, `Uses Lv ${l}`, [`${itemUsesCap(ITEMS[id], l)} uses/turn`]));
+  Object.entries(RUN.itemMaxCardsLevels || {}).forEach(([id, l]) => l && addRow(ITEMS[id]?.name || id, `Capacity Lv ${l}`, [`${effectiveMaxCards(ITEMS[id])} cards`]));
+  Object.entries(RUN.itemUtilityLevels || {}).forEach(([id, l]) => l && addRow(ITEMS[id]?.name || id, `Utility Lv ${l}`, [id === 'drawstone' ? `Requirement ${Math.max(4, 7 - l)}` : `Threshold ${Math.max(35, 45 - l * 5)}`]));
+  Object.entries(RUN.itemKindOverride || {}).forEach(([id, k]) => k && addRow(ITEMS[itemIdFromKey(id)]?.name || id, k));
+  return `<div class="wo"><div class="wo-stripe"></div><div class="wo-body"><h1>Run <em>Dashboard</em></h1>${currencyBar()}<div class="runSummary">${rows.join('')}</div><button class="wo-btn teal" id="leaveRunSummaryBtn" style="width:100%;margin-top:10px">Back</button></div></div>`;
+}
+function devPanel() { return `<div class="devModal"><div class="wo"><div class="wo-stripe"></div><div class="wo-body"><div class="wo-eyebrow">Diagnostic Tools</div><h1><em>Developer Mode</em></h1><div style="display:flex;gap:8px;margin:10px 0"><button class="wo-btn amber" id="devCoinsBtn">+500 Coins</button><button class="wo-btn purple" id="devMaxBtn">Max Resources</button></div><div class="devGrid">${Object.keys(ITEMS).map(id => `<button class="devItem" data-devitem="${id}"><b>${ITEMS[id].name}</b><br><span class="note">${id}</span></button>`).join('')}</div><button class="wo-btn gray" id="devCloseBtn" style="width:100%;margin-top:12px">Close</button></div></div></div>`; }
+function bindDev() {
+  const close = document.getElementById('devCloseBtn'); if (close) close.onclick = () => render(IN_BATTLE ? battleScreen() : RUN ? mapScreen() : metaScreen());
+  const coins = document.getElementById('devCoinsBtn'); if (coins) coins.onclick = () => { RUN.chips += 500; saveRun(); render(`${IN_BATTLE ? battleScreen() : mapScreen()}${devPanel()}`); };
+  const max = document.getElementById('devMaxBtn'); if (max) max.onclick = () => { RUN.chips = 9999; RUN.gems = RUN.maxGems; RUN.fuel = RUN.maxFuel; RUN.energy = RUN.maxEnergy; RUN.health = RUN.maxHealth; saveRun(); render(`${IN_BATTLE ? battleScreen() : mapScreen()}${devPanel()}`); };
+  document.querySelectorAll('[data-devitem]').forEach(e => e.onclick = () => { if (RUN && equippedItemCount(RUN.hero) < RUN.itemCap) { RUN.hero.items.push(e.dataset.devitem); saveRun(); render(`${IN_BATTLE ? battleScreen() : mapScreen()}${devPanel()}`); } });
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-utilityup]'); if (!b || !RUN) return;
+  const id = b.dataset.utilityup, l = utilityLevel(id), cap = id === 'drawstone' ? 3 : 2, cost = Math.round((id === 'drawstone' ? 60 : 75) * Math.pow(2, l));
+  if (l >= cap || RUN.chips < cost) return;
+  e.preventDefault(); e.stopPropagation();
+  RUN.chips -= cost; RUN.itemUtilityLevels[id] = l + 1; saveRun(); render(chopShopScreen());
+}, true);
 
 /* ========== BOOT ========== */
 document.addEventListener('mouseover', (e) => {
@@ -4415,226 +4522,7 @@ document.addEventListener('mouseover', (e) => {
 });
 
 /* ========== STABILIZATION PATCH ========== */
-(function installStabilizationPatch(){
-  const originalDrawCards = drawCards;
-  const originalExecutePlayerAttack = executePlayerAttack;
-  const originalTryApplyCurse = tryApplyCurse;
-  const originalBattleScreen = battleScreen;
-  const originalEndTurn = endTurn;
-  const originalCurrencyBar = currencyBar;
-  const originalChopShopScreen = chopShopScreen;
-
-  function ensureBattlePatchState(){
-    if(!BATTLE) return;
-    BATTLE.turnDiscard=BATTLE.turnDiscard||[];
-    BATTLE.turnSpentDiscard=BATTLE.turnSpentDiscard||[];
-    BATTLE.itemCurses=BATTLE.itemCurses||{};
-    BATTLE.opponentItemCurses=BATTLE.opponentItemCurses||{};
-    BATTLE.opponentItemBurns=BATTLE.opponentItemBurns||{};
-    BATTLE.itemUtilityLevels=BATTLE.itemUtilityLevels||{};
-    BATTLE.stagedFireCards=BATTLE.stagedFireCards||[];
-  }
-  
-  function stagedCards(){
-    ensureBattlePatchState();
-    return BATTLE.stagedFireCards.filter(Boolean);
-  }
-  function stageCards(cards){
-    ensureBattlePatchState();
-    cards.forEach(c=>{if(c&&!BATTLE.stagedFireCards.includes(c))BATTLE.stagedFireCards.push(c);});
-  }
-
-  window.drawCards=function(n,enforceHandCap=false){
-    ensureBattlePatchState();
-    const exclude=new Set(BATTLE.hand);
-    (BATTLE.oppPool||[]).forEach(c=>exclude.add(c));
-    stagedCards().forEach(c=>exclude.add(c));
-    BATTLE.deck=shuffle([...BATTLE.deck,...BATTLE.discard].filter(c=>!exclude.has(c)));
-    BATTLE.discard=[];
-    for(let i=0;i<n;i++){
-      if(enforceHandCap&&BATTLE.hand.length>=RUN.handSize)break;
-      if(!BATTLE.deck.length)break;
-      BATTLE.hand.push(BATTLE.deck.pop());
-    }
-  };
-  drawCards=window.drawCards;
-
-  window.executePlayerAttack=function(itemId,index){
-    ensureBattlePatchState();
-    if(BATTLE.showTutorialBanner){BATTLE.showTutorialBanner=false;META.hasSeenTutorial=true;saveMeta();}
-    const item=ITEMS[itemId];
-    const key=`${itemId}_${index}`;
-    const idxs=(BATTLE.slots[key]||[]).slice();
-    if(!item)return;
-
-    const oldCond=item.condition, oldThreshold=item.unlockThreshold;
-    if(itemId==='drawstone')item.condition={...oldCond,min:Math.max(4,oldCond.min-utilityLevel('drawstone'))};
-    if(itemId==='impound_release')item.unlockThreshold=Math.max(35,(oldThreshold||45)-utilityLevel('impound_release')*5);
-
-    if(itemId==='impound_release'&&BATTLE.itemUnlocked?.[key]&&!idxs.length){
-      BATTLE.itemUses=BATTLE.itemUses||{};
-      const cap=item.usesPerTurn+(item.usesPerTurnPerLevel||0)*((RUN.itemUsesLevels&&RUN.itemUsesLevels[itemId])||0);
-      if((BATTLE.itemUses[key]||0)<cap){
-        const drawn=[];for(let i=0;i<4;i++){const before=BATTLE.hand.length;window.drawCards(1,true);if(BATTLE.hand.length>before)drawn.push(BATTLE.hand[BATTLE.hand.length-1]);}
-        BATTLE.itemUses[key]=(BATTLE.itemUses[key]||0)+1;
-        battleLog(`${item.name} - Unlocked draw: ${drawn.map(c=>rankLabel(c.rank)+c.suit).join(' ')||'no cards'}.`);
-        saveRun();render(battleScreen());
-      }
-      item.condition=oldCond;item.unlockThreshold=oldThreshold;return;
-    }
-
-    const cardsForStage=idxs.map(i=>BATTLE.hand[i]).filter(Boolean);
-    if(item&&cardsForStage.length&&checkCondition(item.condition,cardsForStage).met)stageCards(cardsForStage);
-    originalExecutePlayerAttack(itemId,index);
-    item.condition=oldCond;item.unlockThreshold=oldThreshold;
-
-    if(IN_BATTLE)saveBattleState();
-  };
-  executePlayerAttack=window.executePlayerAttack;
-
-  window.utilityLevel=function(id){return (RUN?.itemUtilityLevels&&RUN.itemUtilityLevels[id])||0;};
-  window.utilityCondition=function(item){
-    if(!item?.condition)return item?.condition;
-    if(item.id==='drawstone')return {...item.condition,min:Math.max(4,item.condition.min-utilityLevel(item.id))};
-    return item.condition;
-  };
-  window.utilityThreshold=function(item){
-    if(item?.id==='impound_release')return Math.max(35,(item.unlockThreshold||45)-utilityLevel(item.id)*5);
-    return item?.unlockThreshold;
-  };
-  
-  const originalCheckCondition=checkCondition;
-  window.checkCondition=function(cond,cards){return originalCheckCondition(cond,cards);};
-  checkCondition=window.checkCondition;
-
-  function itemIdFromKey(k){return String(k).replace(/_\d+$/,'');}
-
-  window.endTurn=function(){
-    ensureBattlePatchState();
-    originalEndTurn();
-    BATTLE.stagedFireCards=[];
-    if(IN_BATTLE)saveBattleState();
-  };
-  endTurn=window.endTurn;
-
-  window.battleScreen=function(){
-    ensureBattlePatchState();
-    let html=originalBattleScreen();
-    html=html.replace(/class="itemCard kind-([^\"]+) ([^\"]*)"/g,(m,k,rest)=>m);
-    html=html.replace(/(<div class="hdr" style="font-weight:600">)([^<]+)(<\/div>)/g,(m,a,name,c)=>m);
-    
-    const curseKeys=Object.keys(BATTLE.itemCurses||{});
-    if(curseKeys.length){
-      const badges=curseKeys.map(k=>`<span class="curseBadge">Cursed: ${BATTLE.itemCurses[k]}</span>`).join(' ');
-      html=html.replace(/(<div class="panel">\s*<div class="note" style="margin:0 0 4px">Drag cards or tap to select<\/div>)/,`<div class="panel curseShield"><div class="note" style="margin:0 0 6px"><b>Active Curse Traps</b> ${badges}</div></div>$1`);
-    }
-    
-    if(BATTLE.pendingTarget){
-      html=html.replace(/(<button class="wo-btn red" id="endTurnBtn")/,'$1 disabled');
-      const isBurn=BATTLE.pendingTarget.type==='burn';
-      const rows=(BATTLE.opponent.items||[]).map((id,i)=>{
-        const it=ITEMS[id];if(!it||it.kind==='storage')return '';
-        const key=`${id}_${i}`;
-        const curseAmt=BATTLE.opponentItemCurses&&BATTLE.opponentItemCurses[key];
-        const burnAmt=BATTLE.opponentItemBurns&&BATTLE.opponentItemBurns[key];
-        const tag=curseAmt?` <span class="curseBadge">Cursed: ${curseAmt}</span>`:burnAmt?` <span class="curseBadge">Burn: ${burnAmt}</span>`:'';
-        return `<button class="wo-btn ${isBurn?'amber':'purple'} targetSlotBtn" data-targetkey="${key}" style="width:100%;text-align:left;margin-bottom:6px">${it.name}${tag}</button>`;
-      }).join('');
-      const modal=`<div class="targetPickerOverlay" style="position:fixed;inset:0;background:#12163acc;display:flex;align-items:center;justify-content:center;z-index:110;padding:20px">
-        <div class="wo" style="max-width:380px;width:100%"><div class="wo-stripe"></div><div class="wo-body">
-          <div class="wo-eyebrow">${isBurn?'Ignite an Item':'Curse an Item'}</div>
-          <h1>Pick ${BATTLE.opponent.name}'s <em>Item</em></h1>
-          <div class="note" style="margin-bottom:10px">${isBurn?`This item slot is trapped. If ${BATTLE.opponent.name} fires it, the burn backfires into their own health instead of yours.`:`This item slot is trapped. It stays cursed until ${BATTLE.opponent.name} fires it before their turn ends, or it detonates.`}</div>
-          ${rows||'<div class="note">No eligible item slots.</div>'}
-          <button class="wo-btn gray" id="cancelPendingTargetBtn" style="width:100%;margin-top:4px">Cancel</button>
-        </div></div>
-      </div>`;
-      html+=modal;
-    }
-    return html;
-  };
-  battleScreen=window.battleScreen;
-
-  const oldMatch=castleMatchScreen;
-  window.castleMatchScreen=function(){
-    if(MATCH_POPUP){
-      const saved=MATCH_POPUP; MATCH_POPUP=null;
-      let board=oldMatch();
-      MATCH_POPUP=saved;
-      board=board.replace('<div class="wo"><div class="wo-stripe"></div><div class="wo-body">','<div class="wo matchBoardWrap" style="pointer-events:none"><div class="wo-stripe"></div><div class="wo-body">');
-      const popup=`<div class="match-modal"><div class="wo" style="max-width:360px"><div class="wo-stripe"></div><div class="wo-body" style="text-align:center"><div class="wo-eyebrow">Pair Matched</div><h1>${saved.suitLabel} <em>Pair!</em></h1><div class="treasure-prize">${saved.rewardLabel}</div>${saved.boardCleared?'<div class="note">Board cleared! The matching game is done for this run.</div>':''}<button class="wo-btn amber" id="matchPopupContinueBtn" style="width:100%;margin-top:10px;pointer-events:auto">Nice!</button></div></div></div>`;
-      return board + popup;
-    }
-    let html=oldMatch();
-    return html.replace('<div class="wo"><div class="wo-stripe"></div><div class="wo-body">','<div class="wo matchBoardWrap"><div class="wo-stripe"></div><div class="wo-body">');
-  };
-  castleMatchScreen=window.castleMatchScreen;
-
-  META.devModeActive=META.playerName?.toLowerCase()==='devmode';
-  /****************************************************************************
-* RUN DASHBOARD SYSTEM                                                     *
-****************************************************************************/
-  window.runSummaryScreen=function(){
-    if(!RUN)return metaScreen();
-    const r=RUN.runUpgrades||{};const rows=[];
-    const addRow=(a,b,subs)=>rows.push(`<div class="shopcard"><div class="hdr"><span><b>${a}</b></span><span>${b}</span></div>${(subs||[]).map(s=>`<div class="note">${s}</div>`).join('')}</div>`);
-    rows.push(`<div class="shopcard"><div class="hdr"><span><b>Vehicle</b></span><span>${HEROES[RUN.hero?.heroId]?.name||''}</span></div></div>`);
-    addRow('Item Capacity',`${equippedItemCount(RUN.hero)}/${RUN.itemCap}`,[`Run Upgrades: ${r.itemSlots||0}`,`Career Point Upgrades: ${META.levels.garage||0}`]);
-    addRow('Cards Drawn Per Turn',RUN.drawPerTurn,[`Run Upgrades: ${r.drawPerTurn||0}`,`Career Point Upgrades: ${META.levels.draw||0}`]);
-    addRow('Maximum Hand Size',RUN.handSize,[`Career Point Upgrades: ${META.levels.handCap||0}`]);
-    addRow('Gem Draw',`${1+(META.levels.gem||0)+(r.gemDraw||0)} cards/gem`,[`Run Upgrades: ${r.gemDraw||0}`,`Career Point Upgrades: ${META.levels.gem||0}`]);
-    Object.entries(RUN.itemLevels||{}).forEach(([id,l])=>l&&addRow(ITEMS[id]?.name||id,`Tune Lv ${l}`));Object.entries(RUN.itemUsesLevels||{}).forEach(([id,l])=>l&&addRow(ITEMS[id]?.name||id,`Uses Lv ${l}`,[`${itemUsesCap(ITEMS[id],l)} uses/turn`]));Object.entries(RUN.itemMaxCardsLevels||{}).forEach(([id,l])=>l&&addRow(ITEMS[id]?.name||id,`Capacity Lv ${l}`,[`${effectiveMaxCards(ITEMS[id])} cards`]));Object.entries(RUN.itemUtilityLevels||{}).forEach(([id,l])=>l&&addRow(ITEMS[id]?.name||id,`Utility Lv ${l}`,[id==='drawstone'?`Requirement ${Math.max(4,7-l)}`:`Threshold ${Math.max(35,45-l*5)}`]));Object.entries(RUN.itemKindOverride||{}).forEach(([id,k])=>k&&addRow(ITEMS[itemIdFromKey(id)]?.name||id,k));
-    return `<div class="wo"><div class="wo-stripe"></div><div class="wo-body"><h1>Run <em>Dashboard</em></h1>${currencyBar()}<div class="runSummary">${rows.join('')}</div><button class="wo-btn teal" id="leaveRunSummaryBtn" style="width:100%;margin-top:10px">Back</button></div></div>`;
-  };
-  function devPanel(){return `<div class="devModal"><div class="wo"><div class="wo-stripe"></div><div class="wo-body"><div class="wo-eyebrow">Diagnostic Tools</div><h1><em>Developer Mode</em></h1><div style="display:flex;gap:8px;margin:10px 0"><button class="wo-btn amber" id="devCoinsBtn">+500 Coins</button><button class="wo-btn purple" id="devMaxBtn">Max Resources</button></div><div class="devGrid">${Object.keys(ITEMS).map(id=>`<button class="devItem" data-devitem="${id}"><b>${ITEMS[id].name}</b><br><span class="note">${id}</span></button>`).join('')}</div><button class="wo-btn gray" id="devCloseBtn" style="width:100%;margin-top:12px">Close</button></div></div></div>`;}
-  
-  const oldRender=render;
-  window.render=function(html){
-    oldRender(html);
-    document.body.classList.toggle('world-2', !!(RUN && RUN.world >= 2));
-    const battleLogEl=document.getElementById('battleLogEl'); if(battleLogEl) battleLogEl.scrollTop=battleLogEl.scrollHeight;
-    const app=document.getElementById('app');
-    app.querySelectorAll('[data-card]').forEach(el=>{let ph=false;el.onclick=()=>{if(ph){ph=false;return;}toggleCardSelect(+el.dataset.card);};el.onpointerdown=e=>{if(e.pointerType!=='mouse'||e.button===0){e.preventDefault();ph=true;toggleCardSelect(+el.dataset.card);}};});
-    const name=document.getElementById('playerNameInput');
-    if(name){name.oninput=()=>{META.playerName=name.value.trim().slice(0,18);META.devModeActive=META.playerName.toLowerCase()==='devmode';saveMeta();if(META.devModeActive)render(metaScreen());};}
-    const dev=document.getElementById('devPanelBtn');if(dev)dev.onclick=()=>{document.getElementById('app').insertAdjacentHTML('beforeend',devPanel());bindDev();};
-    const dash=document.getElementById('openRunSummaryBtn');if(dash)dash.onclick=()=>render(runSummaryScreen());
-    const leave=document.getElementById('leaveRunSummaryBtn');if(leave)leave.onclick=()=>render(IN_BATTLE?battleScreen():metaScreen());
-    app.querySelectorAll('[data-targetkey]').forEach(el=>el.onclick=()=>{
-      const k=el.dataset.targetkey;
-      if(!BATTLE.pendingTarget)return;
-      if(BATTLE.pendingTarget.type==='burn')chooseBurnTarget(k);else chooseCurseTarget(k);
-    });
-    const cancelTarget=document.getElementById('cancelPendingTargetBtn');if(cancelTarget)cancelTarget.onclick=()=>cancelPendingTarget();
-    bindDev();
-  };
-  render=window.render;
-  function bindDev(){const close=document.getElementById('devCloseBtn');if(close)close.onclick=()=>render(IN_BATTLE?battleScreen():RUN?mapScreen():metaScreen());const coins=document.getElementById('devCoinsBtn');if(coins)coins.onclick=()=>{RUN.chips+=500;saveRun();render(`${IN_BATTLE?battleScreen():mapScreen()}${devPanel()}`);};const max=document.getElementById('devMaxBtn');if(max)max.onclick=()=>{RUN.chips=9999;RUN.gems=RUN.maxGems;RUN.fuel=RUN.maxFuel;RUN.energy=RUN.maxEnergy;RUN.health=RUN.maxHealth;saveRun();render(`${IN_BATTLE?battleScreen():mapScreen()}${devPanel()}`);};document.querySelectorAll('[data-devitem]').forEach(e=>e.onclick=()=>{if(RUN&&equippedItemCount(RUN.hero)<RUN.itemCap){RUN.hero.items.push(e.dataset.devitem);saveRun();render(`${IN_BATTLE?battleScreen():mapScreen()}${devPanel()}`);}});}
-  
-  const cb=originalCurrencyBar;
-  window.currencyBar=function(extraHTML=''){let h=cb(extraHTML);const controls=`${META.devModeActive?`<button class="wo-btn gray" id="devPanelBtn" style="padding:3px 7px;font-size:10px">[🛠️ DEV]</button>`:''}<button class="wo-btn purple" id="openRunSummaryBtn" style="padding:3px 7px;font-size:10px">Run Dashboard</button>`;if(h.includes('<!--RUNCONTROLS-->'))return h.replace('<!--RUNCONTROLS-->',controls);const at=h.lastIndexOf('</div>');if(at<0)return h;return h.slice(0,at)+controls+h.slice(at);};currencyBar=window.currencyBar;
-  
-  window.chopShopScreen=function(returnTo){
-    let html=originalChopShopScreen(returnTo);
-    if(RUN?.hero?.items){
-      const extra=RUN.hero.items.map((id,i)=>{
-        if(id==='drawstone'){const l=utilityLevel(id),cost=l>=3?0:Math.round(60*Math.pow(2,l));return `<div class="shopcard"><b>Drawstone Requirement Upgrade</b><div class="note">Current: ${Math.max(4,7-l)}. Upgrade lowers the requirement by 1, down to 4.</div><button class="wo-btn purple" data-utilityup="drawstone" ${l>=3||RUN.chips<cost?'disabled':''}>${l>=3?'Maxed':'Lower Requirement ('+cost+' coins)'}</button></div>`;}
-        if(id==='impound_release'){const l=utilityLevel(id),cost=l>=2?0:Math.round(75*Math.pow(2,l));return `<div class="shopcard"><b>Impound Release Charge Upgrade</b><div class="note">Current: ${Math.max(35,45-l*5)}. Upgrade lowers the threshold by 5, down to 35.</div><button class="wo-btn purple" data-utilityup="impound_release" ${l>=2||RUN.chips<cost?'disabled':''}>${l>=2?'Maxed':'Lower Charge Threshold ('+cost+' coins)'}</button></div>`;}
-        return '';
-      }).join('');
-      if(extra){const at=html.lastIndexOf('</div></div>');if(at>=0)html=html.slice(0,at)+extra+html.slice(at);}
-    }
-    return html;
-  };chopShopScreen=window.chopShopScreen;
-  
-  document.addEventListener('click',e=>{const b=e.target.closest('[data-utilityup]');if(!b||!RUN)return;const id=b.dataset.utilityup,l=utilityLevel(id),cap=id==='drawstone'?3:2,cost=Math.round((id==='drawstone'?60:75)*Math.pow(2,l));if(l>=cap||RUN.chips<cost)return;e.preventDefault();e.stopPropagation();RUN.chips-=cost;RUN.itemUtilityLevels[id]=l+1;saveRun();render(chopShopScreen());},true);
-  
-  const oldRenderStd=renderStandardItemCard;
-  window.renderStandardItemCard=function(item,opts={}){let h=oldRenderStd(item,opts);if(item?.id==='drawstone')h=h.replace('7 or higher',`${Math.max(4,7-utilityLevel('drawstone'))} or higher`);if(item?.id==='impound_release')h=h.replace('45-point',`${Math.max(35,45-utilityLevel('impound_release'))}-point`);return h;};renderStandardItemCard=window.renderStandardItemCard;
-  const oldItemRequirementText=itemRequirementText;window.itemRequirementText=function(item,eKind){let t=oldItemRequirementText(item,eKind);if(item?.id==='drawstone')t=t.replace(/7/g,String(Math.max(4,7-utilityLevel('drawstone'))));return t;};itemRequirementText=window.itemRequirementText;
-  
-  if(RUN){RUN.itemUtilityLevels=RUN.itemUtilityLevels||{};}
-})();
+META.devModeActive = META.playerName?.toLowerCase() === "devmode";
 (function(){
   const tip=document.createElement('div');tip.className='jsFloatTip';document.body.appendChild(tip);
   document.body.classList.add('jsTooltipActive');

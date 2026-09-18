@@ -70,15 +70,10 @@
   .upgradeNum{color:var(--amber)}
   .jsTooltipActive .effectTip:hover::after,.jsTooltipActive [data-title]:hover::after,.jsTooltipActive .hoverTip:hover::after{display:none !important}
   .jsFloatTip{position:fixed;z-index:100000;max-width:230px;background:#000000;color:#ffffff;padding:8px;border-radius:6px;font:11px var(--disp);text-align:left;box-shadow:3px 3px 0 #1fb6a6;pointer-events:none;border:1px solid #1fb6a6;display:none}
-  .matchGrid{width:100%}
-  .matchGrid .card.mini{width:100%;height:auto;aspect-ratio:3/4;font-size:clamp(10px,3.4vw,15px);min-width:0}
-  @media (max-width:640px){
-    .matchLayout{grid-template-columns:1fr !important}
-    .matchGrid{max-width:340px !important;margin:0 auto}
-  }
   @media (min-width:900px){
     .matchLayout{grid-template-columns:minmax(0,1fr) minmax(200px,240px) !important}
     .matchGrid{max-width:520px !important}
+    .matchGrid .card.mini{height:76px;font-size:15px}
   }
   .duelHead{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:flex-start}
   .vsMark{align-self:center}
@@ -156,7 +151,7 @@
     font-size:17px;border:2px solid #12163a;cursor:pointer;user-select:none;flex-shrink:0;gap:1px}
   .card div:last-child{font-size:23px;line-height:1}
   .card.red{color:#e5484d}
-  .card.suit-club{color:#16a085}
+  .card.suit-club{color:#12163a}
   .card.selected{outline:3px solid var(--amber);transform:translateY(-6px)}
   .card.matched{outline:3px solid var(--green)}
   .card.cursed{outline:2px solid var(--purple)}
@@ -164,7 +159,7 @@
   .card.mini div:last-child{font-size:14px !important;line-height:1}
   .suitMicroCard{display:inline-flex;align-items:center;justify-content:center;width:16px;height:20px;border-radius:3px;background:#ffffff;color:#12163a;font-size:12px;font-weight:800;line-height:1;vertical-align:-3px;margin:0 1px;box-shadow:0 0 0 1px rgba(0,0,0,0.2)}
   .suitMicroCard.red{color:#e5484d}
-  .suitMicroCard.suit-club{color:#16a085}
+  .suitMicroCard.suit-club{color:#12163a}
   .card.back{background:var(--blue);color:transparent;position:relative}
   .card.back::after{content:'?';color:var(--ink);position:absolute;font-size:16px}
   .card.back.mini::after{font-size:12px}
@@ -300,9 +295,6 @@
   .castleBtn:disabled{opacity:.5;cursor:default}
   .castleMenuExit{margin-top:8px;padding-top:10px;border-top:1px solid rgba(31,182,166,.25)}
   .castleMenuExit .castleBtn{background:#20263b;color:#fff;border-color:#4d587a;box-shadow:3px 3px 0 #0b0f19}
-  .castleMenuExitTop{margin-bottom:8px;padding-bottom:10px;border-bottom:1px solid rgba(31,182,166,.25)}
-  .castleMenuExitTop .castleBtn{background:#20263b;color:#fff;border-color:#4d587a;box-shadow:3px 3px 0 #0b0f19}
-  .facilityExitTop{background:#20263b !important;color:#fff !important;border-color:#4d587a !important;box-shadow:3px 3px 0 #0b0f19 !important}
   .handWorkspace{position:relative}
   .handCapacity{position:absolute;top:-8px;right:0;font:600 10px var(--mono);color:var(--dim);cursor:help;z-index:2;line-height:1}
   .handWorkspace>.hand{padding-top:10px}
@@ -379,7 +371,7 @@ function shuffle(arr) { for (let i = arr.length - 1; i > 0; i--) { const j = (Ma
 * HAND EVALUATION                                                          *
 ****************************************************************************/
 const TIERS = ['High Card', 'Pair', 'Two Pair', 'Three of a Kind', 'Straight', 'Flush', 'Full House', 'Four of a Kind', 'Straight Flush'];
-const TIER_MULT = [1.0, 1.5, 1.7, 2.5, 2.5, 2.8, 3.2, 4.0, 5.0];
+const TIER_MULT = [1.0, 1.5, 1.7, 3.0, 2.5, 2.8, 3.2, 4.0, 5.0];
 function evaluateHand(cards) {
   if (!cards.length) return { tier: 0, label: 'No Cards', mult: 0 };
   const ranks = cards.map(c => c.rank);
@@ -979,8 +971,8 @@ const ITEMS = {
     bonus: { condition: { type: 'pokerTier', tier: 1 }, base: 0.5, perLevel: 0.25, maxLevel: 2 }, 
     note: 'Up to 2 cards. A Pair adds a bonus that grows the more you tune it.' },
   opp_pair_curse: { id: 'opp_pair_curse', name: 'Repo Notice', maxCards: 2, usesPerTurn: 1,
-    condition: { type: 'pokerTier', tier: 1 }, baseMult: 1, kind: 'curse',
-    note: `Needs a Pair. Curses one of your Items for ${SIGMA_TIP} of the cards played.` },
+    condition: { type: 'pokerTier', tier: 1 }, baseMult: 1,
+    note: 'Needs a Pair. A plain, reliable poke.' },
   opp_sudden_dash: { id: 'opp_sudden_dash', name: 'Sudden Dash', maxCards: 2, usesPerTurn: 1,
     condition: { type: 'pokerTier', tier: 1 }, baseMult: 1,
     note: 'Needs a Pair. A plain, reliable poke.' },
@@ -994,8 +986,8 @@ const ITEMS = {
     condition: { type: 'any', exactCount: 1 }, flatAmount: 10,
     note: 'Needs exactly 1 card. Flat attack for 10 damage - the simplest hazard in the game.' },
   opp_harassment: { id: 'opp_harassment', name: 'Harassment', maxCards: 2, usesPerTurn: 1,
-    condition: { type: 'pokerTier', tier: 1 }, baseMult: 1, kind: 'curse',
-    note: 'Needs a Pair. Curses one of your Items.' },
+    condition: { type: 'pokerTier', tier: 1 }, baseMult: 1,
+    note: 'Needs a Pair. A plain, reliable poke.' },
   opp_shouting_match: { id: 'opp_shouting_match', name: 'Shouting Match', maxCards: 3, usesPerTurn: 1,
     condition: { type: 'pokerTier', tier: 1 }, baseMult: 1,
     note: 'Needs a Pair. A plain, reliable poke.' },
@@ -1006,8 +998,8 @@ const ITEMS = {
     condition: { type: 'sumThreshold', min: 25 }, baseMult: 0, flatAmount: 24,
     note: `Needs cards totaling ${SIGMA_TIP}25+. Flat attack for 24 damage.` },
   opp_rancid_blaze: { id: 'opp_rancid_blaze', name: 'Rancid Blaze', maxCards: 3, usesPerTurn: 1,
-    condition: { type: 'pokerTier', tier: 2 }, baseMult: 1, kind: 'burn',
-    note: 'Needs Two Pair. Burn damage.' },
+    condition: { type: 'pokerTier', tier: 2 }, baseMult: 1,
+    note: 'Needs Two Pair. Direct damage.' },
   opp_debris_slam: { id: 'opp_debris_slam', name: 'Debris Slam', maxCards: 3, usesPerTurn: 1,
     condition: { type: 'pokerTier', tier: 1 }, baseMult: 1,
     note: 'Needs a Pair. A plain, reliable poke.' },
@@ -1782,9 +1774,7 @@ function selectNode(row, col) {
     else { const found = rollTreasure(node.big); playSfx('open'); TREASURE_POPUP = found; render(mapScreen()); }
   }
   else if (node.type === 'match_hazard') {
-    if (RUN.castleState?.matchLockReason === 'glitch') { RUN.lastNotice = 'This Grid Anomaly has already been hacked.'; render(mapScreen()); return; }
-    if (!RUN.castleState) RUN.castleState = {};
-    if ((RUN.castleState.matchGuesses || 0) <= 0) { RUN.castleState.matchGuesses = 4; RUN.castleState.matchLockReason = null; }
+    if (RUN.castleState?.matchPlayed) { RUN.lastNotice = 'This Grid Anomaly has already been hacked.'; render(mapScreen()); return; }
     MATCH_RETURN_TO_MAP = true;
     MATCH_OVERLAY_ACTIVE = true;
     renderMatchOverlay();
@@ -1809,15 +1799,13 @@ function castleMenuScreen(message='') {
   return `${noticeHTML()}
   <div class="wo">
     <div class="wo-stripe"></div><div class="wo-body">
-      <h1>Choose Where To <em>Go</em></h1>
+      <h1 style="text-align:center">Fleet <em>Compound</em></h1>
       ${currencyBar()}
       ${message ? `<div class="panel"><div class="note">${message}</div></div>` : ''}
       <div class="castleMenu">
-        <div class="castleMenuExitTop">
-          <button class="castleBtn" id="leaveCastleBtn">Back to World Map.</button>
-        </div>
+        <button class="castleBtn castleBtn-exit" id="leaveCastleBtn" style="background:#ffc44d;color:#12163a;border-color:#ffc44d;font-weight:800">Back to World Map.</button>
         <button class="castleBtn" id="castleDungeonNavBtn">Visit the Fleet Compound Dungeon.</button>
-        <button class="castleBtn" id="castleWizardNavBtn" ${RUN.castleState?.matchLockReason === 'glitch' ? 'disabled' : ''}>${RUN.castleState?.matchLockReason === 'glitch' ? 'Matching Game Closed' : (RUN.castleState?.matchCards ? 'Continue the Fleet Carnival Matching Game.' : 'Visit the Fleet Carnival Matching Game.')}</button>
+        <button class="castleBtn" id="castleWizardNavBtn" ${RUN.castleState?.matchPlayed ? 'disabled' : ''}>${RUN.castleState?.matchPlayed ? 'Matching Game Played' : 'Visit the Fleet Carnival Matching Game.'}</button>
         <button class="castleBtn" id="castleBlacksmithNavBtn">Visit the Tuning Garage.</button>
         <button class="castleBtn" id="castleChopShopNavBtn">Visit the Chop Shop.</button>
         <button class="castleBtn" id="castleOverdriveNavBtn">Visit the Overdrive Bay.</button>
@@ -1927,10 +1915,13 @@ function castleMatchScreen() {
       </div>
     </div></div>`;
   }
-  if (st.matchLockReason === 'glitch') {
+  if (st.matchPlayed) {
+    const closedMsg = st.matchLockReason === 'glitch' ? 'CRITICAL GLITCH! A Red Joker and a Black Joker were flipped together. Grid Anomaly Closed.'
+      : st.matchLockReason === 'outofattempts' ? 'Out of attempts! The matching session is over for this run.'
+      : "You've already played this round. Come back on your next run.";
     return `<div class="map-popup-overlay"><div class="wo wide"><div class="wo-stripe"></div><div class="wo-body">
       <h1>Fleet Carnival <em>Matching Game</em></h1>
-      <div class="note">CRITICAL GLITCH! A Red Joker and a Black Joker were flipped together. Grid Anomaly Closed.</div>
+      <div class="note">${closedMsg}</div>
       <button class="wo-btn gray" id="leaveMatchBtn" style="width:100%">Back to Compound Menu</button>
     </div></div></div>`;
   }
@@ -2472,17 +2463,16 @@ if (idxs.some(i => BATTLE.usedThisTurn.has(i))) {
   if (item.drawAmount || item.drawUsesCardCount) {
     const slotCardMap = {}; Object.entries(BATTLE.slots).forEach(([key, ix]) => { slotCardMap[key] = ix.map(i => BATTLE.hand[i]); });
     const stillUsedCards = [...BATTLE.usedThisTurn].map(i => BATTLE.hand[i]).filter(c => !cards.includes(c));
-    BATTLE.turnSpentDiscard = BATTLE.turnSpentDiscard || [];
-    const sortedOut = [...idxs].sort((a, b) => b - a);
-    for (const i of sortedOut) { BATTLE.turnSpentDiscard.push(BATTLE.hand[i]); BATTLE.hand.splice(i, 1); }
     const drawN = item.drawUsesCardCount
       ? cards.length + (item.drawBonusFlat || 0) + (item.drawPerLevel || 0) * level
       : item.drawAmount + (item.drawPerLevel || 0) * level;
+    const sortedOut = [...idxs].sort((a, b) => b - a);
+    for (const i of sortedOut) { BATTLE.turnSpentDiscard.push(BATTLE.hand[i]); BATTLE.hand.splice(i, 1); }
+    Object.entries(slotCardMap).forEach(([key, cs]) => { BATTLE.slots[key] = cs.map(c => BATTLE.hand.indexOf(c)).filter(i => i !== -1); });
+    BATTLE.usedThisTurn = new Set(stillUsedCards.map(c => BATTLE.hand.indexOf(c)).filter(i => i !== -1));
     const beforeDraw = BATTLE.hand.length;
     drawCards(drawN, true);
     const drawn = BATTLE.hand.slice(beforeDraw);
-    Object.entries(slotCardMap).forEach(([key, cs]) => { BATTLE.slots[key] = cs.map(c => BATTLE.hand.indexOf(c)).filter(i => i !== -1); });
-    BATTLE.usedThisTurn = new Set(stillUsedCards.map(c => BATTLE.hand.indexOf(c)).filter(i => i !== -1));
     battleLog(`${item.name} - Discarded ${cardsStr}, drew ${drawn.map(c=>rankLabel(c.rank)+c.suit).join(' ') || 'no cards'}.`);
     resortHandAndRelink(RUN.handSortMode);
   }
@@ -2552,6 +2542,9 @@ function opponentAttackIsValid(attack, best, pool, cap) {
   if (!attack || attack.autoFire) return true;
   if (attack.id === 'opp_castle_poke_t3' || attack.name === 'Champion Strike') {
     return opponentHasExactPokerTier(pool, 3, cap);
+  }
+  if (attack.id === 'opp_castle_poke_t2' || attack.name === 'Guard Strike') {
+    return opponentHasExactPokerTier(pool, 2, cap);
   }
   return true;
 }
@@ -2682,9 +2675,7 @@ function endTurn() {
           const itemCap = effectiveMaxCards(item) ?? maxCards;
           const best = bestHandFromPool(BATTLE.oppPool, itemCap);
           const cond = checkCondition(item.condition, best.cards);
-          const validPokerAttack = item.id === 'opp_castle_poke_t3'
-            ? opponentHasExactPokerTier(BATTLE.oppPool, 3, itemCap)
-            : true;
+          const validPokerAttack = opponentAttackIsValid(item, best, BATTLE.oppPool, itemCap);
           if (cond.met && validPokerAttack) { itemPick = { item, best, cond, key: slotKeyForBurn }; break; }
         }
         if (!itemPick && burnBlockedPick) {
@@ -3333,7 +3324,6 @@ function battleScreen() {
       })()}
       <div>
         <div style="margin-top:4px">
-          ${idxs.length ? `<button class="wo-btn gray" style="padding:3px 6px;font-size:10px" data-clear="${slotKey}">Clear</button>` : ''}
           ${ready && (usesLeft > 0 || isChargingUnlockItem) && cooldownLeft <= 0 ? `<span class="attackChip ${eKind==='defense' ? 'defendChip' : ''}" data-attack="${slotKey}" style="font-size:10px; padding:3px 6px">${item.unlockThreshold != null ? (isChargingUnlockItem ? 'Deposit Card(s) ▶' : 'Draw ▶') : eKind==='defense' ? 'Defend ▶' : (item.flatAmount==null && (item.baseMult ?? 1)===0 && (item.drawAmount || item.drawUsesCardCount)) ? 'Draw ▶' : 'Attack ▶'}</span>` : ''}
         </div>
       </div>
@@ -3426,7 +3416,6 @@ function battleScreen() {
       <div class="matchupSide playerSide">
         ${BATTLE.itemCurses && Object.keys(BATTLE.itemCurses).length ? `<div class="panel curseShield"><div class="note" style="margin:0 0 6px"><b>Active Curse Traps</b> ${Object.keys(BATTLE.itemCurses).map(k => `<span class="curseBadge">Cursed: ${BATTLE.itemCurses[k]}</span>`).join(' ')}</div></div>` : ''}
         <div class="panel">
-          <div class="note" style="margin:0 0 4px">Drag cards or tap to select</div>
           <div class="itemGrid">
             ${itemsHTML}
             ${(() => {
@@ -3539,8 +3528,9 @@ function pickShopStock() {
   const row = Math.max(0, RUN.currentRow || 0);
   const SUIT_STASH_IDS = ['spade_bag', 'heart_bag', 'club_bag', 'diamond_bag'];
   const SUIT_INFERNO_IDS = ['spade_inferno', 'heart_inferno', 'club_inferno', 'diamond_inferno'];
-  const ownedIds = new Set(RUN.hero.items);
-  const pool = Object.values(ITEMS).filter(it => it.cost > 0 && !ownedIds.has(it.id) && (it.minRow == null || it.minRow <= row)
+  const ownedIds = new Set(RUN.hero?.items || []);
+  const pool = Object.values(ITEMS).filter(it => it.cost > 0 && (it.minRow == null || it.minRow <= row)
+    && !ownedIds.has(it.id)
     && (it.kind !== 'storage' || it.id === 'supply_bag' || SUIT_STASH_IDS.includes(it.id)));
   const defensePool = pool.filter(it => it.kind === 'defense');
   const nonDefensePool = pool.filter(it => it.kind !== 'defense');
@@ -3574,8 +3564,8 @@ function dealerItemCardHTML(item, opts) {
     <div class="dealerMetaDivider"></div>
     <div class="dealerMeta">
       <div class="price" style="white-space:nowrap">${priceLabel}</div>
+      <div class="hoverTip note" style="margin:0;font-size:10px;white-space:nowrap" data-title="A rough gauge of how hard this item can hit at full setup.">Power ${item.kind === 'storage' ? 0 : itemPowerScore(item)}</div>
       ${footer}
-      ${item.kind !== 'storage' ? `<div class="hoverTip note" style="margin:4px 0 0;font-size:10px;white-space:nowrap;text-align:center" data-title="A rough gauge of how hard this item can hit at full setup.">Power ${itemPowerScore(item)}</div>` : ''}
     </div>
   </div>`;
 }
@@ -3584,8 +3574,8 @@ function shopScreen(fromCastle=false) {
   const options = RUN.shopStock.map(id => ITEMS[id]).filter(Boolean);
   const itemRows = options.map(it => dealerItemCardHTML(it, {
     mode: 'buy',
-    disabled: RUN.chips < it.cost || (!it.weightless && equippedItemCount(RUN.hero) >= RUN.itemCap),
-    disabledLabel: (!it.weightless && equippedItemCount(RUN.hero) >= RUN.itemCap) ? 'No open slot' : null,
+    disabled: RUN.chips < it.cost || equippedItemCount(RUN.hero) >= RUN.itemCap,
+    disabledLabel: equippedItemCount(RUN.hero) >= RUN.itemCap ? 'No open slot' : null,
   })).join('');
   const ownedRows = RUN.hero.items.map((id,i)=>{
     const it=ITEMS[id]; if(!it) return '';
@@ -3602,12 +3592,8 @@ function shopScreen(fromCastle=false) {
           <button class="wo-btn purple" id="openRunUpgradeFromShopBtn" data-fromcastle="${fromCastle ? '1' : '0'}" style="flex:1">Upgrades</button>
         </div>
         <div class="dealerRow" style="margin:10px 0 12px">${itemRows || '<div class="note">No items in this category.</div>'}</div>
-        <div class="hdr" style="margin-top:14px;font-weight:800;font-size:14px"><span>Equipped Items</span></div>
-        <div class="dealerRow" style="margin-top:8px">${ownedRows}${(() => {
-          const openSlots = Math.max(0, RUN.itemCap - equippedItemCount(RUN.hero));
-          return Array.from({ length: openSlots }).map(() => `<div class="itemCard" style="display:flex;align-items:center;justify-content:center;text-align:center;border:2px dashed var(--blue-light);color:var(--dim);font-size:11px;min-height:96px">Open item slot</div>`).join('');
-        })()}</div>
-        ${(!ownedRows) ? `<div class="note" style="margin-top:6px">Nothing equipped yet.</div>` : ''}
+        <div class="hdr" style="margin-top:14px;font-weight:800;font-size:14px"><span>Equipped Items</span><span>${equippedItemCount(RUN.hero)}/${RUN.itemCap}</span></div>
+        ${ownedRows ? `<div class="dealerRow" style="margin-top:8px">${ownedRows}</div>` : `<div class="note" style="margin-top:6px">Nothing equipped yet.</div>`}
       </div>
     </div>`;
 }
@@ -3644,8 +3630,7 @@ function garageScreen(message='') {
 }
 
 function blacksmithScreen() {
-  const sortedOptions = BLACKSMITH_OPTIONS.map((opt, i) => ({ opt, i })).sort((a, b) => SCOPE_TUNE_COST[a.opt.scope] - SCOPE_TUNE_COST[b.opt.scope]);
-  const rows = sortedOptions.map(({ opt, i }) => {
+  const rows = BLACKSMITH_OPTIONS.map((opt, i) => {
     const b = findBoost(opt);
     const bonus = b ? b.bonus : 0;
     const count = b ? (b.count || 0) : 0;
@@ -3671,7 +3656,7 @@ function blacksmithScreen() {
     const badge = (amt) => amt > 0 ? `<span style="position:absolute;top:-6px;right:-6px;background:#2fae66;color:#fff;font-size:10px;font-weight:800;border-radius:10px;padding:1px 5px;box-shadow:0 0 0 2px #12163a">+${amt}</span>` : '';
     const leftMini = `<div style="position:relative;display:inline-block">${leftVisual}${badge(bonus)}</div>`;
     const rightMini = `<div style="position:relative;display:inline-block">${leftVisual}${badge(maxed ? bonus : bonus + SCOPE_TUNE_DAMAGE[opt.scope])}</div>`;
-    return `<div class="shopcard" style="max-width:340px;margin-left:auto;margin-right:auto">
+    return `<div class="shopcard">
       <div style="display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:nowrap">
         ${leftMini}
         <span style="font-size:20px;color:var(--dim)">➔</span>
@@ -3690,22 +3675,12 @@ function blacksmithScreen() {
     if (lvlCap <= 0) return '';
     const lvl = itemLevel(id), maxed = lvl >= lvlCap;
     const cost = maxed ? 0 : itemTuneCost(item, lvl);
-    const badge = (n) => `<span style="position:absolute;top:-6px;right:-6px;background:#2fae66;color:#fff;font-size:10px;font-weight:800;border-radius:10px;padding:1px 5px;box-shadow:0 0 0 2px #12163a">Lv${n}</span>`;
-    const iconMini = `<div style="position:relative;display:inline-block"><span class="vart" style="width:38px;height:52px;font-size:20px;border:2px solid var(--blue);border-radius:5px;background:var(--white);display:flex;align-items:center;justify-content:center;text-align:center;padding:2px">${item.name.slice(0,2)}</span>${badge(lvl)}</div>`;
-    const iconMiniNext = `<div style="position:relative;display:inline-block"><span class="vart" style="width:38px;height:52px;font-size:20px;border:2px solid var(--blue);border-radius:5px;background:var(--white);display:flex;align-items:center;justify-content:center;text-align:center;padding:2px">${item.name.slice(0,2)}</span>${badge(maxed ? lvl : lvl + 1)}</div>`;
-    return `<div class="shopcard" style="max-width:340px;margin-left:auto;margin-right:auto">
-      <div class="note" style="margin:0 0 6px;text-align:center"><b>${item.name}</b></div>
-      <div style="display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:nowrap">
-        ${iconMini}
-        <span style="font-size:20px;color:var(--dim)">➔</span>
-        <div style="display:flex;flex-direction:column;align-items:center;gap:3px">
-          ${lvl > 0 ? `<button class="wo-btn gray" data-bonusdown="${id}" style="padding:4px 8px;font-size:11px">Refund</button>` : ''}
-          ${maxed ? `<span class="note" style="margin:0">Maxed</span>` : `<button class="wo-btn amber" data-bonusup="${id}" style="padding:4px 8px;font-size:11px" ${RUN.chips < cost ? 'disabled' : ''}>Level Up</button>`}
-          ${maxed ? '' : `<span class="price" style="font-size:11px">${cost} coins</span>`}
-        </div>
-        <span style="font-size:20px;color:var(--dim)">➔</span>
-        ${iconMiniNext}
-      </div>
+    return `<div class="shopcard" style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+      <span><b>${item.name}</b> <span class="note" style="margin:0">Bonus Lv ${lvl}/${lvlCap}</span></span>
+      <span style="display:flex;gap:6px;align-items:center">
+        ${lvl > 0 ? `<button class="wo-btn gray" data-bonusdown="${id}" style="padding:4px 8px;font-size:11px">Refund</button>` : ''}
+        ${maxed ? `<span class="note" style="margin:0">Maxed</span>` : `<button class="wo-btn amber" data-bonusup="${id}" style="padding:4px 8px;font-size:11px" ${RUN.chips < cost ? 'disabled' : ''}>Level Up (${cost})</button>`}
+      </span>
     </div>`;
   }).filter(Boolean).join('');
   const visitNote = BLACKSMITH_VISIT.primary === null
@@ -3720,13 +3695,12 @@ function blacksmithScreen() {
         <div class="wo-sub">${visitNote}</div>
         ${currencyBar()}
         <div style="display:flex;gap:8px;margin:10px 0">
-          <button class="wo-btn teal${RETURN_TO_CASTLE_MENU ? ' facilityExitTop' : ''}" id="leaveBlacksmithBtn" style="flex:1">${RETURN_TO_CASTLE_MENU ? 'Back to Compound' : roadExitLabel()}</button>
+          <button class="wo-btn teal" id="leaveBlacksmithBtn" style="flex:1">${RETURN_TO_CASTLE_MENU ? 'Back to Compound' : roadExitLabel()}</button>
           <button class="wo-btn purple" id="openRunUpgradeFromBlacksmithBtn" style="flex:1">Upgrades</button>
         </div>
-        <div class="hdr" style="justify-content:center;font-size:13px;font-weight:800;letter-spacing:.04em;color:var(--amber)">[ CARD TUNING UPGRADES ]</div>
-        <div style="margin:10px 0;display:flex;flex-direction:column;gap:8px">${rows}</div>
-        <div class="hdr" style="justify-content:center;margin-top:18px;font-size:13px;font-weight:800;letter-spacing:.04em;color:var(--amber)">[ FLEET EQUIPMENT TUNING ]</div>
-        <div style="margin-top:8px;display:flex;flex-direction:column;gap:8px">${equippedChecklist || '<div class="note" style="text-align:center">No items with a Bonus Level track equipped.</div>'}</div>
+        <div style="margin:12px 0">${rows}</div>
+        <div class="hdr" style="margin-top:14px"><span>Equipped Items - Bonus Level</span></div>
+        <div style="margin-top:8px">${equippedChecklist || '<div class="note">No items with a Bonus Level track equipped.</div>'}</div>
       </div>
     </div>
   `;
@@ -3905,11 +3879,13 @@ function upgradeScreen() {
 * OVERDRIVE BAY                                                            *
 ****************************************************************************/
 function overdriveBayScreen() {
-  const usesBadge = (n) => `<span style="position:absolute;top:-8px;right:-8px;background:#00e676;color:#062622;font-size:12px;font-weight:900;border-radius:12px;padding:2px 7px;box-shadow:0 0 0 2px #12163a;z-index:2">${n}</span>`;
-  const holoCompareBlock = (beforeHTML, afterHTML, beforeN, afterN) => `<div style="display:flex;align-items:center;gap:14px;justify-content:center;margin:8px 0">
-      <div style="position:relative;display:inline-block">${beforeHTML}${usesBadge(beforeN)}</div>
-      <span style="font-size:30px;color:#00e676;line-height:1">➔</span>
-      <div style="position:relative;display:inline-block">${afterHTML}${usesBadge(afterN)}</div>
+  const holoCompareBlock = (beforeHTML, afterHTML, cost) => `<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center;margin:8px 0">
+      <div>${beforeHTML}</div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+        <span style="color:#00e676;font-weight:800;font-size:13px;white-space:nowrap">Upgrade ➔</span>
+        <span class="price" style="white-space:nowrap">${cost} coins</span>
+      </div>
+      <div>${afterHTML}</div>
     </div>`;
   const uniqueItemIds = [...new Set(RUN.hero.items)].filter(id => ITEMS[id] && ITEMS[id].kind !== 'storage' && ITEMS[id].usesPerTurnPerLevel);
   const rows = uniqueItemIds.map(id => {
@@ -3919,23 +3895,22 @@ function overdriveBayScreen() {
     const before = renderStandardItemCard(item, {});
     let after = before;
     if (!usesMaxed) { RUN.itemUsesLevels[id] = usesLvl + 1; after = renderStandardItemCard(item, {}); RUN.itemUsesLevels[id] = usesLvl; }
-    const currentUses = (item.usesPerTurn || 1) + usesLvl;
-    return `<div class="shopcard" style="max-width:300px;margin-left:auto;margin-right:auto">
-      <div class="note" style="text-align:center;margin:0 0 4px"><b>${item.name}</b></div>
-      ${holoCompareBlock(before, after, currentUses, currentUses + 1)}
-      <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-top:2px">
-        ${usesMaxed ? `<span class="note" style="margin:0">Maxed</span>` : `<button class="wo-btn amber" data-usesup="${id}" style="padding:6px 10px;font-size:12px" ${RUN.chips < usesCost ? 'disabled' : ''}>+1 Use Per Turn</button><span class="price" style="font-size:11px">${usesCost} coins</span>`}
-        ${usesLvl > 0 ? `<button class="wo-btn gray" data-usesdown="${id}" style="padding:5px 9px;font-size:11px">Refund</button>` : ''}
+    return `<div class="shopcard">
+      <div class="hdr"><span>${item.name}</span><span>Uses Per Turn (Lv ${usesLvl}/${ITEM_MAX_USES_LEVEL})</span></div>
+      ${holoCompareBlock(before, after, usesMaxed ? 'MAX' : usesCost)}
+      <div style="display:flex;justify-content:center;gap:6px">
+        ${usesLvl > 0 ? `<button class="wo-btn gray" data-usesdown="${id}" style="padding:6px 10px;font-size:12px">Refund</button>` : ''}
+        ${usesMaxed ? '' : `<button class="wo-btn amber" data-usesup="${id}" style="padding:6px 10px;font-size:12px" ${RUN.chips < usesCost ? 'disabled' : ''}>+1 Use Per Turn</button>`}
       </div>
     </div>`;
   }).join('');
-  return `${noticeHTML()}<div class="wo" style="max-width:480px;margin:16px auto"><div class="wo-stripe"></div><div class="wo-body">
+  return `${noticeHTML()}<div class="wo"><div class="wo-stripe"></div><div class="wo-body">
     <div class="wo-eyebrow">Overdrive Bay &middot; Run Upgrade (resets next run)</div><h1>Boost <em>Uses Per Turn</em></h1>${currencyBar()}
     <div style="display:flex;gap:8px;margin:10px 0">
-      <button class="wo-btn teal${RETURN_TO_CASTLE_MENU ? ' facilityExitTop' : ''}" id="leaveOverdriveBtn" style="flex:1">${RETURN_TO_CASTLE_MENU ? 'Back to Compound' : roadExitLabel()}</button>
+      <button class="wo-btn teal" id="leaveOverdriveBtn" style="flex:1">${RETURN_TO_CASTLE_MENU ? 'Back to Compound' : roadExitLabel()}</button>
       <button class="wo-btn purple" id="openRunUpgradeFromOverdriveBtn" style="flex:1">Upgrades</button>
     </div>
-    <div style="margin:12px 0;display:flex;flex-direction:column;gap:10px">${rows || '<div class="note">No eligible Items equipped.</div>'}</div>
+    <div style="margin:12px 0">${rows || '<div class="note">No eligible Items equipped.</div>'}</div>
   </div></div>`;
 }
 
@@ -3970,8 +3945,27 @@ function chopShopScreen(returnTo) {
     }
 
     let capacityHTML = '';
+    if (item.kind !== 'storage') {
+      const capLvl = itemMaxCardsLevel(itemId), capMaxed = capLvl >= ITEM_MAX_CARDS_BONUS_CAP;
+      const capCost = capMaxed ? 0 : itemMaxCardsTuneCost(capLvl);
+      let capAfterHTML = original;
+      if (!capMaxed) { RUN.itemMaxCardsLevels[itemId] = capLvl + 1; capAfterHTML = renderStandardItemCard(item, {}); RUN.itemMaxCardsLevels[itemId] = capLvl; }
+      capacityHTML = `<div style="margin-top:10px">
+        <div class="hdr" style="justify-content:center"><span>Card Capacity (Lv ${capLvl}/${ITEM_MAX_CARDS_BONUS_CAP})</span></div>
+        <div style="display:flex;align-items:center;gap:10px;justify-content:center;margin-top:6px">
+          ${original}
+          <span style="font-size:18px;color:var(--dim)">➔</span>
+          ${capAfterHTML}
+        </div>
+        <div style="text-align:center;margin-top:6px">
+          ${capLvl > 0 ? `<button class="wo-btn gray" data-cardsdown="${itemId}" style="padding:5px 10px;font-size:11px;margin-right:6px">Refund</button>` : ''}
+          ${capMaxed ? `<span class="note">Maxed</span>` : `<button class="wo-btn amber" data-cardsup="${itemId}" style="padding:5px 10px;font-size:11px" ${RUN.chips<capCost?'disabled':''}>+1 Capacity (${capCost} coins)</button>`}
+        </div>
+      </div>`;
+    }
 
-    return `<div class="shopcard" style="max-width:520px;margin-left:auto;margin-right:auto">
+    return `<div class="shopcard">
+      <div class="hdr"><span>${item.name}</span><span>Item ${index+1}</span></div>
       <div style="display:flex;align-items:center;gap:12px;justify-content:center;flex-wrap:wrap;margin:8px 0">
         ${original}
         ${item.kind !== 'storage' ? `<span style="font-size:20px;color:var(--dim)">➔</span>` : ''}
@@ -3994,11 +3988,11 @@ function chopShopScreen(returnTo) {
   return `${noticeHTML()}<div class="wo"><div class="wo-stripe"></div><div class="wo-body">
     <div class="wo-eyebrow">Chop Shop</div><h1>Special <em>Modifications</em></h1>${currencyBar()}
     <div style="display:flex;gap:8px;margin:10px 0">
-      <button class="wo-btn teal${RETURN_TO_CASTLE_MENU ? ' facilityExitTop' : ''}" id="leaveChopShopBtn" style="flex:1">${RETURN_TO_CASTLE_MENU?'Back to Compound':roadExitLabel()}</button>
+      <button class="wo-btn teal" id="leaveChopShopBtn" style="flex:1">${RETURN_TO_CASTLE_MENU?'Back to Compound':roadExitLabel()}</button>
       <button class="wo-btn purple" id="openRunUpgradeFromChopShopBtn" style="flex:1">Upgrades</button>
     </div>
-    <div class="note" style="margin:10px 0;text-align:center">Convert an Item to poison, burn, or curse. One conversion per Item, for this run only.</div>
-    <div style="margin:12px 0;display:flex;flex-direction:column;gap:10px;max-width:560px;margin-left:auto;margin-right:auto">${rows || '<div class="note">No Items available.</div>'}${utilityRows}</div>
+    <div class="note" style="margin:10px 0">Convert an Item to poison, burn, or curse (one per Item, run only), or add card slots.</div>
+    <div style="margin:12px 0">${rows || '<div class="note">No Items available.</div>'}${utilityRows}</div>
   </div></div>`;
 }
 
@@ -4314,7 +4308,7 @@ function render(html) {
   });
 
   const castleDungeonNavBtn = document.getElementById('castleDungeonNavBtn'); if (castleDungeonNavBtn) castleDungeonNavBtn.onclick = () => render(castleDungeonScreen());
-  const castleWizardNavBtn = document.getElementById('castleWizardNavBtn'); if (castleWizardNavBtn) castleWizardNavBtn.onclick = () => { if (!RUN.castleState) RUN.castleState = {}; if (RUN.castleState.matchLockReason === 'glitch') return; if ((RUN.castleState.matchGuesses || 0) <= 0) { RUN.castleState.matchGuesses = 4; RUN.castleState.matchLockReason = null; } MATCH_RETURN_TO_MAP = false; MATCH_OVERLAY_ACTIVE = true; renderMatchOverlay(); };
+  const castleWizardNavBtn = document.getElementById('castleWizardNavBtn'); if (castleWizardNavBtn) castleWizardNavBtn.onclick = () => { if (!RUN.castleState) RUN.castleState = {}; if (RUN.castleState.matchPlayed) return; MATCH_RETURN_TO_MAP = false; MATCH_OVERLAY_ACTIVE = true; renderMatchOverlay(); };
   const castleBlacksmithNavBtn = document.getElementById('castleBlacksmithNavBtn'); if (castleBlacksmithNavBtn) castleBlacksmithNavBtn.onclick = () => { RETURN_TO_CASTLE_MENU = true; BLACKSMITH_OPTIONS = pickBlacksmithOptions(); BLACKSMITH_VISIT = { primary: null, secondary: null }; render(blacksmithScreen()); };
   const castleChopShopNavBtn = document.getElementById('castleChopShopNavBtn'); if (castleChopShopNavBtn) castleChopShopNavBtn.onclick = () => { RETURN_TO_CASTLE_MENU = true; render(chopShopScreen()); };
   const castleOverdriveNavBtn = document.getElementById('castleOverdriveNavBtn'); if (castleOverdriveNavBtn) castleOverdriveNavBtn.onclick = () => { RETURN_TO_CASTLE_MENU = true; render(overdriveBayScreen()); };
@@ -4424,9 +4418,11 @@ function render(html) {
             st.matchLock = false;
 
             if (st.matchGuesses <= 0) {
+              st.matchCards = null;
+              st.matchPlayed = true;
               st.matchLockReason = 'outofattempts';
-              if (MATCH_RETURN_TO_MAP) { RUN.lastNotice = 'Out of attempts for this visit! Come back to try again.'; render(mapScreen()); }
-              else render(castleMenuScreen('Out of attempts for this visit! Come back to try again.'));
+              if (MATCH_RETURN_TO_MAP) { RUN.lastNotice = 'Out of attempts! The matching session is over for this run.'; render(mapScreen()); }
+              else render(castleMenuScreen('Out of attempts! The matching session is over for this run.'));
             } else {
               renderMatchOverlay();
             }
@@ -4506,8 +4502,7 @@ function render(html) {
   });
     app.querySelectorAll('[data-buy]').forEach(el => el.onclick = () => {
     const cost = +el.dataset.cost;
-    const buyItem = ITEMS[el.dataset.buy];
-    if (RUN.chips < cost || (!buyItem?.weightless && equippedItemCount(RUN.hero) >= RUN.itemCap) || RUN.hero.items.includes(el.dataset.buy)) return;
+    if (RUN.chips < cost || equippedItemCount(RUN.hero) >= RUN.itemCap || RUN.hero.items.includes(el.dataset.buy)) return;
     RUN.chips -= cost;
     RUN.hero.items.push(el.dataset.buy);
     RUN.shopStock = RUN.shopStock.filter(id => id !== el.dataset.buy);

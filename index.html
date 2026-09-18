@@ -3410,6 +3410,15 @@ function battleScreen() {
       <div class="panel">
         ${BATTLE.showTutorialBanner ? `<div class="note" style="border:1px solid var(--amber);border-radius:6px;padding:8px 10px;margin-bottom:8px;text-align:center;color:var(--amber)">Click or drag cards from your hand, then click an Item Slot below to load your weapon.</div>` : ''}
         <div class="handWorkspace"><div class="handCapacity hoverTip" data-title="Your Maximum Hand Size. New cards cannot be drawn past this cap.">Max ${RUN.handSize}</div><div class="hand">${handHTML}</div></div>
+        ${BATTLE.turnDiscard.length ? `<div class="stagedDiscardPanel" style="margin-top:8px;padding:8px;border:1px dashed var(--dim);border-radius:8px">
+          <div class="note" style="margin:0 0 6px;font-weight:700">[ Staged for Discard ]</div>
+          <div class="hand">${BATTLE.turnDiscard.map(i => {
+            const c = BATTLE.hand[i];
+            return `<div class="card ${suitColorClass(c.color, c.suit)}" data-unstage="${i}" data-title="Click to return this card to your hand" style="cursor:pointer;opacity:0.75">
+              <div>${rankLabel(c.rank)}</div><div>${c.suit}</div>
+            </div>`;
+          }).join('')}</div>
+        </div>` : ''}
         <div class="playerActionGrid">
           <button class="wo-btn gray" id="sortToggleBtn" style="padding:6px 3px;font-size:10px;flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Sort: ${(RUN.handSortMode || 'value') === 'value' ? 'Value' : 'Suit'}</button>
           ${(() => { const sp = VEHICLE_SPECIALS[RUN.hero.heroId]; if (!sp) return ''; const minNeed = sp.energyCost ?? sp.energyPerUnit; return `<button class="wo-btn amber hoverTip" id="vehicleSpecialBtn" style="padding:6px 3px;font-size:10px;flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" data-title="${sp.desc}" ${RUN.energy < minNeed ? 'disabled' : ''}>${sp.name} = ${minNeed} ${ICON.energy}</button>`; })()}
@@ -3452,7 +3461,6 @@ function battleScreen() {
 
       <div class="matchupSide opponentSide">
         <div class="panel">
-          <div class="note" style="margin:0 0 4px;visibility:hidden">.</div>
           <div class="itemGrid">
             ${opponentAttackBoxHTML(opp)}
           </div>
@@ -4072,6 +4080,7 @@ function render(html) {
     saveRun(); render(battleScreen());
   };
   const discardSelectedBtn = document.getElementById('discardSelectedBtn'); if (discardSelectedBtn) discardSelectedBtn.onclick = markSelectedForDiscard;
+  app.querySelectorAll('[data-unstage]').forEach(el => el.onclick = (e) => { e.stopPropagation(); unmarkDiscard(+el.dataset.unstage); });
 
   app.querySelectorAll('[data-nodeinfo]').forEach(el => el.onclick = () => { const [r, c] = el.dataset.nodeinfo.split(':').map(Number); MAP_POPUP = { row: r, col: c }; render(mapScreen()); });
   const popupCloseBtn = document.getElementById('popupCloseBtn'); if (popupCloseBtn) popupCloseBtn.onclick = () => { MAP_POPUP = null; render(mapScreen()); };
@@ -4607,6 +4616,9 @@ META.devModeActive = META.playerName?.toLowerCase() === "devmode";
 (function(){
   const tip=document.createElement('div');tip.className='jsFloatTip';document.body.appendChild(tip);
   document.body.classList.add('jsTooltipActive');
+  const INTERACTIVE_SEL='.attackChip[data-title],.attackChip[data-tip],#vehicleSpecialBtn[data-title],#vehicleSpecialBtn[data-tip]';
+  const STATIC_SEL='.effectTip[data-tip],.hoverTip[data-title],[data-title]';
+  let activeEl=null;
   function place(el){
     const r=el.getBoundingClientRect();
     tip.style.display='block';
@@ -4615,20 +4627,38 @@ META.devModeActive = META.playerName?.toLowerCase() === "devmode";
     let top=r.bottom+6; if(top+th>window.innerHeight-6) top=r.top-th-6;
     tip.style.left=left+'px'; tip.style.top=top+'px';
   }
-  document.addEventListener('mouseover',e=>{
-    const el=e.target.closest('.effectTip[data-tip],.hoverTip[data-title],[data-title]');
-    if(!el)return;
+  function showTip(el){
     const text=el.getAttribute('data-tip')||el.getAttribute('data-title');
     if(!text)return;
     tip.textContent=text;
     place(el);
+  }
+  function hideTip(){ tip.style.display='none'; activeEl=null; }
+  document.addEventListener('mouseover',e=>{
+    const el=e.target.closest(INTERACTIVE_SEL);
+    if(!el)return;
+    showTip(el);
   });
   document.addEventListener('mouseout',e=>{
-    const el=e.target.closest('.effectTip[data-tip],.hoverTip[data-title],[data-title]');
+    const el=e.target.closest(INTERACTIVE_SEL);
     if(!el)return;
-    tip.style.display='none';
+    hideTip();
   });
-  document.addEventListener('scroll',()=>{tip.style.display='none';},true);
+  document.addEventListener('click',e=>{
+    if(e.target.closest(INTERACTIVE_SEL))return;
+    const el=e.target.closest(STATIC_SEL);
+    if(!el){ hideTip(); return; }
+    if(activeEl===el){ hideTip(); return; }
+    activeEl=el;
+    showTip(el);
+    e.stopPropagation();
+  });
+  document.addEventListener('scroll',()=>{hideTip();},true);
+})();
+(function(){
+  const unlockAudio=()=>{ primeAudioChannel(); document.removeEventListener('click',unlockAudio,true); document.removeEventListener('touchend',unlockAudio,true); };
+  document.addEventListener('click',unlockAudio,true);
+  document.addEventListener('touchend',unlockAudio,true);
 })();
 (function boot() {
   const savedBattle = loadBattleSave();

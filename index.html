@@ -89,43 +89,6 @@
   .bigicon{font-size:30px;line-height:1}
   .duelBoard{display:grid;grid-template-columns:1fr 90px 1fr;gap:8px;align-items:start}
   @media (max-width:700px){ .duelBoard{grid-template-columns:1fr} .duelHead{grid-template-columns:1fr 1fr} .vsMark{display:none} }
-  @media (max-width:600px) and (orientation:portrait){
-    /* Portrait phones: standard document flow, opponent on top, deck in the middle, player at the bottom. No height caps, no internal scroll traps - the page scrolls naturally if content runs long. */
-    .duelHead{grid-template-columns:1fr}
-    .game-stage:has(.duelHead){ display:flex; flex-direction:column }
-    .game-stage:has(.duelHead) .duelHead,
-    .game-stage:has(.duelHead) .duelBoard,
-    .game-stage:has(.duelHead) .duelMatchup{ display:contents; }
-    .game-stage:has(.duelHead) .duelHead .duelSide.opp{ order:1 }
-    .game-stage:has(.duelHead) .duelBoard > div:last-of-type{ order:2 }
-    .game-stage:has(.duelHead) .duelMatchup .matchupSide.opponentSide{ order:3 }
-    .game-stage:has(.duelHead) .duelBoard > .deckStack{ order:4 }
-    .game-stage:has(.duelHead) .duelHead .duelSide.you{ order:5 }
-    .game-stage:has(.duelHead) .duelBoard > div:first-of-type{ order:6 }
-    .game-stage:has(.duelHead) .duelMatchup .matchupSide.playerSide{ order:7 }
-    .game-stage:has(.duelHead) .panel:has(> .log){ order:8 }
-  }
-  @media (max-width:950px) and (orientation:landscape){
-    /* Landscape phones/tablets: keep the fixed-height split-view band so opponent and player stay simultaneously visible without page scroll */
-    .game-stage:has(.duelHead){
-      display:grid;
-      grid-template-rows:14vh 13vh 10vh auto auto auto minmax(0,1fr) auto;
-      grid-template-columns:1fr;
-      height:calc(100dvh - 96px);
-      overflow:hidden;
-    }
-    .game-stage:has(.duelHead) .duelHead,
-    .game-stage:has(.duelHead) .duelBoard,
-    .game-stage:has(.duelHead) .duelMatchup{ display:contents; }
-    .game-stage:has(.duelHead) .duelHead .duelSide.opp{ grid-row:1; min-height:0; overflow-y:auto }
-    .game-stage:has(.duelHead) .duelBoard > div:last-of-type{ grid-row:2; min-height:0; overflow-y:auto }
-    .game-stage:has(.duelHead) .duelMatchup .matchupSide.opponentSide{ grid-row:3; min-height:0; overflow-y:auto }
-    .game-stage:has(.duelHead) .duelHead .duelSide.you{ grid-row:4 }
-    .game-stage:has(.duelHead) .duelBoard > div:first-of-type{ grid-row:5 }
-    .game-stage:has(.duelHead) .duelBoard > .deckStack{ grid-row:6 }
-    .game-stage:has(.duelHead) .duelMatchup .matchupSide.playerSide{ grid-row:7; min-height:0; overflow-y:auto }
-    .game-stage:has(.duelHead) .panel:has(> .log){ grid-row:8; min-height:0 }
-  }
   .deckStack{text-align:center;padding-top:20px;display:flex;flex-direction:column;align-items:center;gap:10px;width:100%;box-sizing:border-box}.deckStack .card.back{cursor:default;pointer-events:none}
   .deckStack .card.back::after{content:none}
   .wo-btn.red{background:var(--red);border-color:#a83236}
@@ -167,17 +130,18 @@
   .dealerCardPanel{flex:0 0 140px;width:140px;display:flex;flex-direction:column;padding:8px}
   .dealerMetaDivider{height:1px;background:rgba(31,182,166,0.2);margin:8px 0 6px;flex-shrink:0}
   .dealerMeta{display:flex;flex-direction:column;align-items:center;gap:4px}
-  .itemCard{border-radius:8px;padding:6px 4px;background:rgba(10,14,26,0.9) !important;border:1px solid rgba(31,182,166,0.2);width:100%;height:150px;overflow:hidden;display:flex;flex-direction:column;align-items:center;text-align:center;box-sizing:border-box;font-size:12px;position:relative;transition:box-shadow .15s ease}
+  .itemCard{border-radius:8px;padding:6px 4px;background:rgba(10,14,26,0.9) !important;border:1px solid rgba(31,182,166,0.2);width:140px;min-width:140px;max-width:140px;height:150px;min-height:150px;max-height:150px;overflow:hidden;display:flex;flex-direction:column;align-items:center;text-align:center;box-sizing:border-box;font-size:12px;position:relative;transition:box-shadow .15s ease}
   .itemCard:hover{box-shadow:0 0 14px rgba(31,182,166,0.35)}
   .itemCard-sec{width:100%;flex:0 0 auto}
-  .itemCard-footer{margin-top:auto;width:100%;flex:0 0 auto}
-  .itemCard-cards-sec{min-height:34px;display:flex;flex-direction:column;justify-content:center;align-items:center;width:100%;overflow:visible}
+  .itemCard>.itemCard-sec:first-of-type{flex:0 0 34px;height:34px;display:flex;flex-direction:column;justify-content:center;overflow:hidden}
+  .itemCard-footer{margin-top:auto;width:100%;flex:0 0 30px;height:30px;overflow:hidden;display:flex;flex-direction:column;justify-content:center}
+  .itemCard-cards-sec{flex:0 0 46px;height:46px;display:flex;flex-direction:column;justify-content:center;align-items:center;width:100%;overflow:hidden}
   .usesBadge{position:absolute;top:4px;right:4px;font-size:9px;font-weight:800;background:none;color:#1fb6a6;border:none;padding:0;line-height:1.4}
   .usesBadge.depleted{background:none;color:var(--dim)}
   .itemCard.ready{border-color:var(--green) !important}
-  .itemCard .hdr{width:100%;justify-content:center;text-align:center}
+  .itemCard .hdr{width:100%;justify-content:center;text-align:center;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
   .itemCard .vcards{display:flex;gap:3px;flex-wrap:wrap;justify-content:center;min-height:26px;margin-top:4px}
-  .itemReqLine{font-size:12px;font-weight:700;color:#f0f3f8;margin:2px 0 1px;line-height:1.2}
+  .itemReqLine{font-size:12px;font-weight:700;color:#f0f3f8;margin:2px 0 1px;line-height:1.2;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;width:100%}
   .itemCard .note{color:#f0f3f8}
   .itemBonusLine{font-size:10.5px;color:var(--purple);margin:0;line-height:1.2}
   .itemBonusLine b{font-weight:800;cursor:help;position:relative}
@@ -293,14 +257,16 @@
     .hand .card:not(.mini) div:last-child{font-size:19px}
     .itemCard{font-size:11px}
     .itemCard .itemReqLine{font-size:11px}
-    .itemCard .itemBonusLine{font-size:10px}
-    .itemGrid .itemCard{flex:0 0 calc(50% - 6px)}
+    .itemCard-cards-sec,.itemCard-cards-sec .itemBonusLine{font-size:8.5px}
     .currencies{gap:6px}
     .cur{font-size:11px}
   }
-  @media (max-width:950px) and (orientation:landscape){
+  @media (max-width:850px) and (orientation:portrait){
+    .itemGrid .itemCard{flex:0 0 calc(50% - 6px)}
+  }
+  @media (max-width:740px) and (orientation:landscape){
     .duelMatchup{grid-template-columns:1fr 1fr}
-    .duelMatchup .matchupSide.playerSide .itemGrid .itemCard{flex:0 0 calc(33.333% - 6px)}
+    .itemGrid .itemCard{flex:0 0 calc(33.333% - 6px)}
   }
   @media (max-width:480px){
     
@@ -420,7 +386,6 @@ function bestHandFromPool(pool, maxCards) {
 function bestFiveFromPool(pool) { return bestHandFromPool(pool, 5); } 
 function damageFor(cards, mult) { return Math.round(cards.reduce((a, c) => a + cardValue(c.rank) + (c.bonus || 0), 0) * mult); }
 
-
 function formatRewardParts(reward, labels = { coins: 'coins', gems: 'gems', fuel: 'fuel', points: 'Career Points' }) {
   return Object.entries(labels)
     .filter(([key]) => reward[key])
@@ -463,6 +428,10 @@ function playSfx(kind) {
       else if (kind === 'sell') { tone(500, 350, 0.12, 'triangle', 0.1); }
       else if (kind === 'upgrade') { tone(440, 660, 0.09, 'square', 0.09); tone(660, 990, 0.16, 'square', 0.1, 0.09); }
       else if (kind === 'open') { tone(300, 500, 0.12, 'sawtooth', 0.08); tone(700, 1000, 0.22, 'sine', 0.11, 0.1); }
+      else if (kind === 'poison') { tone(120, 180, 0.07, 'triangle', 0.25, 0.00); tone(90, 150, 0.08, 'triangle', 0.22, 0.05); tone(110, 160, 0.07, 'triangle', 0.25, 0.11); tone(85, 130, 0.09, 'triangle', 0.20, 0.16); }
+      else if (kind === 'curse') { tone(120, 60, 0.5, 'sawtooth', 0.14); tone(127, 64, 0.5, 'sawtooth', 0.06, 0.02); }
+      else if (kind === 'burn') { tone(150, 650, 0.25, 'triangle', 0.16); }
+      else if (kind === 'armor') { tone(880, 860, 0.05, 'square', 0.13); tone(180, 120, 0.18, 'triangle', 0.18, 0.05); }
     } catch (e) {}
   };
   if (ctx.state === 'suspended') { ctx.resume().then(fire).catch(() => {}); }
@@ -724,13 +693,14 @@ function checkCondition(cond, cards) {
   }
   else if (cond.type === 'sumExact') {
     const sum = cards.reduce((a, c) => a + cardValue(c.rank) + (c.bonus || 0), 0);
-    result = { met: cards.length > 0 && sum === cond.value, label: `${SIGMA_TIP}${sum}`, sum };
+    result = { met: cards.length > 0 && Math.round(sum) === cond.value, label: `${SIGMA_TIP}${sum}`, sum };
   }
   else if (cond.type === 'suitCountExact') {
     const n = cards.filter(c => c.suit === cond.suit).length;
     result = { met: n === cond.count, label: `${n} of ${cond.suit}`, count: n };
   }
   else result = { met: false, label: '' };
+  
   if (cond && cond.exactCount != null) result.met = result.met && cards.length === cond.exactCount;
   return result;
 }
@@ -794,6 +764,10 @@ function itemRequirementText(item) {
 function formatKindAmount(item, kindTagHTML) {
   const hasKindAmount = item.flatAmount != null || (item.baseMult ?? 1) > 0;
   if (!hasKindAmount) return '';
+  if (item.flatAmount != null && (item.baseMult ?? 0) === 0) {
+    const amountText = `${item.flatAmount}`;
+    return kindTagHTML ? [kindTagHTML, amountText].filter(Boolean).join(' ') : `<b>Attack</b> ${amountText}`;
+  }
   const maxC = effectiveMaxCards(item);
   const multVal = item.baseMult ?? 1;
   const amountText = multVal !== 1 ? `&times;${multVal}` : (maxC > 1 ? SIGMA_TIP : '');
@@ -837,7 +811,6 @@ function computeItemAmount(item, cards, level, condResult, isOpponent) {
     }
   }
   if (item.perCardBonus && cards.length > 1) mult += item.perCardBonus * (cards.length - 1);
-  
   
   if (item.id === 'fender_bender' && !isOpponent && RUN.hero?.heroId === 'admin' && META.levels.adminTune) mult += 0.1 * META.levels.adminTune;
   const rawSum = cards.reduce((a, c) => a + cardValue(c.rank) + (c.bonus || 0), 0);
@@ -896,7 +869,7 @@ const ITEMS = {
     drawAmount: 2, drawPerLevel: 0,
     note: 'Needs a Pair. Deals damage and draws 2 cards immediately.' },
   trips_draw: { id: 'trips_draw', name: 'Triple Draw', cost: 55, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
-    condition: { type: 'pokerTier', tier: 3, exactTier: true }, baseMult: 1.4,
+    condition: { type: 'pokerTier', tier: 3, exactTier: true }, baseMult: 1.8,
     drawAmount: 3, drawPerLevel: 0,
     note: 'Needs Three of a Kind. Deals damage and draws 3 cards immediately.' },
   diamond_draw: { id: 'diamond_draw', name: 'Diamond Dash', cost: 45, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
@@ -979,7 +952,7 @@ const ITEMS = {
     condition: { type: 'any' }, suitPunish: { suit: '♥', perCard: 4, base: 6 },
     note: 'Needs any card. Hits harder for every Heart you\'ve already discarded this fight.' },
   opp_hydrant_blast: { id: 'opp_hydrant_blast', name: 'Pressure Blast Explosion', maxCards: 4, usesPerTurn: 1,
-    condition: { type: 'sumThreshold', min: 25 }, flatAmount: 24,
+    condition: { type: 'sumThreshold', min: 25 }, baseMult: 0, flatAmount: 24,
     note: `Needs cards totaling ${SIGMA_TIP}25+. Flat attack for 24 damage.` },
   opp_rancid_blaze: { id: 'opp_rancid_blaze', name: 'Rancid Blaze', maxCards: 3, usesPerTurn: 1,
     condition: { type: 'pokerTier', tier: 2 }, baseMult: 1, kind: 'burn',
@@ -1018,8 +991,8 @@ const ITEMS = {
     condition: { type: 'sumThreshold', min: 25 }, flatAmount: 45,
     note: `Needs cards totaling ${SIGMA_TIP}25+. A massive flat hit.` },
   opp_gas_leak: { id: 'opp_gas_leak', name: 'Gas Leak', maxCards: 5, usesPerTurn: 1,
-    condition: { type: 'any' }, baseMult: 0, kind: 'unlock', unlockThreshold: 55, flatAmount: 42,
-    note: `<span style="color:var(--purple)">Locked: Opponent cards deposit value to charge it. Once unlocked, fires a 42-damage Ignition Explosion.</span>` },
+    condition: { type: 'any' }, baseMult: 0, flatAmount: 0,
+    note: `<span style="color:var(--purple)">Building pressure from drawn cards. Deals no damage until it erupts for a flat 35, then resets.</span>` },
   opp_major_gas_leak: { id: 'opp_major_gas_leak', name: 'Major Gas Leak', maxCards: 5, usesPerTurn: 1,
     condition: { type: 'any' }, baseMult: 0, kind: 'unlock', unlockThreshold: 75, flatAmount: 65,
     note: `<span style="color:var(--purple)">Locked: Opponent cards deposit value to charge it. Once unlocked, fires a 65-damage Massive Ignition.</span>` },
@@ -1120,7 +1093,7 @@ const ITEMS = {
     condition: { type: 'pokerTier', tier: 2 }, baseMult: 1,
     note: 'Needs Two Pair. A hard poke.' },
   opp_castle_poke_t3: { id: 'opp_castle_poke_t3', name: 'Champion Strike', maxCards: 4, usesPerTurn: 1,
-    condition: { type: 'pokerTier', tier: 3 }, baseMult: 1,
+    condition: { type: 'pokerTier', tier: 3, exactTier: true }, baseMult: 1,
     note: 'Needs Three of a Kind. A hard poke.' },
   opp_petty_siphon: { id: 'opp_petty_siphon', name: 'Petty Siphon', maxCards: 1, usesPerTurn: 1,
     condition: { type: 'any', exactCount: 1 }, flatAmount: 0, opponentEffect: 'stealFuel',
@@ -1129,7 +1102,7 @@ const ITEMS = {
     condition: { type: 'colorCount', color: 'blk', count: 4, exactCount: 4 }, flatAmount: 0, opponentEffect: 'earlyEscape',
     note: 'Needs exactly 4 Black cards. Instantly ends the fight - you clear the stop, but it flees with your fuel, costing you 3 Fuel.' },
   triple_threat: { id: 'triple_threat', name: 'Triple Threat', cost: 45, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
-    condition: { type: 'pokerTier', tier: 3, exactTier: true }, baseMult: 1,
+    condition: { type: 'pokerTier', tier: 3, exactTier: true }, baseMult: 1.6,
     bonus: { base: 1.0, perLevel: 1.0, maxLevel: 3 }, 
     note: 'Needs Three of a Kind. A big hit that tunes even further with upgrades.' },
   bike_dash: { id: 'bike_dash', name: 'Short Fuse', cost: 30, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1,
@@ -1165,6 +1138,12 @@ const ITEMS = {
   escort_wall: { id: 'escort_wall', name: 'Roadblock', cost: 45, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'pokerTier', tier: 1 }, baseMult: 1, kind: 'defense',
     note: `Needs a Pair. Blocks damage equal to ${SIGMA_TIP} of the cards played, instead of dealing damage.` },
+  guard_rail: { id: 'guard_rail', name: 'Guard Rail', cost: 40, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+    condition: { type: 'any' }, baseMult: 0.8, kind: 'defense',
+    note: `Needs any card. Blocks damage equal to ${SIGMA_TIP} of the cards played × 0.8.` },
+  spare_tire: { id: 'spare_tire', name: 'Spare Tire', cost: 50, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+    condition: { type: 'colorCount', color: 'blk', count: 2 }, baseMult: 1.1, kind: 'defense',
+    note: `Needs 2+ ${kw('Black')} cards. Blocks damage equal to ${SIGMA_TIP} of the cards played × 1.1.` },
   toxic_spill: { id: 'toxic_spill', name: 'Toxic Spill', cost: 40, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'any' }, baseMult: 0.5, kind: 'poison',
     bonus: { base: 0, perLevel: 0.15, maxLevel: 3 },
@@ -1176,7 +1155,7 @@ const ITEMS = {
   torch_burn: { id: 'torch_burn', name: 'Slow Burn', cost: 65, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'pokerTier', tier: 1 }, baseMult: 1, kind: 'burn',
     note: 'Needs a Pair. Burns over 3 turns instead of hitting directly, and burns can stack.' },
-  supply_bag: { id: 'supply_bag', name: 'Regular Stash', cost: 50, maxCards: 2, kind: 'storage', maxStore: 2, weightless: true,
+  supply_bag: { id: 'supply_bag', name: 'Card Stash', cost: 50, maxCards: 2, kind: 'storage', maxStore: 2, weightless: true,
     note: 'Holds up to 2 cards of any kind turn to turn (up to 5 with Chop Shop upgrades). Weightless, does not use an Item slot. Never attacks, never gets cursed. Click a stored card to take it back.' },
   supply_bag_big: { id: 'supply_bag_big', name: 'Elite Stash', cost: 50, maxCards: 5, kind: 'storage', maxStore: 5, weightless: true,
     note: 'Holds up to 5 cards of any kind turn to turn (up to 7 with Chop Shop upgrades). Weightless, does not use an Item slot. Never attacks, never gets cursed. Click a stored card to take it back.' },
@@ -1391,7 +1370,7 @@ const OPPONENT_TIERS = [
   ],
   [ 
     { id: 'angryCitizen', name: 'Angry Citizen', icon: '😠', image: 'Hazards/angry-citizen.jpg', hp: 75, minTier: 1, drawRate: 3, items: ['opp_harassment', 'opp_shouting_match', 'opp_grudge_match'] },
-    { id: 'hydrant', name: 'Burst Hydrant', icon: '💦', image: 'Hazards/burst-hydrant.jpg', hp: 80, minTier: 0, drawRate: 3, items: ['opp_hydrant_blast'] },
+    { id: 'hydrant', name: 'Burst Hydrant', icon: '💦', image: 'Hazards/burst-hydrant.jpg', hp: 80, minTier: 0, drawRate: 3, discardPoolEachTurn: true, hiddenOnDraw: 3, items: ['opp_hydrant_blast'] },
     { id: 'dumpsterFire', name: 'Dumpster Fire', icon: '🔥', image: 'Hazards/dumpster-fire.jpg', hp: 85, minTier: 2, drawRate: 3, special: { type: 'redSteal', redThreshold: 3, fuelSteal: 1, extraDraw: 1 }, items: ['opp_rancid_blaze'] },
     { id: 'scrapHeap', name: 'Shifting Scrap Heap', icon: '🗑️', image: 'Hazards/scrap-heap.jpg', hp: 90, minTier: 1, drawRate: 2, special: { type: 'drawOnHit', amount: 1 }, items: ['opp_debris_slam'] },
     { id: 'twoToneHauler', name: 'Two-Tone Hauler', icon: '🚚', image: 'Hazards/dumpster-fire.jpg', hp: 95, minTier: 1, drawRate: 4, items: ['opp_patch_job', 'opp_red_alert', 'opp_black_ice'] }
@@ -1400,7 +1379,7 @@ const OPPONENT_TIERS = [
     { id: 'evilMechanic1', name: 'Evil Mechanic', icon: '🔧', image: 'Hazards/evil-mechanic.jpg', hp: 95, minTier: 2, drawRate: 3, curse: { count: 1, amount: 10, chance: 0.6 }, items: ['opp_sabotage_engine'] },
     { id: 'streetFire', name: 'Street Fire', icon: '🔥', image: 'Hazards/street-fire.jpg', hp: 100, minTier: 3, drawRate: 3, special: { type: 'lifesteal', pct: 0.5 }, items: ['opp_scorching_wave'] },
     { id: 'sinkhole', name: 'Sinkhole', icon: '🕳️', image: 'Hazards/sinkhole.jpg', hp: 105, minTier: 1, drawRate: 3, items: ['opp_aftershock', 'opp_bulletin', 'opp_ground_collapse'] },
-    { id: 'gasLeak1', name: 'Gas Leak', icon: '⛽', image: 'Hazards/gas-leak.jpg', hp: 110, drawRate: 3, items: ['opp_gas_leak'] },
+    { id: 'gasLeak1', name: 'Gas Leak', icon: '⛽', image: 'Hazards/gas-leak.jpg', hp: 110, drawRate: 3, special: { type: 'countdownStrike', threshold: 55, damage: 35 }, items: ['opp_gas_leak'] },
     { id: 'kingOfHearts', name: 'King of Hearts', icon: '🃏', image: 'Hazards/angry-citizen.jpg', hp: 100, minTier: 0, drawRate: 3, discardPoolEachTurn: true, items: ['opp_hearts_3', 'opp_hearts_2', 'opp_hearts_1', 'opp_hearts_0'] },
     { id: 'roadblockSurge', name: 'Surge Roadblock', icon: '⚡', image: 'Hazards/sinkhole.jpg', hp: 105, minTier: 1, drawRate: 3, startPoolBonus: 2, items: ['opp_barrier_slam'] }
   ],
@@ -1589,8 +1568,6 @@ function generateMap() {
   }
   nodes[0][0].type='battle';
   nodes[1].forEach(n=>n.type='battle');
-  nodes[2][0]={type:'shop'};
-  nodes[5][0]={type:'rest'};
   nodes[castleRow][0]={type:'castle'};
   const eligible=[];
   for(let r=0;r<nodes.length;r++) for(let c=0;c<nodes[r].length;c++)
@@ -1673,6 +1650,8 @@ const BASE_GAS_PENALTY = 15;
 function initRunWithStarter(id) {
   const L = META.levels;
   const baseHero = HEROES[id];
+  DUNGEON_WIN_POPUP = null;
+  DUNGEON_CONTINUE_POPUP = null;
   
   RUN = {
     worldMultiplier: 1.0, 
@@ -1769,11 +1748,11 @@ function castleMenuScreen(message='') {
   return `${noticeHTML()}
   <div class="wo">
     <div class="wo-stripe"></div><div class="wo-body">
-      <div class="wo-eyebrow">Fleet Compound</div>
       <h1>Choose Where To <em>Go</em></h1>
       ${currencyBar()}
       ${message ? `<div class="panel"><div class="note">${message}</div></div>` : ''}
       <div class="castleMenu">
+        <button class="castleBtn" id="leaveCastleBtn" style="background:var(--red);color:#fff;font-weight:800;border-color:#a83236">Back to World Map.</button>
         <button class="castleBtn" id="castleDungeonNavBtn">Visit the Fleet Compound Dungeon.</button>
         <button class="castleBtn" id="castleWizardNavBtn" ${RUN.castleState?.matchPlayed ? 'disabled' : ''}>${RUN.castleState?.matchPlayed ? 'Matching Game Played' : 'Visit the Fleet Carnival Matching Game.'}</button>
         <button class="castleBtn" id="castleBlacksmithNavBtn">Visit the Tuning Garage.</button>
@@ -1781,7 +1760,6 @@ function castleMenuScreen(message='') {
         <button class="castleBtn" id="castleOverdriveNavBtn">Visit the Overdrive Bay.</button>
         <button class="castleBtn" id="castleShopNavBtn">Visit the Dealership.</button>
         <button class="castleBtn" id="castleInnNavBtn">Visit the Inn.</button>
-        <button class="castleBtn" id="leaveCastleBtn">Leave this area.</button>
       </div>
     </div>
   </div>
@@ -2038,9 +2016,8 @@ function startBattle(opponentDef, row, col, castleStage=0) {
     oppDef = { ...oppDef, hp: cappedHp, items: cleanItems, curse: undefined };
   }
   BATTLE = {
-    opponent: { ...oppDef, hpNow: oppDef.hp, poisonStacks: [], armor: oppDef.startArmor || 0 }, row, col, castleStage,
+    opponent: { ...oppDef, hpNow: oppDef.hp, poisonStacks: [], armor: oppDef.startArmor || 0, countdown: oppDef.special?.type === 'countdownStrike' ? oppDef.special.threshold : undefined }, row, col, castleStage,
     deck: shuffle(freshDeck()), discard: [],
-    oppDeck: shuffle(freshDeck()), oppDiscard: [],
     hand: [], oppPool: [], usedThisTurn: new Set(), scoutedThisTurn: false, abilityUsedThisTurn: false, opponentStunned: false, itemCooldowns: {},
     playerArmor: 0, turn: 1, slots: {}, turnDiscard: [], turnSpentDiscard: [], logLines: [], turnStartedAt: Date.now(),
     playerHandPurgeActive: !!(nodeDef && nodeDef.gridStorm),
@@ -2081,21 +2058,24 @@ function startBattle(opponentDef, row, col, castleStage=0) {
   }
   render(battleScreen());
 }
+function reshuffleSharedDeck() {
+  if (!BATTLE.discard.length) return;
+  const live = new Set([...BATTLE.hand, ...BATTLE.oppPool]);
+  BATTLE.deck = shuffle([...BATTLE.deck, ...BATTLE.discard].filter(c => !live.has(c)));
+  BATTLE.discard = [];
+}
 function drawCards(n, allowOverflow = false) {
   for (let i = 0; i < n && (allowOverflow || BATTLE.hand.length < RUN.handSize); i++) {
-    if (!BATTLE.deck.length) { if (!BATTLE.discard.length) break; BATTLE.deck = shuffle(BATTLE.discard); BATTLE.discard = []; }
+    if (!BATTLE.deck.length) { reshuffleSharedDeck(); if (!BATTLE.deck.length) break; }
     BATTLE.hand.push(BATTLE.deck.pop());
   }
 }
 function drawOpponentPoolCards(n) {
   const opp = BATTLE.opponent;
-  const live = new Set(BATTLE.oppPool);
-  BATTLE.oppDeck = shuffle([...BATTLE.oppDeck, ...BATTLE.oppDiscard].filter(c => !live.has(c)));
-  BATTLE.oppDiscard = [];
   const drawn = [];
   for (let i = 0; i < n; i++) {
-    if (!BATTLE.oppDeck.length) break;
-    const c = BATTLE.oppDeck.pop();
+    if (!BATTLE.deck.length) { reshuffleSharedDeck(); if (!BATTLE.deck.length) break; }
+    const c = BATTLE.deck.pop();
     drawn.push(c);
     BATTLE.oppPool.push(c);
   }
@@ -2109,7 +2089,12 @@ function drawOpponentPoolCards(n) {
 }
 function drawOpponentCards() {
   BATTLE.scoutedThisTurn = false; BATTLE.abilityUsedThisTurn = false;
-  drawOpponentPoolCards(BATTLE.opponent.drawRate);
+  const drawn = drawOpponentPoolCards(BATTLE.opponent.drawRate);
+  if (BATTLE.opponent.special?.type === 'countdownStrike') {
+    if (BATTLE.opponent.countdown == null) BATTLE.opponent.countdown = BATTLE.opponent.special.threshold;
+    const rankTotal = drawn.reduce((a, c) => a + cardValue(c.rank), 0);
+    BATTLE.opponent.countdown = Math.max(0, BATTLE.opponent.countdown - rankTotal);
+  }
 }
 function drawOpponentStartingHand() {
   BATTLE.scoutedThisTurn = false; BATTLE.abilityUsedThisTurn = false;
@@ -2364,17 +2349,20 @@ if (idxs.some(i => BATTLE.usedThisTurn.has(i))) {
     if (eKind === 'defense') {
       BATTLE.playerArmor += amount;
       battleLog(`${item.name} [${cardsStr}] - ${condResult.label}! +${amount} armor - ${breakdown}`);
-      playSfx('shield'); flashScreen('shield');
+      playSfx('armor'); flashScreen('shield');
     } else if (eKind === 'poison') {
       BATTLE.opponent.poisonStacks = BATTLE.opponent.poisonStacks || [];
       BATTLE.opponent.poisonStacks.push(amount);
       battleLog(`${item.name} [${cardsStr}] - ${condResult.label}! Applied ${amount} poison (${breakdown}).`);
+      playSfx('poison');
     } else if (eKind === 'burn') {
       BATTLE.pendingTarget = { type: 'burn', amount, itemName: item.name };
       battleLog(`${item.name} [${cardsStr}] - ${condResult.label}! Select an item slot on ${BATTLE.opponent.name}'s inventory to ignite for ${amount} (${breakdown}).`);
+      playSfx('burn');
     } else if (eKind === 'curse') {
       BATTLE.pendingTarget = { type: 'curse', amount, itemName: item.name };
       battleLog(`${item.name} [${cardsStr}] - ${condResult.label}! Select an item slot on ${BATTLE.opponent.name}'s inventory to curse for ${amount} (${breakdown}).`);
+      playSfx('curse');
     } else {
       const atkBefore = BATTLE.opponent.hpNow;
       let dmgToApply = amount;
@@ -2444,15 +2432,17 @@ function resolveOpponentAttackEffect(attack, oppDmg) {
   if (attack.effect === 'burn') {
     const amount=Math.max(3,Math.round(oppDmg*0.45));
     BATTLE.opponent.burns=BATTLE.opponent.burns||[]; BATTLE.opponent.burns.push({stages:[amount,Math.round(amount/2),Math.round(amount/4)],stageIdx:0});
+    playSfx('burn');
     return ` Applied ${amount} burn.`;
   }
   if (attack.effect === 'poison') {
     const amount=Math.max(2,Math.round(oppDmg*0.35));
     BATTLE.opponent.poisonStacks=BATTLE.opponent.poisonStacks||[]; BATTLE.opponent.poisonStacks.push(amount);
+    playSfx('poison');
     return ` Applied ${amount} poison.`;
   }
   if (attack.effect === 'curse') {
-    tryApplyCurse(); return ' Applied a curse.';
+    tryApplyCurse(); playSfx('curse'); return ' Applied a curse.';
   }
   if (attack.effect === 'stun') { BATTLE.opponentStunned=true; return ' Stunned your fleet for the next counter-attack.'; }
   if (attack.effect === 'heal') {
@@ -2549,6 +2539,27 @@ function endTurn() {
   if (BATTLE.opponentStunned) {
     battleLog(`${BATTLE.opponent.name} is stunned and doesn't counter-attack.`);
     BATTLE.opponentStunned = false;
+  } else if (BATTLE.opponent.special?.type === 'countdownStrike') {
+    const spec = BATTLE.opponent.special;
+    if (BATTLE.opponent.countdown == null) BATTLE.opponent.countdown = spec.threshold;
+    if (BATTLE.opponent.countdown <= 0) {
+      let oppDmg = spec.damage;
+      let armorBlocked = 0;
+      if (BATTLE.playerArmor > 0) {
+        armorBlocked = Math.min(BATTLE.playerArmor, oppDmg);
+        BATTLE.playerArmor -= armorBlocked; oppDmg -= armorBlocked;
+      }
+      RUN.health = Math.max(0, RUN.health - oppDmg);
+      if (oppDmg > 0) { playSfx('hurt'); flashScreen('hurt'); BATTLE.lastHit = { amount: oppDmg, source: BATTLE.opponent.name }; showDamagePopup(oppDmg, BATTLE.opponent.name); }
+      const dmgPhrase = armorBlocked > 0
+        ? `${spec.damage} damage, but your armor absorbed ${armorBlocked}${oppDmg > 0 ? ` (${oppDmg} got through)` : ''}${BATTLE.playerArmor > 0 ? ` and you have ${BATTLE.playerArmor} armor remaining` : ', and your armor is gone'}`
+        : `${oppDmg} damage`;
+      battleLog(`${BATTLE.opponent.name} reaches critical pressure and erupts - ${dmgPhrase}. Your health: ${RUN.health}/${RUN.maxHealth}.`);
+      BATTLE.opponent.countdown = spec.threshold;
+      opponentLandedHit = true;
+    } else {
+      battleLog(`${BATTLE.opponent.name} is building pressure. ${BATTLE.opponent.countdown} left until it erupts.`);
+    }
   } else {
     const attackTimes = BATTLE.opponent.usesPerTurn ?? OPPONENT_USES_PER_TURN_DEFAULT;
     const maxCards = opponentMaxCards(BATTLE.opponent);
@@ -2617,7 +2628,7 @@ function endTurn() {
             } else {
               battleLog(`${BATTLE.opponent.name}'s ${item.name} is charging - ${remaining} more needed.`);
             }
-            BATTLE.oppDiscard.push(...best.cards);
+            BATTLE.discard.push(...best.cards);
             BATTLE.oppPool = BATTLE.oppPool.filter(c => !best.cards.includes(c));
             if (RUN.health <= 0) break;
             continue;
@@ -2659,7 +2670,7 @@ function endTurn() {
           ? `${rawDmg} damage, but your armor absorbed ${armorBlocked}${oppDmg > 0 ? ` (${oppDmg} got through)` : ''}${BATTLE.playerArmor > 0 ? ` and you have ${BATTLE.playerArmor} armor remaining` : ', and your armor is gone'}`
           : `${oppDmg} damage`;
         battleLog(`${BATTLE.opponent.name} used ${item.name}${cond.label ? ` with ${cond.label}` : ''} (${usedText}) - ${dmgPhrase}.${specialLog} Your health: ${RUN.health}/${RUN.maxHealth}.`);
-        BATTLE.oppDiscard.push(...best.cards);
+        BATTLE.discard.push(...best.cards);
         BATTLE.oppPool = BATTLE.oppPool.filter(c => !best.cards.includes(c));
         if (RUN.health <= 0) break;
         continue;
@@ -2725,12 +2736,13 @@ function endTurn() {
       battleLog(attackDef.autoFire
         ? `${BATTLE.opponent.name}'s ${attackDef.name || 'attack'} kicks in - ${dmgPhrase}.${specialLog} Your health: ${RUN.health}/${RUN.maxHealth}.`
         : `${BATTLE.opponent.name} used ${attackDef.name || best.label} with ${best.label} (${usedText}) - ${dmgPhrase}.${specialLog} Your health: ${RUN.health}/${RUN.maxHealth}.`);
-      BATTLE.oppDiscard.push(...best.cards);
+      BATTLE.discard.push(...best.cards);
       BATTLE.oppPool = BATTLE.oppPool.filter(c => !best.cards.includes(c));
       if (RUN.health <= 0) break;
     }
     if (!anyAttack) {
       battleLog(`${BATTLE.opponent.name} didn't have enough to attack this turn.`);
+      
       const stillHidden = BATTLE.oppPool.filter(c => !c.revealed);
       shuffle(stillHidden).slice(0, 2).forEach(c => c.revealed = true);
     }
@@ -2741,13 +2753,16 @@ function endTurn() {
     Object.keys(BATTLE.opponentItemCurses).forEach(k => detonateOpponentItemCurse(k, 'it never fired this turn'));
     if (BATTLE.opponent.hpNow <= 0) { winBattle(); return; }
   }
+  
   if (BATTLE.opponentItemBurns && Object.keys(BATTLE.opponentItemBurns).length) {
     Object.keys(BATTLE.opponentItemBurns).forEach(k => {
       BATTLE.opponentItemBurns[k] = Math.floor(BATTLE.opponentItemBurns[k] * 0.5);
       if (BATTLE.opponentItemBurns[k] <= 0) delete BATTLE.opponentItemBurns[k];
     });
   }
+
   if (RUN.health <= 0) { IN_BATTLE = false; clearBattleSave(); playSfx('lose'); render(nodeResultScreen(false, { lastHit: BATTLE.lastHit })); return; }
+
   if (BATTLE.playerHandPurgeActive) {
     const stashedIdxs = new Set();
     Object.entries(BATTLE.slots).forEach(([key, idxs]) => {
@@ -2761,14 +2776,17 @@ function endTurn() {
       battleLog(`Grid Storm purges your hand - ${purgeIdxs.length} card${purgeIdxs.length > 1 ? 's' : ''} sent to discard.`);
     }
   }
+
   BATTLE.turn++;
   drawCards(RUN.drawPerTurn);
   resortHandAndRelink(RUN.handSortMode);
+  
   if ((BATTLE.opponent.discardPoolEachTurn || BATTLE.opponent.reckless) && BATTLE.oppPool.length) {
-    BATTLE.oppDiscard.push(...BATTLE.oppPool);
+    BATTLE.discard.push(...BATTLE.oppPool);
     BATTLE.oppPool = [];
   }
   drawOpponentCards();
+  
   if (BATTLE.opponent.armorRegen) {
     const cap = BATTLE.opponent.armorRegenCap ?? BATTLE.opponent.startArmor ?? 999;
     BATTLE.opponent.armor = Math.min(cap, (BATTLE.opponent.armor || 0) + BATTLE.opponent.armorRegen);
@@ -2798,16 +2816,18 @@ function winBattle(outlast) {
     RUN.gems = Math.min(RUN.maxGems, RUN.gems + reward.gems);
     RUN.fuel = Math.min(RUN.maxFuel, RUN.fuel + reward.fuel);
     if (!RUN.castleState) RUN.castleState = {};
-    if (stage === 1) RUN.castleState.firstDone = true;
+    if (stage === 1) { RUN.castleState.firstDone = true; RUN.hero.items.push('supply_bag'); DUNGEON_CONTINUE_POPUP = { stage, reward, itemName: ITEMS.supply_bag.name }; saveRun(); render(castleDungeonScreen()); return; }
     if (stage === 2) RUN.castleState.secondDone = true;
     if (stage === 3) {
       RUN.castleState.thirdDone = true;
-      if (equippedItemCount(RUN.hero) >= RUN.itemCap) {
-        RUN.chips += 100;
-        DUNGEON_WIN_POPUP = { reward, itemName: '+100 Coin Vehicle Salvage (item slots were full)' };
-      } else {
+      
+      {
         const ownedIds = new Set(RUN.hero.items);
-        const pool = Object.values(ITEMS).filter(it => it.kind !== 'storage' && !ownedIds.has(it.id));
+        const fullPool = Object.values(ITEMS).filter(it => !ownedIds.has(it.id));
+        const eligiblePool = (equippedItemCount(RUN.hero) >= RUN.itemCap)
+          ? fullPool.filter(it => it.weightless)
+          : fullPool;
+        const pool = eligiblePool.length ? eligiblePool : fullPool;
         const wonItem = (pool.length ? pool : Object.values(ITEMS))[Math.floor(Math.random() * (pool.length ? pool.length : Object.values(ITEMS).length))];
         RUN.hero.items.push(wonItem.id);
         DUNGEON_WIN_POPUP = { reward, itemName: wonItem.name };
@@ -2816,6 +2836,7 @@ function winBattle(outlast) {
       render(castleDungeonScreen());
       return;
     }
+    
     DUNGEON_CONTINUE_POPUP = { stage, reward };
     saveRun();
     render(castleDungeonScreen());
@@ -2843,6 +2864,7 @@ function winBattle(outlast) {
   playSfx(exactKillBonus ? 'perfect' : 'win');
   render(nodeResultScreen(true, { chipReward, gemReward, fuelReward, pointsReward, exactKillBonus }));
 }
+
 /* ========== SCREENS ========== */
 function noticeHTML() {
   if (!RUN || !RUN.lastNotice) return '';
@@ -2861,11 +2883,13 @@ function currencyBar(extraHTML = '') {
     ${extraHTML}
   </div>`;
 }
+
 let MAP_POPUP = null; 
 let TREASURE_POPUP = null; 
 let GARAGE_POPUP = false; 
 let GARAGE_MESSAGE = ''; 
 function tierNeedText(minTier) { return minTier > 0 ? `At least a ${TIERS[minTier]}` : 'Any card'; }
+
 function tierNeedTextForOpponent(o) {
   const a = (o.attacks && o.attacks[0]) || {};
   const minTier = a.minTier ?? o.minTier ?? 0;
@@ -2879,6 +2903,7 @@ function suitName(s) { return { '♥':'Hearts', '♦':'Diamonds', '♣':'Clubs',
 function effectPhrase(effect) {
   return { burn:'applies burn', poison:'applies poison', curse:'curses one of your Items', stun:'stuns your next counter-attack', heal:'heals itself', stealFuel:'steals fuel', reinforceArmor:'reinforces its own armor', draw:'draws an extra card' }[effect] || effect;
 }
+
 function describeOpponentAttacks(opp) {
   if (!opp.attacks || !opp.attacks.length) return opp.locked ? 'Builds up turn by turn, then unleashes one big hit once it reaches its threshold.' : 'Attacks using whatever hand it can draw from its pool.';
   const parts = opp.attacks.map(a => {
@@ -2979,6 +3004,7 @@ function mapScreen() {
   const avail = availableNextNodes();
   const visibleRange = 3 + META.levels.range + (RUN.runUpgrades?.sightRange || 0);
   let svgLines = '';
+
   for (const e of RUN.map.edges) {
     const x1 = 25 + e.fromRow * colW + colW/2;
     const x2 = 25 + e.toRow * colW + colW/2;
@@ -2989,6 +3015,7 @@ function mapScreen() {
     svgLines += `<path d="M ${x1} ${y1} C ${x1+28} ${y1}, ${x2-28} ${y2}, ${x2} ${y2}"
       fill="none" stroke="${traveled?'#1fb6a6':'#7f9180'}" stroke-width="${traveled?5:3}" stroke-linecap="round"/>`;
   }
+
   let nodesHTML='';
     const NODE_ICON={shop:ICON.cart,rest:ICON.wrench,blacksmith:ICON.hammer,chopshop:ICON.curse,overdrive:ICON.energy,treasure:ICON.gift,castle:ICON.castle,match_hazard:'🃏'};
     const NODE_TITLE={shop:'Dealership',rest:'Service Station',blacksmith:'Tuning Garage',chopshop:'Chop Shop',overdrive:'Overdrive Bay',treasure:'Supply Cache',castle:'Fleet Compound',match_hazard:'Grid Anomaly'};
@@ -3016,12 +3043,14 @@ function mapScreen() {
     else if(node.type==='castle') tip='Choose battles, shopping, refueling, a matching game, or other rewards.';
     else if(node.type==='match_hazard') tip='Grid Anomaly Detected: Tap to hack the Carnival Board for extra fleet gear.';
     else tip='Find coins, fuel, and gems.';
+
     nodesHTML+=`<div class="mapnode-wrap ${isBoss?'bossnode ':''}${c===0?'toprow':c===1?'midrow':'bottomrow'}" style="left:${(x/totalW*100)}%;top:${y}px">
       ${isCurrent?'<div class="hereTag">You Are Here</div>':''}
       <button class="mapnode ${cls} type-${node.type}" ${showReal?`data-nodeinfo="${r}:${c}"`:''} ${showReal?'':'disabled'}>${icon}</button>
       <div class="tooltip"><b>${title}</b>${isCurrent?' <span style="color:var(--amber)">(current)</span>':''}<br>${tip}</div>
     </div>`;
   }
+
   return `${noticeHTML()}
   <div class="panel">${currencyBar(`<div style="margin-left:auto;display:flex;gap:6px">
         <button class="wo-btn purple" id="openRunUpgradeFromMapBtn" style="padding:4px 9px;font-size:11px;white-space:nowrap;border-width:1px">Run Upgrade</button>
@@ -3041,6 +3070,7 @@ function mapScreen() {
     </div>
   </div>`;
 }
+
 /* ========== RUN-SCOPED UPGRADES (paid with coins, last only for this run) ========== */
 const MAX_ITEM_CAP = 9; 
 const RUN_UPGRADE_DEFS = {
@@ -3084,22 +3114,27 @@ function runUpgradeScreen() {
     <button class="wo-btn teal" id="leaveRunUpgradeBtn" style="width:100%;margin-top:10px">${backLabel}</button>
   </div></div>`;
 }
+
 function battleScreen() {
   const opp = BATTLE.opponent;
   const hpPct = Math.max(0, (opp.hpNow / opp.hp) * 100);
   const healthPct = Math.max(0, (RUN.health / RUN.maxHealth) * 100);
+
   const poolHTML = BATTLE.oppPool.map(c => c.revealed
     ? `<div class="card ${suitColorClass(c.color, c.suit)}"><div>${rankLabel(c.rank)}</div><div>${c.suit}</div></div>`
     : `<div class="card back"></div>`).join('') || '<span class="note" style="margin:0">empty</span>';
+
   const hero = HEROES[RUN.hero.heroId];
   const itemsHTML = RUN.hero.items.map((itemId, index) => {
     const item = ITEMS[itemId];
     if (!item) return `<div class="shopcard error">Missing Item Data: ${itemId}</div>`;
+
     const slotKey = `${itemId}_${index}`;
     const idxs = BATTLE.slots[slotKey] || [];
     const cards = idxs.map(i => BATTLE.hand[i]);
     const level = itemLevel(itemId);
     const cursedAmt = BATTLE.itemCurses && BATTLE.itemCurses[slotKey];
+
     if (item.kind === 'storage') {
       const cardHTML = idxs.map(cardHandIdx => {
         const c = BATTLE.hand[cardHandIdx];
@@ -3120,9 +3155,11 @@ function battleScreen() {
         </div>
       </div>`;
     }
+
     const condResult = cards.length ? checkCondition(item.condition, cards) : { met: false, label: '' };
     const ready = condResult.met;
     const previewCalc = ready ? computeItemAmount(item, cards, level, condResult) : null;
+    
     let hypPreviewHTML = '';
     if (!idxs.length && typeof selectedIdx !== 'undefined' && selectedIdx.length) {
       const hypCards = selectedIdx.filter(i => !BATTLE.usedThisTurn.has(i)).slice(0, effectiveMaxCards(item)).map(i => BATTLE.hand[i]);
@@ -3138,6 +3175,7 @@ function battleScreen() {
     const effectWord = eKind === 'defense' ? 'armor' : eKind === 'poison' ? 'poison' : eKind === 'burn' ? 'burn' : eKind === 'curse' ? 'curse' : 'dmg';
     const cap = itemUsesCap(item, itemUsesLevel(itemId));
     const usesLeft = cap - ((BATTLE.itemUses && BATTLE.itemUses[slotKey]) || 0);
+    
     const isChargingUnlockItem = item.unlockThreshold != null && !(BATTLE.itemUnlocked && BATTLE.itemUnlocked[slotKey]);
     const cardHTML = idxs.map(cardHandIdx => {
       const c = BATTLE.hand[cardHandIdx];
@@ -3147,7 +3185,8 @@ function battleScreen() {
     const bonusLine = item.bonus && bonusPct > 0 ? `<div class="itemBonusLine">Bonus <b>+${bonusPct}%</b> if ${bonusConditionText(item.bonus.condition || item.condition)}</div>` : '';
     const drawNPreview = item.drawUsesCardCount ? (cards.length + (item.drawBonusFlat||0) + (item.drawPerLevel||0)*level) : (item.drawAmount ? item.drawAmount + (item.drawPerLevel||0)*level : 0);
     const drawBonusLine = (item.drawAmount || item.drawUsesCardCount) ? `<div class="itemBonusLine hoverTip" data-title="Draws ${drawNPreview} card${drawNPreview===1?'':'s'} immediately after this item is used."><b>Draw</b> ${drawNPreview} card${drawNPreview===1?'':'s'}</div>` : '';
-    const usesBadgeText = isChargingUnlockItem ? '∞' : cap === Infinity ? '∞' : `${Math.max(0, usesLeft)}/${cap}`;
+
+    const usesBadgeText = isChargingUnlockItem ? '∞' : cap === Infinity ? '∞' : `${Math.max(0, usesLeft)}`;
     const cooldownLeft = item.cooldown != null ? (BATTLE.itemCooldowns?.[slotKey] || 0) : 0;
     const isDepletedThisTurn = !isChargingUnlockItem && cap !== Infinity && usesLeft <= 0;
     return `<div class="itemCard kind-${eKind} ${ready ? 'ready' : ''} ${cursedAmt ? 'cursed' : ''} ${isDepletedThisTurn ? 'depleted-lockout' : ''}" data-assign="${slotKey}" style="border-style:dashed;border-width:2px"
@@ -3178,8 +3217,8 @@ function battleScreen() {
           :'';
         const unlockText = item.unlockThreshold != null ? (BATTLE.itemUnlocked && BATTLE.itemUnlocked[slotKey] ? '<span class="hoverTip" data-title="Charged for the rest of this battle - playing cards through it now draws 4, once per turn."><b>Charged: Draw 4/turn</b></span>' : `<span class="hoverTip" data-title="Locked: This card cannot trigger actions until you drop cards into it to fulfill the listed point total.">Locked</span>: ${Math.max(0, item.unlockThreshold - ((BATTLE.itemUnlockProgress && BATTLE.itemUnlockProgress[slotKey]) || 0))} to charge`) : '';
         if (cards.length && ready) {
-          const kindText = hasKindAmount ? `${previewCalc.breakdown} ${kindTag || '<b>Damage</b>'}` : '';
-          return `<div class="note" style="margin:4px 0 0">${kindText || 'Requirement not met'}</div>${unlockText?`<div class="note" style="margin:2px 0 0">${unlockText}</div>`:''}`;
+          const kindText = hasKindAmount ? `${previewCalc.breakdown} ${kindTag || '<b>Damage</b>'}` : '<b>Ready</b>';
+          return `<div class="note" style="margin:4px 0 0">${kindText}</div>${unlockText?`<div class="note" style="margin:2px 0 0">${unlockText}</div>`:''}`;
         }
         if (cards.length && !ready) return `<div class="note" style="margin:4px 0 0">Requirement not met</div>`;
         const staticKindText = formatKindAmount(item, kindTag);
@@ -3204,6 +3243,7 @@ function battleScreen() {
     <div>${rankLabel(c.rank)}</div><div>${c.suit}</div>
   </div>`;
   }).join('');
+
   return `
     <div class="panel">${currencyBar(`<div style="margin-left:auto;display:flex;gap:6px">
         <button class="wo-btn purple" id="openRunUpgradeFromBattleBtn" style="padding:4px 9px;font-size:11px;white-space:nowrap;border-width:1px">Run Upgrade</button>
@@ -3252,11 +3292,11 @@ function battleScreen() {
       <div class="panel">
         ${BATTLE.showTutorialBanner ? `<div class="note" style="border:1px solid var(--amber);border-radius:6px;padding:8px 10px;margin-bottom:8px;text-align:center;color:var(--amber)">Click or drag cards from your hand, then click an Item Slot below to load your weapon.</div>` : ''}
         <div class="hand">${handHTML}</div>
-        <div style="display:flex;gap:5px;flex-wrap:nowrap;align-items:center">
-          <button class="wo-btn gray" id="discardSelectedBtn" style="padding:7px 8px;font-size:11px;flex:1 1 0;min-width:0" data-title="Fold selected cards face-down instead of playing them." ${!selectedIdx.length ? 'disabled' : ''}>Discard</button>
-          <button class="wo-btn purple" id="gemDrawBtn" style="padding:7px 8px;font-size:11px;flex:1 1 0;min-width:0;white-space:nowrap" ${RUN.gems < 1 ? 'disabled' : ''}>Draw = ${GEM_DRAW_COST} ${ICON.gem}</button>
-          ${(() => { const sp = VEHICLE_SPECIALS[RUN.hero.heroId]; if (!sp) return ''; const minNeed = sp.energyCost ?? sp.energyPerUnit; return `<button class="wo-btn amber hoverTip" id="vehicleSpecialBtn" style="padding:7px 8px;font-size:11px;flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" data-title="${sp.desc}" ${RUN.energy < minNeed ? 'disabled' : ''}>${sp.name} = ${minNeed} ${ICON.energy}</button>`; })()}
-          <button class="wo-btn gray" id="sortToggleBtn" style="padding:7px 6px;font-size:11px;flex:0 0 auto;white-space:nowrap">Sort: ${(RUN.handSortMode || 'value') === 'value' ? 'Value' : 'Suit'}</button>
+        <div style="display:flex;gap:3px;flex-wrap:nowrap;align-items:center;width:100%">
+          <button class="wo-btn gray" id="sortToggleBtn" style="padding:6px 3px;font-size:10px;flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Sort: ${(RUN.handSortMode || 'value') === 'value' ? 'Value' : 'Suit'}</button>
+          ${(() => { const sp = VEHICLE_SPECIALS[RUN.hero.heroId]; if (!sp) return ''; const minNeed = sp.energyCost ?? sp.energyPerUnit; return `<button class="wo-btn amber hoverTip" id="vehicleSpecialBtn" style="padding:6px 3px;font-size:10px;flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" data-title="${sp.desc}" ${RUN.energy < minNeed ? 'disabled' : ''}>${sp.name} = ${minNeed} ${ICON.energy}</button>`; })()}
+          <button class="wo-btn purple" id="gemDrawBtn" style="padding:6px 3px;font-size:10px;flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" ${RUN.gems < 1 ? 'disabled' : ''}>Draw = ${GEM_DRAW_COST} ${ICON.gem}</button>
+          <button class="wo-btn gray" id="discardSelectedBtn" style="padding:6px 3px;font-size:10px;flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" data-title="Fold selected cards face-down instead of playing them." ${!selectedIdx.length ? 'disabled' : ''}>Discard</button>
     </div>
         
       </div>
@@ -3291,6 +3331,7 @@ function battleScreen() {
           </div>
         </div>
       </div>
+
       <div class="matchupSide opponentSide">
         <div class="panel">
           <div class="note" style="margin:0 0 4px;visibility:hidden">.</div>
@@ -3333,6 +3374,7 @@ function handleCardDrop(e, slotKey, maxSlot) {
 function tryDispatch() {
   endTurn();
 }
+
 function nodeResultScreen(won, rewards) {
   const rewardsHTML = won ? `
     <div class="hdr" style="margin-top:10px"><span>Rewards</span><span></span></div>
@@ -3363,35 +3405,40 @@ function nodeResultScreen(won, rewards) {
     </div>
   `;
 }
+
 function pickShopStock() {
   const row = Math.max(0, RUN.currentRow || 0);
   const SUIT_STASH_IDS = ['spade_bag', 'heart_bag', 'club_bag', 'diamond_bag'];
   const SUIT_INFERNO_IDS = ['spade_inferno', 'heart_inferno', 'club_inferno', 'diamond_inferno'];
   const pool = Object.values(ITEMS).filter(it => it.cost > 0 && (it.minRow == null || it.minRow <= row)
     && (it.kind !== 'storage' || it.id === 'supply_bag' || SUIT_STASH_IDS.includes(it.id)));
-  const shuffled = shuffle([...pool]);
+  const defensePool = pool.filter(it => it.kind === 'defense');
+  const nonDefensePool = pool.filter(it => it.kind !== 'defense');
   const picked = [];
   let suitStashUsed = false;
   let suitInfernoUsed = false;
+  const tryAdd = (it) => {
+    if (picked.length >= 6 || picked.includes(it)) return;
+    if (SUIT_STASH_IDS.includes(it.id)) { if (suitStashUsed) return; suitStashUsed = true; }
+    if (SUIT_INFERNO_IDS.includes(it.id)) { if (suitInfernoUsed) return; suitInfernoUsed = true; }
+    picked.push(it);
+  };
+  // Guarantee at least one defense/armor card on the shelves when one is available.
+  if (defensePool.length) tryAdd(shuffle([...defensePool])[0]);
+  const shuffled = shuffle([...nonDefensePool]);
   for (const it of shuffled) {
     if (picked.length >= 6) break;
-    if (SUIT_STASH_IDS.includes(it.id)) {
-      if (suitStashUsed) continue;
-      suitStashUsed = true;
-    }
-    if (SUIT_INFERNO_IDS.includes(it.id)) {
-      if (suitInfernoUsed) continue;
-      suitInfernoUsed = true;
-    }
-    picked.push(it);
+    tryAdd(it);
   }
   return picked;
 }
+
 function dealerItemCardHTML(item, opts) {
   const priceLabel = opts.mode === 'buy' ? `${item.cost} coins` : `${opts.sell} coins`;
   const footer = opts.mode === 'buy'
     ? `<button class="wo-btn amber" data-buy="${item.id}" data-cost="${item.cost}" ${opts.disabled ? 'disabled' : ''} style="padding:5px 8px;font-size:11px;white-space:nowrap;width:100%">${opts.disabledLabel || 'Purchase'}</button>`
     : `<button class="wo-btn gray" data-sell="${opts.index}" style="padding:5px 8px;font-size:11px;white-space:nowrap;width:100%">Sell</button>`;
+  
   return `<div class="dealerCardPanel panel">
     ${renderStandardItemCard(item, {})}
     <div class="dealerMetaDivider"></div>
@@ -3430,6 +3477,7 @@ function shopScreen(fromCastle=false) {
       </div>
     </div>`;
 }
+
 function garageScreen(message='') {
   const restAvailable = RUN.health < RUN.maxHealth && !(RUN.restStopUsed && RUN.restStopUsed.row === RUN.currentRow && RUN.restStopUsed.col === RUN.currentCol);
   return `<div class="map-popup-overlay">
@@ -3445,11 +3493,13 @@ function garageScreen(message='') {
           <button class="wo-btn purple" id="openRunUpgradeFromRestBtn" style="flex:1">Upgrades</button>
         </div>
         ${message ? `<div class="panel"><div class="note">${message}</div></div>` : ''}
+
         <div class="shopcard">
           <h3>Fleet Maintenance</h3>
           <button class="wo-btn" id="restBtn" ${restAvailable ? '' : 'disabled'}>Rest (+30 Health)</button>
           <div class="note" style="margin-top:6px">Single-use per visit.</div>
         </div>
+
         <div class="shopcard">
           <h3>Fuel Dispenser</h3>
           <button class="wo-btn amber" id="stationFuelBtn" ${RUN.chips < 8 || RUN.fuel >= RUN.maxFuel ? 'disabled' : ''}>1 Fuel = 8 Coins</button>
@@ -3458,6 +3508,7 @@ function garageScreen(message='') {
     </div>
   </div>`;
 }
+
 function blacksmithScreen() {
   const rows = BLACKSMITH_OPTIONS.map((opt, i) => {
     const b = findBoost(opt);
@@ -3652,11 +3703,13 @@ function starterSelectScreen() {
     </div>
   `;
 }
+
 function upgradeScreen() {
   const TIER_LABEL = { high: 'Core Stats - Matters Every Run', medium: 'Resource Capacity', low: 'Situational & Utility' };
   const TIER_COLOR = { high: 'var(--red)', medium: 'var(--amber)', low: 'var(--blue)' };
   const groups = { high: [], medium: [], low: [] };
   UPGRADE_DEFS.forEach(u => groups[u.tier || 'medium'].push(u));
+
   const cardFor = u => {
     const lvl = META.levels[u.id];
     const maxed = lvl >= MAX_LEVEL;
@@ -3682,10 +3735,12 @@ function upgradeScreen() {
       <div class="levelbar" style="margin-top:6px"><i style="width:${(lvl / MAX_LEVEL) * 100}%"></i></div>
     </div>`;
   };
+
   const sections = ['high', 'medium', 'low'].map(tier => `
     <div style="margin-top:18px;font-weight:800;font-size:15px;text-transform:uppercase;letter-spacing:0.03em;color:${TIER_COLOR[tier]};border-bottom:2px solid ${TIER_COLOR[tier]};padding-bottom:4px">${TIER_LABEL[tier]}</div>
     <div style="margin:8px 0">${groups[tier].map(cardFor).join('')}</div>
   `).join('');
+
   return `
     <div class="wo">
       <div class="wo-stripe"></div>
@@ -3699,6 +3754,7 @@ function upgradeScreen() {
     </div>
   `;
 }
+
 /****************************************************************************
 * OVERDRIVE BAY                                                            *
 ****************************************************************************/
@@ -3737,6 +3793,7 @@ function overdriveBayScreen() {
     <div style="margin:12px 0">${rows || '<div class="note">No eligible Items equipped.</div>'}</div>
   </div></div>`;
 }
+
 /****************************************************************************
 * CHOP SHOP PREVIEWS                                                       *
 ****************************************************************************/
@@ -3766,6 +3823,7 @@ function chopShopScreen(returnTo) {
       }).join('');
       convertBlockHTML = `<div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">${previewCols}</div>`;
     }
+
     let capacityHTML = '';
     if (item.kind !== 'storage') {
       const capLvl = itemMaxCardsLevel(itemId), capMaxed = capLvl >= ITEM_MAX_CARDS_BONUS_CAP;
@@ -3785,6 +3843,7 @@ function chopShopScreen(returnTo) {
         </div>
       </div>`;
     }
+
     return `<div class="shopcard">
       <div class="hdr"><span>${item.name}</span><span>Item ${index+1}</span></div>
       <div style="display:flex;align-items:center;gap:12px;justify-content:center;flex-wrap:wrap;margin:8px 0">
@@ -3805,17 +3864,15 @@ function chopShopScreen(returnTo) {
     <div style="margin:12px 0">${rows || '<div class="note">No Items available.</div>'}</div>
   </div></div>`;
 }
+
 function metaScreen() {
   const hasSave = !!loadRunSave();
   return `
-    <div class="wo" style="position: relative;">
+    <div class="wo">
       <div class="wo-stripe"></div>
       <div class="wo-body">
-        <div class="note" style="position: absolute; top: 36px; right: 84px; margin: 0; text-align: left; opacity: 0.9; font-size: 16px; font-weight: 600; line-height: 1.4; max-width: 320px; color: var(--amber);">
-          🥇 JJ was first to beat World 1!<br>
-          <div style="margin-top: 4px;">🏆 Haley was first to beat World 2! 🏆</div>
-        </div>
-        <h1>Fleet <em>Duel</em> <span style="font-size: 16px; font-weight: 400; color: var(--dim); vertical-align: middle; margin-left: 6px;">(Work in Progress)</span></h1>
+        <div class="wo-eyebrow">Home Base</div>
+        <h1>Fleet <em>Duel</em></h1>
         <div class="wo-sub">Career Points: ${META.points} &middot; Best route: ${META.bestRun}/21 &middot; High score: ${META.highScore} &middot; Runs played: ${META.runsPlayed}</div>
         <div class="panel" style="margin-bottom:10px">
           <div class="hdr"><span>Fleet Name</span><span></span></div>
@@ -3824,18 +3881,12 @@ function metaScreen() {
         ${hasSave ? `<button class="wo-btn" id="continueRunBtn" style="margin-bottom:10px;width:100%">Continue Run</button>` : `<button class="wo-btn" id="startRunBtn" style="margin-bottom:10px;width:100%">New Run</button>`}
         ${hasSave ? `<button class="wo-btn gray" id="startRunBtn" style="width:100%;margin-bottom:10px">New Run (overwrites save)</button>` : ''}
         <button class="wo-btn amber" id="viewUpgradesBtn" style="width:100%">Career Point Upgrades</button>
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; gap:16px;">
-          <div class="note" style="margin: 0; opacity: 0.95; font-size: 22px; font-weight: 600; color: var(--dim); white-space: nowrap; flex-shrink: 0;">
-            Made by Drew
-          </div>
-          <div class="note" style="margin: 0; text-align: right; opacity: 0.75; font-size: 13px; line-height: 1.4; max-width: 70%;">
-            Please send Drew your feedback, high scores, bug findings, or confusing areas so he can update the master registry leaderboard.
-          </div>
-        </div>
+        <div class="note" style="text-align:center;margin-top:16px;opacity:0.75">Made by Drew. Please send Drew your feedback, high scores, bug findings, or confusing areas so he can update the master registry leaderboard. Work in Progress.</div>
       </div>
     </div>
   `;
 }
+
 let MAP_SCROLL_X = 0;
 /* ========== RENDER + EVENTS ========== */
 function render(html) {
@@ -3843,7 +3894,9 @@ function render(html) {
   app.innerHTML = `<div class="game-stage">${html}</div>`;
   if (IN_BATTLE) saveBattleState();
   const mw = app.querySelector('.mapwrap');
+  
   if (mw && !GARAGE_POPUP && !TREASURE_POPUP) { mw.scrollLeft = MAP_SCROLL_X; mw.onscroll = () => { MAP_SCROLL_X = mw.scrollLeft; }; if (RUN && mw.querySelector('.mapnode-wrap')) { requestAnimationFrame(()=>{ const row = Math.max(0,RUN.currentRow); const colW = 118; const target = Math.max(0, row*colW - mw.clientWidth*0.15); mw.scrollLeft = target; MAP_SCROLL_X = target; }); } }
+
   app.querySelectorAll('[data-card]').forEach(el => el.onclick = () => toggleCardSelect(+el.dataset.card));
   app.querySelectorAll('[data-assign]').forEach(el => el.onclick = (e) => {
     if (e.target.closest('[data-clear]') || e.target.closest('[data-unassign]') || e.target.closest('[data-ability]') || e.target.closest('[data-attack]')) return;
@@ -3876,10 +3929,12 @@ function render(html) {
     saveRun(); render(battleScreen());
   };
   const discardSelectedBtn = document.getElementById('discardSelectedBtn'); if (discardSelectedBtn) discardSelectedBtn.onclick = markSelectedForDiscard;
+
   app.querySelectorAll('[data-nodeinfo]').forEach(el => el.onclick = () => { const [r, c] = el.dataset.nodeinfo.split(':').map(Number); MAP_POPUP = { row: r, col: c }; render(mapScreen()); });
   const popupCloseBtn = document.getElementById('popupCloseBtn'); if (popupCloseBtn) popupCloseBtn.onclick = () => { MAP_POPUP = null; render(mapScreen()); };
   const popupGoBtn = document.getElementById('popupGoBtn'); if (popupGoBtn) popupGoBtn.onclick = () => { const p = MAP_POPUP; MAP_POPUP = null; if (p) selectNode(p.row, p.col); };
   const popupReenterBtn = document.getElementById('popupReenterBtn'); if (popupReenterBtn) popupReenterBtn.onclick = () => { const p = MAP_POPUP; MAP_POPUP = null; if (p) reenterCurrentNode(p.row, p.col); };
+
   const continueBtn = document.getElementById('continueBtn');
   if (continueBtn) continueBtn.onclick = () => {
     const won = continueBtn.parentElement.querySelector('.wo-eyebrow').textContent.includes('Won');
@@ -3916,6 +3971,7 @@ function render(html) {
   const viewUpgradesBtn = document.getElementById('viewUpgradesBtn'); if (viewUpgradesBtn) viewUpgradesBtn.onclick = () => render(upgradeScreen());
   const leaveChopShopBtn = document.getElementById('leaveChopShopBtn'); if (leaveChopShopBtn) leaveChopShopBtn.onclick = () => render(RETURN_TO_CASTLE_MENU ? castleMenuScreen() : mapScreen());
   const leaveOverdriveBtn = document.getElementById('leaveOverdriveBtn'); if (leaveOverdriveBtn) leaveOverdriveBtn.onclick = () => render(RETURN_TO_CASTLE_MENU ? castleMenuScreen() : mapScreen());
+    
   const stationFuelBtn = document.getElementById('stationFuelBtn');
   if (stationFuelBtn) {
     stationFuelBtn.onclick = () => {
@@ -3928,6 +3984,7 @@ function render(html) {
       }
     };
   }
+
   const restBtn = document.getElementById('restBtn'); 
   if (restBtn) {
     restBtn.onclick = () => { 
@@ -3939,10 +3996,12 @@ function render(html) {
       render(mapScreen()); 
     };
   }
+
   const leaveStationBtn = document.getElementById('leaveStationBtn');
   if (leaveStationBtn) {
     leaveStationBtn.onclick = () => { GARAGE_POPUP = false; render(mapScreen()); };
   }
+
   const castleFuelBtn = document.getElementById('castleFuelBtn'); 
   if (castleFuelBtn) {
     castleFuelBtn.onclick = () => { 
@@ -3958,6 +4017,7 @@ function render(html) {
       } 
     };
   }
+
   const castleRestBtn = document.getElementById('castleRestBtn'); 
   if (castleRestBtn) {
     castleRestBtn.onclick = () => { 
@@ -3970,10 +4030,12 @@ function render(html) {
       render(castleInnScreen(`You slept and recovered 30 health${cost ? ` for ${cost} coins` : ''}.`)); 
     };
   }
+
   app.querySelectorAll('[data-garageselect]').forEach(el => el.onclick = () => {
     GARAGE_SELECTED_ITEM = el.dataset.garageselect;
     render(blacksmithScreen());
   });
+
   app.querySelectorAll('[data-bonusup]').forEach(el => el.onclick = () => {
     const item = ITEMS[el.dataset.bonusup];
     const cap = itemLevelCap(item);
@@ -4057,6 +4119,7 @@ function render(html) {
     saveRun();
     render(chopShopScreen());
   });
+
   app.querySelectorAll('[data-runupgrade]').forEach(el => el.onclick = () => {
     const kind = el.dataset.runupgrade;
     const def = RUN_UPGRADE_DEFS[kind];
@@ -4112,6 +4175,7 @@ function render(html) {
     saveMeta();
     render(upgradeScreen());
   });
+
   const castleDungeonNavBtn = document.getElementById('castleDungeonNavBtn'); if (castleDungeonNavBtn) castleDungeonNavBtn.onclick = () => render(castleDungeonScreen());
   const castleWizardNavBtn = document.getElementById('castleWizardNavBtn'); if (castleWizardNavBtn) castleWizardNavBtn.onclick = () => { if (!RUN.castleState) RUN.castleState = {}; if (RUN.castleState.matchPlayed) return; MATCH_RETURN_TO_MAP = false; MATCH_OVERLAY_ACTIVE = true; renderMatchOverlay(); };
   const castleBlacksmithNavBtn = document.getElementById('castleBlacksmithNavBtn'); if (castleBlacksmithNavBtn) castleBlacksmithNavBtn.onclick = () => { RETURN_TO_CASTLE_MENU = true; BLACKSMITH_OPTIONS = pickBlacksmithOptions(); BLACKSMITH_VISIT = { primary: null, secondary: null }; render(blacksmithScreen()); };
@@ -4143,6 +4207,7 @@ function render(html) {
     MATCH_POPUP = null;
     const st = RUN.castleState;
     if (wasCleared) {
+      
       st.matchCards = null;
       st.matchGuesses = 4;
       st.matchPick = [];
@@ -4155,16 +4220,22 @@ function render(html) {
     el.onclick = () => {
       const i = +el.dataset.match;
       const st = RUN.castleState;
+
       if (!st || MATCH_POPUP || st.matchGuesses <= 0 || st.matchPick.includes(i) || st.matchCards[i].flipped || st.matchCards[i].matched || st.matchLock) return;
+
       st.matchPick.push(i);
       st.matchCards[i].flipped = true;
+
       if (st.matchPick.length < 2) { renderMatchOverlay(); return; }
+
       st.matchLock = true;
       renderMatchOverlay();
+
       setTimeout(() => {
         const [a, b] = st.matchPick;
         const ga = st.matchCards[a].group, gb = st.matchCards[b].group;
         const isJokerGlitch = (ga === 'RJ' && gb === 'BJ') || (ga === 'BJ' && gb === 'RJ');
+
         if (isJokerGlitch) {
           st.matchCards = null;
           st.matchPick = [];
@@ -4176,10 +4247,13 @@ function render(html) {
           renderMatchOverlay();
           return;
         }
+
         if (ga === gb) {
+          
           st.matchCards[a].matched = true;
           st.matchCards[b].matched = true;
           st.matchPick = [];
+
           const reward = MATCH_SUIT_REWARDS[ga] || {};
           RUN.chips += reward.coins || 0;
           RUN.gems = Math.min(RUN.maxGems, RUN.gems + (reward.gems || 0));
@@ -4188,16 +4262,11 @@ function render(html) {
           RUN.energy = Math.min(RUN.maxEnergy, RUN.energy + (reward.energy || 0));
           if (reward.points) earnPoints(reward.points);
           saveRun();
+
           const boardCleared = st.matchCards.every(c => c.matched);
           if (boardCleared) {
-            let clearLabel;
-            if (equippedItemCount(RUN.hero) >= RUN.itemCap) {
-              RUN.chips += 100;
-              clearLabel = '+100 coins (item slots were full)';
-            } else {
-              RUN.hero.items.push('supply_bag');
-              clearLabel = 'Weightless Stash Card added to your Fleet';
-            }
+            RUN.hero.items.push('supply_bag');
+            const clearLabel = 'Card Stash added to your Fleet';
             saveRun();
             MATCH_POPUP = { suitLabel: 'Board', rewardLabel: clearLabel, boardCleared: true, jackpot: true };
           } else {
@@ -4205,9 +4274,12 @@ function render(html) {
           }
           st.matchLock = false;
           renderMatchOverlay();
+
         } else {
+          
           st.matchGuesses--;
           renderMatchOverlay();
+
           setTimeout(() => {
             st.matchCards[a].flipped = false;
             st.matchCards[b].flipped = false;
@@ -4228,6 +4300,7 @@ function render(html) {
       }, 30);
     };
   });
+
   const leaveShopBtn = document.getElementById('leaveShopBtn'); if (leaveShopBtn) leaveShopBtn.onclick = () => render(RETURN_TO_CASTLE_MENU ? castleMenuScreen() : mapScreen());
   const leaveBlacksmithBtn = document.getElementById('leaveBlacksmithBtn'); if (leaveBlacksmithBtn) leaveBlacksmithBtn.onclick = () => { BLACKSMITH_OPTIONS = null; BLACKSMITH_VISIT = null; render(RETURN_TO_CASTLE_MENU ? castleMenuScreen() : mapScreen()); };
   const leaveTreasureBtn = document.getElementById('leaveTreasureBtn'); if (leaveTreasureBtn) leaveTreasureBtn.onclick = () => { TREASURE_POPUP = null; render(mapScreen()); };
@@ -4306,6 +4379,7 @@ function render(html) {
     saveRun();
     render(shopScreen());
   });
+
   const backToMetaBtn = document.getElementById('backToMetaBtn'); if (backToMetaBtn) backToMetaBtn.onclick = () => render(metaScreen());
   const startRunBtn = document.getElementById('startRunBtn'); if (startRunBtn) startRunBtn.onclick = () => { clearRunSave(); render(starterSelectScreen()); };
   const continueRunBtn = document.getElementById('continueRunBtn'); if (continueRunBtn) continueRunBtn.onclick = () => { RUN = loadRunSave(); 
@@ -4328,6 +4402,7 @@ function render(html) {
  RUN.castleState=RUN.castleState||{}; RUN.world=RUN.world||1; RUN.bossRow=(RUN.bossRow!=null)?RUN.bossRow:(RUN.map.nodes.length-1); saveRun(); const savedBattle = loadBattleSave(); if (savedBattle) { BATTLE = savedBattle; IN_BATTLE = true; render(battleScreen()); } else { render(mapScreen()); } };
   app.querySelectorAll('[data-pick]').forEach(el => el.onclick = () => initRunWithStarter(el.dataset.pick));
 }
+
 /* ========== BOOT ========== */
 document.addEventListener('mouseover', (e) => {
   const el = e.target.closest('[data-title], .effectTip');
@@ -4338,6 +4413,7 @@ document.addEventListener('mouseover', (e) => {
   if (r.left - halfTip < 8) el.classList.add('tipLeft');
   else if (r.right + halfTip > window.innerWidth - 8) el.classList.add('tipRight');
 });
+
 /* ========== STABILIZATION PATCH ========== */
 (function installStabilizationPatch(){
   const originalDrawCards = drawCards;
@@ -4347,6 +4423,7 @@ document.addEventListener('mouseover', (e) => {
   const originalEndTurn = endTurn;
   const originalCurrencyBar = currencyBar;
   const originalChopShopScreen = chopShopScreen;
+
   function ensureBattlePatchState(){
     if(!BATTLE) return;
     BATTLE.turnDiscard=BATTLE.turnDiscard||[];
@@ -4357,7 +4434,8 @@ document.addEventListener('mouseover', (e) => {
     BATTLE.itemUtilityLevels=BATTLE.itemUtilityLevels||{};
     BATTLE.stagedFireCards=BATTLE.stagedFireCards||[];
   }
-   function stagedCards(){
+  
+  function stagedCards(){
     ensureBattlePatchState();
     return BATTLE.stagedFireCards.filter(Boolean);
   }
@@ -4365,9 +4443,11 @@ document.addEventListener('mouseover', (e) => {
     ensureBattlePatchState();
     cards.forEach(c=>{if(c&&!BATTLE.stagedFireCards.includes(c))BATTLE.stagedFireCards.push(c);});
   }
+
   window.drawCards=function(n,enforceHandCap=false){
     ensureBattlePatchState();
     const exclude=new Set(BATTLE.hand);
+    (BATTLE.oppPool||[]).forEach(c=>exclude.add(c));
     stagedCards().forEach(c=>exclude.add(c));
     BATTLE.deck=shuffle([...BATTLE.deck,...BATTLE.discard].filter(c=>!exclude.has(c)));
     BATTLE.discard=[];
@@ -4378,6 +4458,7 @@ document.addEventListener('mouseover', (e) => {
     }
   };
   drawCards=window.drawCards;
+
   window.executePlayerAttack=function(itemId,index){
     ensureBattlePatchState();
     if(BATTLE.showTutorialBanner){BATTLE.showTutorialBanner=false;META.hasSeenTutorial=true;saveMeta();}
@@ -4385,9 +4466,11 @@ document.addEventListener('mouseover', (e) => {
     const key=`${itemId}_${index}`;
     const idxs=(BATTLE.slots[key]||[]).slice();
     if(!item)return;
+
     const oldCond=item.condition, oldThreshold=item.unlockThreshold;
     if(itemId==='drawstone')item.condition={...oldCond,min:Math.max(4,oldCond.min-utilityLevel('drawstone'))};
     if(itemId==='impound_release')item.unlockThreshold=Math.max(35,(oldThreshold||45)-utilityLevel('impound_release')*5);
+
     if(itemId==='impound_release'&&BATTLE.itemUnlocked?.[key]&&!idxs.length){
       BATTLE.itemUses=BATTLE.itemUses||{};
       const cap=item.usesPerTurn+(item.usesPerTurnPerLevel||0)*((RUN.itemUsesLevels&&RUN.itemUsesLevels[itemId])||0);
@@ -4399,13 +4482,16 @@ document.addEventListener('mouseover', (e) => {
       }
       item.condition=oldCond;item.unlockThreshold=oldThreshold;return;
     }
+
     const cardsForStage=idxs.map(i=>BATTLE.hand[i]).filter(Boolean);
     if(item&&cardsForStage.length&&checkCondition(item.condition,cardsForStage).met)stageCards(cardsForStage);
     originalExecutePlayerAttack(itemId,index);
     item.condition=oldCond;item.unlockThreshold=oldThreshold;
+
     if(IN_BATTLE)saveBattleState();
   };
   executePlayerAttack=window.executePlayerAttack;
+
   window.utilityLevel=function(id){return (RUN?.itemUtilityLevels&&RUN.itemUtilityLevels[id])||0;};
   window.utilityCondition=function(item){
     if(!item?.condition)return item?.condition;
@@ -4416,10 +4502,13 @@ document.addEventListener('mouseover', (e) => {
     if(item?.id==='impound_release')return Math.max(35,(item.unlockThreshold||45)-utilityLevel(item.id)*5);
     return item?.unlockThreshold;
   };
+  
   const originalCheckCondition=checkCondition;
   window.checkCondition=function(cond,cards){return originalCheckCondition(cond,cards);};
   checkCondition=window.checkCondition;
+
   function itemIdFromKey(k){return String(k).replace(/_\d+$/,'');}
+
   window.endTurn=function(){
     ensureBattlePatchState();
     originalEndTurn();
@@ -4427,16 +4516,19 @@ document.addEventListener('mouseover', (e) => {
     if(IN_BATTLE)saveBattleState();
   };
   endTurn=window.endTurn;
+
   window.battleScreen=function(){
     ensureBattlePatchState();
     let html=originalBattleScreen();
     html=html.replace(/class="itemCard kind-([^\"]+) ([^\"]*)"/g,(m,k,rest)=>m);
     html=html.replace(/(<div class="hdr" style="font-weight:600">)([^<]+)(<\/div>)/g,(m,a,name,c)=>m);
+    
     const curseKeys=Object.keys(BATTLE.itemCurses||{});
     if(curseKeys.length){
       const badges=curseKeys.map(k=>`<span class="curseBadge">Cursed: ${BATTLE.itemCurses[k]}</span>`).join(' ');
       html=html.replace(/(<div class="panel">\s*<div class="note" style="margin:0 0 4px">Drag cards or tap to select<\/div>)/,`<div class="panel curseShield"><div class="note" style="margin:0 0 6px"><b>Active Curse Traps</b> ${badges}</div></div>$1`);
     }
+    
     if(BATTLE.pendingTarget){
       html=html.replace(/(<button class="wo-btn red" id="endTurnBtn")/,'$1 disabled');
       const isBurn=BATTLE.pendingTarget.type==='burn';
@@ -4462,20 +4554,22 @@ document.addEventListener('mouseover', (e) => {
     return html;
   };
   battleScreen=window.battleScreen;
+
   const oldMatch=castleMatchScreen;
   window.castleMatchScreen=function(){
     if(MATCH_POPUP){
       const saved=MATCH_POPUP; MATCH_POPUP=null;
       let board=oldMatch();
       MATCH_POPUP=saved;
-      board=board.replace('<div class="wo"><div class="wo-stripe"></div><div class="wo-body">','<div class="wo matchBoardWrap"><div class="wo-stripe"></div><div class="wo-body">');
-      const popup=`<div class="match-modal"><div class="wo" style="max-width:360px"><div class="wo-stripe"></div><div class="wo-body" style="text-align:center"><div class="wo-eyebrow">Pair Matched</div><h1>${saved.suitLabel} <em>Pair!</em></h1><div class="treasure-prize">${saved.rewardLabel}</div>${saved.boardCleared?'<div class="note">Board cleared! The matching game is done for this run.</div>':''}<button class="wo-btn amber" id="matchPopupContinueBtn" style="width:100%;margin-top:10px">Nice!</button></div></div></div>`;
-      return board.replace('</div></div>',`</div>${popup}</div>`);
+      board=board.replace('<div class="wo"><div class="wo-stripe"></div><div class="wo-body">','<div class="wo matchBoardWrap" style="pointer-events:none"><div class="wo-stripe"></div><div class="wo-body">');
+      const popup=`<div class="match-modal"><div class="wo" style="max-width:360px"><div class="wo-stripe"></div><div class="wo-body" style="text-align:center"><div class="wo-eyebrow">Pair Matched</div><h1>${saved.suitLabel} <em>Pair!</em></h1><div class="treasure-prize">${saved.rewardLabel}</div>${saved.boardCleared?'<div class="note">Board cleared! The matching game is done for this run.</div>':''}<button class="wo-btn amber" id="matchPopupContinueBtn" style="width:100%;margin-top:10px;pointer-events:auto">Nice!</button></div></div></div>`;
+      return board + popup;
     }
     let html=oldMatch();
     return html.replace('<div class="wo"><div class="wo-stripe"></div><div class="wo-body">','<div class="wo matchBoardWrap"><div class="wo-stripe"></div><div class="wo-body">');
   };
   castleMatchScreen=window.castleMatchScreen;
+
   META.devModeActive=META.playerName?.toLowerCase()==='devmode';
   /****************************************************************************
 * RUN DASHBOARD SYSTEM                                                     *
@@ -4493,6 +4587,7 @@ document.addEventListener('mouseover', (e) => {
     return `<div class="wo"><div class="wo-stripe"></div><div class="wo-body"><h1>Run <em>Dashboard</em></h1>${currencyBar()}<div class="runSummary">${rows.join('')}</div><button class="wo-btn teal" id="leaveRunSummaryBtn" style="width:100%;margin-top:10px">Back</button></div></div>`;
   };
   function devPanel(){return `<div class="devModal"><div class="wo"><div class="wo-stripe"></div><div class="wo-body"><div class="wo-eyebrow">Diagnostic Tools</div><h1><em>Developer Mode</em></h1><div style="display:flex;gap:8px;margin:10px 0"><button class="wo-btn amber" id="devCoinsBtn">+500 Coins</button><button class="wo-btn purple" id="devMaxBtn">Max Resources</button></div><div class="devGrid">${Object.keys(ITEMS).map(id=>`<button class="devItem" data-devitem="${id}"><b>${ITEMS[id].name}</b><br><span class="note">${id}</span></button>`).join('')}</div><button class="wo-btn gray" id="devCloseBtn" style="width:100%;margin-top:12px">Close</button></div></div></div>`;}
+  
   const oldRender=render;
   window.render=function(html){
     oldRender(html);
@@ -4515,8 +4610,10 @@ document.addEventListener('mouseover', (e) => {
   };
   render=window.render;
   function bindDev(){const close=document.getElementById('devCloseBtn');if(close)close.onclick=()=>render(IN_BATTLE?battleScreen():RUN?mapScreen():metaScreen());const coins=document.getElementById('devCoinsBtn');if(coins)coins.onclick=()=>{RUN.chips+=500;saveRun();render(`${IN_BATTLE?battleScreen():mapScreen()}${devPanel()}`);};const max=document.getElementById('devMaxBtn');if(max)max.onclick=()=>{RUN.chips=9999;RUN.gems=RUN.maxGems;RUN.fuel=RUN.maxFuel;RUN.energy=RUN.maxEnergy;RUN.health=RUN.maxHealth;saveRun();render(`${IN_BATTLE?battleScreen():mapScreen()}${devPanel()}`);};document.querySelectorAll('[data-devitem]').forEach(e=>e.onclick=()=>{if(RUN&&equippedItemCount(RUN.hero)<RUN.itemCap){RUN.hero.items.push(e.dataset.devitem);saveRun();render(`${IN_BATTLE?battleScreen():mapScreen()}${devPanel()}`);}});}
+  
   const cb=originalCurrencyBar;
   window.currencyBar=function(extraHTML=''){let h=cb(extraHTML);const controls=`${META.devModeActive?`<button class="wo-btn gray" id="devPanelBtn" style="padding:3px 7px;font-size:10px">[🛠️ DEV]</button>`:''}<button class="wo-btn purple" id="openRunSummaryBtn" style="padding:3px 7px;font-size:10px">Run Dashboard</button>`;if(h.includes('<!--RUNCONTROLS-->'))return h.replace('<!--RUNCONTROLS-->',controls);const at=h.lastIndexOf('</div>');if(at<0)return h;return h.slice(0,at)+controls+h.slice(at);};currencyBar=window.currencyBar;
+  
   window.chopShopScreen=function(returnTo){
     let html=originalChopShopScreen(returnTo);
     if(RUN?.hero?.items){
@@ -4529,10 +4626,13 @@ document.addEventListener('mouseover', (e) => {
     }
     return html;
   };chopShopScreen=window.chopShopScreen;
+  
   document.addEventListener('click',e=>{const b=e.target.closest('[data-utilityup]');if(!b||!RUN)return;const id=b.dataset.utilityup,l=utilityLevel(id),cap=id==='drawstone'?3:2,cost=Math.round((id==='drawstone'?60:75)*Math.pow(2,l));if(l>=cap||RUN.chips<cost)return;e.preventDefault();e.stopPropagation();RUN.chips-=cost;RUN.itemUtilityLevels[id]=l+1;saveRun();render(chopShopScreen());},true);
+  
   const oldRenderStd=renderStandardItemCard;
   window.renderStandardItemCard=function(item,opts={}){let h=oldRenderStd(item,opts);if(item?.id==='drawstone')h=h.replace('7 or higher',`${Math.max(4,7-utilityLevel('drawstone'))} or higher`);if(item?.id==='impound_release')h=h.replace('45-point',`${Math.max(35,45-utilityLevel('impound_release'))}-point`);return h;};renderStandardItemCard=window.renderStandardItemCard;
   const oldItemRequirementText=itemRequirementText;window.itemRequirementText=function(item,eKind){let t=oldItemRequirementText(item,eKind);if(item?.id==='drawstone')t=t.replace(/7/g,String(Math.max(4,7-utilityLevel('drawstone'))));return t;};itemRequirementText=window.itemRequirementText;
+  
   if(RUN){RUN.itemUtilityLevels=RUN.itemUtilityLevels||{};}
 })();
 (function(){

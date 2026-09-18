@@ -119,21 +119,7 @@
   border-right: 4px solid var(--red);
 }
 @media (max-width: 800px) {
-  .duelMatchup {
-    grid-template-columns: 1fr;
-  }
-}
-  .vslot{border:2px dashed var(--blue-light);border-radius:8px;padding:10px;width:160px;background:var(--bg);cursor:pointer}
-  .vslot.filled{border-style:solid;border-color:var(--amber)}
-  .vslot.ready{border-color:var(--green)}
-  .vslot.defense{border-color:#4a7fd8}
-  .vslot.poison{border-color:#5a8a3a}
-  .vslot .vname{font-weight:700;font-size:15px;color:var(--blue)}
-  .vslot .vreq{font-family:var(--mono);font-size:10.5px;color:var(--dim);margin:3px 0}
-  .vslot .vcards{display:flex;gap:3px;flex-wrap:wrap;min-height:30px;margin-top:6px}
-  .itemGrid{display:flex;flex-wrap:wrap;justify-content:center;width:100%;gap:6px}
-  .itemGrid .itemCard{flex:0 0 125px}
-  .popupItemRow{display:grid;grid-template-columns:repeat(auto-fill,125px);justify-content:center;gap:8px}
+  .duelMatchup{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;align-items:start;} .matchupSide{min-width:0;} .playerSide{border-left:4px solid var(--blue);} .opponentSide{border-right:4px solid var(--red);} @media (max-width:800px){.duelMatchup{grid-template-columns:1fr;}} .vslot{border:2px dashed var(--blue-light);border-radius:8px;padding:10px;width:160px;background:var(--bg);cursor:pointer} .vslot.filled{border-style:solid;border-color:var(--amber)} .vslot.ready{border-color:var(--green)} .vslot.defense{border-color:#4a7fd8} .vslot.poison{border-color:#5a8a3a} .vslot .vname{font-weight:700;font-size:15px;color:var(--blue)} .vslot .vreq{font-family:var(--mono);font-size:10.5px;color:var(--dim);margin:3px 0} .vslot .vcards{display:flex;gap:3px;flex-wrap:wrap;min-height:30px;margin-top:6px} .duelMatchup .itemGrid{display:flex;flex-direction:row;flex-wrap:nowrap;justify-content:flex-start;align-items:flex-start;gap:10px;overflow-x:auto;padding:4px 2px 12px;width:100%;-webkit-overflow-scrolling:touch;} .duelMatchup .itemCard,.duelMatchup .itemGrid > div{flex:0 0 125px !important;width:125px !important;min-width:125px !important;max-width:125px !important;box-sizing:border-box;margin:0;} .popupItemRow{display:grid;grid-template-columns:repeat(auto-fill,125px);justify-content:center;gap:8px}
   .pickItemRow{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-start}
   .pickItemRow .itemCard{flex:0 0 125px;width:125px}
   .dealerRow{

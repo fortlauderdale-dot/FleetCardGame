@@ -296,7 +296,8 @@
   .castleMenuExit{margin-top:8px;padding-top:10px;border-top:1px solid rgba(31,182,166,.25)}
   .castleMenuExit .castleBtn{background:#20263b;color:#fff;border-color:#4d587a;box-shadow:3px 3px 0 #0b0f19}
   .handWorkspace{position:relative}
-  .handCapacity{position:absolute;top:0;right:0;font:600 10px var(--mono);color:var(--dim);cursor:help;z-index:2}
+  .handCapacity{position:absolute;top:-8px;right:0;font:600 10px var(--mono);color:var(--dim);cursor:help;z-index:2;line-height:1}
+  .handWorkspace>.hand{padding-top:10px}
   .playerActionGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:3px;width:100%;align-items:stretch}
   .playerActionGrid .wo-btn{min-width:0}
   @media (max-width:900px){
@@ -2911,13 +2912,10 @@ function winBattle(outlast) {
           const pool = eligiblePool.length ? eligiblePool : fullPool;
           wonItem = (pool.length ? pool : Object.values(ITEMS))[Math.floor(Math.random() * (pool.length ? pool.length : Object.values(ITEMS).length))];
         }
-        if (wonItem.weightless || equippedItemCount(RUN.hero) < RUN.itemCap) {
-          RUN.hero.items.push(wonItem.id);
-          DUNGEON_WIN_POPUP = { reward, itemName: wonItem.name };
-        } else {
-          RUN.chips += 100;
-          DUNGEON_WIN_POPUP = { reward, itemName: '100 coins', convertedItem: true };
-        }
+        // Weightless rewards bypass the item-cap check entirely.
+        // No item reward is converted into coins; the awarded item is preserved.
+        RUN.hero.items.push(wonItem.id);
+        DUNGEON_WIN_POPUP = { reward, itemName: wonItem.name };
       }
       saveRun();
       render(castleDungeonScreen());
@@ -3379,7 +3377,7 @@ function battleScreen() {
     <div class="duelBoard">
       <div class="panel">
         ${BATTLE.showTutorialBanner ? `<div class="note" style="border:1px solid var(--amber);border-radius:6px;padding:8px 10px;margin-bottom:8px;text-align:center;color:var(--amber)">Click or drag cards from your hand, then click an Item Slot below to load your weapon.</div>` : ''}
-        <div class="handWorkspace"><div class="handCapacity hoverTip" data-title="Your Maximum Hand Size. New cards cannot be drawn past this cap.">Hand: ${BATTLE.hand.length} / Max ${RUN.handSize}</div><div class="hand">${handHTML}</div></div>
+        <div class="handWorkspace"><div class="handCapacity hoverTip" data-title="Your Maximum Hand Size. New cards cannot be drawn past this cap.">Max ${RUN.handSize}</div><div class="hand">${handHTML}</div></div>
         <div class="playerActionGrid">
           <button class="wo-btn gray" id="sortToggleBtn" style="padding:6px 3px;font-size:10px;flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Sort: ${(RUN.handSortMode || 'value') === 'value' ? 'Value' : 'Suit'}</button>
           ${(() => { const sp = VEHICLE_SPECIALS[RUN.hero.heroId]; if (!sp) return ''; const minNeed = sp.energyCost ?? sp.energyPerUnit; return `<button class="wo-btn amber hoverTip" id="vehicleSpecialBtn" style="padding:6px 3px;font-size:10px;flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" data-title="${sp.desc}" ${RUN.energy < minNeed ? 'disabled' : ''}>${sp.name} = ${minNeed} ${ICON.energy}</button>`; })()}

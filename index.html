@@ -336,6 +336,7 @@
     .duelBoard{grid-template-columns:1fr}
     .deckStack{order:2;padding-top:6px}
   }
+  #app h1:has(+ .currencyHeader){text-align:center !important;width:100% !important;margin-bottom:4px !important;} #leaveShopBtn{background:linear-gradient(180deg,#ffc44d 0%,#e09f1a 100%) !important;color:#0b0f19 !important;border:3px solid #1a2038 !important;border-radius:8px !important;font-weight:800 !important;letter-spacing:0.03em !important;box-shadow:3px 3px 0 #0b0f19,0 0 10px rgba(255,196,77,0.4) !important;text-transform:none !important;font-size:13px !important;transition:transform 0.1s ease,box-shadow 0.1s ease !important;} #leaveShopBtn:active{transform:translate(2px,2px) !important;box-shadow:1px 1px 0 #0b0f19 !important;}
 </style>
 </head>
 <body>
@@ -3600,9 +3601,7 @@ function dealerItemCardHTML(item, opts) {
     </div>
   </div>`;
 }
-function emptyItemSlotHTML() {
-  return `<div class="dealerCardPanel panel"><div class="emptyItemSlot">Open Slot</div></div>`;
-}
+function emptyItemSlotHTML(){return `<div class="dealerCardPanel panel"><div class="emptyItemSlot">Open Slot</div><div class="dealerMetaDivider"></div><div class="dealerMeta"></div></div>`;}
 function shopScreen(fromCastle=false) {
   if (!RUN.shopStock) RUN.shopStock = pickShopStock().map(it => it.id);
   const options = RUN.shopStock.map(id => ITEMS[id]).filter(Boolean);

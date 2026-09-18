@@ -136,50 +136,12 @@
   .popupItemRow{display:grid;grid-template-columns:repeat(auto-fill,125px);justify-content:center;gap:8px}
   .pickItemRow{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-start}
   .pickItemRow .itemCard{flex:0 0 125px;width:125px}
-  .dealerRow{display:flex;gap:12px;overflow-x:auto;padding-bottom:6px;-webkit-overflow-scrolling:touch}
-    .dealerCardPanel{
-    flex: 0 0 145px;
-    width: 145px;
-    min-width: 145px;
-    max-width: 145px;
-    margin: 0 auto;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    align-items: center;
-    padding: 8px;
-    box-sizing: border-box;
-  }
-  .dealerCardPanel .itemCard {
-    margin: 0 auto;
-    box-sizing: border-box;
-  }
-  .emptyItemSlot {
-    border: 2px dashed rgba(31, 182, 166, 0.3);
-    width: 125px;
-    height: 150px;
-    min-height: 150px;
-    max-height: 150px;
-    box-sizing: border-box;
-    display: flex;
-    align-items: flex-start;
-    justify-content: center;
-    padding-top: 16px;
-    background: transparent !important;
-    color: rgba(31, 182, 166, 0.35) !important;
-    font-size: 11px;
-    font-weight: 700;
-    margin-top: 0;
-  }
+   .dealerRow{display:flex;flex-direction:row;flex-wrap:nowrap;justify-content:flex-start;align-items:flex-start;gap:10px;overflow-x:auto;padding:8px 4px 14px;width:100%;max-width:960px;margin:0;-webkit-overflow-scrolling:touch;}
+  .dealerCardPanel{flex:0 0 145px;width:145px;min-width:145px;max-width:145px;display:flex;flex-direction:column;justify-content:flex-start;align-items:center;padding:8px;box-sizing:border-box;overflow:hidden;margin:0;}
+  .dealerCardPanel .itemCard {margin:0 auto;box-sizing:border-box;}
+  .emptyItemSlot {border:2px dashed rgba(31,182,166,0.3);width:125px;height:150px;min-height:150px;max-height:150px;box-sizing:border-box;display:flex;align-items:flex-start;justify-content:center;padding-top:16px;background:transparent !important;color:rgba(31,182,166,0.35) !important;font-size:11px;font-weight:700;margin:0 auto;margin-top:0;}
   .dealerMetaDivider{height:1px;background:rgba(31,182,166,0.2);margin:8px 0 6px;flex-shrink:0}
-  .dealerMeta{
-    width: 100%;
-    margin-top: auto;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
+  .dealerMeta{width:100%;margin-top:auto;display:flex;flex-direction:column;align-items:center;gap:4px;min-height:52px;}
   }
   .itemCard{border-radius:8px;padding:6px 4px;background:rgba(10,14,26,0.9) !important;border:1px solid rgba(31,182,166,0.2);width:125px;min-width:125px;max-width:125px;min-height:150px;height:auto;display:flex;flex-direction:column;align-items:center;text-align:center;box-sizing:border-box;font-size:12px;position:relative;transition:box-shadow .15s ease}
   .emptyItemSlot{border-radius:8px;padding:6px 4px;background:transparent !important;border:2px dashed rgba(31,182,166,0.3);width:125px;min-width:125px;max-width:125px;min-height:150px;height:auto;box-sizing:border-box;display:flex;align-items:center;justify-content:center;color:rgba(31,182,166,0.35);font-size:11px;font-weight:700}

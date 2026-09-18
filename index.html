@@ -75,6 +75,12 @@
     .matchGrid{max-width:520px !important}
     .matchGrid .card.mini{height:76px;font-size:15px}
   }
+  .matchGrid .card.mini.matchTile{width:100%;aspect-ratio:3/4;height:auto;max-width:56px;max-height:74px;margin:0 auto}
+  .matchTileJoker{font-size:10px !important;font-weight:800;letter-spacing:0.02em}
+  .joker-outline-red{outline:3px solid #e5484d !important}
+  .joker-outline-black{outline:3px solid #12163a !important}
+  .glitchWarningBanner{margin-top:10px;padding:6px 8px;border-radius:5px;background:rgba(229,72,77,0.12);border:1px solid var(--red);color:var(--red);font-weight:700;font-size:11px;text-align:center}
+  .castleBtn-exit{order:-1}
   .duelHead{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:flex-start}
   .vsMark{align-self:center}
   .duelSide{display:flex;align-items:center;gap:8px}
@@ -1302,9 +1308,9 @@ function renderStandardItemCard(item, opts = {}) {
   const {
     interactive = false, slotKey = null, cards = [], cursedAmt = null, ready = false,
     usesBadgeText = null, usesDepleted = false, cooldownLeft = 0, hypPreviewHTML = '',
-    footerHTML = null, level = 0,
+    footerHTML = null, level = 0, kindOverride = null,
   } = opts;
-  const eKind = effectiveKind(item);
+  const eKind = kindOverride || effectiveKind(item);
   const dragAttrs = interactive
     ? ` data-assign="${slotKey}" style="border-style:dashed;border-width:2px" ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleCardDrop(event,'${slotKey}',${effectiveMaxCards(item)})"`
     : ` style="cursor:default"`;
@@ -1902,6 +1908,11 @@ let MATCH_RETURN_TO_MAP = false;
 let MATCH_OVERLAY_ACTIVE = false; 
 function renderMatchOverlay() { render(MATCH_RETURN_TO_MAP ? mapScreen() : castleMenuScreen()); }
 let JOKER_GLITCH_POPUP = null; 
+function jackpotPreviewCardHTML(st) {
+  const item = ITEMS[st.matchJackpotItemId];
+  if (!item) return '<div class="note">No item available</div>';
+  return `<div style="max-width:150px;margin:6px auto 0">${renderStandardItemCard(item, {})}</div>`;
+}
 function castleMatchScreen() {
   if (!RUN.castleState) RUN.castleState = {};
   const st = RUN.castleState;
@@ -1936,16 +1947,21 @@ function castleMatchScreen() {
     );
     st.matchGuesses = 4;
     st.matchPick = [];
+    const ownedIds = new Set(RUN.hero?.items || []);
+    const jackpotPool = Object.values(ITEMS).filter(it => it.cost > 0 && !ownedIds.has(it.id));
+    st.matchJackpotItemId = jackpotPool.length ? shuffle([...jackpotPool])[0].id : 'supply_bag';
   }
-  const groupSymbol = { '♦': '♦', '♣': '♣', '♥': '♥', '♠': '♠', 'RJ': '🃏', 'BJ': '🃏' };
+  const groupSymbol = { '♦': '♦', '♣': '♣', '♥': '♥', '♠': '♠', 'RJ': 'Joker', 'BJ': 'Joker' };
   const cards = st.matchCards.map((c, i) => {
     const isRed = c.color === 'red' ? 'red' : '';
     const isClub = (c.group === '♣' && (c.flipped || c.matched)) ? 'club-card' : '';
+    const isJoker = c.group === 'RJ' || c.group === 'BJ';
+    const jokerOutline = (c.matched && c.group === 'RJ') ? 'joker-outline-red' : (c.matched && c.group === 'BJ') ? 'joker-outline-black' : '';
     const displayState = (c.flipped || c.matched) ? '' : 'back';
     const isDisabled = (c.flipped || c.matched || st.matchLock) ? 'disabled' : '';
-    return `<button class="card mini ${isRed} ${isClub} ${displayState}" data-match="${i}" ${isDisabled}>
+    return `<button class="card mini matchTile ${isRed} ${isClub} ${displayState} ${jokerOutline}" data-match="${i}" ${isDisabled}>
               <div>${(c.flipped || c.matched) ? '' : '?'}</div>
-              <div>${(c.flipped || c.matched) ? groupSymbol[c.group] : ''}</div>
+              <div class="${isJoker && (c.flipped || c.matched) ? 'matchTileJoker' : ''}">${(c.flipped || c.matched) ? groupSymbol[c.group] : ''}</div>
             </button>`;
   }).join('');
   const board = `
@@ -1955,25 +1971,25 @@ function castleMatchScreen() {
       <div class="wo-body">
         <h1>Fleet Carnival <em>Matching Game</em></h1>
         <div class="wo-sub">Attempts Left: ${st.matchGuesses}</div>
-        <div style="display:grid; grid-template-columns:minmax(0,1fr) minmax(150px,190px); gap:16px; align-items:start" class="matchLayout">
-          <div style="display:grid; grid-template-columns:repeat(6, 1fr); gap:6px; max-width:320px; margin:0 auto" class="matchGrid">
-            ${cards}
-          </div>
+        <div class="matchGrid" style="display:grid; grid-template-columns:repeat(6, 1fr); gap:6px; max-width:340px; margin:0 auto">
+          ${cards}
+        </div>
+        <div class="matchBottomGrid" style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:16px; align-items:start">
           <div class="panel" style="margin:0">
-            <div class="hdr" style="margin-bottom:6px"><span>Pair Loot Index</span></div>
-            <div style="display:flex;flex-direction:column;gap:5px;font-size:12px">
-              <div>[♦] - 20 coins</div>
-              <div>[♣] - 1 gem</div>
-              <div>[♥] - 20 health</div>
-              <div>[♠] - 4 energy</div>
-              <div style="color:var(--red);font-size:15px">[🃏 RJ] - 3 gems</div>
-              <div>[BJ] - 50 career points</div>
+            <div class="hdr" style="margin-bottom:6px;justify-content:center">[ Pair Rewards ]</div>
+            <div class="pairRewardsGrid" style="display:grid; grid-template-columns:1fr 1fr; grid-template-rows:repeat(3,auto); gap:5px;font-size:12px">
+              <div>[♦] 20 coins</div>
+              <div>[♣] 1 gem</div>
+              <div>[♥] 20 health</div>
+              <div>[♠] 4 energy</div>
+              <div style="color:var(--red)">[Red Joker] 3 gems</div>
+              <div>[Black Joker] 50 Career Points</div>
             </div>
-            <div class="note" style="margin-top:10px;color:var(--red);font-weight:700">⚠️ WARNING: Flipping a Red Joker and a Black Joker together triggers an instant CRITICAL GLITCH board reset!</div>
-            <div class="panel" style="margin-top:10px;text-align:center">
-              <div class="hdr" style="justify-content:center">Clear Board</div>
-              <div class="note">${ICON.stash || '📦'} Weightless Stash Card</div>
-            </div>
+          </div>
+          <div class="panel" style="margin:0;text-align:center">
+            <div class="hdr" style="justify-content:center">Jackpot Preview</div>
+            ${jackpotPreviewCardHTML(st)}
+            <div class="glitchWarningBanner">⚠️ Glitch Warning: Flipping a Red Joker and a Black Joker together resets the board.</div>
           </div>
         </div>
         <button class="wo-btn gray" id="leaveMatchBtn" style="width:100%;margin-top:14px">Back to Compound Menu</button>
@@ -1997,11 +2013,11 @@ function pickBlacksmithOptions() {
   const r1 = 2 + Math.floor(Math.random() * 13);
   const r2 = 2 + Math.floor(Math.random() * 13);
   const su3 = SUITS[Math.floor(Math.random() * SUITS.length)];
-  return shuffle([
+  return [
     { scope: 'card', rank: r1, suit: su1.s, label: `${rankLabel(r1)}${su1.s}`, desc: `Just this one card.` },
     { scope: 'rank', rank: r2, label: `Every ${rankLabel(r2)}`, desc: `Any ${rankLabel(r2)} you draw, any suit.` },
     { scope: 'suit', suit: su3.s, label: `Every ${su3.s}`, desc: `Any card of that suit you draw.` },
-  ]);
+  ].sort((a, b) => SCOPE_TUNE_COST[a.scope] - SCOPE_TUNE_COST[b.scope]);
 }
 function findBoost(opt) { return RUN.cardBoosts.find(b => b.scope === opt.scope && b.rank === opt.rank && b.suit === opt.suit); }
 function boostCard(opt) {
@@ -3675,12 +3691,18 @@ function blacksmithScreen() {
     if (lvlCap <= 0) return '';
     const lvl = itemLevel(id), maxed = lvl >= lvlCap;
     const cost = maxed ? 0 : itemTuneCost(item, lvl);
-    return `<div class="shopcard" style="display:flex;align-items:center;justify-content:space-between;gap:8px">
-      <span><b>${item.name}</b> <span class="note" style="margin:0">Bonus Lv ${lvl}/${lvlCap}</span></span>
-      <span style="display:flex;gap:6px;align-items:center">
-        ${lvl > 0 ? `<button class="wo-btn gray" data-bonusdown="${id}" style="padding:4px 8px;font-size:11px">Refund</button>` : ''}
-        ${maxed ? `<span class="note" style="margin:0">Maxed</span>` : `<button class="wo-btn amber" data-bonusup="${id}" style="padding:4px 8px;font-size:11px" ${RUN.chips < cost ? 'disabled' : ''}>Level Up (${cost})</button>`}
-      </span>
+    const before = renderStandardItemCard(item, { level: lvl });
+    const after = maxed ? before : renderStandardItemCard(item, { level: lvl + 1 });
+    return `<div class="shopcard">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:14px">
+        <div>${before}</div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0">
+          <span style="font-size:22px;color:var(--amber)">➔</span>
+          ${lvl > 0 ? `<button class="wo-btn gray" data-bonusdown="${id}" style="padding:4px 8px;font-size:11px">Refund</button>` : ''}
+          ${maxed ? `<span class="note" style="margin:0">Maxed</span>` : `<button class="wo-btn amber" data-bonusup="${id}" style="padding:4px 8px;font-size:11px" ${RUN.chips < cost ? 'disabled' : ''}>Level Up (${cost})</button>`}
+        </div>
+        <div>${after}</div>
+      </div>
     </div>`;
   }).filter(Boolean).join('');
   const visitNote = BLACKSMITH_VISIT.primary === null
@@ -3698,8 +3720,9 @@ function blacksmithScreen() {
           <button class="wo-btn teal" id="leaveBlacksmithBtn" style="flex:1">${RETURN_TO_CASTLE_MENU ? 'Back to Compound' : roadExitLabel()}</button>
           <button class="wo-btn purple" id="openRunUpgradeFromBlacksmithBtn" style="flex:1">Upgrades</button>
         </div>
+        <div class="hdr"><span>[ Card Tuning Upgrades ]</span></div>
         <div style="margin:12px 0">${rows}</div>
-        <div class="hdr" style="margin-top:14px"><span>Equipped Items - Bonus Level</span></div>
+        <div class="hdr" style="margin-top:14px"><span>[ Fleet Equipment Tuning ]</span></div>
         <div style="margin-top:8px">${equippedChecklist || '<div class="note">No items with a Bonus Level track equipped.</div>'}</div>
       </div>
     </div>
@@ -3879,10 +3902,11 @@ function upgradeScreen() {
 * OVERDRIVE BAY                                                            *
 ****************************************************************************/
 function overdriveBayScreen() {
-  const holoCompareBlock = (beforeHTML, afterHTML, cost) => `<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center;margin:8px 0">
+  const holoCompareBlock = (beforeHTML, afterHTML, cost, cta) => `<div style="display:flex;align-items:center;gap:16px;justify-content:space-between;margin:10px 0">
       <div>${beforeHTML}</div>
-      <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
-        <span style="color:#00e676;font-weight:800;font-size:13px;white-space:nowrap">Upgrade ➔</span>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0">
+        <span style="font-size:28px;color:var(--amber);line-height:1">➔</span>
+        ${cta}
         <span class="price" style="white-space:nowrap">${cost} coins</span>
       </div>
       <div>${afterHTML}</div>
@@ -3892,16 +3916,19 @@ function overdriveBayScreen() {
     const item = ITEMS[id];
     const usesLvl = itemUsesLevel(id), usesMaxed = usesLvl >= ITEM_MAX_USES_LEVEL;
     const usesCost = usesMaxed ? 0 : itemUsesTuneCost(usesLvl);
-    const before = renderStandardItemCard(item, {});
+    const usesNow = itemUsesCap(item, usesLvl);
+    const before = renderStandardItemCard(item, { usesBadgeText: `${usesNow}` });
     let after = before;
-    if (!usesMaxed) { RUN.itemUsesLevels[id] = usesLvl + 1; after = renderStandardItemCard(item, {}); RUN.itemUsesLevels[id] = usesLvl; }
-    return `<div class="shopcard">
-      <div class="hdr"><span>${item.name}</span><span>Uses Per Turn (Lv ${usesLvl}/${ITEM_MAX_USES_LEVEL})</span></div>
-      ${holoCompareBlock(before, after, usesMaxed ? 'MAX' : usesCost)}
-      <div style="display:flex;justify-content:center;gap:6px">
-        ${usesLvl > 0 ? `<button class="wo-btn gray" data-usesdown="${id}" style="padding:6px 10px;font-size:12px">Refund</button>` : ''}
-        ${usesMaxed ? '' : `<button class="wo-btn amber" data-usesup="${id}" style="padding:6px 10px;font-size:12px" ${RUN.chips < usesCost ? 'disabled' : ''}>+1 Use Per Turn</button>`}
-      </div>
+    if (!usesMaxed) {
+      RUN.itemUsesLevels[id] = usesLvl + 1;
+      after = renderStandardItemCard(item, { usesBadgeText: `${itemUsesCap(item, usesLvl + 1)}` });
+      RUN.itemUsesLevels[id] = usesLvl;
+    }
+    const cta = usesMaxed ? `<span class="note">Maxed</span>` : `<button class="wo-btn amber" data-usesup="${id}" style="padding:6px 10px;font-size:12px;white-space:nowrap" ${RUN.chips < usesCost ? 'disabled' : ''}>[ +1 Use Per Turn ]</button>`;
+    return `<div class="shopcard" style="padding:14px">
+      <div class="hdr" style="justify-content:center"><span>${item.name}</span></div>
+      ${holoCompareBlock(before, after, usesMaxed ? '—' : usesCost, cta)}
+      ${usesLvl > 0 ? `<div style="text-align:center"><button class="wo-btn gray" data-usesdown="${id}" style="padding:6px 10px;font-size:12px">Refund</button></div>` : ''}
     </div>`;
   }).join('');
   return `${noticeHTML()}<div class="wo"><div class="wo-stripe"></div><div class="wo-body">
@@ -3920,21 +3947,18 @@ function overdriveBayScreen() {
 function chopShopScreen(returnTo) {
   const rows = RUN.hero.items.map((itemId,index)=>{
     const item=ITEMS[itemId]; if(!item) return '';
+    if (item.kind === 'storage') return '';
     const instanceKey=`${itemId}_${index}`; const current=RUN.itemKindOverride[instanceKey] || RUN.itemKindOverride[itemId];
     const alreadyModified=!!current;
     const original = renderStandardItemCard(item, {});
     const convertCost = itemKindConvertCost();
 
     let convertBlockHTML;
-    if (item.kind === 'storage') {
-      convertBlockHTML = `<div class="note" style="text-align:center;width:100%">Stash Items can't be converted to an element.</div>`;
-    } else if (alreadyModified) {
+    if (alreadyModified) {
       convertBlockHTML = `<div class="note" style="text-align:center;width:100%">Already modified to <b>${current}</b>. No further modification this run.</div>`;
     } else {
       const previewCols = ['poison','burn','curse'].map(k => {
-        RUN.itemKindOverride[instanceKey] = k;
-        const previewCard = renderStandardItemCard(item, {});
-        delete RUN.itemKindOverride[instanceKey];
+        const previewCard = renderStandardItemCard(item, { kindOverride: k });
         return `<div style="display:flex;flex-direction:column;align-items:center;gap:4px">
           ${previewCard}
           <button class="wo-btn ${k==='poison'?'green':k==='burn'?'red':'purple'}" data-kindconvert="${itemId}" data-item-index="${index}" data-kindto="${k}" style="padding:6px 10px;font-size:11px" ${RUN.chips<convertCost?'disabled':''}>Convert to ${k[0].toUpperCase()+k.slice(1)}</button>
@@ -3944,34 +3968,12 @@ function chopShopScreen(returnTo) {
       convertBlockHTML = `<div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">${previewCols}</div>`;
     }
 
-    let capacityHTML = '';
-    if (item.kind !== 'storage') {
-      const capLvl = itemMaxCardsLevel(itemId), capMaxed = capLvl >= ITEM_MAX_CARDS_BONUS_CAP;
-      const capCost = capMaxed ? 0 : itemMaxCardsTuneCost(capLvl);
-      let capAfterHTML = original;
-      if (!capMaxed) { RUN.itemMaxCardsLevels[itemId] = capLvl + 1; capAfterHTML = renderStandardItemCard(item, {}); RUN.itemMaxCardsLevels[itemId] = capLvl; }
-      capacityHTML = `<div style="margin-top:10px">
-        <div class="hdr" style="justify-content:center"><span>Card Capacity (Lv ${capLvl}/${ITEM_MAX_CARDS_BONUS_CAP})</span></div>
-        <div style="display:flex;align-items:center;gap:10px;justify-content:center;margin-top:6px">
-          ${original}
-          <span style="font-size:18px;color:var(--dim)">➔</span>
-          ${capAfterHTML}
-        </div>
-        <div style="text-align:center;margin-top:6px">
-          ${capLvl > 0 ? `<button class="wo-btn gray" data-cardsdown="${itemId}" style="padding:5px 10px;font-size:11px;margin-right:6px">Refund</button>` : ''}
-          ${capMaxed ? `<span class="note">Maxed</span>` : `<button class="wo-btn amber" data-cardsup="${itemId}" style="padding:5px 10px;font-size:11px" ${RUN.chips<capCost?'disabled':''}>+1 Capacity (${capCost} coins)</button>`}
-        </div>
-      </div>`;
-    }
-
     return `<div class="shopcard">
-      <div class="hdr"><span>${item.name}</span><span>Item ${index+1}</span></div>
       <div style="display:flex;align-items:center;gap:12px;justify-content:center;flex-wrap:wrap;margin:8px 0">
         ${original}
-        ${item.kind !== 'storage' ? `<span style="font-size:20px;color:var(--dim)">➔</span>` : ''}
+        <span style="font-size:20px;color:var(--dim)">➔</span>
         ${convertBlockHTML}
       </div>
-      ${capacityHTML}
     </div>`;
   }).join('');
   const utilityRows = RUN.hero.items.map((id,i) => {
@@ -4396,8 +4398,9 @@ function render(html) {
 
           const boardCleared = st.matchCards.every(c => c.matched);
           if (boardCleared) {
-            RUN.hero.items.push('supply_bag');
-            const clearLabel = 'Card Stash added to your Fleet';
+            const jackpotItem = ITEMS[st.matchJackpotItemId] || ITEMS['supply_bag'];
+            RUN.hero.items.push(jackpotItem.id);
+            const clearLabel = `${jackpotItem.name} added to your Fleet`;
             saveRun();
             MATCH_POPUP = { suitLabel: 'Board', rewardLabel: clearLabel, boardCleared: true, jackpot: true };
           } else {

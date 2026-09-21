@@ -3147,38 +3147,41 @@ function mapScreen() {
   }
 
   let nodesHTML='';
-    const NODE_ICON={shop:ICON.cart,rest:ICON.wrench,blacksmith:ICON.hammer,chopshop:ICON.curse,overdrive:ICON.energy,treasure:ICON.gift,castle:ICON.castle,match_hazard:'🃏'};
-    const NODE_TITLE={shop:'Dealership',rest:'Service Station',blacksmith:'Tuning Garage',chopshop:'Chop Shop',overdrive:'Overdrive Bay',treasure:'Supply Cache',castle:'Fleet Compound',match_hazard:'Grid Anomaly'};
-      for(let r=0;r<rows.length;r++) for(let c=0;c<rows[r].length;c++){
-    const node=rows[r][c], x=25+r*colW+colW/2, y=rowY[Math.min(c,rowY.length-1)];
-    const isDone=RUN.path.some(p=>p.row===r&&p.col===c);
-    const isCurrent=r===RUN.currentRow&&c===RUN.currentCol;
-    const isAvail=avail.some(n=>n.row===r&&n.col===c);
-    const isBoss=r===rows.length-1;
-    const withinSight=r<=RUN.currentRow+visibleRange;
-    const showReal=isBoss||isDone||isAvail||withinSight;
-    const cls=isCurrent?'current':isDone?'done':isAvail?'avail':withinSight?'future':'farfuture';
-    const icon=!showReal?`<span class="vart" style="width:19px;height:19px;font-size:19px">${ICON.fog}</span>`:(node.type==='battle'?art(node.opponent,19):`<span class="vart" style="width:19px;height:19px;font-size:19px">${NODE_ICON[node.type]}</span>`);
-    const title=!showReal?'Unscouted':(node.type==='battle'?node.opponent.name:NODE_TITLE[node.type]);
-    let tip;
-    if(!showReal) tip='Move closer to scout this stop.';
-    else if(node.type==='battle'){
-      const o=node.opponent;
-      tip=`HP: ${o.hp}<br>${tierNeedTextForOpponent(o)} needed to attack${o.boss?'<br><b>World Boss</b>':''}${node.gridStorm?'<br><b style="color:var(--red)">Grid Storm: purges your hand at end of turn</b>':''}`;
-    } else if(node.type==='shop') tip='Dealership - buy and sell Items.';
-    else if(node.type==='rest') tip='Restore 30 health.';
-    else if(node.type==='blacksmith') tip='Spend coins to permanently boost a card, rank, or suit for this run.';
-    else if(node.type==='chopshop') tip='Spend coins to convert an Item to poison, burn, or curse, or add card slots.';
-    else if(node.type==='overdrive') tip='Spend coins to add uses per turn to your equipped Items.';
-    else if(node.type==='castle') tip='Choose battles, shopping, refueling, a matching game, or other rewards.';
-    else if(node.type==='match_hazard') tip='Grid Anomaly Detected: Tap to hack the Carnival Board for extra fleet gear.';
-    else tip='Find coins, fuel, and gems.';
+  const NODE_ICON={shop:ICON.cart,rest:ICON.wrench,blacksmith:ICON.hammer,chopshop:ICON.curse,overdrive:ICON.energy,treasure:ICON.gift,castle:ICON.castle,match_hazard:'🃏'};
+  const NODE_TITLE={shop:'Dealership',rest:'Service Station',blacksmith:'Tuning Garage',chopshop:'Chop Shop',overdrive:'Overdrive Bay',treasure:'Supply Cache',castle:'Fleet Compound',match_hazard:'Grid Anomaly'};
+  
+  for(let r=0;r<rows.length;r++) {
+    for(let c=0;c<rows[r].length;c++) {
+      const node=rows[r][c], x=25+r*colW+colW/2, y=rowY[Math.min(c,rowY.length-1)];
+      const isDone=RUN.path.some(p=>p.row===r&&p.col===c);
+      const isCurrent=r===RUN.currentRow&&c===RUN.currentCol;
+      const isAvail=avail.some(n=>n.row===r&&n.col===c);
+      const isBoss=r===rows.length-1;
+      const withinSight=r<=RUN.currentRow+visibleRange;
+      const showReal=isBoss||isDone||isAvail||withinSight;
+      const cls=isCurrent?'current':isDone?'done':isAvail?'avail':withinSight?'future':'farfuture';
+      const icon=!showReal?`<span class="vart" style="width:19px;height:19px;font-size:19px">${ICON.fog}</span>`:(node.type==='battle'?art(node.opponent,19):`<span class="vart" style="width:19px;height:19px;font-size:19px">${NODE_ICON[node.type]}</span>`);
+      const title=!showReal?'Unscouted':(node.type==='battle'?node.opponent.name:NODE_TITLE[node.type]);
+      let tip;
+      if(!showReal) tip='Move closer to scout this stop.';
+      else if(node.type==='battle'){
+        const o=node.opponent;
+        tip=`HP: ${o.hp}<br>${tierNeedTextForOpponent(o)} needed to attack${o.boss?'<br><b>World Boss</b>':''}${node.gridStorm?'<br><b style="color:var(--red)">Grid Storm: purges your hand at end of turn</b>':''}`;
+      } else if(node.type==='shop') tip='Dealership - buy and sell Items.';
+      else if(node.type==='rest') tip='Restore 30 health.';
+      else if(node.type==='blacksmith') tip='Spend coins to permanently boost a card, rank, or suit for this run.';
+      else if(node.type==='chopshop') tip='Spend coins to convert an Item to poison, burn, or curse, or add card slots.';
+      else if(node.type==='overdrive') tip='Spend coins to add uses per turn to your equipped Items.';
+      else if(node.type==='castle') tip='Choose battles, shopping, refueling, a matching game, or other rewards.';
+      else if(node.type==='match_hazard') tip='Grid Anomaly Detected: Tap to hack the Carnival Board for extra fleet gear.';
+      else tip='Find coins, fuel, and gems.';
 
-        nodesHTML+=`<div class="mapnode-wrap ${isBoss?'bossnode ':''}${c===0?'toprow':c===1?'midrow':'bottomrow'}" style="left:${(x/totalW*100)}%;top:${y}px">
-      ${isCurrent?'<div class="hereTag">You Are Here</div>':''}
-      <button class="mapnode ${cls} type-${node.type}" ${showReal?`data-nodeinfo="r:{c}"`:''} ${showReal?'':'disabled'}>${icon}</button>
-      <div class="tooltip"><b>${title}</b>${isCurrent?' <span style="color:var(--amber)">(current)</span>':''}<br>${tip}</div>
-    </div>`;
+      nodesHTML+=`<div class="mapnode-wrap ${isBoss?'bossnode ':''}${c===0?'toprow':c===1?'midrow':'bottomrow'}" style="left:${(x/totalW*100)}%;top:${y}px">
+        ${isCurrent?'<div class="hereTag">You Are Here</div>':''}
+        <button class="mapnode ${cls} type-${node.type}" ${showReal?`data-nodeinfo="r:{c}"`:''} ${showReal?'':'disabled'}>${icon}</button>
+        <div class="tooltip"><b>${title}</b>${isCurrent?' <span style="color:var(--amber)">(current)</span>':''}<br>${tip}</div>
+      </div>`;
+    }
   }
 
   return `<div id="map-viewport">${noticeHTML()}<div class="panel">${currencyBar()}</div><div class="panel"><div class="mapwrap" style="width:100%;height:${totalH}px;overflow-x:auto;overflow-y:hidden;position:relative"><div style="position:relative;width:${totalW}px;height:${totalH}px"><div class="regionTitlePinned">${WORLD_NAMES[RUN.world] || WORLD_NAMES[1]}</div><svg width="${totalW}" height="${totalH}" viewBox="0 0 ${totalW} ${totalH}" style="position:absolute;left:0;top:0;pointer-events:none">${svgLines}</svg>${nodesHTML}${(() => { const parsedName = String(META.playerName || 'Commander').trim().replace(/\w\S*/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()); return (RUN.currentRow === -1 && !RUN.onboardingDismissed) ? `<div class="floating-tutorial-card"><div class="wo-eyebrow">Fleet Onboarding</div><h3>Welcome, \${parsedName}!</h3><p>Click the node to the left to start your journey.</p></div>` : ''; })()}</div>${MAP_POPUP ? nodePopupScreen(MAP_POPUP.row, MAP_POPUP.col) : ''}${TREASURE_POPUP ? treasureScreen(TREASURE_POPUP) : ''}${GARAGE_POPUP ? garageScreen(GARAGE_MESSAGE) : ''}${MATCH_OVERLAY_ACTIVE ? castleMatchScreen() : ''}</div></div></div>`;

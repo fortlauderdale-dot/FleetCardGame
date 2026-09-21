@@ -4701,6 +4701,7 @@ window.renderCombatTrainingStep = function(step) {
 (function boot() {
   const savedBattle = loadBattleSave();
   const savedRun = loadRunSave();
+  if (savedBattle && savedRun) {
     RUN = savedRun;
     BATTLE = savedBattle;
     IN_BATTLE = true;
@@ -4709,6 +4710,3 @@ window.renderCombatTrainingStep = function(step) {
   }
   render(metaScreen());
 })();
-</script>
-</body>
-</html>

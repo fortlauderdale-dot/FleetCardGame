@@ -213,7 +213,7 @@
   .mapnode.avail{background:var(--white);border-color:var(--amber);box-shadow:0 0 0 5px #1fb6a633;cursor:pointer}
   .mapnode.done{background:var(--green);border-color:var(--green);color:#fff;cursor:default}
   .mapnode.current{background:var(--blue);border-color:var(--blue-dark);color:#fff;cursor:default;box-shadow:0 0 0 5px #4a5fc755;animation:herePulse 1.4s ease-in-out infinite}
-    @keyframes herePulse{0%,100%{box-shadow:0 0 0 4px #4a5fc755}50%{box-shadow:0 0 0 9px #4a5fc722}}
+  @keyframes herePulse{0%,100%{box-shadow:0 0 0 4px #4a5fc755}50%{box-shadow:0 0 0 9px #4a5fc722}}
   .mapnode.world3boss{animation:world3BossGlow 1.3s ease-in-out infinite;border-color:#ff5c1a}
   @keyframes world3BossGlow{0%,100%{box-shadow:0 0 10px 4px rgba(255,90,40,0.55)}50%{box-shadow:0 0 26px 10px rgba(255,140,60,0.95)}}
   .hereTag{position:absolute;left:50%;bottom:calc(100% + 4px);transform:translateX(-50%);white-space:nowrap;
@@ -1637,7 +1637,7 @@ function generateMap() {
     }
     nodes.push(row);
   }
-    nodes[0][0].type='battle';
+  nodes[0][0].type='battle';
   nodes[1].forEach(n=>n.type='battle');
   nodes[2][0]={type:'shop'};
   nodes[castleRow][castleCol]={type:'castle'};
@@ -1661,7 +1661,7 @@ function generateMap() {
       nodes[r][c]={type:t};
     }
   });
-    const bossTemplate = isWorld3 ? BOSS_WORLD3 : BOSS;
+  const bossTemplate = isWorld3 ? BOSS_WORLD3 : BOSS;
   nodes.push([{type:'battle', opponent: scaleMonsterForNewWorld(bossTemplate, worldMultiplier * 1.3, 6)}]);
   for(let r=0;r<nodes.length-1;r++){
     const cur=nodes[r], next=nodes[r+1];
@@ -1807,7 +1807,7 @@ function selectNode(row, col) {
     if (!node.big && Math.random() < 0.15) { TREASURE_POPUP = { choice: true }; playSfx('open'); render(mapScreen()); }
     else { const found = rollTreasure(node.big); playSfx('open'); TREASURE_POPUP = found; render(mapScreen()); }
   }
-    else if (node.type === 'match_hazard') {
+  else if (node.type === 'match_hazard') {
     resetCarnivalMatchState();
     MATCH_RETURN_TO_MAP = true;
     MATCH_OVERLAY_ACTIVE = true;
@@ -3211,7 +3211,7 @@ function mapScreen() {
       const isBoss=r===rows.length-1;
       const withinSight=r<=RUN.currentRow+visibleRange;
       const showReal=isBoss||isDone||isAvail||withinSight;
-            const isWorld3BossNode = isBoss && RUN.world === 3;
+      const isWorld3BossNode = isBoss && RUN.world === 3;
       const cls=(isCurrent?'current':isDone?'done':isAvail?'avail':withinSight?'future':'farfuture')+(isWorld3BossNode?' world3boss':'');
       const icon=!showReal?`<span class="vart" style="width:19px;height:19px;font-size:19px">${ICON.fog}</span>`:(node.type==='battle'?art(node.opponent,19):`<span class="vart" style="width:19px;height:19px;font-size:19px">${NODE_ICON[node.type]}</span>`);
       const title=!showReal?'Unscouted':(node.type==='battle'?node.opponent.name:NODE_TITLE[node.type]);
@@ -3231,12 +3231,12 @@ function mapScreen() {
 
       nodesHTML+=`<div class="mapnode-wrap ${isBoss?'bossnode ':''}${c===0?'toprow':c===1?'midrow':'bottomrow'}" style="left:${(x/totalW*100)}%;top:${y}px">
         ${isCurrent?'<div class="hereTag">You Are Here</div>':''}
-        <button class="mapnode ${cls} type-${node.type}" ${showReal?`data-nodeinfo="r:{c}"`:''} ${showReal?'':'disabled'}>${icon}</button>
+        <button class="mapnode ${cls} type-${node.type}" ${showReal?`data-nodeinfo="${r}:${c}"`:''} ${showReal?'':'disabled'}>${icon}</button>
         <div class="tooltip"><b>${title}</b>${isCurrent?' <span style="color:var(--amber)">(current)</span>':''}<br>${tip}</div>
       </div>`;
     }
   }
-  return `<div id="map-viewport">${noticeHTML()}<div class="panel">${currencyBar()}</div><div class="panel"><div class="mapwrap" style="width:100%;height:${totalH}px;overflow-x:auto;overflow-y:hidden;position:relative"><div style="position:relative;width:${totalW}px;height:${totalH}px"><div class="regionTitlePinned">${WORLD_NAMES[RUN.world] || WORLD_NAMES}</div><svg width="${totalW}" height="${totalH}" viewBox="0 0 ${totalW} ${totalH}" style="position:absolute;left:0;top:0;pointer-events:none">${svgLines}</svg>${nodesHTML}${(() => { const parsedName = String(META.playerName || 'Commander').trim().replace(/\w\S*/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()); return (RUN.currentRow === -1 && !RUN.onboardingDismissed) ? `<div class="floating-tutorial-card"><div class="wo-eyebrow">Fleet Onboarding</div><h3>Welcome, \${parsedName}!</h3><p>Click the node to the left to start your journey.</p></div>` : ''; })()}</div>${MAP_POPUP ? nodePopupScreen(MAP_POPUP.row, MAP_POPUP.col) : ''}${TREASURE_POPUP ? treasureScreen(TREASURE_POPUP) : ''}${GARAGE_POPUP ? garageScreen(GARAGE_MESSAGE) : ''}${MATCH_OVERLAY_ACTIVE ? castleMatchScreen() : ''}${WORLD3_BOSS_WARNING_POPUP ? world3BossWarningScreen() : ''}</div></div></div>`;
+  return `<div id="map-viewport">${noticeHTML()}<div class="panel">${currencyBar()}</div><div class="panel"><div class="mapwrap" style="width:100%;height:${totalH}px;overflow-x:auto;overflow-y:hidden;position:relative"><div style="position:relative;width:${totalW}px;height:${totalH}px"><div class="regionTitlePinned">${WORLD_NAMES[RUN.world] || WORLD_NAMES}</div><svg width="${totalW}" height="${totalH}" viewBox="0 0 ${totalW} ${totalH}" style="position:absolute;left:0;top:0;pointer-events:none">${svgLines}</svg>${nodesHTML}${(() => { const parsedName = String(META.playerName || 'Commander').trim().replace(/\w\S*/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()); return (RUN.currentRow === -1 && !RUN.onboardingDismissed) ? `<div class="floating-tutorial-card"><div class="wo-eyebrow">Fleet Onboarding</div><h3>Welcome, ${parsedName}!</h3><p>Click the node to the left to start your journey.</p></div>` : ''; })()}</div>${MAP_POPUP ? nodePopupScreen(MAP_POPUP.row, MAP_POPUP.col) : ''}${TREASURE_POPUP ? treasureScreen(TREASURE_POPUP) : ''}${GARAGE_POPUP ? garageScreen(GARAGE_MESSAGE) : ''}${MATCH_OVERLAY_ACTIVE ? castleMatchScreen() : ''}${WORLD3_BOSS_WARNING_POPUP ? world3BossWarningScreen() : ''}</div></div></div>`;
 }
 /* ========== RUN-SCOPED UPGRADES (paid with coins, last only for this run) ========== */
 const MAX_ITEM_CAP = 9; 
@@ -4158,7 +4158,7 @@ function render(html) {
     const won = continueBtn.parentElement.querySelector('.wo-eyebrow').textContent.includes('Won');
     if (won) {
       commitNode(BATTLE.row, BATTLE.col);
-            if (RUN.pendingWorldWin) {
+      if (RUN.pendingWorldWin) {
         RUN.pendingWorldWin = false;
         if (RUN.world === 1) { RUN.pendingNextWorld = 2; render(worldCompleteScreen(1, 2)); }
         else if (RUN.world === 2) { META.world2Cleared = true; saveMeta(); RUN.pendingNextWorld = 3; render(worldCompleteScreen(2, 3)); }
@@ -4168,7 +4168,7 @@ function render(html) {
     }
     else endRun(false);
   };
-    const advanceWorldBtn = document.getElementById('advanceWorldBtn');
+  const advanceWorldBtn = document.getElementById('advanceWorldBtn');
   if (advanceWorldBtn) advanceWorldBtn.onclick = () => {
     RUN.world = RUN.pendingNextWorld || 2;
     RUN.worldMultiplier = RUN.world === 3 ? 1.50 : RUN.world === 4 ? 1.75 : 1.25;
@@ -4635,11 +4635,10 @@ function render(html) {
     if (!BATTLE.pendingTarget) return;
     if (BATTLE.pendingTarget.type === 'burn') chooseBurnTarget(k); else chooseCurseTarget(k);
   });
-    const cancelTargetBtn = document.getElementById('cancelPendingTargetBtn'); if (cancelTargetBtn) cancelTargetBtn.onclick = () => cancelPendingTarget();
+  const cancelTargetBtn = document.getElementById('cancelPendingTargetBtn'); if (cancelTargetBtn) cancelTargetBtn.onclick = () => cancelPendingTarget();
   const world3BossConfirmBtn = document.getElementById('world3BossConfirmBtn'); if (world3BossConfirmBtn) world3BossConfirmBtn.onclick = () => confirmWorld3BossBattle();
   const world3BossCancelBtn = document.getElementById('world3BossCancelBtn'); if (world3BossCancelBtn) world3BossCancelBtn.onclick = () => cancelWorld3BossBattle();
   bindDev();
-}
 }
 function itemIdFromKey(k) { return String(k).replace(/_\d+$/, ''); }
 function runSummaryScreen() {
@@ -4784,5 +4783,6 @@ window.renderCombatTrainingStep = function(step) {
   }
   render(metaScreen());
 })();
-
-  
+</script>
+</body>
+</html>

@@ -200,8 +200,8 @@
   .kv{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px dashed var(--blue-light);font-family:var(--mono);font-size:12.5px}
   .kv b{color:var(--blue)}
   .price{color:var(--amber);font-weight:700}
-    #map-viewport .mapwrap{position:relative;margin:0 auto;overflow-x:auto;overflow-y:visible;background:linear-gradient(0deg,rgba(31,182,166,0.05) 1px,transparent 1px) 0 0/100% 32px,linear-gradient(90deg,rgba(31,182,166,0.05) 1px,transparent 1px) 0 0/32px 100%,#0b0f19;border:2px solid #1a2038;border-radius:12px;padding:50px 10px 12px;} .regionTitlePinned{position:absolute;top:14px;left:0;right:0;text-align:center;font-family:var(--disp);font-weight:700;font-size:20px;color:#1fb6a6;text-shadow:0 2px 0 #0b0f19;z-index:10;letter-spacing:0.02em;text-transform:none;} .mapnode-wrap{position:absolute;transform:translate(-50%,-50%);z-index:1;} .mapnode-wrap:hover{z-index:80;} .mapnode-wrap:hover .tooltip{display:block;} .mapnode-wrap .tooltip{top:120%;bottom:auto;} #map-viewport .mapnode.current{animation:singleNodePulse 1.4s ease-in-out infinite !important;} @keyframes singleNodePulse{0%,100%{box-shadow:0 0 0 4px rgba(0,245,212,0.3),inset 0 0 8px rgba(0,245,212,0.2);border-color:var(--energy);}50%{box-shadow:0 0 20px 6px rgba(0,245,212,0.6),inset 0 0 14px rgba(0,245,212,0.4);border-color:#ffffff;}} #map-viewport .mapnode.avail{animation:none !important;border:3px solid var(--green) !important;background:#ffffff !important;color:var(--green) !important;box-shadow:0 0 12px rgba(47,174,102,0.45) !important;}
-  @keyframes mapNodeWiggle{0%,100%{transform:translateX(-2px) rotate(-4deg)}50%{transform:translateX(2px) rotate(4deg)}}
+      #map-viewport .mapwrap{position:relative;margin:0 auto;overflow-x:auto;overflow-y:visible;border:2px solid #1a2038;border-radius:12px;padding:50px 10px 12px;} .regionTitlePinned{position:absolute;top:14px;left:0;right:0;text-align:center;font-family:var(--disp);font-weight:700;font-size:20px;color:#1fb6a6;text-shadow:0 2px 0 #0b0f19;z-index:10;letter-spacing:0.02em;text-transform:none;} .mapnode-wrap{position:absolute;transform:translate(-50%,-50%);z-index:1;} .mapnode-wrap:hover{z-index:80;} .mapnode-wrap:hover .tooltip{display:block;} .mapnode-wrap .tooltip{top:120%;bottom:auto;} #map-viewport .mapnode.current{animation:singleNodePulse 1.4s ease-in-out infinite !important;} @keyframes singleNodePulse{0%,100%{box-shadow:0 0 0 4px rgba(0,245,212,0.3),inset 0 0 8px rgba(0,245,212,0.2);border-color:var(--energy);}50%{box-shadow:0 0 20px 6px rgba(0,245,212,0.6),inset 0 0 14px rgba(0,245,212,0.4);border-color:#ffffff;}} #map-viewport .mapnode.avail{animation:none !important;border:3px solid var(--green) !important;background:#ffffff !important;color:var(--green) !important;box-shadow:0 0 12px rgba(47,174,102,0.45) !important;} .floating-tutorial-card{position:absolute;z-index:1000;background:var(--white);border:2px dashed var(--amber);border-radius:8px;padding:12px;max-width:260px;box-shadow:3px 3px 0 var(--blue-dark),0 0 14px rgba(31,182,166,0.35);font-size:12px;line-height:1.4;left:185px;top:70px;} .floating-tutorial-card .wo-eyebrow{color:var(--energy);font-size:10px;font-weight:600;margin-bottom:4px;} .floating-tutorial-card h3{font-size:15px;margin:0 0 4px 0;color:#ffffff;} .floating-tutorial-card p{margin:0;}
+ @keyframes mapNodeWiggle{0%,100%{transform:translateX(-2px) rotate(-4deg)}50%{transform:translateX(2px) rotate(4deg)}}
   .mapnode.type-match_hazard{animation:mapNodeWiggle 1.8s ease-in-out infinite}
   .tooltip{display:none;position:absolute;bottom:120%;left:50%;transform:translateX(-50%);z-index:90;
     background:#000000 !important;color:#ffffff !important;font-family:var(--mono);font-size:10.5px;line-height:1.5;
@@ -1780,6 +1780,7 @@ function payTravelCost() {
 }
 function commitNode(row, col) { RUN.currentRow = row; RUN.currentCol = col; RUN.path.push({ row, col }); saveRun(); }
 function selectNode(row, col) {
+  RUN.onboardingDismissed = true;
   payTravelCost();
   const node = RUN.map.nodes[row][col];
   if (node.type === 'battle') { startBattle(node.opponent, row, col); return; }
@@ -3178,8 +3179,8 @@ function mapScreen() {
       <div class="tooltip"><b>${title}</b>${isCurrent?' <span style="color:var(--amber)">(current)</span>':''}<br>${tip}</div>
     </div>`;
   }
-   return `<div id="map-viewport">${noticeHTML()}<div class="panel">${currencyBar()}</div><div class="panel"><div class="mapwrap" style="width:100%;height:${totalH}px;overflow-x:auto;overflow-y:hidden;position:relative"><div style="position:relative;width:${totalW}px;height:${totalH}px"><div class="regionTitlePinned">${WORLD_NAMES[RUN.world] || WORLD_NAMES[1]}</div><svg width="${totalW}" height="${totalH}" viewBox="0 0 ${totalW} ${totalH}" style="position:absolute;left:0;top:0;pointer-events:none">${svgLines}</svg>
-        ${nodesHTML}
+     return `<div id="map-viewport">${noticeHTML()}<div class="panel">${currencyBar()}</div><div class="panel"><div class="mapwrap" style="width:100%;height:${totalH}px;overflow-x:auto;overflow-y:hidden;position:relative"><div style="position:relative;width:${totalW}px;height:${totalH}px"><div class="regionTitlePinned">${WORLD_NAMES[RUN.world] || WORLD_NAMES[1]}</div><svg width="${totalW}" height="${totalH}" viewBox="0 0 ${totalW} ${totalH}" style="position:absolute;left:0;top:0;pointer-events:none">${svgLines}</svg>${(() => { const parsedName = String(META.playerName || 'Commander').trim().replace(/\\w\\S*/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()); return (RUN.currentRow === -1 && !RUN.onboardingDismissed) ? `<div class="floating-tutorial-card"><div class="wo-eyebrow">Fleet Onboarding</div><h3>Welcome, \${parsedName}!</h3><p>Click the node to the left to start your journey.</p></div>` : ''; })()}`;
+    ${nodesHTML}
       </div>
       ${MAP_POPUP ? nodePopupScreen(MAP_POPUP.row, MAP_POPUP.col) : ''}
       ${TREASURE_POPUP ? treasureScreen(TREASURE_POPUP) : ''}

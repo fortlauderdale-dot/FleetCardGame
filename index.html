@@ -141,7 +141,7 @@
     width:100%; max-width:960px; margin:0; -webkit-overflow-scrolling:touch;
   }
   #dealer-viewport .dealerCardPanel{
-    flex:0 0 145px; width:145px; min-width:145px; max-width:145px;
+    flex:0 0 141px; width:141px; min-width:141px; max-width:141px;
     display:flex; flex-direction:column; justify-content:flex-start; align-items:center;
     padding:8px; box-sizing:border-box; overflow:hidden; margin:0;
   }
@@ -159,6 +159,9 @@
     align-items:center; gap:4px; min-height:52px;
   }
   #dealer-viewport h1{ text-align:center; }
+  .facilityExitBtn{background:#ffc44d !important;color:#12163a !important;border-color:#ffc44d !important;font-weight:800 !important;text-transform:none !important;}
+  #chopshop-viewport .wo{max-width:900px;margin-left:auto;margin-right:auto}
+  #overdrive-viewport .wo{max-width:820px;margin-left:auto;margin-right:auto}
 
   .itemCard{border-radius:8px;padding:6px 4px;background:rgba(10,14,26,0.9) !important;border:1px solid rgba(31,182,166,0.2);width:125px;min-width:125px;max-width:125px;min-height:150px;height:auto;display:flex;flex-direction:column;align-items:center;text-align:center;box-sizing:border-box;font-size:12px;position:relative;transition:box-shadow .15s ease}
   .emptyItemSlot{border-radius:8px;padding:6px 4px;background:transparent !important;border:2px dashed rgba(31,182,166,0.3);width:125px;min-width:125px;max-width:125px;min-height:150px;height:auto;box-sizing:border-box;display:flex;align-items:center;justify-content:center;color:rgba(31,182,166,0.35);font-size:11px;font-weight:700}
@@ -214,7 +217,7 @@
   .mapnode.done{background:var(--green);border-color:var(--green);color:#fff;cursor:default}
   .mapnode.current{background:var(--blue);border-color:var(--blue-dark);color:#fff;cursor:default;box-shadow:0 0 0 5px #4a5fc755;animation:herePulse 1.4s ease-in-out infinite}
   @keyframes herePulse{0%,100%{box-shadow:0 0 0 4px #4a5fc755}50%{box-shadow:0 0 0 9px #4a5fc722}}
-  .mapnode.world3boss{animation:world3BossGlow 1.3s ease-in-out infinite;border-color:#ff5c1a}
+  .mapnode.worldboss{animation:world3BossGlow 1.3s ease-in-out infinite;border-color:#ff5c1a}
   @keyframes world3BossGlow{0%,100%{box-shadow:0 0 10px 4px rgba(255,90,40,0.55)}50%{box-shadow:0 0 26px 10px rgba(255,140,60,0.95)}}
   .hereTag{position:absolute;left:50%;bottom:calc(100% + 4px);transform:translateX(-50%);white-space:nowrap;
     background:var(--blue-dark);color:#fff;font-family:var(--mono);font-size:9.5px;font-weight:700;letter-spacing:.04em;
@@ -1244,6 +1247,60 @@ const ITEMS = {
   black_bag: { id: 'black_bag', name: 'Black Stash', cost: 40, maxCards: 10, kind: 'storage', maxStore: 5,
     acceptFilter: { color: 'blk' },
     note: `Holds up to 5 ${kw('Black')} cards only. Click a stored card to take it back.` },
+  w3_road_rage: { id: 'w3_road_rage', name: 'Road Rage', maxCards: 2, usesPerTurn: 1,
+    condition: { type: 'pokerTier', tier: 1 }, baseMult: 1,
+    note: 'Needs a Pair. A frustrated jab.' },
+  w3_static_interference: { id: 'w3_static_interference', name: 'Static Interference', maxCards: 2, usesPerTurn: 1,
+    condition: { type: 'sumThreshold', min: 8 }, flatAmount: 10,
+    note: `Needs cards totaling ${SIGMA_TIP}8+. A crackling burst of noise.` },
+  w3_propeller_slash: { id: 'w3_propeller_slash', name: 'Propeller Slash', maxCards: 1, usesPerTurn: 1,
+    condition: { type: 'any', exactCount: 1 }, flatAmount: 9,
+    note: 'Needs exactly 1 card. A quick slashing pass.' },
+  w3_paper_jam: { id: 'w3_paper_jam', name: 'Paper Jam', maxCards: 2, usesPerTurn: 1,
+    condition: { type: 'pokerTier', tier: 1 }, baseMult: 1, kind: 'curse',
+    note: 'Needs a Pair. Jams and curses one of your Items.' },
+  w3_high_beam_glare: { id: 'w3_high_beam_glare', name: 'High-Beam Glare', maxCards: 1, usesPerTurn: 1,
+    condition: { type: 'any' }, baseMult: 1,
+    note: 'Needs any card. A blinding glare.' },
+  w3_citation_blitz: { id: 'w3_citation_blitz', name: 'Citation Blitz', maxCards: 3, usesPerTurn: 1,
+    condition: { type: 'pokerTier', tier: 2 }, baseMult: 1, kind: 'curse',
+    note: 'Needs Two Pair. Issues a citation that curses one of your Items.' },
+  w3_signal_scramble: { id: 'w3_signal_scramble', name: 'Signal Scramble', maxCards: 3, usesPerTurn: 1,
+    condition: { type: 'sumThreshold', min: 22 }, flatAmount: 30, kind: 'poison',
+    note: `Needs cards totaling ${SIGMA_TIP}22+. Poison damage.` },
+  opp_boot_lockdown: { id: 'opp_boot_lockdown', name: 'Boot Lockdown', maxCards: 5, usesPerTurn: 1,
+    condition: { type: 'pokerTier', tier: 3, exactTier: true }, baseMult: 1, kind: 'curse',
+    note: 'Needs Three of a Kind. Boots and curses one of your Items.' },
+  opp_impound_fury: { id: 'opp_impound_fury', name: 'Impound Fury', maxCards: 5, usesPerTurn: 1,
+    condition: { type: 'any' }, perFaceCardDamage: 14,
+    note: 'Needs any card. Damage scales with how many face cards (J/Q/K) it plays.' },
+  w4_hull_scrape: { id: 'w4_hull_scrape', name: 'Hull Scrape', maxCards: 2, usesPerTurn: 1,
+    condition: { type: 'pokerTier', tier: 1 }, baseMult: 1,
+    note: 'Needs a Pair. A grinding scrape.' },
+  w4_line_snap: { id: 'w4_line_snap', name: 'Line Snap', maxCards: 1, usesPerTurn: 1,
+    condition: { type: 'any', exactCount: 1 }, flatAmount: 9,
+    note: 'Needs exactly 1 card. A sudden snap.' },
+  w4_bilge_leak: { id: 'w4_bilge_leak', name: 'Bilge Leak', maxCards: 2, usesPerTurn: 1,
+    condition: { type: 'pokerTier', tier: 1 }, baseMult: 1, kind: 'poison',
+    note: 'Needs a Pair. Poison damage.' },
+  w4_wake_turbulence: { id: 'w4_wake_turbulence', name: 'Wake Turbulence', maxCards: 2, usesPerTurn: 1,
+    condition: { type: 'sumThreshold', min: 9 }, flatAmount: 11,
+    note: `Needs cards totaling ${SIGMA_TIP}9+. Rocks you with wake turbulence.` },
+  w4_chum_slick: { id: 'w4_chum_slick', name: 'Chum Slick', maxCards: 3, usesPerTurn: 1,
+    condition: { type: 'pokerTier', tier: 1 }, baseMult: 1, kind: 'burn',
+    note: 'Needs a Pair. Burn damage.' },
+  w4_blue_strobe: { id: 'w4_blue_strobe', name: 'Blue Strobe', maxCards: 3, usesPerTurn: 1,
+    condition: { type: 'pokerTier', tier: 2 }, baseMult: 1, kind: 'curse',
+    note: 'Needs Two Pair. Pulls you over and curses one of your Items.' },
+  w4_backflow_gush: { id: 'w4_backflow_gush', name: 'Backflow Gush', maxCards: 3, usesPerTurn: 1,
+    condition: { type: 'sumThreshold', min: 22 }, flatAmount: 30, kind: 'poison',
+    note: `Needs cards totaling ${SIGMA_TIP}22+. Poison damage.` },
+  opp_bascule_crush: { id: 'opp_bascule_crush', name: 'Bascule Crush', maxCards: 5, usesPerTurn: 1,
+    condition: { type: 'sumThreshold', min: 38 }, flatAmount: 46,
+    note: `Needs cards totaling ${SIGMA_TIP}38+. The bridge deck slams shut.` },
+  opp_warning_bell: { id: 'opp_warning_bell', name: 'Warning Bell', maxCards: 1, usesPerTurn: 1,
+    condition: { type: 'any', exactCount: 1 }, flatAmount: 10, opponentEffect: 'stealFuel',
+    note: 'Needs exactly 1 card. A small hit, and it siphons a bit of your fuel.' },
 };
 
 /* ========== HERO ROSTER (6 total - 4 playable, 2 reserved for future vehicles) ========== */
@@ -1470,6 +1527,36 @@ const OPPONENT_TIERS = [
 
 const BOSS = { id: 'wildfire', name: 'Wildfire', tier: 6, icon: '🔥', image: 'Hazards/wildfire.jpg', hp: 160, minTier: 3, drawRate: 4, boss: true, usesPerTurn: 2, curse: { count: 2, amount: 12, chance: 0.55 }, items: ['opp_firestorm_surge', 'opp_ashfall', 'opp_total_engulfment'], attackInfo: 'Attack: uses its best poker hand for about 10-35 damage, depending on the hand, and can hit twice a turn. Can also curse your equipped Items - an Item that doesn\'t fire before turn end takes its curse damage.' };
 const BOSS_WORLD3 = { id: 'gridlock', name: 'The Gridlock', tier: 6, icon: '🚦', image: 'Hazards/wildfire.jpg', hp: 190, minTier: 3, drawRate: 5, boss: true, usesPerTurn: 2, startArmor: 20, armorRegen: 10, curse: { count: 2, amount: 15, chance: 0.6 }, items: ['opp_firestorm_surge', 'opp_ashfall', 'opp_total_engulfment'], attackInfo: 'Attack: uses its best poker hand for heavy damage and can hit twice a turn. Starts with armor that regenerates, and can curse your equipped Items - an Item that doesn\'t fire before turn end takes its curse damage.' };
+
+/* ========== WORLD 3 / WORLD 4 FLAT OPPONENT POOLS (Highway Nodes) ========== */
+const WORLD_3_POOLS = {
+  regulars: [
+    { id: 'w3_gridlock_commuter', name: 'Gridlock Commuter', icon: '🚗', image: 'Hazards/jaywalker.jpg', hp: 50, minTier: 1, drawRate: 2, items: ['w3_road_rage'] },
+    { id: 'w3_static_walkie', name: 'Static Walkie-Talkie', icon: '📻', image: 'Hazards/downed-line.jpg', hp: 48, minTier: 1, drawRate: 2, items: ['w3_static_interference'] },
+    { id: 'w3_rogue_courier_drone', name: 'Rogue Courier Drone', icon: '🛸', image: 'Hazards/flicker-light.jpg', hp: 52, minTier: 1, drawRate: 2, items: ['w3_propeller_slash'] },
+    { id: 'w3_broken_ticket_dispenser', name: 'Broken Ticket Dispenser', icon: '🎫', image: 'Hazards/broken-meter.jpg', hp: 55, minTier: 1, drawRate: 2, items: ['w3_paper_jam'] },
+    { id: 'w3_blinding_led_billboard', name: 'Blinding LED Billboard', icon: '🚦', image: 'Hazards/flicker-light.jpg', hp: 54, minTier: 1, drawRate: 2, items: ['w3_high_beam_glare'] },
+  ],
+  elites: [
+    { id: 'w3_code_enforcement_enforcer', name: 'Code Enforcement Enforcer', icon: '🚔', image: 'Hazards/angry-citizen.jpg', hp: 90, minTier: 2, drawRate: 3, items: ['w3_citation_blitz'] },
+    { id: 'w3_smart_city_mainframe', name: 'Smart-City Central Mainframe', icon: '🖥️', image: 'Hazards/blackout.jpg', hp: 95, minTier: 2, drawRate: 3, items: ['w3_signal_scramble'] },
+  ],
+  boss: { id: 'congestion_charge', name: 'The Congestion Charge', icon: '🚧', image: 'Hazards/wildfire.jpg', hp: 160, minTier: 3, drawRate: 5, boss: true, usesPerTurn: 2, items: ['opp_boot_lockdown', 'opp_impound_fury'], attackInfo: 'Attack: uses its best poker hand for heavy damage and can hit twice a turn. Boots and curses your equipped Items - an Item that doesn\'t fire before turn end takes its curse damage.' },
+};
+const WORLD_4_POOLS = {
+  regulars: [
+    { id: 'w4_barnacle_buoy', name: 'Barnacle Buoy', icon: '🟠', image: 'Hazards/pothole.jpg', hp: 60, minTier: 1, drawRate: 2, items: ['w4_hull_scrape'] },
+    { id: 'w4_rusty_mooring_cleat', name: 'Rusty Mooring Cleat', icon: '⚓', image: 'Hazards/broken-meter.jpg', hp: 62, minTier: 1, drawRate: 2, items: ['w4_line_snap'] },
+    { id: 'w4_fuel_dock_siphon', name: 'Fuel Dock Siphon', icon: '⛽', image: 'Hazards/gas-leak.jpg', hp: 58, minTier: 1, drawRate: 2, items: ['w4_bilge_leak'] },
+    { id: 'w4_water_taxi', name: 'New River Water Taxi', icon: '🚤', image: 'Hazards/jaywalker.jpg', hp: 65, minTier: 1, drawRate: 2, items: ['w4_wake_turbulence'] },
+    { id: 'w4_bait_barge', name: 'Overloaded Bait Barge', icon: '🚢', image: 'Hazards/dumpster-fire.jpg', hp: 68, minTier: 1, drawRate: 2, items: ['w4_chum_slick'] },
+  ],
+  elites: [
+    { id: 'w4_marine_patrol_interceptor', name: 'Marine Patrol Interceptor', icon: '🚨', image: 'Hazards/angry-citizen.jpg', hp: 110, minTier: 2, drawRate: 3, items: ['w4_blue_strobe'] },
+    { id: 'w4_stormwater_pump', name: 'Automatic Storm-Water Pump', icon: '🌊', image: 'Hazards/flash-flood.jpg', hp: 115, minTier: 2, drawRate: 3, items: ['w4_backflow_gush'] },
+  ],
+  boss: { id: 'bridge_overlord', name: 'The Bridge Overlord', icon: '🌉', image: 'Hazards/wildfire.jpg', hp: 190, minTier: 3, drawRate: 5, boss: true, usesPerTurn: 2, items: ['opp_bascule_crush', 'opp_warning_bell'], attackInfo: 'Attack: uses its best poker hand for heavy damage and can hit twice a turn. Crushes with its bascule span and siphons your fuel.' },
+};
 const OPPONENT_SWING_CAP = [22, 28, 34, 40, 46, 52, 60];
 function revealFraction(row) { return [1.0, 0.8, 0.6, 0.4, 0.25, 0.1, 0][Math.min(row, 6)]; }
 
@@ -1622,18 +1709,33 @@ function generateMap() {
   const worldMultiplier = RUN.worldMultiplier || 1.0; 
   const tierQueues = {};
   const WORLD2_POISON_ITEMS = ['opp_aftershock', 'opp_toxic_spray', 'opp_corrosive_mud'];
+  const highwayPools = RUN.world === 3 ? WORLD_3_POOLS : RUN.world === 4 ? WORLD_4_POOLS : null;
+  const highwayRegularQueue = highwayPools ? shuffle([...highwayPools.regulars]) : null;
+  function nextHighwayRegular() {
+    if (!highwayRegularQueue.length) highwayRegularQueue.push(...shuffle([...highwayPools.regulars]));
+    return highwayRegularQueue.pop();
+  }
+  function scaleHighwayOpponent(base, row) {
+    const scaled = JSON.parse(JSON.stringify(base));
+    scaled.hp = Math.round(base.hp * worldMultiplier * (1 + row * 0.05));
+    return scaled;
+  }
   function pickOpponentForTier(tier) {
     if (!tierQueues[tier] || !tierQueues[tier].length) tierQueues[tier] = shuffle([...OPPONENT_TIERS[tier]]);
     const picked = tierQueues[tier].pop();
     if (RUN.world >= 2 && Math.random() < 0.5) return { ...picked, items: WORLD2_POISON_ITEMS };
     return picked;
   }
+  function makeOpponentForRow(row) {
+    if (highwayPools) return scaleHighwayOpponent(nextHighwayRegular(), row);
+    const tier = tierForRow(row);
+    const baseOpp = pickOpponentForTier(tier);
+    return scaleMonsterForNewWorld(baseOpp, worldMultiplier * tierDifficultyMult(tier), tier);
+  }
   for (let r=0;r<rowCounts.length;r++) {
     const row=[];
-    const tier = tierForRow(r);
     for(let c=0;c<rowCounts[r];c++) {
-      const baseOpp = pickOpponentForTier(tier);
-      row.push({type:'pending', opponent: scaleMonsterForNewWorld(baseOpp, worldMultiplier * tierDifficultyMult(tier), tier)});
+      row.push({type:'pending', opponent: makeOpponentForRow(r)});
     }
     nodes.push(row);
   }
@@ -1647,21 +1749,17 @@ function generateMap() {
   shuffle(eligible);
   const needBattles=29-3; 
   eligible.slice(0,needBattles).forEach(({r,c})=> {
-    const tier = tierForRow(r);
-    const baseOpp = pickOpponentForTier(tier);
-    nodes[r][c]={type:'battle', opponent: scaleMonsterForNewWorld(baseOpp, worldMultiplier * tierDifficultyMult(tier), tier)};
+    nodes[r][c]={type:'battle', opponent: makeOpponentForRow(r)};
   });
   eligible.slice(needBattles).forEach(({r,c})=>{
     const t=pickNodeType();
     if (t==='battle') {
-      const tier = tierForRow(r);
-      const baseOpp = pickOpponentForTier(tier);
-      nodes[r][c]={type:'battle', opponent: scaleMonsterForNewWorld(baseOpp, worldMultiplier * tierDifficultyMult(tier), tier)};
+      nodes[r][c]={type:'battle', opponent: makeOpponentForRow(r)};
     } else {
       nodes[r][c]={type:t};
     }
   });
-  const bossTemplate = isWorld3 ? BOSS_WORLD3 : BOSS;
+  const bossTemplate = highwayPools ? highwayPools.boss : BOSS;
   nodes.push([{type:'battle', opponent: scaleMonsterForNewWorld(bossTemplate, worldMultiplier * 1.3, 6)}]);
   for(let r=0;r<nodes.length-1;r++){
     const cur=nodes[r], next=nodes[r+1];
@@ -1683,27 +1781,39 @@ function generateMap() {
       for(let b=0;b<next.length;b++) if(!edges.some(e=>e.fromRow===r&&e.toCol===b)) add(Math.round(b*backwardRatio),b);
     }
   }
-  const riskRow = rowCounts.findIndex((n, r) => n >= 2 && r > 2 && r < castleRow - 1 && r !== 4);
-  if (riskRow !== -1) {
-    const riskCol = nodes[riskRow].length - 1;
-    const riskTier = tierForRow(riskRow);
-    const baseOpp = pickOpponentForTier(riskTier);
-    const toughOpp = scaleMonsterForNewWorld(baseOpp, worldMultiplier * tierDifficultyMult(riskTier) * 1.35, riskTier);
-    toughOpp.name = `${baseOpp.name} [Elite]`;
-    nodes[riskRow][riskCol] = { type: 'battle', opponent: toughOpp };
-    const targetEdge = edges.find(e => e.fromRow === riskRow && e.fromCol === riskCol);
-    if (targetEdge) nodes[riskRow + 1][targetEdge.toCol] = { type: 'treasure', big: true };
-  }
-  const stormRow = rowCounts.findIndex((n, r) => n >= 2 && r > 2 && r < castleRow - 1 && r !== 4 && r !== riskRow);
-  if (stormRow !== -1) {
-    const stormCol = 0;
-    const stormTier = tierForRow(stormRow);
-    const stormOpp = pickOpponentForTier(stormTier);
-    const scaledStormOpp = scaleMonsterForNewWorld(stormOpp, worldMultiplier * tierDifficultyMult(stormTier), stormTier);
-    scaledStormOpp.name = `${stormOpp.name} [Grid Storm]`;
-    nodes[stormRow][stormCol] = { type: 'battle', opponent: scaledStormOpp, gridStorm: true };
-    const stormEdge = edges.find(e => e.fromRow === stormRow && e.fromCol === stormCol);
-    if (stormEdge) nodes[stormRow + 1][stormEdge.toCol] = { type: 'match_hazard' };
+  if (!highwayPools) {
+    const riskRow = rowCounts.findIndex((n, r) => n >= 2 && r > 2 && r < castleRow - 1 && r !== 4);
+    if (riskRow !== -1) {
+      const riskCol = nodes[riskRow].length - 1;
+      const riskTier = tierForRow(riskRow);
+      const baseOpp = pickOpponentForTier(riskTier);
+      const toughOpp = scaleMonsterForNewWorld(baseOpp, worldMultiplier * tierDifficultyMult(riskTier) * 1.35, riskTier);
+      toughOpp.name = `${baseOpp.name} [Elite]`;
+      nodes[riskRow][riskCol] = { type: 'battle', opponent: toughOpp };
+      const targetEdge = edges.find(e => e.fromRow === riskRow && e.fromCol === riskCol);
+      if (targetEdge) nodes[riskRow + 1][targetEdge.toCol] = { type: 'treasure', big: true };
+    }
+    const stormRow = rowCounts.findIndex((n, r) => n >= 2 && r > 2 && r < castleRow - 1 && r !== 4 && r !== riskRow);
+    if (stormRow !== -1) {
+      const stormCol = 0;
+      const stormTier = tierForRow(stormRow);
+      const stormOpp = pickOpponentForTier(stormTier);
+      const scaledStormOpp = scaleMonsterForNewWorld(stormOpp, worldMultiplier * tierDifficultyMult(stormTier), stormTier);
+      scaledStormOpp.name = `${stormOpp.name} [Grid Storm]`;
+      nodes[stormRow][stormCol] = { type: 'battle', opponent: scaledStormOpp, gridStorm: true };
+      const stormEdge = edges.find(e => e.fromRow === stormRow && e.fromCol === stormCol);
+      if (stormEdge) nodes[stormRow + 1][stormEdge.toCol] = { type: 'match_hazard' };
+    }
+  } else {
+    [9, 15].forEach((eliteRow, idx) => {
+      if (nodes[eliteRow] && nodes[eliteRow].length) {
+        const col = idx === 0 ? nodes[eliteRow].length - 1 : 0;
+        const eliteBase = highwayPools.elites[idx % highwayPools.elites.length];
+        const eliteOpp = scaleHighwayOpponent(eliteBase, eliteRow);
+        eliteOpp.name = `${eliteBase.name} [Elite]`;
+        nodes[eliteRow][col] = { type: 'battle', opponent: eliteOpp };
+      }
+    });
   }
   return {nodes,edges};
 }
@@ -1789,8 +1899,8 @@ function commitNode(row, col) { RUN.currentRow = row; RUN.currentCol = col; RUN.
 function selectNode(row, col) {
   RUN.onboardingDismissed = true;
   const node = RUN.map.nodes[row][col];
-  if (node.type === 'battle' && row === RUN.bossRow && RUN.world === 3) {
-    WORLD3_BOSS_WARNING_POPUP = { row, col };
+  if (node.type === 'battle' && row === RUN.bossRow) {
+    WORLD_BOSS_WARNING_POPUP = { row, col };
     render(mapScreen());
     return;
   }
@@ -1825,7 +1935,7 @@ function reenterCurrentNode(row, col) {
   render(mapScreen());
 }
 let RETURN_TO_CASTLE_MENU = false;
-let WORLD3_BOSS_WARNING_POPUP = false;
+let WORLD_BOSS_WARNING_POPUP = false;
 const CASTLE_FIRST = { id:'castleGuard', name:'Castle Guard', tier:2, icon:'🛡️', image: 'vehicles/castle-guard.jpg', hp:75, minTier:2, drawRate: 3, items: ['opp_castle_poke_t2'] };
 const CASTLE_SECOND = { id:'castleChampion', name:'Castle Champion', tier:3, icon:'🏰', image: 'vehicles/castle-champion.jpg', hp:105, minTier:3, drawRate: 4, items: ['opp_castle_poke_t3'] };
 const CASTLE_THIRD = { id:'castleOverlord', name:'Compound Overlord', tier:4, icon:'👑', image: 'vehicles/castle-overlord.jpg', hp:210, minTier:3, drawRate: 5, usesPerTurn:2, items: ['opp_castle_poke_t3', 'fender_bender'] };
@@ -3148,32 +3258,33 @@ function nodePopupScreen(r, c) {
     </div>
   </div>`;
 }
-function confirmWorld3BossBattle() {
-  const p = WORLD3_BOSS_WARNING_POPUP;
-  WORLD3_BOSS_WARNING_POPUP = false;
+function confirmWorldBossBattle() {
+  const p = WORLD_BOSS_WARNING_POPUP;
+  WORLD_BOSS_WARNING_POPUP = false;
   if (!p) { render(mapScreen()); return; }
   payTravelCost();
   const node = RUN.map.nodes[p.row][p.col];
   startBattle(node.opponent, p.row, p.col);
 }
-function cancelWorld3BossBattle() {
-  WORLD3_BOSS_WARNING_POPUP = false;
+function cancelWorldBossBattle() {
+  WORLD_BOSS_WARNING_POPUP = false;
   render(mapScreen());
 }
-function world3BossWarningScreen() {
-  const p = WORLD3_BOSS_WARNING_POPUP;
+function worldBossWarningScreen() {
+  const p = WORLD_BOSS_WARNING_POPUP;
   const node = RUN.map.nodes[p.row][p.col];
   const o = node.opponent;
+  const regionName = WORLD_NAMES[RUN.world] || 'World';
   return `<div class="map-popup-overlay">
     <div class="wo" style="max-width:460px;border-color:#7a0000">
       <div class="wo-stripe" style="background:linear-gradient(90deg,#7a0000,#ff5c1a)"></div>
       <div class="wo-body" style="text-align:center">
         <div class="wo-eyebrow" style="color:#ff5c1a">⚠️ Critical Threat Detected</div>
         <h1>${o.name}</h1>
-        <div class="wo-sub">Downtown Core World Boss</div>
+        <div class="wo-sub">${regionName} World Boss</div>
         <div class="note" style="margin:10px 0;text-align:left">HP: ${o.hp}<br>Draws: ${o.drawRate}/turn<br>Attacks per turn: ${o.usesPerTurn || 1}<br>${o.attackInfo || 'Uses its strongest available hand each turn.'}</div>
-        <button class="wo-btn red" id="world3BossConfirmBtn" style="width:100%;margin-top:8px">Engage Boss Battle</button>
-        <button class="wo-btn gray" id="world3BossCancelBtn" style="width:100%;margin-top:8px">Not Yet</button>
+        <button class="wo-btn red" id="worldBossConfirmBtn" style="width:100%;margin-top:8px">Engage Boss Battle</button>
+        <button class="wo-btn gray" id="worldBossCancelBtn" style="width:100%;margin-top:8px">Not Yet</button>
       </div>
     </div>
   </div>`;
@@ -3195,7 +3306,7 @@ function mapScreen() {
     const traveled = RUN.path.some(p=>p.row===e.fromRow&&p.col===e.fromCol) &&
                      RUN.path.some(p=>p.row===e.toRow&&p.col===e.toCol);
     svgLines += `<path d="M ${x1} ${y1} C ${x1+28} ${y1}, ${x2-28} ${y2}, ${x2} ${y2}"
-      fill="none" stroke="${traveled?'#1fb6a6':'#7f9180'}" stroke-width="${traveled?5:3}" stroke-linecap="round"/>`;
+      fill="none" stroke="${traveled?'#ffc44d':'#7f9180'}" stroke-width="${traveled?5:3}" stroke-linecap="round" ${traveled?'style="filter:drop-shadow(0 0 4px #1fb6a6)"':''}/>`;
   }
 
   let nodesHTML='';
@@ -3211,8 +3322,8 @@ function mapScreen() {
       const isBoss=r===rows.length-1;
       const withinSight=r<=RUN.currentRow+visibleRange;
       const showReal=isBoss||isDone||isAvail||withinSight;
-      const isWorld3BossNode = isBoss && RUN.world === 3;
-      const cls=(isCurrent?'current':isDone?'done':isAvail?'avail':withinSight?'future':'farfuture')+(isWorld3BossNode?' world3boss':'');
+      const isWorldBossNode = isBoss;
+      const cls=(isCurrent?'current':isDone?'done':isAvail?'avail':withinSight?'future':'farfuture')+(isWorldBossNode?' worldboss':'');
       const icon=!showReal?`<span class="vart" style="width:19px;height:19px;font-size:19px">${ICON.fog}</span>`:(node.type==='battle'?art(node.opponent,19):`<span class="vart" style="width:19px;height:19px;font-size:19px">${NODE_ICON[node.type]}</span>`);
       const title=!showReal?'Unscouted':(node.type==='battle'?node.opponent.name:NODE_TITLE[node.type]);
       let tip;
@@ -3236,7 +3347,7 @@ function mapScreen() {
       </div>`;
     }
   }
-  return `<div id="map-viewport">${noticeHTML()}<div class="panel">${currencyBar()}</div><div class="panel"><div class="mapwrap" style="width:100%;height:${totalH}px;overflow-x:auto;overflow-y:hidden;position:relative"><div style="position:relative;width:${totalW}px;height:${totalH}px"><div class="regionTitlePinned">${WORLD_NAMES[RUN.world] || WORLD_NAMES}</div><svg width="${totalW}" height="${totalH}" viewBox="0 0 ${totalW} ${totalH}" style="position:absolute;left:0;top:0;pointer-events:none">${svgLines}</svg>${nodesHTML}${(() => { const parsedName = String(META.playerName || 'Commander').trim().replace(/\w\S*/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()); return (RUN.currentRow === -1 && !RUN.onboardingDismissed) ? `<div class="floating-tutorial-card"><div class="wo-eyebrow">Fleet Onboarding</div><h3>Welcome, ${parsedName}!</h3><p>Click the node to the left to start your journey.</p></div>` : ''; })()}</div>${MAP_POPUP ? nodePopupScreen(MAP_POPUP.row, MAP_POPUP.col) : ''}${TREASURE_POPUP ? treasureScreen(TREASURE_POPUP) : ''}${GARAGE_POPUP ? garageScreen(GARAGE_MESSAGE) : ''}${MATCH_OVERLAY_ACTIVE ? castleMatchScreen() : ''}${WORLD3_BOSS_WARNING_POPUP ? world3BossWarningScreen() : ''}</div></div></div>`;
+  return `<div id="map-viewport">${noticeHTML()}<div class="panel">${currencyBar()}</div><div class="panel"><div class="mapwrap" style="width:100%;height:${totalH}px;overflow-x:auto;overflow-y:hidden;position:relative"><div style="position:relative;width:${totalW}px;height:${totalH}px"><div class="regionTitlePinned">${WORLD_NAMES[RUN.world] || WORLD_NAMES}</div><svg width="${totalW}" height="${totalH}" viewBox="0 0 ${totalW} ${totalH}" style="position:absolute;left:0;top:0;pointer-events:none">${svgLines}</svg>${nodesHTML}${(() => { const parsedName = String(META.playerName || 'Commander').trim().replace(/\w\S*/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()); return (RUN.currentRow === -1 && !RUN.onboardingDismissed) ? `<div class="floating-tutorial-card"><div class="wo-eyebrow">Fleet Onboarding</div><h3>Welcome, ${parsedName}!</h3><p>Click the node to the left to start your journey.</p></div>` : ''; })()}</div>${MAP_POPUP ? nodePopupScreen(MAP_POPUP.row, MAP_POPUP.col) : ''}${TREASURE_POPUP ? treasureScreen(TREASURE_POPUP) : ''}${GARAGE_POPUP ? garageScreen(GARAGE_MESSAGE) : ''}${MATCH_OVERLAY_ACTIVE ? castleMatchScreen() : ''}${WORLD_BOSS_WARNING_POPUP ? worldBossWarningScreen() : ''}</div></div></div>`;
 }
 /* ========== RUN-SCOPED UPGRADES (paid with coins, last only for this run) ========== */
 const MAX_ITEM_CAP = 9; 
@@ -3784,7 +3895,7 @@ function blacksmithScreen() {
         <div class="wo-sub">${visitNote}</div>
         ${currencyBar()}
         <div style="display:flex;gap:8px;margin:10px 0">
-          <button class="wo-btn" id="leaveBlacksmithBtn" style="flex:1;background:#ffc44d;color:#12163a;border-color:#ffc44d;font-weight:800">${RETURN_TO_CASTLE_MENU ? 'Back to Compound' : roadExitLabel()}</button>
+          <button class="wo-btn facilityExitBtn" id="leaveBlacksmithBtn" style="flex:1">${RETURN_TO_CASTLE_MENU ? 'Back to Compound' : roadExitLabel()}</button>
           <button class="wo-btn purple" id="openRunUpgradeFromBlacksmithBtn" style="flex:1">Upgrades</button>
         </div>
         <div class="hdr"><span>[ Card Tuning Upgrades ]</span></div>
@@ -3859,6 +3970,7 @@ function worldCompleteScreen(fromWorld, toWorld) {
   `;
 }
 function world3ClearedScreen() {
+  const nextName = WORLD_NAMES[4] || 'World 4';
   return `
     <div class="treasure-modal">
       <div class="wo">
@@ -3866,8 +3978,23 @@ function world3ClearedScreen() {
         <div class="wo-body" style="text-align:center">
           <div class="wo-eyebrow">Downtown Core Secured</div>
           <h1>World 3 <em>Cleared</em></h1>
-          <div class="wo-sub" style="margin:10px 0">Downtown Core is secured. Your fleet is advancing to World 4.</div>
-          <button class="wo-btn amber" id="advanceWorldBtn" style="width:100%;margin-top:8px">Advance to World 4</button>
+          <div class="wo-sub" style="margin:10px 0">Downtown Core is secured. Your fleet is advancing to the ${nextName}.</div>
+          <button class="wo-btn amber" id="advanceWorldBtn" style="width:100%;margin-top:8px">Advance to the ${nextName}</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+function victoryScreen() {
+  return `
+    <div class="treasure-modal">
+      <div class="wo">
+        <div class="wo-stripe"></div>
+        <div class="wo-body" style="text-align:center">
+          <div class="wo-eyebrow">Riverwalk District Secured</div>
+          <h1>Campaign <em>Complete</em></h1>
+          <div class="wo-sub" style="margin:10px 0">More worlds coming soon! Thanks for playing.</div>
+          <button class="wo-btn amber" id="claimVictoryBtn" style="width:100%;margin-top:8px">Finish Run</button>
         </div>
       </div>
     </div>
@@ -4015,14 +4142,14 @@ function overdriveBayScreen() {
       ${usesLvl > 0 ? `<div style="text-align:center"><button class="wo-btn gray" data-usesdown="${id}" style="padding:6px 10px;font-size:12px">Refund</button></div>` : ''}
     </div>`;
   }).join('');
-  return `${noticeHTML()}<div class="wo"><div class="wo-stripe"></div><div class="wo-body">
+  return `<div id="overdrive-viewport">${noticeHTML()}<div class="wo"><div class="wo-stripe"></div><div class="wo-body">
     <div class="wo-eyebrow">Overdrive Bay &middot; Run Upgrade (resets next run)</div><h1>Boost <em>Uses Per Turn</em></h1>${currencyBar()}
     <div style="display:flex;gap:8px;margin:10px 0">
-      <button class="wo-btn" id="leaveOverdriveBtn" style="flex:1;background:#ffc44d;color:#12163a;border-color:#ffc44d;font-weight:800">${RETURN_TO_CASTLE_MENU ? 'Back to Compound' : roadExitLabel()}</button>
+      <button class="wo-btn facilityExitBtn" id="leaveOverdriveBtn" style="flex:1">${RETURN_TO_CASTLE_MENU ? 'Back to Compound' : roadExitLabel()}</button>
       <button class="wo-btn purple" id="openRunUpgradeFromOverdriveBtn" style="flex:1">Upgrades</button>
     </div>
     <div style="margin:12px 0">${rows || '<div class="note">No eligible Items equipped.</div>'}</div>
-  </div></div>`;
+  </div></div></div>`;
 }
 
 /****************************************************************************
@@ -4071,15 +4198,15 @@ function chopShopScreen(returnTo) {
     }
     return '';
   }).join('');
-  return `${noticeHTML()}<div class="wo"><div class="wo-stripe"></div><div class="wo-body">
+  return `<div id="chopshop-viewport">${noticeHTML()}<div class="wo"><div class="wo-stripe"></div><div class="wo-body">
     <div class="wo-eyebrow">Chop Shop</div><h1>Special <em>Modifications</em></h1>${currencyBar()}
     <div style="display:flex;gap:8px;margin:10px 0">
-      <button class="wo-btn" id="leaveChopShopBtn" style="flex:1;background:#ffc44d;color:#12163a;border-color:#ffc44d;font-weight:800">${RETURN_TO_CASTLE_MENU?'Back to Compound':roadExitLabel()}</button>
+      <button class="wo-btn facilityExitBtn" id="leaveChopShopBtn" style="flex:1">${RETURN_TO_CASTLE_MENU?'Back to Compound':roadExitLabel()}</button>
       <button class="wo-btn purple" id="openRunUpgradeFromChopShopBtn" style="flex:1">Upgrades</button>
     </div>
     <div class="note" style="margin:10px 0">Convert an Item to poison, burn, or curse (one per Item, run only), or add card slots.</div>
     <div style="margin:12px 0">${rows || '<div class="note">No Items available.</div>'}${utilityRows}</div>
-  </div></div>`;
+  </div></div></div>`;
 }
 
 function metaScreen() {
@@ -4163,6 +4290,7 @@ function render(html) {
         if (RUN.world === 1) { RUN.pendingNextWorld = 2; render(worldCompleteScreen(1, 2)); }
         else if (RUN.world === 2) { META.world2Cleared = true; saveMeta(); RUN.pendingNextWorld = 3; render(worldCompleteScreen(2, 3)); }
         else if (RUN.world === 3) { META.world3Cleared = true; saveMeta(); RUN.pendingNextWorld = 4; render(world3ClearedScreen()); }
+        else if (RUN.world === 4) { META.world4Cleared = true; saveMeta(); render(victoryScreen()); }
         else { endRun(true); }
       } else render(mapScreen());
     }
@@ -4636,8 +4764,9 @@ function render(html) {
     if (BATTLE.pendingTarget.type === 'burn') chooseBurnTarget(k); else chooseCurseTarget(k);
   });
   const cancelTargetBtn = document.getElementById('cancelPendingTargetBtn'); if (cancelTargetBtn) cancelTargetBtn.onclick = () => cancelPendingTarget();
-  const world3BossConfirmBtn = document.getElementById('world3BossConfirmBtn'); if (world3BossConfirmBtn) world3BossConfirmBtn.onclick = () => confirmWorld3BossBattle();
-  const world3BossCancelBtn = document.getElementById('world3BossCancelBtn'); if (world3BossCancelBtn) world3BossCancelBtn.onclick = () => cancelWorld3BossBattle();
+  const worldBossConfirmBtn = document.getElementById('worldBossConfirmBtn'); if (worldBossConfirmBtn) worldBossConfirmBtn.onclick = () => confirmWorldBossBattle();
+  const worldBossCancelBtn = document.getElementById('worldBossCancelBtn'); if (worldBossCancelBtn) worldBossCancelBtn.onclick = () => cancelWorldBossBattle();
+  const claimVictoryBtn = document.getElementById('claimVictoryBtn'); if (claimVictoryBtn) claimVictoryBtn.onclick = () => endRun(true);
   bindDev();
 }
 function itemIdFromKey(k) { return String(k).replace(/_\d+$/, ''); }

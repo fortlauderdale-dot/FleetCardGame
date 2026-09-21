@@ -3128,7 +3128,7 @@ function nodePopupScreen(r, c) {
 }
 function mapScreen() {
   const rows = RUN.map.nodes;
-  const colW = 118, rowY = [170, 90, 250];
+  const colW = 118, rowY =;
   const totalW = rows.length * colW + 50;
   const totalH = 420;
   const avail = availableNextNodes();
@@ -3183,8 +3183,7 @@ function mapScreen() {
       </div>`;
     }
   }
-
-  return `<div id="map-viewport">${noticeHTML()}<div class="panel">${currencyBar()}</div><div class="panel"><div class="mapwrap" style="width:100%;height:${totalH}px;overflow-x:auto;overflow-y:hidden;position:relative"><div style="position:relative;width:${totalW}px;height:${totalH}px"><div class="regionTitlePinned">${WORLD_NAMES[RUN.world] || WORLD_NAMES[1]}</div><svg width="${totalW}" height="${totalH}" viewBox="0 0 ${totalW} ${totalH}" style="position:absolute;left:0;top:0;pointer-events:none">${svgLines}</svg>${nodesHTML}${(() => { const parsedName = String(META.playerName || 'Commander').trim().replace(/\w\S*/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()); return (RUN.currentRow === -1 && !RUN.onboardingDismissed) ? `<div class="floating-tutorial-card"><div class="wo-eyebrow">Fleet Onboarding</div><h3>Welcome, \${parsedName}!</h3><p>Click the node to the left to start your journey.</p></div>` : ''; })()}</div>${MAP_POPUP ? nodePopupScreen(MAP_POPUP.row, MAP_POPUP.col) : ''}${TREASURE_POPUP ? treasureScreen(TREASURE_POPUP) : ''}${GARAGE_POPUP ? garageScreen(GARAGE_MESSAGE) : ''}${MATCH_OVERLAY_ACTIVE ? castleMatchScreen() : ''}</div></div></div>`;
+  return `<div id="map-viewport">${noticeHTML()}<div class="panel">${currencyBar()}</div><div class="panel"><div class="mapwrap" style="width:100%;height:${totalH}px;overflow-x:auto;overflow-y:hidden;position:relative"><div style="position:relative;width:${totalW}px;height:${totalH}px"><div class="regionTitlePinned">${WORLD_NAMES[RUN.world] || WORLD_NAMES}</div><svg width="${totalW}" height="${totalH}" viewBox="0 0 ${totalW} ${totalH}" style="position:absolute;left:0;top:0;pointer-events:none">${svgLines}</svg>${nodesHTML}${(() => { const parsedName = String(META.playerName || 'Commander').trim().replace(/\w\S*/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()); return (RUN.currentRow === -1 && !RUN.onboardingDismissed) ? `<div class="floating-tutorial-card"><div class="wo-eyebrow">Fleet Onboarding</div><h3>Welcome, \${parsedName}!</h3><p>Click the node to the left to start your journey.</p></div>` : ''; })()}</div>${MAP_POPUP ? nodePopupScreen(MAP_POPUP.row, MAP_POPUP.col) : ''}${TREASURE_POPUP ? treasureScreen(TREASURE_POPUP) : ''}${GARAGE_POPUP ? garageScreen(GARAGE_MESSAGE) : ''}${MATCH_OVERLAY_ACTIVE ? castleMatchScreen() : ''}</div></div></div>`;
 }
 /* ========== RUN-SCOPED UPGRADES (paid with coins, last only for this run) ========== */
 const MAX_ITEM_CAP = 9; 

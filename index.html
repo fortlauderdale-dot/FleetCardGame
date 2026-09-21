@@ -131,71 +131,34 @@
   .vslot .vname{font-weight:700;font-size:15px;color:var(--blue)}
   .vslot .vreq{font-family:var(--mono);font-size:10.5px;color:var(--dim);margin:3px 0}
   .vslot .vcards{display:flex;gap:3px;flex-wrap:wrap;min-height:30px;margin-top:6px}
-  .itemGrid{display:flex;flex-wrap:wrap;justify-content:center;width:100%;gap:6px}
-  .itemGrid .itemCard{flex:0 0 125px}
+  #battle-viewport .itemGrid{display:flex;flex-wrap:wrap;justify-content:flex-start;width:100%;gap:10px;} #battle-viewport .itemGrid .itemCard{flex:0 0 calc(25% - 7.5px);box-sizing:border-box;margin:0;}
   .popupItemRow{display:grid;grid-template-columns:repeat(auto-fill,125px);justify-content:center;gap:8px}
   .pickItemRow{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-start}
   .pickItemRow .itemCard{flex:0 0 125px;width:125px}
-  .dealerRow{
-    display: flex;
-    flex-direction: row;
-    flex-wrap: nowrap;
-    justify-content: flex-start;
-    align-items: flex-start;
-    gap: 10px;
-    overflow-x: auto;
-    padding: 8px 4px 14px;
-    width: 100%;
-    max-width: 960px;
-    margin: 0;
-    -webkit-overflow-scrolling: touch;
+  #dealer-viewport .dealerRow{
+    display:flex; flex-direction:row; flex-wrap:nowrap; justify-content:flex-start;
+    align-items:flex-start; gap:10px; overflow-x:auto; padding:8px 4px 14px;
+    width:100%; max-width:960px; margin:0; -webkit-overflow-scrolling:touch;
   }
-  .dealerCardPanel{
-    flex: 0 0 145px;
-    width: 145px;
-    min-width: 145px;
-    max-width: 145px;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    align-items: center;
-    padding: 8px;
-    box-sizing: border-box;
-    overflow: hidden;
-    margin: 0;
+  #dealer-viewport .dealerCardPanel{
+    flex:0 0 145px; width:145px; min-width:145px; max-width:145px;
+    display:flex; flex-direction:column; justify-content:flex-start; align-items:center;
+    padding:8px; box-sizing:border-box; overflow:hidden; margin:0;
   }
-  .dealerCardPanel .itemCard {
-    margin: 0 auto;
-    box-sizing: border-box;
+  #dealer-viewport .dealerCardPanel .itemCard{ margin:0 auto; box-sizing:border-box; }
+  #dealer-viewport .emptyItemSlot{
+    border:2px dashed rgba(31,182,166,0.3); width:125px; height:150px;
+    min-height:150px; max-height:150px; box-sizing:border-box;
+    display:flex; align-items:flex-start; justify-content:center; padding-top:16px;
+    background:transparent !important; color:rgba(31,182,166,0.35) !important;
+    font-size:11px; font-weight:700; margin:0 auto;
   }
-  .emptyItemSlot {
-    border: 2px dashed rgba(31, 182, 166, 0.3);
-    width: 125px;
-    height: 150px;
-    min-height: 150px;
-    max-height: 150px;
-    box-sizing: border-box;
-    display: flex;
-    align-items: flex-start;
-    justify-content: center;
-    padding-top: 16px;
-    background: transparent !important;
-    color: rgba(31, 182, 166, 0.35) !important;
-    font-size: 11px;
-    font-weight: 700;
-    margin: 0 auto;
-    margin-top: 0;
+  #dealer-viewport .dealerMetaDivider{ height:1px; background:rgba(31,182,166,0.2); margin:8px 0 6px; flex-shrink:0; }
+  #dealer-viewport .dealerMeta{
+    width:100%; margin-top:auto; display:flex; flex-direction:column;
+    align-items:center; gap:4px; min-height:52px;
   }
-  .dealerMetaDivider{height:1px;background:rgba(31,182,166,0.2);margin:8px 0 6px;flex-shrink:0}
-  .dealerMeta{
-    width: 100%;
-    margin-top: auto;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    min-height: 52px;
-  }
+  #dealer-viewport h1{ text-align:center; }
 
   .itemCard{border-radius:8px;padding:6px 4px;background:rgba(10,14,26,0.9) !important;border:1px solid rgba(31,182,166,0.2);width:125px;min-width:125px;max-width:125px;min-height:150px;height:auto;display:flex;flex-direction:column;align-items:center;text-align:center;box-sizing:border-box;font-size:12px;position:relative;transition:box-shadow .15s ease}
   .emptyItemSlot{border-radius:8px;padding:6px 4px;background:transparent !important;border:2px dashed rgba(31,182,166,0.3);width:125px;min-width:125px;max-width:125px;min-height:150px;height:auto;box-sizing:border-box;display:flex;align-items:center;justify-content:center;color:rgba(31,182,166,0.35);font-size:11px;font-weight:700}
@@ -3412,7 +3375,7 @@ function battleScreen() {
   </div>`;
   }).join('');
 
-  return `
+  return `<div id="battle-viewport">
     <div class="panel">${currencyBar(`<div style="margin-left:auto;display:flex;gap:6px">
         <button class="wo-btn purple" id="openRunUpgradeFromBattleBtn" style="padding:4px 9px;font-size:11px;white-space:nowrap;border-width:1px">Run Upgrade</button>
         <button class="wo-btn gray" id="forfeitRunBtn" style="padding:4px 9px;font-size:11px;white-space:nowrap;border-width:1px;box-shadow:none">Forfeit Run</button>
@@ -3540,11 +3503,11 @@ function battleScreen() {
           <h1>Pick ${BATTLE.opponent.name}'s <em>Item</em></h1>
           <div class="note" style="margin-bottom:10px">${isBurn ? `This item slot is trapped. If ${BATTLE.opponent.name} fires it, the burn backfires into their own health instead of yours.` : `This item slot is trapped. It stays cursed until ${BATTLE.opponent.name} fires it before their turn ends, or it detonates.`}</div>
           ${rows || '<div class="note">No eligible item slots.</div>'}
-          <button class="wo-btn gray" id="cancelPendingTargetBtn" style="width:100%;margin-top:4px">Cancel</button>
+            <button class="wo-btn gray" id="cancelPendingTargetBtn" style="width:100%;margin-top:4px">Cancel</button>
         </div></div>
       </div>`;
     })()}
-  `;
+  </div>`;
 }
 function handleCardDrop(e, slotKey, maxSlot) {
   e.preventDefault();
@@ -3666,6 +3629,7 @@ function shopScreen(fromCastle=false) {
   const emptyCount = Math.max(0, RUN.itemCap - equippedItemCount(RUN.hero));
   const emptySlotRows = Array.from({ length: emptyCount }, emptyItemSlotHTML).join('');
   return `${noticeHTML()}
+  <div id="dealer-viewport">
     <div class="wo">
       <div class="wo-stripe"></div><div class="wo-body">
         <h1>Dealership</h1>${currencyBar()}
@@ -3676,6 +3640,7 @@ function shopScreen(fromCastle=false) {
         <div class="dealerRow" style="margin:10px 0 12px">${itemRows || '<div class="note">No items in this category.</div>'}</div>
         <div class="hdr" style="margin-top:14px;font-weight:800;font-size:14px"><span>Equipped Items</span><span>${equippedItemCount(RUN.hero)}/${RUN.itemCap}</span></div>
         ${(ownedRows || emptySlotRows) ? `<div class="dealerRow" style="margin-top:8px">${ownedRows}${emptySlotRows}</div>` : `<div class="note" style="margin-top:6px">Nothing equipped yet.</div>`}
+      </div>
       </div>
     </div>`;
 }

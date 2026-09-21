@@ -213,7 +213,9 @@
   .mapnode.avail{background:var(--white);border-color:var(--amber);box-shadow:0 0 0 5px #1fb6a633;cursor:pointer}
   .mapnode.done{background:var(--green);border-color:var(--green);color:#fff;cursor:default}
   .mapnode.current{background:var(--blue);border-color:var(--blue-dark);color:#fff;cursor:default;box-shadow:0 0 0 5px #4a5fc755;animation:herePulse 1.4s ease-in-out infinite}
-  @keyframes herePulse{0%,100%{box-shadow:0 0 0 4px #4a5fc755}50%{box-shadow:0 0 0 9px #4a5fc722}}
+    @keyframes herePulse{0%,100%{box-shadow:0 0 0 4px #4a5fc755}50%{box-shadow:0 0 0 9px #4a5fc722}}
+  .mapnode.world3boss{animation:world3BossGlow 1.3s ease-in-out infinite;border-color:#ff5c1a}
+  @keyframes world3BossGlow{0%,100%{box-shadow:0 0 10px 4px rgba(255,90,40,0.55)}50%{box-shadow:0 0 26px 10px rgba(255,140,60,0.95)}}
   .hereTag{position:absolute;left:50%;bottom:calc(100% + 4px);transform:translateX(-50%);white-space:nowrap;
     background:var(--blue-dark);color:#fff;font-family:var(--mono);font-size:9.5px;font-weight:700;letter-spacing:.04em;
     padding:2px 6px;border-radius:4px;pointer-events:none}
@@ -1467,6 +1469,7 @@ const OPPONENT_TIERS = [
 ];
 
 const BOSS = { id: 'wildfire', name: 'Wildfire', tier: 6, icon: '🔥', image: 'Hazards/wildfire.jpg', hp: 160, minTier: 3, drawRate: 4, boss: true, usesPerTurn: 2, curse: { count: 2, amount: 12, chance: 0.55 }, items: ['opp_firestorm_surge', 'opp_ashfall', 'opp_total_engulfment'], attackInfo: 'Attack: uses its best poker hand for about 10-35 damage, depending on the hand, and can hit twice a turn. Can also curse your equipped Items - an Item that doesn\'t fire before turn end takes its curse damage.' };
+const BOSS_WORLD3 = { id: 'gridlock', name: 'The Gridlock', tier: 6, icon: '🚦', image: 'Hazards/wildfire.jpg', hp: 190, minTier: 3, drawRate: 5, boss: true, usesPerTurn: 2, startArmor: 20, armorRegen: 10, curse: { count: 2, amount: 15, chance: 0.6 }, items: ['opp_firestorm_surge', 'opp_ashfall', 'opp_total_engulfment'], attackInfo: 'Attack: uses its best poker hand for heavy damage and can hit twice a turn. Starts with armor that regenerates, and can curse your equipped Items - an Item that doesn\'t fire before turn end takes its curse damage.' };
 const OPPONENT_SWING_CAP = [22, 28, 34, 40, 46, 52, 60];
 function revealFraction(row) { return [1.0, 0.8, 0.6, 0.4, 0.25, 0.1, 0][Math.min(row, 6)]; }
 
@@ -1612,7 +1615,10 @@ function generateMap() {
   const tierForRow = r => Math.min(OPPONENT_TIERS.length - 1, Math.floor(r / 3)); 
   const tierDifficultyMult = tier => 1 + tier * 0.12;
   const castleRow = 10;
+  const isWorld3 = RUN.world === 3;
   const rowCounts = [1,2,1,2,3,1,2,3,2,2,1,2,3,2,2,3,2,2,3,2];
+  if (isWorld3) rowCounts[castleRow] = 3; 
+  const castleCol = isWorld3 ? 1 : 0; 
   const worldMultiplier = RUN.worldMultiplier || 1.0; 
   const tierQueues = {};
   const WORLD2_POISON_ITEMS = ['opp_aftershock', 'opp_toxic_spray', 'opp_corrosive_mud'];
@@ -1631,10 +1637,10 @@ function generateMap() {
     }
     nodes.push(row);
   }
-  nodes[0][0].type='battle';
+    nodes[0][0].type='battle';
   nodes[1].forEach(n=>n.type='battle');
   nodes[2][0]={type:'shop'};
-  nodes[castleRow][0]={type:'castle'};
+  nodes[castleRow][castleCol]={type:'castle'};
   const eligible=[];
   for(let r=0;r<nodes.length;r++) for(let c=0;c<nodes[r].length;c++)
     if(nodes[r][c].type==='pending') eligible.push({r,c});
@@ -1655,7 +1661,8 @@ function generateMap() {
       nodes[r][c]={type:t};
     }
   });
-  nodes.push([{type:'battle', opponent: scaleMonsterForNewWorld(BOSS, worldMultiplier * 1.3, 6)}]);
+    const bossTemplate = isWorld3 ? BOSS_WORLD3 : BOSS;
+  nodes.push([{type:'battle', opponent: scaleMonsterForNewWorld(bossTemplate, worldMultiplier * 1.3, 6)}]);
   for(let r=0;r<nodes.length-1;r++){
     const cur=nodes[r], next=nodes[r+1];
     const add=(a,b)=>{if(!edges.some(e=>e.fromRow===r&&e.fromCol===a&&e.toRow===r+1&&e.toCol===b))edges.push({fromRow:r,fromCol:a,toRow:r+1,toCol:b});};
@@ -1781,8 +1788,13 @@ function payTravelCost() {
 function commitNode(row, col) { RUN.currentRow = row; RUN.currentCol = col; RUN.path.push({ row, col }); saveRun(); }
 function selectNode(row, col) {
   RUN.onboardingDismissed = true;
-  payTravelCost();
   const node = RUN.map.nodes[row][col];
+  if (node.type === 'battle' && row === RUN.bossRow && RUN.world === 3) {
+    WORLD3_BOSS_WARNING_POPUP = { row, col };
+    render(mapScreen());
+    return;
+  }
+  payTravelCost();
   if (node.type === 'battle') { startBattle(node.opponent, row, col); return; }
   commitNode(row, col);
   if (node.type === 'castle') render(castleMenuScreen());
@@ -1795,8 +1807,8 @@ function selectNode(row, col) {
     if (!node.big && Math.random() < 0.15) { TREASURE_POPUP = { choice: true }; playSfx('open'); render(mapScreen()); }
     else { const found = rollTreasure(node.big); playSfx('open'); TREASURE_POPUP = found; render(mapScreen()); }
   }
-  else if (node.type === 'match_hazard') {
-    if (RUN.castleState?.matchPlayed) { RUN.lastNotice = 'This Grid Anomaly has already been hacked.'; render(mapScreen()); return; }
+    else if (node.type === 'match_hazard') {
+    resetCarnivalMatchState();
     MATCH_RETURN_TO_MAP = true;
     MATCH_OVERLAY_ACTIVE = true;
     renderMatchOverlay();
@@ -1813,6 +1825,7 @@ function reenterCurrentNode(row, col) {
   render(mapScreen());
 }
 let RETURN_TO_CASTLE_MENU = false;
+let WORLD3_BOSS_WARNING_POPUP = false;
 const CASTLE_FIRST = { id:'castleGuard', name:'Castle Guard', tier:2, icon:'🛡️', image: 'vehicles/castle-guard.jpg', hp:75, minTier:2, drawRate: 3, items: ['opp_castle_poke_t2'] };
 const CASTLE_SECOND = { id:'castleChampion', name:'Castle Champion', tier:3, icon:'🏰', image: 'vehicles/castle-champion.jpg', hp:105, minTier:3, drawRate: 4, items: ['opp_castle_poke_t3'] };
 const CASTLE_THIRD = { id:'castleOverlord', name:'Compound Overlord', tier:4, icon:'👑', image: 'vehicles/castle-overlord.jpg', hp:210, minTier:3, drawRate: 5, usesPerTurn:2, items: ['opp_castle_poke_t3', 'fender_bender'] };
@@ -1928,6 +1941,15 @@ function jackpotPreviewCardHTML(st) {
   const item = ITEMS[st.matchJackpotItemId];
   if (!item) return '<div class="note">No item available</div>';
   return `<div style="max-width:150px;margin:6px auto 0">${renderStandardItemCard(item, {})}</div>`;
+}
+function resetCarnivalMatchState() {
+  if (!RUN.castleState) RUN.castleState = {};
+  RUN.castleState.matchPlayed = false;
+  RUN.castleState.matchLockReason = null;
+  RUN.castleState.matchCards = null;
+  RUN.castleState.matchGuesses = 4;
+  RUN.castleState.matchPick = [];
+  RUN.castleState.matchLock = false;
 }
 function castleMatchScreen() {
   if (!RUN.castleState) RUN.castleState = {};
@@ -3126,9 +3148,39 @@ function nodePopupScreen(r, c) {
     </div>
   </div>`;
 }
+function confirmWorld3BossBattle() {
+  const p = WORLD3_BOSS_WARNING_POPUP;
+  WORLD3_BOSS_WARNING_POPUP = false;
+  if (!p) { render(mapScreen()); return; }
+  payTravelCost();
+  const node = RUN.map.nodes[p.row][p.col];
+  startBattle(node.opponent, p.row, p.col);
+}
+function cancelWorld3BossBattle() {
+  WORLD3_BOSS_WARNING_POPUP = false;
+  render(mapScreen());
+}
+function world3BossWarningScreen() {
+  const p = WORLD3_BOSS_WARNING_POPUP;
+  const node = RUN.map.nodes[p.row][p.col];
+  const o = node.opponent;
+  return `<div class="map-popup-overlay">
+    <div class="wo" style="max-width:460px;border-color:#7a0000">
+      <div class="wo-stripe" style="background:linear-gradient(90deg,#7a0000,#ff5c1a)"></div>
+      <div class="wo-body" style="text-align:center">
+        <div class="wo-eyebrow" style="color:#ff5c1a">⚠️ Critical Threat Detected</div>
+        <h1>${o.name}</h1>
+        <div class="wo-sub">Downtown Core World Boss</div>
+        <div class="note" style="margin:10px 0;text-align:left">HP: ${o.hp}<br>Draws: ${o.drawRate}/turn<br>Attacks per turn: ${o.usesPerTurn || 1}<br>${o.attackInfo || 'Uses its strongest available hand each turn.'}</div>
+        <button class="wo-btn red" id="world3BossConfirmBtn" style="width:100%;margin-top:8px">Engage Boss Battle</button>
+        <button class="wo-btn gray" id="world3BossCancelBtn" style="width:100%;margin-top:8px">Not Yet</button>
+      </div>
+    </div>
+  </div>`;
+}
 function mapScreen() {
   const rows = RUN.map.nodes;
-  const colW = 118, rowY =;
+  const colW = 118, rowY = [110, 210, 310];
   const totalW = rows.length * colW + 50;
   const totalH = 420;
   const avail = availableNextNodes();
@@ -3159,7 +3211,8 @@ function mapScreen() {
       const isBoss=r===rows.length-1;
       const withinSight=r<=RUN.currentRow+visibleRange;
       const showReal=isBoss||isDone||isAvail||withinSight;
-      const cls=isCurrent?'current':isDone?'done':isAvail?'avail':withinSight?'future':'farfuture';
+            const isWorld3BossNode = isBoss && RUN.world === 3;
+      const cls=(isCurrent?'current':isDone?'done':isAvail?'avail':withinSight?'future':'farfuture')+(isWorld3BossNode?' world3boss':'');
       const icon=!showReal?`<span class="vart" style="width:19px;height:19px;font-size:19px">${ICON.fog}</span>`:(node.type==='battle'?art(node.opponent,19):`<span class="vart" style="width:19px;height:19px;font-size:19px">${NODE_ICON[node.type]}</span>`);
       const title=!showReal?'Unscouted':(node.type==='battle'?node.opponent.name:NODE_TITLE[node.type]);
       let tip;
@@ -3183,7 +3236,7 @@ function mapScreen() {
       </div>`;
     }
   }
-  return `<div id="map-viewport">${noticeHTML()}<div class="panel">${currencyBar()}</div><div class="panel"><div class="mapwrap" style="width:100%;height:${totalH}px;overflow-x:auto;overflow-y:hidden;position:relative"><div style="position:relative;width:${totalW}px;height:${totalH}px"><div class="regionTitlePinned">${WORLD_NAMES[RUN.world] || WORLD_NAMES}</div><svg width="${totalW}" height="${totalH}" viewBox="0 0 ${totalW} ${totalH}" style="position:absolute;left:0;top:0;pointer-events:none">${svgLines}</svg>${nodesHTML}${(() => { const parsedName = String(META.playerName || 'Commander').trim().replace(/\w\S*/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()); return (RUN.currentRow === -1 && !RUN.onboardingDismissed) ? `<div class="floating-tutorial-card"><div class="wo-eyebrow">Fleet Onboarding</div><h3>Welcome, \${parsedName}!</h3><p>Click the node to the left to start your journey.</p></div>` : ''; })()}</div>${MAP_POPUP ? nodePopupScreen(MAP_POPUP.row, MAP_POPUP.col) : ''}${TREASURE_POPUP ? treasureScreen(TREASURE_POPUP) : ''}${GARAGE_POPUP ? garageScreen(GARAGE_MESSAGE) : ''}${MATCH_OVERLAY_ACTIVE ? castleMatchScreen() : ''}</div></div></div>`;
+  return `<div id="map-viewport">${noticeHTML()}<div class="panel">${currencyBar()}</div><div class="panel"><div class="mapwrap" style="width:100%;height:${totalH}px;overflow-x:auto;overflow-y:hidden;position:relative"><div style="position:relative;width:${totalW}px;height:${totalH}px"><div class="regionTitlePinned">${WORLD_NAMES[RUN.world] || WORLD_NAMES}</div><svg width="${totalW}" height="${totalH}" viewBox="0 0 ${totalW} ${totalH}" style="position:absolute;left:0;top:0;pointer-events:none">${svgLines}</svg>${nodesHTML}${(() => { const parsedName = String(META.playerName || 'Commander').trim().replace(/\w\S*/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()); return (RUN.currentRow === -1 && !RUN.onboardingDismissed) ? `<div class="floating-tutorial-card"><div class="wo-eyebrow">Fleet Onboarding</div><h3>Welcome, \${parsedName}!</h3><p>Click the node to the left to start your journey.</p></div>` : ''; })()}</div>${MAP_POPUP ? nodePopupScreen(MAP_POPUP.row, MAP_POPUP.col) : ''}${TREASURE_POPUP ? treasureScreen(TREASURE_POPUP) : ''}${GARAGE_POPUP ? garageScreen(GARAGE_MESSAGE) : ''}${MATCH_OVERLAY_ACTIVE ? castleMatchScreen() : ''}${WORLD3_BOSS_WARNING_POPUP ? world3BossWarningScreen() : ''}</div></div></div>`;
 }
 /* ========== RUN-SCOPED UPGRADES (paid with coins, last only for this run) ========== */
 const MAX_ITEM_CAP = 9; 
@@ -3788,16 +3841,33 @@ function treasureScreen(found) {
     </div>
   `;
 }
-function worldCompleteScreen() {
+function worldCompleteScreen(fromWorld, toWorld) {
+  const fromName = WORLD_NAMES[fromWorld] || `World ${fromWorld}`;
+  const toName = WORLD_NAMES[toWorld] || `World ${toWorld}`;
   return `
     <div class="treasure-modal">
       <div class="wo">
         <div class="wo-stripe"></div>
         <div class="wo-body" style="text-align:center">
-          <div class="wo-eyebrow">World 1 Complete</div>
+          <div class="wo-eyebrow">${fromName} Complete</div>
           <h1>Route <em>Secured</em></h1>
-          <div class="wo-sub" style="margin:10px 0">The Wildfire is out and the highway's clear. Fort Lauderdale owes your fleet one. Fuel up, because World 2 is rolling in hotter.</div>
-          <button class="wo-btn amber" id="advanceWorldBtn" style="width:100%;margin-top:8px">Head Into World 2</button>
+          <div class="wo-sub" style="margin:10px 0">The boss is out and the route's clear. Fort Lauderdale owes your fleet one. Fuel up, because ${toName} is rolling in hotter.</div>
+          <button class="wo-btn amber" id="advanceWorldBtn" style="width:100%;margin-top:8px">Head Into ${toName}</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+function world3ClearedScreen() {
+  return `
+    <div class="treasure-modal">
+      <div class="wo">
+        <div class="wo-stripe"></div>
+        <div class="wo-body" style="text-align:center">
+          <div class="wo-eyebrow">Downtown Core Secured</div>
+          <h1>World 3 <em>Cleared</em></h1>
+          <div class="wo-sub" style="margin:10px 0">Downtown Core is secured. Your fleet is advancing to World 4.</div>
+          <button class="wo-btn amber" id="advanceWorldBtn" style="width:100%;margin-top:8px">Advance to World 4</button>
         </div>
       </div>
     </div>
@@ -4088,24 +4158,28 @@ function render(html) {
     const won = continueBtn.parentElement.querySelector('.wo-eyebrow').textContent.includes('Won');
     if (won) {
       commitNode(BATTLE.row, BATTLE.col);
-      if (RUN.pendingWorldWin) {
+            if (RUN.pendingWorldWin) {
         RUN.pendingWorldWin = false;
-        if (RUN.world >= 2) { META.world2Cleared = true; saveMeta(); endRun(true); }
-        else render(worldCompleteScreen());
+        if (RUN.world === 1) { RUN.pendingNextWorld = 2; render(worldCompleteScreen(1, 2)); }
+        else if (RUN.world === 2) { META.world2Cleared = true; saveMeta(); RUN.pendingNextWorld = 3; render(worldCompleteScreen(2, 3)); }
+        else if (RUN.world === 3) { META.world3Cleared = true; saveMeta(); RUN.pendingNextWorld = 4; render(world3ClearedScreen()); }
+        else { endRun(true); }
       } else render(mapScreen());
     }
     else endRun(false);
   };
-  const advanceWorldBtn = document.getElementById('advanceWorldBtn');
+    const advanceWorldBtn = document.getElementById('advanceWorldBtn');
   if (advanceWorldBtn) advanceWorldBtn.onclick = () => {
-    RUN.world = 2;
-    RUN.worldMultiplier = 1.25;
+    RUN.world = RUN.pendingNextWorld || 2;
+    RUN.worldMultiplier = RUN.world === 3 ? 1.50 : RUN.world === 4 ? 1.75 : 1.25;
     RUN.map = generateMap();
     RUN.bossRow = RUN.map.nodes.length - 1;
     RUN.currentRow = -1;
     RUN.currentCol = null;
     RUN.path = [];
-    META.bestWorld = Math.max(META.bestWorld || 1, 2);
+    RUN.pendingNextWorld = null;
+    resetCarnivalMatchState();
+    META.bestWorld = Math.max(META.bestWorld || 1, RUN.world);
     saveMeta();
     saveRun();
     render(mapScreen());
@@ -4561,8 +4635,11 @@ function render(html) {
     if (!BATTLE.pendingTarget) return;
     if (BATTLE.pendingTarget.type === 'burn') chooseBurnTarget(k); else chooseCurseTarget(k);
   });
-  const cancelTargetBtn = document.getElementById('cancelPendingTargetBtn'); if (cancelTargetBtn) cancelTargetBtn.onclick = () => cancelPendingTarget();
+    const cancelTargetBtn = document.getElementById('cancelPendingTargetBtn'); if (cancelTargetBtn) cancelTargetBtn.onclick = () => cancelPendingTarget();
+  const world3BossConfirmBtn = document.getElementById('world3BossConfirmBtn'); if (world3BossConfirmBtn) world3BossConfirmBtn.onclick = () => confirmWorld3BossBattle();
+  const world3BossCancelBtn = document.getElementById('world3BossCancelBtn'); if (world3BossCancelBtn) world3BossCancelBtn.onclick = () => cancelWorld3BossBattle();
   bindDev();
+}
 }
 function itemIdFromKey(k) { return String(k).replace(/_\d+$/, ''); }
 function runSummaryScreen() {

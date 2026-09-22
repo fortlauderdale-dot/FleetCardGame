@@ -4214,8 +4214,13 @@ function metaScreen() {
     <div class="wo">
       <div class="wo-stripe"></div>
       <div class="wo-body">
-        <div class="wo-eyebrow">Home Base</div>
-        <h1>Fleet <em>Duel</em></h1>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+          <h1 style="margin:0">Fleet <em>Duel</em></h1>
+          <div style="text-align:right">
+            <div class="note" style="margin:0;font-size:13px;opacity:0.9">🏆 JJ was first to beat World 1!</div>
+            <div class="note" style="margin:0;font-size:13px;opacity:0.9">🏆 Haley was first to beat World 2!</div>
+          </div>
+        </div>
         <div class="wo-sub">Career Points: ${META.points} &middot; Best route: ${META.bestRun}/21 &middot; High score: ${META.highScore} &middot; Runs played: ${META.runsPlayed}</div>
         <div class="panel" style="margin-bottom:10px">
           <div class="hdr"><span>Fleet Name</span><span></span></div>
@@ -4224,12 +4229,14 @@ function metaScreen() {
         ${hasSave ? `<button class="wo-btn" id="continueRunBtn" style="margin-bottom:10px;width:100%">Continue Run</button>` : `<button class="wo-btn" id="startRunBtn" style="margin-bottom:10px;width:100%">New Run</button>`}
         ${hasSave ? `<button class="wo-btn gray" id="startRunBtn" style="width:100%;margin-bottom:10px">New Run (overwrites save)</button>` : ''}
         <button class="wo-btn amber" id="viewUpgradesBtn" style="width:100%">Career Point Upgrades</button>
-        <div class="note" style="text-align:center;margin-top:16px;opacity:0.75">Made by Drew. Please send Drew your feedback, high scores, bug findings, or confusing areas so he can update the master registry leaderboard. Work in Progress.</div>
+        <div style="display:flex;align-items:center;margin-top:16px;opacity:0.75">
+          <div class="note" style="margin:0;font-size:24px;white-space:nowrap">Made by Drew</div>
+          <div class="note" style="margin:0;flex:1;text-align:center;font-size:12px">Please send Drew your feedback, high scores, bug findings, or confusing areas so he can update the master registry leaderboard. Work in Progress.</div>
+        </div>
       </div>
     </div>
   `;
 }
-
 let MAP_SCROLL_X = 0;
 /* ========== RENDER + EVENTS ========== */
 function render(html) {

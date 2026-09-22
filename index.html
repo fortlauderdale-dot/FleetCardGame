@@ -770,9 +770,8 @@ function checkCondition(cond, cards) {
     result = { met: !!hit, label: hit ? `${rankLabel(hit.rank)}${hit.suit}` : '' };
   }
   else if (cond.type === 'parity') {
-    const ODD_RANKS = [14, 3, 5, 7, 9];
-    const EVEN_RANKS = [2, 4, 6, 8, 10];
-    const matchFn = cond.parity === 'even' ? (c => EVEN_RANKS.includes(c.rank)) : (c => ODD_RANKS.includes(c.rank));
+    const effRank = c => c.rank === 14 ? 1 : c.rank;
+    const matchFn = cond.parity === 'even' ? (c => effRank(c) % 2 === 0) : (c => effRank(c) % 2 !== 0);
     const n = cards.filter(matchFn).length;
     if (cond.mode === 'all') result = { met: cards.length > 0 && n === cards.length, label: `All ${cond.parity}`, count: n };
     else result = { met: n >= cond.count, label: `${n} ${cond.parity}`, count: n };
@@ -1221,9 +1220,9 @@ const ITEMS = {
     bonus: { base: 0, perLevel: 0.2, maxLevel: 3 },
     note: 'Needs at least 3 Hearts among your played cards.' },
   odd_job: { id: 'odd_job', name: 'Odd Job', cost: 40, maxCards: 5, usesPerTurn: 1, usesPerTurnPerLevel: 1,
-    condition: { type: 'parity', parity: 'odd', mode: 'count', count: 1 }, baseMult: 1.2,
+    condition: { type: 'parity', parity: 'odd', mode: 'all' }, baseMult: 1.2,
     bonus: { base: 0, perLevel: 0.25, maxLevel: 3 },
-    note: 'Needs at least 1 odd card among your played cards (up to 5).' },
+    note: 'Upgrades up to 5 cards. Every loaded card must be an odd rank.' },
   lucky_seven: { id: 'lucky_seven', name: 'Lucky Seven', cost: 60, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1, minRow: 2,
     condition: { type: 'exactRank', rank: 7 }, baseMult: 2.2,
     bonus: { base: 0, perLevel: 0.4, maxLevel: 3 },

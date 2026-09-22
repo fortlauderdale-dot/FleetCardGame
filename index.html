@@ -204,7 +204,7 @@
   .kv{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px dashed var(--blue-light);font-family:var(--mono);font-size:12.5px}
   .kv b{color:var(--blue)}
   .price{color:var(--amber);font-weight:700}
-        #map-viewport .mapwrap{position:relative;margin:0 auto;overflow-x:auto;overflow-y:visible;border:2px solid #1a2038;border-radius:12px;padding:50px 10px 12px;} .regionTitlePinned{position:absolute;top:14px;left:0;right:0;text-align:center;font-family:var(--disp);font-weight:700;font-size:20px;color:#1fb6a6;text-shadow:0 2px 0 #0b0f19;z-index:10;letter-spacing:0.02em;text-transform:none;} .mapnode-wrap{position:absolute;transform:translate(-50%,-50%);z-index:1;} .mapnode-wrap:hover{z-index:80;} .mapnode-wrap:hover .tooltip{display:block;} .mapnode-wrap .tooltip{top:120%;bottom:auto;} .mapnode-wrap.bottomrow .tooltip{top:auto;bottom:120%;} #map-viewport .mapnode.current{animation:singleNodePulse 1.4s ease-in-out infinite !important;} @keyframes singleNodePulse{0%,100%{box-shadow:0 0 0 4px rgba(0,245,212,0.3),inset 0 0 8px rgba(0,245,212,0.2);border-color:var(--energy);}50%{box-shadow:0 0 20px 6px rgba(0,245,212,0.6),inset 0 0 14px rgba(0,245,212,0.4);border-color:#ffffff;}} #map-viewport .mapnode.avail{animation:none !important;border:3px solid var(--green) !important;background:#ffffff !important;color:var(--green) !important;box-shadow:0 0 12px rgba(47,174,102,0.45) !important;} .floating-tutorial-card{position:absolute;z-index:1000;background:var(--white);border:2px dashed var(--amber);border-radius:8px;padding:12px;max-width:260px;box-shadow:3px 3px 0 var(--blue-dark),0 0 14px rgba(31,182,166,0.35);font-size:12px;line-height:1.4;left:110px;top:70px;} .floating-tutorial-card .wo-eyebrow{color:var(--energy);font-size:10px;font-weight:600;margin-bottom:4px;} .floating-tutorial-card h3{font-size:15px;margin:0 0 4px 0;color:#ffffff;} .floating-tutorial-card p{margin:0;}
+        #map-viewport .mapwrap{position:relative;margin:0 auto;overflow-x:auto;overflow-y:visible;border:2px solid #1a2038;border-radius:12px;padding:14px 10px 12px;} .regionTitlePinned{position:absolute;top:14px;left:0;right:0;text-align:center;font-family:var(--disp);font-weight:700;font-size:20px;color:#1fb6a6;text-shadow:0 2px 0 #0b0f19;z-index:10;letter-spacing:0.02em;text-transform:none;} .mapnode-wrap{position:absolute;transform:translate(-50%,-50%);z-index:1;} .mapnode-wrap:hover{z-index:80;} .mapnode-wrap:hover .tooltip{display:block;} .mapnode-wrap .tooltip{top:120%;bottom:auto;} .mapnode-wrap.bottomrow .tooltip{top:auto;bottom:120%;} #map-viewport .mapnode.current{animation:singleNodePulse 1.4s ease-in-out infinite !important;} @keyframes singleNodePulse{0%,100%{box-shadow:0 0 0 4px rgba(0,245,212,0.3),inset 0 0 8px rgba(0,245,212,0.2);border-color:var(--energy);}50%{box-shadow:0 0 20px 6px rgba(0,245,212,0.6),inset 0 0 14px rgba(0,245,212,0.4);border-color:#ffffff;}} #map-viewport .mapnode.avail{animation:none !important;border:3px solid var(--green) !important;background:#ffffff !important;color:var(--green) !important;box-shadow:0 0 12px rgba(47,174,102,0.45) !important;} .floating-tutorial-card{position:absolute;z-index:1000;background:var(--white);border:2px dashed var(--amber);border-radius:8px;padding:12px;max-width:260px;box-shadow:3px 3px 0 var(--blue-dark),0 0 14px rgba(31,182,166,0.35);font-size:12px;line-height:1.4;left:110px;top:70px;} .floating-tutorial-card .wo-eyebrow{color:var(--energy);font-size:10px;font-weight:600;margin-bottom:4px;} .floating-tutorial-card h3{font-size:15px;margin:0 0 4px 0;color:#ffffff;} .floating-tutorial-card p{margin:0;}
 @keyframes mapNodeWiggle{0%,100%{transform:translateX(-2px) rotate(-4deg)}50%{transform:translateX(2px) rotate(4deg)}}
   .mapnode.type-match_hazard{animation:mapNodeWiggle 1.8s ease-in-out infinite}
   .tooltip{display:none;position:absolute;bottom:120%;left:50%;transform:translateX(-50%);z-index:90;
@@ -218,8 +218,10 @@
   .mapnode.done{background:var(--green);border-color:var(--green);color:#fff;cursor:default}
   .mapnode.current{background:var(--blue);border-color:var(--blue-dark);color:#fff;cursor:default;box-shadow:0 0 0 5px #4a5fc755;animation:herePulse 1.4s ease-in-out infinite}
   @keyframes herePulse{0%,100%{box-shadow:0 0 0 4px #4a5fc755}50%{box-shadow:0 0 0 9px #4a5fc722}}
-  .mapnode.worldboss{animation:world3BossGlow 1.3s ease-in-out infinite;border-color:#ff5c1a}
+  .mapnode.worldboss{width:72px;height:72px;font-size:32px;animation:world3BossGlow 1.3s ease-in-out infinite;border-color:#ff5c1a}
   @keyframes world3BossGlow{0%,100%{box-shadow:0 0 10px 4px rgba(255,90,40,0.55)}50%{box-shadow:0 0 26px 10px rgba(255,140,60,0.95)}}
+  .mapnode.elitenode{width:56px;height:56px;font-size:24px;border-color:#d9861f;box-shadow:0 0 0 5px rgba(217,134,31,0.28),0 0 14px rgba(217,134,31,0.55);animation:eliteNodeGlow 1.8s ease-in-out infinite}
+  @keyframes eliteNodeGlow{0%,100%{box-shadow:0 0 0 5px rgba(217,134,31,0.28),0 0 12px rgba(217,134,31,0.5)}50%{box-shadow:0 0 0 8px rgba(217,134,31,0.4),0 0 20px rgba(217,134,31,0.8)}}
   .hereTag{position:absolute;left:50%;bottom:calc(100% + 4px);transform:translateX(-50%);white-space:nowrap;
     background:var(--blue-dark);color:#fff;font-family:var(--mono);font-size:9.5px;font-weight:700;letter-spacing:.04em;
     padding:2px 6px;border-radius:4px;pointer-events:none}
@@ -320,9 +322,10 @@
   .mapnode.type-treasure{background:#effbf1;border-color:#4cae68}
   .mapnode.type-rest{background:#fff9df;border-color:#d5b24a}
   .mapnode.type-blacksmith,.mapnode.type-chopshop{background:#fff8e9;border-color:#d99a30}
-  .mapnode.type-castle{background:#f2edff;border-color:#8a4fe0;width:64px;height:64px;font-size:34px;box-shadow:0 0 0 6px rgba(138,79,224,0.28),0 0 20px rgba(138,79,224,0.55);animation:castleGlow 2.4s ease-in-out infinite}
-  @keyframes castleGlow{0%,100%{box-shadow:0 0 0 6px rgba(138,79,224,0.28),0 0 16px rgba(138,79,224,0.5)}50%{box-shadow:0 0 0 9px rgba(138,79,224,0.4),0 0 26px rgba(138,79,224,0.8)}}
+  .mapnode.type-castle{background:#f2edff;border-color:#8a4fe0;width:84px;height:84px;font-size:44px;opacity:1;box-shadow:0 0 0 7px rgba(138,79,224,0.28),0 0 24px rgba(138,79,224,0.55);animation:castleGlow 2.4s ease-in-out infinite}
+  @keyframes castleGlow{0%,100%{box-shadow:0 0 0 7px rgba(138,79,224,0.28),0 0 18px rgba(138,79,224,0.5)}50%{box-shadow:0 0 0 11px rgba(138,79,224,0.4),0 0 30px rgba(138,79,224,0.8)}}
   .mapnode-wrap.castlenode{z-index:20}
+  .regionCaption{text-align:center;font-family:var(--disp);font-weight:700;font-size:14px;color:#1fb6a6;letter-spacing:0.02em;margin-top:8px}
   @media (max-width:700px){.resourceRow{grid-template-columns:1fr}}
   .castleMenu{display:flex;flex-direction:column;gap:10px;margin:14px auto;max-width:440px}
   .castleBtn{display:block;width:100%;text-align:center;padding:16px;font-family:var(--disp);font-size:16px;font-weight:700;color:#4a2f14;
@@ -1923,11 +1926,6 @@ function commitNode(row, col) { RUN.currentRow = row; RUN.currentCol = col; RUN.
 function selectNode(row, col) {
   RUN.onboardingDismissed = true;
   const node = RUN.map.nodes[row][col];
-  if (node.type === 'battle' && row === RUN.bossRow) {
-    WORLD_BOSS_WARNING_POPUP = { row, col };
-    render(mapScreen());
-    return;
-  }
   payTravelCost();
   if (node.type === 'battle') { startBattle(node.opponent, row, col); return; }
   commitNode(row, col);
@@ -1959,7 +1957,6 @@ function reenterCurrentNode(row, col) {
   render(mapScreen());
 }
 let RETURN_TO_CASTLE_MENU = false;
-let WORLD_BOSS_WARNING_POPUP = false;
 const CASTLE_FIRST = { id:'castleGuard', name:'Castle Guard', tier:2, icon:'🛡️', image: 'vehicles/castle-guard.jpg', hp:75, minTier:2, drawRate: 3, items: ['opp_castle_poke_t2'] };
 const CASTLE_SECOND = { id:'castleChampion', name:'Castle Champion', tier:3, icon:'🏰', image: 'vehicles/castle-champion.jpg', hp:105, minTier:3, drawRate: 4, items: ['opp_castle_poke_t3'] };
 const CASTLE_THIRD = { id:'castleOverlord', name:'Compound Overlord', tier:4, icon:'👑', image: 'vehicles/castle-overlord.jpg', hp:210, minTier:3, drawRate: 5, usesPerTurn:2, items: ['opp_castle_poke_t3', 'fender_bender'] };
@@ -3212,6 +3209,7 @@ function nodePopupContent(r, c) {
   const glyph = (svg) => `<span class="vart" style="width:64px;height:64px;font-size:64px">${svg}</span>`;
   if (node.type === 'battle') {
     const o = node.opponent;
+    const isElite = /\[Elite\]/.test(o.name || '');
     const { chipReward, gemReward, fuelReward, pointsReward } = battleRewardsFor(o, r);
     const specialNote = o.special?.type === 'drawOnHit' ? `<div class="note" style="margin-top:4px">Draws +${o.special.amount || 1} card${(o.special.amount||1)>1?'s':''} into its hand every time you land a direct hit on it.</div>`
       : o.startPoolBonus ? `<div class="note" style="margin-top:4px">Starts the fight with ${o.startPoolBonus} extra card${o.startPoolBonus>1?'s':''} already in hand.</div>`
@@ -3225,9 +3223,11 @@ function nodePopupContent(r, c) {
         ['HP', o.hp],
         ['Draws', `${o.drawRate}/turn`],
       ],
-      extra: `<div class="popupItemRow">${opponentAttackBoxHTML(o)}</div>${specialNote}${armorNote}${o.boss ? `<div class="note" style="color:var(--red);font-weight:700;margin-top:4px">World Boss</div>` : ''}`,
+      extra: `<div class="popupItemRow">${opponentAttackBoxHTML(o)}</div>${specialNote}${armorNote}${o.boss ? `<div class="note" style="color:var(--red);font-weight:700;margin-top:4px">World Boss</div>` : isElite ? `<div class="note" style="color:#d9861f;font-weight:700;margin-top:4px">Elite Battle</div>` : ''}`,
       rewards: { chipReward, gemReward, fuelReward, pointsReward },
-      actionLabel: 'Battle',
+      actionLabel: o.boss ? 'Battle Boss' : isElite ? 'Battle Elite' : 'Battle',
+      eyebrow: o.boss ? 'Boss Battle' : isElite ? 'Elite Battle' : 'Stop Details',
+      accent: o.boss ? '#7a0000' : isElite ? '#d9861f' : null,
     };
   }
   if (node.type === 'shop') return { title: 'Dealership', art: glyph(ICON.cart), rows: [], extra: '<div class="note">Buy a vehicle with coins.</div>', actionLabel: 'Go Here' };
@@ -3260,12 +3260,12 @@ function nodePopupScreen(r, c) {
       <div class="cur pts">${ICON.star} +15 Career Points</div>
     </div>` : '';
   return `<div class="map-popup-overlay">
-    <div class="wo" style="width:100%">
-      <div class="wo-stripe"></div>
+    <div class="wo" style="width:100%${info.accent ? `;border-color:${info.accent}` : ''}">
+      <div class="wo-stripe" ${info.accent ? `style="background:${info.accent}"` : ''}></div>
       <div class="wo-body">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
           <div style="flex:1;min-width:0">
-            <div class="wo-eyebrow">Stop Details</div>
+            <div class="wo-eyebrow"${info.accent ? ` style="color:${info.accent}"` : ''}>${info.eyebrow || 'Stop Details'}</div>
             <h1 style="margin:2px 0 0">${info.title}</h1>
           </div>
           <div style="flex-shrink:0">${info.art}</div>
@@ -3274,40 +3274,9 @@ function nodePopupScreen(r, c) {
         ${info.extra || ''}
         ${rewardsHTML}
         <div style="display:flex;gap:8px;margin-top:14px">
-          ${isAvail ? `<button class="wo-btn amber" id="popupGoBtn" style="flex:1">${info.actionLabel}</button>` : isCurrent ? `<button class="wo-btn amber" id="popupReenterBtn" style="flex:1">Go Back In</button>` : ''}
+          ${isAvail ? `<button class="wo-btn ${info.accent ? 'red' : 'amber'}" id="popupGoBtn" style="flex:1">${info.actionLabel}</button>` : isCurrent ? `<button class="wo-btn amber" id="popupReenterBtn" style="flex:1">Go Back In</button>` : ''}
           <button class="wo-btn gray" id="popupCloseBtn" style="flex:1">Close</button>
         </div>
-      </div>
-    </div>
-  </div>`;
-}
-function confirmWorldBossBattle() {
-  const p = WORLD_BOSS_WARNING_POPUP;
-  WORLD_BOSS_WARNING_POPUP = false;
-  if (!p) { render(mapScreen()); return; }
-  payTravelCost();
-  const node = RUN.map.nodes[p.row][p.col];
-  startBattle(node.opponent, p.row, p.col);
-}
-function cancelWorldBossBattle() {
-  WORLD_BOSS_WARNING_POPUP = false;
-  render(mapScreen());
-}
-function worldBossWarningScreen() {
-  const p = WORLD_BOSS_WARNING_POPUP;
-  const node = RUN.map.nodes[p.row][p.col];
-  const o = node.opponent;
-  const regionName = WORLD_NAMES[RUN.world] || 'World';
-  return `<div class="map-popup-overlay">
-    <div class="wo" style="max-width:460px;border-color:#7a0000">
-      <div class="wo-stripe" style="background:linear-gradient(90deg,#7a0000,#ff5c1a)"></div>
-      <div class="wo-body" style="text-align:center">
-        <div class="wo-eyebrow" style="color:#ff5c1a">⚠️ Critical Threat Detected</div>
-        <h1>${o.name}</h1>
-        <div class="wo-sub">${regionName} World Boss</div>
-        <div class="note" style="margin:10px 0;text-align:left">HP: ${o.hp}<br>Draws: ${o.drawRate}/turn<br>Attacks per turn: ${o.usesPerTurn || 1}<br>${o.attackInfo || 'Uses its strongest available hand each turn.'}</div>
-        <button class="wo-btn red" id="worldBossConfirmBtn" style="width:100%;margin-top:8px">Engage Boss Battle</button>
-        <button class="wo-btn gray" id="worldBossCancelBtn" style="width:100%;margin-top:8px">Not Yet</button>
       </div>
     </div>
   </div>`;
@@ -3315,7 +3284,7 @@ function worldBossWarningScreen() {
 function mapScreen() {
   const rows = RUN.map.nodes;
   const colW = 118, rowY = [110, 210, 310];
-  const CASTLE_GAP = 55;
+  const CASTLE_GAP = 65;
   const castleR = rows.findIndex(row => row.some(n => n && n.type === 'castle'));
   const colX = r => 25 + r*colW + colW/2 + (castleR < 0 ? 0 : r > castleR ? CASTLE_GAP*2 : r === castleR ? CASTLE_GAP : 0);
   const totalW = rows.length * colW + 50 + (castleR >= 0 ? CASTLE_GAP*2 : 0);
@@ -3347,12 +3316,14 @@ function mapScreen() {
       const isAvail=avail.some(n=>n.row===r&&n.col===c);
       const isBoss=r===rows.length-1;
       const isCastle=node.type==='castle';
+      const isElite=node.type==='battle'&&node.opponent&&/\[Elite\]/.test(node.opponent.name||'');
       const withinSight=r<=RUN.currentRow+visibleRange;
-      const showReal=isBoss||isDone||isAvail||withinSight;
+      const showReal=isBoss||isDone||isAvail||withinSight||isCastle;
       const isWorldBossNode = isBoss;
-      const cls=(isCurrent?'current':isDone?'done':isAvail?'avail':withinSight?'future':'farfuture')+(isWorldBossNode?' worldboss':'');
-      const iconSize=isCastle&&showReal?34:19;
-      const icon=!showReal?`<span class="vart" style="width:19px;height:19px;font-size:19px">${ICON.fog}</span>`:(node.type==='battle'?art(node.opponent,19):`<span class="vart" style="width:${iconSize}px;height:${iconSize}px;font-size:${iconSize}px">${NODE_ICON[node.type]}</span>`);
+      const cls=(isCurrent?'current':isDone?'done':isAvail?'avail':withinSight||isCastle?'future':'farfuture')+(isWorldBossNode?' worldboss':'')+(isElite?' elitenode':'');
+      const iconSize=isCastle&&showReal?44:isWorldBossNode&&showReal?32:isElite&&showReal?24:19;
+      const battleIconSize=isWorldBossNode?32:isElite?24:19;
+      const icon=!showReal?`<span class="vart" style="width:19px;height:19px;font-size:19px">${ICON.fog}</span>`:(node.type==='battle'?art(node.opponent,battleIconSize):`<span class="vart" style="width:${iconSize}px;height:${iconSize}px;font-size:${iconSize}px">${NODE_ICON[node.type]}</span>`);
       const title=!showReal?'Unscouted':(node.type==='battle'?node.opponent.name:NODE_TITLE[node.type]);
       let tip;
       if(!showReal) tip='Move closer to scout this stop.';
@@ -3375,7 +3346,7 @@ function mapScreen() {
       </div>`;
     }
   }
-  return `<div id="map-viewport">${noticeHTML()}<div class="panel">${currencyBar(`<div style="margin-left:auto;display:flex;gap:6px"><button class="wo-btn purple" id="openRunUpgradeFromMapBtn" style="padding:4px 9px;font-size:11px;white-space:nowrap;border-width:1px">Run Upgrade</button><button class="wo-btn gray" id="forfeitRunBtn" style="padding:4px 9px;font-size:11px;white-space:nowrap;border-width:1px;box-shadow:none">Forfeit Run</button></div>`)}</div><div class="panel"><div class="mapwrap" style="width:100%;height:${totalH}px;overflow-x:auto;overflow-y:hidden;position:relative"><div class="regionTitlePinned">${WORLD_NAMES[RUN.world] || WORLD_NAMES[1]}</div><div style="position:relative;width:${totalW}px;height:${totalH}px"><svg width="${totalW}" height="${totalH}" viewBox="0 0 ${totalW} ${totalH}" style="position:absolute;left:0;top:0;pointer-events:none">${svgLines}</svg>${nodesHTML}${(() => { const parsedName = String(META.playerName || 'Commander').trim().replace(/\w\S*/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()); return (RUN.currentRow === -1 && !RUN.onboardingDismissed) ? `<div class="floating-tutorial-card"><div class="wo-eyebrow">Fleet Onboarding</div><h3>Welcome, ${parsedName}!</h3><p>Click the node to the left to start your journey.</p></div>` : ''; })()}</div>${MAP_POPUP ? nodePopupScreen(MAP_POPUP.row, MAP_POPUP.col) : ''}${TREASURE_POPUP ? treasureScreen(TREASURE_POPUP) : ''}${GARAGE_POPUP ? garageScreen(GARAGE_MESSAGE) : ''}${MATCH_OVERLAY_ACTIVE ? castleMatchScreen() : ''}${WORLD_BOSS_WARNING_POPUP ? worldBossWarningScreen() : ''}</div></div></div>`;
+  return `<div id="map-viewport">${noticeHTML()}<div class="panel">${currencyBar(`<div style="margin-left:auto;display:flex;gap:6px"><button class="wo-btn purple" id="openRunUpgradeFromMapBtn" style="padding:4px 9px;font-size:11px;white-space:nowrap;border-width:1px">Run Upgrade</button><button class="wo-btn gray" id="forfeitRunBtn" style="padding:4px 9px;font-size:11px;white-space:nowrap;border-width:1px;box-shadow:none">Forfeit Run</button></div>`)}</div><div class="panel"><div class="mapwrap" style="width:100%;height:${totalH}px;overflow-x:auto;overflow-y:hidden;position:relative"><div style="position:relative;width:${totalW}px;height:${totalH}px"><svg width="${totalW}" height="${totalH}" viewBox="0 0 ${totalW} ${totalH}" style="position:absolute;left:0;top:0;pointer-events:none">${svgLines}</svg>${nodesHTML}${(() => { const parsedName = String(META.playerName || 'Commander').trim().replace(/\w\S*/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()); return (RUN.currentRow === -1 && !RUN.onboardingDismissed) ? `<div class="floating-tutorial-card"><div class="wo-eyebrow">Fleet Onboarding</div><h3>Welcome, ${parsedName}!</h3><p>Click the node to the left to start your journey.</p></div>` : ''; })()}</div>${MAP_POPUP ? nodePopupScreen(MAP_POPUP.row, MAP_POPUP.col) : ''}${TREASURE_POPUP ? treasureScreen(TREASURE_POPUP) : ''}${GARAGE_POPUP ? garageScreen(GARAGE_MESSAGE) : ''}${MATCH_OVERLAY_ACTIVE ? castleMatchScreen() : ''}</div><div class="regionCaption">World ${RUN.world}: ${WORLD_NAMES[RUN.world] || WORLD_NAMES[1]}</div></div></div>`;
 }
 /* ========== RUN-SCOPED UPGRADES (paid with coins, last only for this run) ========== */
 const MAX_ITEM_CAP = 9; 
@@ -4792,8 +4763,6 @@ function render(html) {
     if (BATTLE.pendingTarget.type === 'burn') chooseBurnTarget(k); else chooseCurseTarget(k);
   });
   const cancelTargetBtn = document.getElementById('cancelPendingTargetBtn'); if (cancelTargetBtn) cancelTargetBtn.onclick = () => cancelPendingTarget();
-  const worldBossConfirmBtn = document.getElementById('worldBossConfirmBtn'); if (worldBossConfirmBtn) worldBossConfirmBtn.onclick = () => confirmWorldBossBattle();
-  const worldBossCancelBtn = document.getElementById('worldBossCancelBtn'); if (worldBossCancelBtn) worldBossCancelBtn.onclick = () => cancelWorldBossBattle();
   const claimVictoryBtn = document.getElementById('claimVictoryBtn'); if (claimVictoryBtn) claimVictoryBtn.onclick = () => endRun(true);
   bindDev();
 }

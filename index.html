@@ -218,9 +218,9 @@
   .mapnode.done{background:var(--green);border-color:var(--green);color:#fff;cursor:default}
   .mapnode.current{background:var(--blue);border-color:var(--blue-dark);color:#fff;cursor:default;box-shadow:0 0 0 5px #4a5fc755;animation:herePulse 1.4s ease-in-out infinite}
   @keyframes herePulse{0%,100%{box-shadow:0 0 0 4px #4a5fc755}50%{box-shadow:0 0 0 9px #4a5fc722}}
-  .mapnode.worldboss{width:72px;height:72px;font-size:32px;animation:world3BossGlow 1.3s ease-in-out infinite;border-color:#ff5c1a}
-  @keyframes world3BossGlow{0%,100%{box-shadow:0 0 10px 4px rgba(255,90,40,0.55)}50%{box-shadow:0 0 26px 10px rgba(255,140,60,0.95)}}
-  .mapnode.elitenode{width:56px;height:56px;font-size:24px;border-color:#d9861f;box-shadow:0 0 0 5px rgba(217,134,31,0.28),0 0 14px rgba(217,134,31,0.55);animation:eliteNodeGlow 1.8s ease-in-out infinite}
+  .mapnode.worldboss{width:72px;height:72px;font-size:32px;animation:world3BossGlow 1.3s ease-in-out infinite;border-color:#c81e1e}
+  @keyframes world3BossGlow{0%,100%{box-shadow:0 0 10px 4px rgba(220,20,20,0.55)}50%{box-shadow:0 0 26px 10px rgba(255,40,40,0.95)}}
+  .mapnode.elitenode{border-color:#d9861f;box-shadow:0 0 0 5px rgba(217,134,31,0.28),0 0 14px rgba(217,134,31,0.55);animation:eliteNodeGlow 1.8s ease-in-out infinite}
   @keyframes eliteNodeGlow{0%,100%{box-shadow:0 0 0 5px rgba(217,134,31,0.28),0 0 12px rgba(217,134,31,0.5)}50%{box-shadow:0 0 0 8px rgba(217,134,31,0.4),0 0 20px rgba(217,134,31,0.8)}}
   .hereTag{position:absolute;left:50%;bottom:calc(100% + 4px);transform:translateX(-50%);white-space:nowrap;
     background:var(--blue-dark);color:#fff;font-family:var(--mono);font-size:9.5px;font-weight:700;letter-spacing:.04em;
@@ -3321,8 +3321,8 @@ function mapScreen() {
       const showReal=isBoss||isDone||isAvail||withinSight||isCastle;
       const isWorldBossNode = isBoss;
       const cls=(isCurrent?'current':isDone?'done':isAvail?'avail':withinSight||isCastle?'future':'farfuture')+(isWorldBossNode?' worldboss':'')+(isElite?' elitenode':'');
-      const iconSize=isCastle&&showReal?44:isWorldBossNode&&showReal?32:isElite&&showReal?24:19;
-      const battleIconSize=isWorldBossNode?32:isElite?24:19;
+      const iconSize=isCastle&&showReal?44:isWorldBossNode&&showReal?32:19;
+      const battleIconSize=isWorldBossNode?32:19;
       const icon=!showReal?`<span class="vart" style="width:19px;height:19px;font-size:19px">${ICON.fog}</span>`:(node.type==='battle'?art(node.opponent,battleIconSize):`<span class="vart" style="width:${iconSize}px;height:${iconSize}px;font-size:${iconSize}px">${NODE_ICON[node.type]}</span>`);
       const title=!showReal?'Unscouted':(node.type==='battle'?node.opponent.name:NODE_TITLE[node.type]);
       let tip;

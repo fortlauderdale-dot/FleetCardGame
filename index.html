@@ -204,7 +204,7 @@
   .kv{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px dashed var(--blue-light);font-family:var(--mono);font-size:12.5px}
   .kv b{color:var(--blue)}
   .price{color:var(--amber);font-weight:700}
-        #map-viewport .mapwrap{position:relative;margin:0 auto;overflow-x:auto;overflow-y:visible;border:2px solid #1a2038;border-radius:12px;padding:50px 10px 12px;} .regionTitlePinned{position:absolute;top:14px;left:0;right:0;text-align:center;font-family:var(--disp);font-weight:700;font-size:20px;color:#1fb6a6;text-shadow:0 2px 0 #0b0f19;z-index:10;letter-spacing:0.02em;text-transform:none;} .mapnode-wrap{position:absolute;transform:translate(-50%,-50%);z-index:1;} .mapnode-wrap:hover{z-index:80;} .mapnode-wrap:hover .tooltip{display:block;} .mapnode-wrap .tooltip{top:120%;bottom:auto;} #map-viewport .mapnode.current{animation:singleNodePulse 1.4s ease-in-out infinite !important;} @keyframes singleNodePulse{0%,100%{box-shadow:0 0 0 4px rgba(0,245,212,0.3),inset 0 0 8px rgba(0,245,212,0.2);border-color:var(--energy);}50%{box-shadow:0 0 20px 6px rgba(0,245,212,0.6),inset 0 0 14px rgba(0,245,212,0.4);border-color:#ffffff;}} #map-viewport .mapnode.avail{animation:none !important;border:3px solid var(--green) !important;background:#ffffff !important;color:var(--green) !important;box-shadow:0 0 12px rgba(47,174,102,0.45) !important;} .floating-tutorial-card{position:absolute;z-index:1000;background:var(--white);border:2px dashed var(--amber);border-radius:8px;padding:12px;max-width:260px;box-shadow:3px 3px 0 var(--blue-dark),0 0 14px rgba(31,182,166,0.35);font-size:12px;line-height:1.4;left:110px;top:70px;} .floating-tutorial-card .wo-eyebrow{color:var(--energy);font-size:10px;font-weight:600;margin-bottom:4px;} .floating-tutorial-card h3{font-size:15px;margin:0 0 4px 0;color:#ffffff;} .floating-tutorial-card p{margin:0;}
+        #map-viewport .mapwrap{position:relative;margin:0 auto;overflow-x:auto;overflow-y:visible;border:2px solid #1a2038;border-radius:12px;padding:50px 10px 12px;} .regionTitlePinned{position:absolute;top:14px;left:0;right:0;text-align:center;font-family:var(--disp);font-weight:700;font-size:20px;color:#1fb6a6;text-shadow:0 2px 0 #0b0f19;z-index:10;letter-spacing:0.02em;text-transform:none;} .mapnode-wrap{position:absolute;transform:translate(-50%,-50%);z-index:1;} .mapnode-wrap:hover{z-index:80;} .mapnode-wrap:hover .tooltip{display:block;} .mapnode-wrap .tooltip{top:120%;bottom:auto;} .mapnode-wrap.bottomrow .tooltip{top:auto;bottom:120%;} #map-viewport .mapnode.current{animation:singleNodePulse 1.4s ease-in-out infinite !important;} @keyframes singleNodePulse{0%,100%{box-shadow:0 0 0 4px rgba(0,245,212,0.3),inset 0 0 8px rgba(0,245,212,0.2);border-color:var(--energy);}50%{box-shadow:0 0 20px 6px rgba(0,245,212,0.6),inset 0 0 14px rgba(0,245,212,0.4);border-color:#ffffff;}} #map-viewport .mapnode.avail{animation:none !important;border:3px solid var(--green) !important;background:#ffffff !important;color:var(--green) !important;box-shadow:0 0 12px rgba(47,174,102,0.45) !important;} .floating-tutorial-card{position:absolute;z-index:1000;background:var(--white);border:2px dashed var(--amber);border-radius:8px;padding:12px;max-width:260px;box-shadow:3px 3px 0 var(--blue-dark),0 0 14px rgba(31,182,166,0.35);font-size:12px;line-height:1.4;left:110px;top:70px;} .floating-tutorial-card .wo-eyebrow{color:var(--energy);font-size:10px;font-weight:600;margin-bottom:4px;} .floating-tutorial-card h3{font-size:15px;margin:0 0 4px 0;color:#ffffff;} .floating-tutorial-card p{margin:0;}
 @keyframes mapNodeWiggle{0%,100%{transform:translateX(-2px) rotate(-4deg)}50%{transform:translateX(2px) rotate(4deg)}}
   .mapnode.type-match_hazard{animation:mapNodeWiggle 1.8s ease-in-out infinite}
   .tooltip{display:none;position:absolute;bottom:120%;left:50%;transform:translateX(-50%);z-index:90;
@@ -320,7 +320,9 @@
   .mapnode.type-treasure{background:#effbf1;border-color:#4cae68}
   .mapnode.type-rest{background:#fff9df;border-color:#d5b24a}
   .mapnode.type-blacksmith,.mapnode.type-chopshop{background:#fff8e9;border-color:#d99a30}
-  .mapnode.type-castle{background:#f2edff;border-color:#8a4fe0}
+  .mapnode.type-castle{background:#f2edff;border-color:#8a4fe0;width:64px;height:64px;font-size:34px;box-shadow:0 0 0 6px rgba(138,79,224,0.28),0 0 20px rgba(138,79,224,0.55);animation:castleGlow 2.4s ease-in-out infinite}
+  @keyframes castleGlow{0%,100%{box-shadow:0 0 0 6px rgba(138,79,224,0.28),0 0 16px rgba(138,79,224,0.5)}50%{box-shadow:0 0 0 9px rgba(138,79,224,0.4),0 0 26px rgba(138,79,224,0.8)}}
+  .mapnode-wrap.castlenode{z-index:20}
   @media (max-width:700px){.resourceRow{grid-template-columns:1fr}}
   .castleMenu{display:flex;flex-direction:column;gap:10px;margin:14px auto;max-width:440px}
   .castleBtn{display:block;width:100%;text-align:center;padding:16px;font-family:var(--disp);font-size:16px;font-weight:700;color:#4a2f14;
@@ -3313,15 +3315,18 @@ function worldBossWarningScreen() {
 function mapScreen() {
   const rows = RUN.map.nodes;
   const colW = 118, rowY = [110, 210, 310];
-  const totalW = rows.length * colW + 50;
+  const CASTLE_GAP = 55;
+  const castleR = rows.findIndex(row => row.some(n => n && n.type === 'castle'));
+  const colX = r => 25 + r*colW + colW/2 + (castleR < 0 ? 0 : r > castleR ? CASTLE_GAP*2 : r === castleR ? CASTLE_GAP : 0);
+  const totalW = rows.length * colW + 50 + (castleR >= 0 ? CASTLE_GAP*2 : 0);
   const totalH = 420;
   const avail = availableNextNodes();
   const visibleRange = 3 + META.levels.range + (RUN.runUpgrades?.sightRange || 0);
   let svgLines = '';
 
   for (const e of RUN.map.edges) {
-    const x1 = 25 + e.fromRow * colW + colW/2;
-    const x2 = 25 + e.toRow * colW + colW/2;
+    const x1 = colX(e.fromRow);
+    const x2 = colX(e.toRow);
     const y1 = rowY[Math.min(e.fromCol,rowY.length-1)];
     const y2 = rowY[Math.min(e.toCol,rowY.length-1)];
     const traveled = RUN.path.some(p=>p.row===e.fromRow&&p.col===e.fromCol) &&
@@ -3336,16 +3341,18 @@ function mapScreen() {
   
   for(let r=0;r<rows.length;r++) {
     for(let c=0;c<rows[r].length;c++) {
-      const node=rows[r][c], x=25+r*colW+colW/2, y=rowY[Math.min(c,rowY.length-1)];
+      const node=rows[r][c], x=colX(r), y=rowY[Math.min(c,rowY.length-1)];
       const isDone=RUN.path.some(p=>p.row===r&&p.col===c);
       const isCurrent=r===RUN.currentRow&&c===RUN.currentCol;
       const isAvail=avail.some(n=>n.row===r&&n.col===c);
       const isBoss=r===rows.length-1;
+      const isCastle=node.type==='castle';
       const withinSight=r<=RUN.currentRow+visibleRange;
       const showReal=isBoss||isDone||isAvail||withinSight;
       const isWorldBossNode = isBoss;
       const cls=(isCurrent?'current':isDone?'done':isAvail?'avail':withinSight?'future':'farfuture')+(isWorldBossNode?' worldboss':'');
-      const icon=!showReal?`<span class="vart" style="width:19px;height:19px;font-size:19px">${ICON.fog}</span>`:(node.type==='battle'?art(node.opponent,19):`<span class="vart" style="width:19px;height:19px;font-size:19px">${NODE_ICON[node.type]}</span>`);
+      const iconSize=isCastle&&showReal?34:19;
+      const icon=!showReal?`<span class="vart" style="width:19px;height:19px;font-size:19px">${ICON.fog}</span>`:(node.type==='battle'?art(node.opponent,19):`<span class="vart" style="width:${iconSize}px;height:${iconSize}px;font-size:${iconSize}px">${NODE_ICON[node.type]}</span>`);
       const title=!showReal?'Unscouted':(node.type==='battle'?node.opponent.name:NODE_TITLE[node.type]);
       let tip;
       if(!showReal) tip='Move closer to scout this stop.';
@@ -3361,7 +3368,7 @@ function mapScreen() {
       else if(node.type==='match_hazard') tip='Grid Anomaly Detected: Tap to hack the Carnival Board for extra fleet gear.';
       else tip='Find coins, fuel, and gems.';
 
-      nodesHTML+=`<div class="mapnode-wrap ${isBoss?'bossnode ':''}${c===0?'toprow':c===1?'midrow':'bottomrow'}" style="left:${(x/totalW*100)}%;top:${y}px">
+      nodesHTML+=`<div class="mapnode-wrap ${isBoss?'bossnode ':''}${isCastle?'castlenode ':''}${c===0?'toprow':c===1?'midrow':'bottomrow'}" style="left:${(x/totalW*100)}%;top:${y}px">
         ${isCurrent?'<div class="hereTag">You Are Here</div>':''}
         <button class="mapnode ${cls} type-${node.type}" ${showReal?`data-nodeinfo="${r}:${c}"`:''} ${showReal?'':'disabled'}>${icon}</button>
         <div class="tooltip"><b>${title}</b>${isCurrent?' <span style="color:var(--amber)">(current)</span>':''}<br>${tip}</div>

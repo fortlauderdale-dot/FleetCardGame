@@ -803,6 +803,21 @@ function bonusConditionText(cond) {
   if (cond?.type === 'suitCount') return `${cond.count}${suitMicroCardHTML(cond.suit)}!`;
   return `${describeCondition(cond)}!`;
 }
+function itemBonusLineHTML(item, level) {
+  if (!item.bonus) return '';
+  const bonusPct = Math.round((item.bonus.base + (item.bonus.perLevel || 0) * level) * 100);
+  if (bonusPct <= 0) return '';
+  // Only show an "if <condition>" clause when the bonus has its own, genuinely stricter
+  // condition than what's already required to fire the item at all. Several items reused
+  // the item's own firing condition here, which just restated the requirement back as if
+  // it were a special extra bonus (e.g. "Bonus +100% if Three of a Kind" on an item that
+  // already needs Three of a Kind to fire in the first place) - that's not a real condition,
+  // just a flat power increase from tuning, so it reads as a plain tune bonus instead.
+  const text = item.bonus.condition
+    ? `Bonus <b>+${bonusPct}%</b> if ${bonusConditionText(item.bonus.condition)}`
+    : `Bonus <b>+${bonusPct}%</b> from tuning`;
+  return `<div class="itemBonusLine">${text}</div>`;
+}
 function describeCondition(cond) {
   if (!cond || cond.type === 'any') return 'Any cards';
   if (cond.type === 'exactCount') return `exactly ${cond.count} cards`;
@@ -1011,8 +1026,8 @@ const ITEMS = {
     drawAmount: 0, drawUsesCardCount: true, drawBonusFlat: 2, drawPerLevel: 0,
     note: `Cards played must add up to exactly 4 (example: 2+2, or a single 4). Draws a card for each card played, +2. Draws immediately.` },
   chain_starter: { id: 'chain_starter', name: 'Jump Start', cost: 50, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1, minRow: 2,
-    condition: { type: 'straightLen', len: 3 }, baseMult: 2.5,
-    note: `Needs a 3-card ${kw('Straight')} (example: 6, 7, 8). ${SIGMA_TIP} +150% damage.` },
+    condition: { type: 'straightLen', len: 3 }, baseMult: straightMult(3),
+    note: `Needs a 3-card ${kw('Straight')} (example: 6, 7, 8). ${SIGMA_TIP} +45% damage.` },
   drawstone: { id: 'drawstone', name: 'Tow Cable', cost: 40, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'sumThreshold', min: 7 }, baseMult: 0,
     drawAmount: 2, drawPerLevel: 0,
@@ -1199,8 +1214,8 @@ const ITEMS = {
     condition: { type: 'colorCount', color: 'blk', count: 4, exactCount: 4 }, flatAmount: 0, opponentEffect: 'earlyEscape',
     note: 'Needs exactly 4 Black cards. Instantly ends the fight - you clear the stop, but it flees with your fuel, costing you 3 Fuel.' },
   triple_threat: { id: 'triple_threat', name: 'Multi-Car Pileup', cost: 45, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
-    condition: { type: 'pokerTier', tier: 3, exactTier: true }, baseMult: 1.6,
-    bonus: { base: 1.0, perLevel: 1.0, maxLevel: 3 }, 
+    condition: { type: 'pokerTier', tier: 3, exactTier: true }, baseMult: 2.2,
+    bonus: { base: 0, perLevel: 0.3, maxLevel: 3 },
     note: 'Needs Three of a Kind. A big hit that tunes even further with upgrades.' },
   bike_dash: { id: 'bike_dash', name: 'Bike Lane Dash', cost: 30, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'straightLen', len: 2 }, baseMult: straightMult(2),
@@ -1526,8 +1541,7 @@ function renderStandardItemCard(item, opts = {}) {
   }
   const drawN = item.drawUsesCardCount ? (cards.length ? cards.length : item.maxCards) + (item.drawBonusFlat || 0) + (item.drawPerLevel || 0) * level : (item.drawAmount ? item.drawAmount + (item.drawPerLevel || 0) * level : 0);
   const drawBonusLine = (item.drawAmount || item.drawUsesCardCount) ? `<div class="itemBonusLine hoverTip" data-title="Draws ${drawN} card${drawN === 1 ? '' : 's'} immediately after this item is used."><b>Draw</b> ${drawN} card${drawN === 1 ? '' : 's'}</div>` : '';
-  const bonusPct = item.bonus ? Math.round((item.bonus.base + (item.bonus.perLevel || 0) * level) * 100) : 0;
-  const bonusLine = item.bonus && bonusPct > 0 ? `<div class="itemBonusLine">Bonus <b>+${bonusPct}%</b> if ${bonusConditionText(item.bonus.condition || item.condition)}</div>` : '';
+  const bonusLine = itemBonusLineHTML(item, level);
   const kindTag = eKind === 'poison' ? `<span class="effectTip poisonText" data-tip="Poison deals its damage at the end of the opponent's turn, then drops by 3 each turn until it's gone."><b>Poison</b></span>`
     : eKind === 'burn' ? `<span class="effectTip burnText" data-tip="Burn hits for full damage, then half, then a quarter, fading out over 3 turns."><b>Burn</b></span>`
     : eKind === 'curse' ? `<span class="effectTip curseText" data-tip="Curse goes off if this item isn't fired again before the opponent's next turn."><b>Curse</b></span>`
@@ -3497,8 +3511,7 @@ function battleScreen() {
       const c = BATTLE.hand[cardHandIdx];
       return `<div class="card mini ${suitColorClass(c.color, c.suit)}" data-unassign="${slotKey}|${cardHandIdx}"><div>${rankLabel(c.rank)}</div><div>${c.suit}</div></div>`;
     }).join('');
-    const bonusPct = item.bonus ? Math.round((item.bonus.base + item.bonus.perLevel * level) * 100) : 0;
-    const bonusLine = item.bonus && bonusPct > 0 ? `<div class="itemBonusLine">Bonus <b>+${bonusPct}%</b> if ${bonusConditionText(item.bonus.condition || item.condition)}</div>` : '';
+    const bonusLine = itemBonusLineHTML(item, level);
     const drawNPreview = item.drawUsesCardCount ? (cards.length + (item.drawBonusFlat||0) + (item.drawPerLevel||0)*level) : (item.drawAmount ? item.drawAmount + (item.drawPerLevel||0)*level : 0);
     const drawBonusLine = (item.drawAmount || item.drawUsesCardCount) ? `<div class="itemBonusLine hoverTip" data-title="Draws ${drawNPreview} card${drawNPreview===1?'':'s'} immediately after this item is used."><b>Draw</b> ${drawNPreview} card${drawNPreview===1?'':'s'}</div>` : '';
 

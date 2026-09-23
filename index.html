@@ -452,7 +452,43 @@ function bestHandFromPool(pool, maxCards) {
   }
   return best;
 }
-function bestFiveFromPool(pool) { return bestHandFromPool(pool, 5); } 
+function bestFiveFromPool(pool) { return bestHandFromPool(pool, 5); }
+// Unlike bestHandFromPool (which always grabs the single highest-poker-tier hand available,
+// regardless of what an item's condition actually needs), this searches the pool for a combo
+// that genuinely satisfies the GIVEN condition - a straight, an exact suit count, a specific
+// rank, odd/even, all four suits, whatever. That's what makes an opponent's "needs a 3-card
+// Straight" or "needs 3 red cards" attack a real, readable threat instead of a coin flip: it
+// fires reliably once the cards for it are actually in the pool, and reliably doesn't fire
+// when they're not, so the pool the player can see is honest information to plan around.
+function bestComboOfSize(pool, cond, size) {
+  if (size < 1 || size > pool.length) return null;
+  let best = null, bestSum = -Infinity;
+  for (const combo of combinations(pool, size)) {
+    if (!checkCondition(cond, combo).met) continue;
+    const sum = combo.reduce((a, c) => a + cardValue(c.rank) + (c.bonus || 0), 0);
+    if (sum > bestSum) { bestSum = sum; best = combo; }
+  }
+  if (!best) return null;
+  return { cards: best, ...evaluateHand(best) };
+}
+function findOpponentCombo(pool, cond, cap) {
+  if (!pool.length || !cap) return null;
+  const poolLen = pool.length;
+  const fixedSize = cond && cond.exactCount != null ? cond.exactCount
+    : cond && cond.type === 'straightLen' ? cond.len
+    : cond && cond.type === 'exactCount' ? cond.count
+    : null;
+  if (fixedSize != null) return poolLen >= fixedSize ? bestComboOfSize(pool, cond, fixedSize) : null;
+  const maxLen = Math.min(cap, poolLen);
+  // A larger combo can never have a lower card-value sum than a smaller one, so the biggest
+  // size that can satisfy the condition is always the most damaging - try biggest first and
+  // stop as soon as one works, instead of exhaustively scoring every smaller size too.
+  for (let size = maxLen; size >= 1; size--) {
+    const found = bestComboOfSize(pool, cond, size);
+    if (found) return found;
+  }
+  return null;
+}
 function damageFor(cards, mult) { return Math.round(cards.reduce((a, c) => a + cardValue(c.rank) + (c.bonus || 0), 0) * mult); }
 
 function formatRewardParts(reward, labels = { coins: 'coins', gems: 'gems', fuel: 'fuel', points: 'Career Points' }) {
@@ -761,7 +797,14 @@ function checkCondition(cond, cards) {
     const ok = cards.length === cond.len && isConsecutive(cards);
     result = { met: ok, label: `${cond.len}-Card Straight` };
   }
-    else if (cond.type === 'suitCount') { const n = cards.filter(c => c.suit === cond.suit).length; result = { met: n >= 1, label: `${n} of ${cond.suit}`, count: n }; } else if (cond.type === 'colorCount') { const n = cards.filter(c => c.color === cond.color).length; result = { met: n >= 1, label: `${n} ${cond.color === 'red' ? 'Red' : 'Black'}`, count: n }; }
+  else if (cond.type === 'suitCount') {
+    const n = cards.filter(c => c.suit === cond.suit).length;
+    result = { met: n >= (cond.count ?? 1), label: `${n} of ${cond.suit}`, count: n };
+  }
+  else if (cond.type === 'suitCountExact') {
+    const n = cards.filter(c => c.suit === cond.suit).length;
+    result = { met: n === cond.count, label: `${n} of ${cond.suit}`, count: n };
+  }
   else if (cond.type === 'colorCount') {
     const n = cards.filter(c => c.color === cond.color).length;
     result = { met: n >= cond.count, label: `${n} ${cond.color === 'red' ? 'Red' : 'Black'}`, count: n };
@@ -1321,9 +1364,9 @@ const ITEMS = {
   w3_barrier_topple: { id: 'w3_barrier_topple', name: 'Barrier Topple', maxCards: 1, usesPerTurn: 1,
     condition: { type: 'any', exactCount: 1 }, flatAmount: 7,
     note: 'Needs exactly 1 card. Just topples straight into the lane.' },
-  w3_extinguisher_backfire: { id: 'w3_extinguisher_backfire', name: 'Extinguisher Backfire', maxCards: 2, usesPerTurn: 1,
-    condition: { type: 'pokerTier', tier: 1 }, baseMult: 1, kind: 'burn',
-    note: 'Needs a Pair. Sprayed the wrong nozzle - that was not foam.' },
+  w3_extinguisher_backfire: { id: 'w3_extinguisher_backfire', name: 'Extinguisher Backfire', maxCards: 3, usesPerTurn: 1,
+    condition: { type: 'suitCount', suit: '♦', count: 3 }, flatAmount: 22, kind: 'burn',
+    note: 'Needs at least 3 Diamonds. Sprayed the wrong nozzle - that was not foam, and it went up fast.' },
   w3_extinguisher_swing: { id: 'w3_extinguisher_swing', name: 'Extinguisher Swing', maxCards: 1, usesPerTurn: 1,
     condition: { type: 'any', exactCount: 1 }, flatAmount: 6,
     note: 'Needs exactly 1 card. A wild swing of the canister.' },
@@ -1331,8 +1374,8 @@ const ITEMS = {
     condition: { type: 'any', exactCount: 1 }, flatAmount: 8,
     note: 'Needs exactly 1 card. Flickers out right as you pass under it.' },
   w3_dumpster_flareup: { id: 'w3_dumpster_flareup', name: 'Dumpster Flare-Up', maxCards: 3, usesPerTurn: 1,
-    condition: { type: 'pokerTier', tier: 2 }, baseMult: 1.1, kind: 'burn',
-    note: 'Needs Two Pair. A gust sends flaming trash your way.' },
+    condition: { type: 'straightLen', len: 3 }, baseMult: 1.45, kind: 'burn',
+    note: 'Needs a 3-card straight (example: 6, 7, 8). A gust sends a line of flaming trash your way.' },
   w3_dumpster_smolder: { id: 'w3_dumpster_smolder', name: 'Dumpster Smolder', maxCards: 2, usesPerTurn: 1,
     condition: { type: 'pokerTier', tier: 1 }, baseMult: 1, kind: 'burn',
     note: 'Needs a Pair. Still smoldering from last week.' },
@@ -1358,8 +1401,8 @@ const ITEMS = {
     condition: { type: 'pokerTier', tier: 1 }, baseMult: 1, opponentEffect: 'stealFuel',
     note: 'Needs a Pair. Takes it for a joyride and siphons a bit of fuel.' },
   w3_picket_shove: { id: 'w3_picket_shove', name: 'Picket Line Shove', maxCards: 3, usesPerTurn: 1,
-    condition: { type: 'pokerTier', tier: 2 }, baseMult: 1.1,
-    note: 'Needs Two Pair. The whole line surges forward at once.' },
+    condition: { type: 'colorCount', color: 'red', count: 3 }, baseMult: 1.3,
+    note: 'Needs 3+ Red cards. The whole line surges forward at once when enough of them show up.' },
   w3_picket_chant: { id: 'w3_picket_chant', name: 'Picket Line Chant', maxCards: 2, usesPerTurn: 1,
     condition: { type: 'pokerTier', tier: 1 }, baseMult: 1,
     note: 'Needs a Pair. Blocks the lane and pounds on the hood.' },
@@ -1369,9 +1412,9 @@ const ITEMS = {
   w3_router_jam: { id: 'w3_router_jam', name: 'Router Jam', maxCards: 1, usesPerTurn: 1,
     condition: { type: 'any', exactCount: 1 }, flatAmount: 4, opponentEffect: 'draw',
     note: 'Needs exactly 1 card. Jams your signal and draws itself an extra card.' },
-  w3_rideshare_cutoff: { id: 'w3_rideshare_cutoff', name: 'Rideshare Cutoff', maxCards: 2, usesPerTurn: 1,
-    condition: { type: 'pokerTier', tier: 1 }, baseMult: 1, kind: 'poison',
-    note: 'Needs a Pair. Cuts you off and leaves a haze of exhaust fumes. Poison damage.' },
+  w3_rideshare_cutoff: { id: 'w3_rideshare_cutoff', name: 'Rideshare Cutoff', maxCards: 1, usesPerTurn: 1,
+    condition: { type: 'exactRank', rank: 9 }, flatAmount: 16, kind: 'poison',
+    note: 'Needs a 9. Cuts you off right at exit 9 and leaves a haze of exhaust fumes. Poison damage.' },
   w3_rideshare_honk: { id: 'w3_rideshare_honk', name: 'Rideshare Honk', maxCards: 1, usesPerTurn: 1,
     condition: { type: 'any', exactCount: 1 }, flatAmount: 6,
     note: 'Needs exactly 1 card. Lays on the horn and clips your bumper.' },
@@ -1404,9 +1447,9 @@ const ITEMS = {
     note: `Needs cards totaling ${SIGMA_TIP}22+. Poison damage.` },
 
   /* ---- World 4 (Riverwalk District) attacks, round 2 - 15 more regulars, curse introduced here ---- */
-  w4_crab_swarm_nip: { id: 'w4_crab_swarm_nip', name: 'Dock Crab Swarm Nip', maxCards: 2, usesPerTurn: 1,
-    condition: { type: 'pokerTier', tier: 1 }, baseMult: 1,
-    note: 'Needs a Pair. A whole colony scuttles out from under the dock.' },
+  w4_crab_swarm_nip: { id: 'w4_crab_swarm_nip', name: 'Dock Crab Swarm Nip', maxCards: 1, usesPerTurn: 1,
+    condition: { type: 'exactRank', rank: 6 }, flatAmount: 16,
+    note: 'Needs a 6. The whole colony scuttles out from under the dock at once, right on cue.' },
   w4_crate_topple: { id: 'w4_crate_topple', name: 'Cargo Crate Topple', maxCards: 3, usesPerTurn: 1,
     condition: { type: 'sumThreshold', min: 14 }, flatAmount: 18,
     note: `Needs cards totaling ${SIGMA_TIP}14+. A stack of loose cargo lets go all at once.` },
@@ -1425,9 +1468,9 @@ const ITEMS = {
   w4_otter_nip: { id: 'w4_otter_nip', name: 'River Otter Nip', maxCards: 1, usesPerTurn: 1,
     condition: { type: 'any', exactCount: 1 }, flatAmount: 9, kind: 'poison',
     note: 'Needs exactly 1 card. Poison damage.' },
-  w4_piling_scrape: { id: 'w4_piling_scrape', name: 'Cobweb-Choked Piling', maxCards: 2, usesPerTurn: 1,
-    condition: { type: 'pokerTier', tier: 1 }, baseMult: 1,
-    note: 'Needs a Pair. Barnacles and cobwebs both leave a mark.' },
+  w4_piling_scrape: { id: 'w4_piling_scrape', name: 'Cobweb-Choked Piling', maxCards: 3, usesPerTurn: 1,
+    condition: { type: 'colorCount', color: 'blk', count: 3 }, baseMult: 1.3,
+    note: 'Needs 3+ Black cards. Barnacles and cobwebs both leave a mark when there is enough to snag on.' },
   w4_cruise_wake_swell: { id: 'w4_cruise_wake_swell', name: 'Cruise Ship Wake Swell', maxCards: 3, usesPerTurn: 1,
     condition: { type: 'sumThreshold', min: 16 }, flatAmount: 22,
     note: `Needs cards totaling ${SIGMA_TIP}16+. A cruise ship passes and the wake rolls the whole dock.` },
@@ -1435,8 +1478,8 @@ const ITEMS = {
     condition: { type: 'any', exactCount: 1 }, flatAmount: 8,
     note: 'Needs exactly 1 card. A smaller swell still rocks you sideways.' },
   w4_chopper_downwash: { id: 'w4_chopper_downwash', name: 'Chopper Downwash Scorch', maxCards: 3, usesPerTurn: 1,
-    condition: { type: 'pokerTier', tier: 2 }, baseMult: 1.1, kind: 'burn',
-    note: 'Needs Two Pair. Exhaust heat from the patrol chopper blast washes over you.' },
+    condition: { type: 'straightLen', len: 3 }, baseMult: 1.45, kind: 'burn',
+    note: 'Needs a 3-card straight (example: 6, 7, 8). Exhaust heat sweeps across you in one long pass.' },
   w4_chopper_buzz: { id: 'w4_chopper_buzz', name: 'Chopper Low Buzz', maxCards: 2, usesPerTurn: 1,
     condition: { type: 'pokerTier', tier: 1 }, baseMult: 1, kind: 'burn',
     note: 'Needs a Pair. Burn damage.' },
@@ -1449,9 +1492,9 @@ const ITEMS = {
   w4_haunted_piling_creak: { id: 'w4_haunted_piling_creak', name: 'Haunted Piling Creak', maxCards: 2, usesPerTurn: 1,
     condition: { type: 'pokerTier', tier: 1 }, baseMult: 1,
     note: 'Needs a Pair. Just the dock settling. Probably.' },
-  w4_fortune_tellers_hex: { id: 'w4_fortune_tellers_hex', name: "Fortune Teller's Hex", maxCards: 2, usesPerTurn: 1,
-    condition: { type: 'pokerTier', tier: 1 }, baseMult: 1, kind: 'curse',
-    note: 'Needs a Pair. She warned you not to park there. Curses one of your Items.' },
+  w4_fortune_tellers_hex: { id: 'w4_fortune_tellers_hex', name: "Fortune Teller's Hex", maxCards: 1, usesPerTurn: 1,
+    condition: { type: 'cardIn', cards: [{ rank: 14, suit: '♠' }] }, flatAmount: 14, kind: 'curse',
+    note: "Needs the Ace of Spades. She warned you not to park there, and the death card doesn't lie. Curses one of your Items." },
   w4_deck_board_snap: { id: 'w4_deck_board_snap', name: 'Loose Deck Board Snap', maxCards: 2, usesPerTurn: 1,
     condition: { type: 'pokerTier', tier: 1 }, baseMult: 1,
     note: 'Needs a Pair. A rotten board finally gives way.' },
@@ -1523,8 +1566,8 @@ const ITEMS = {
     condition: { type: 'any', exactCount: 1 }, flatAmount: 7,
     note: 'Needs exactly 1 card. Just drifts into your bumper.' },
   w1_moat_collapse: { id: 'w1_moat_collapse', name: 'Moat Collapse', maxCards: 3, usesPerTurn: 1,
-    condition: { type: 'pokerTier', tier: 2 }, baseMult: 1.1,
-    note: 'Needs Two Pair. The moat gives way and the whole thing crashes down.' },
+    condition: { type: 'straightLen', len: 3 }, baseMult: 1.8,
+    note: `Needs a 3-card ${kw('Straight')} (example: 6, 7, 8). The moat wall gives way in one long crumbling line.` },
   w1_turret_poke: { id: 'w1_turret_poke', name: 'Turret Poke', maxCards: 2, usesPerTurn: 1,
     condition: { type: 'pokerTier', tier: 1 }, baseMult: 1,
     note: 'Needs a Pair. A plastic turret pokes through your tire.' },
@@ -1532,8 +1575,8 @@ const ITEMS = {
     condition: { type: 'any', exactCount: 1 }, flatAmount: 8,
     note: 'Needs exactly 1 card. Loose string whips across your windshield.' },
   w1_trap_snap: { id: 'w1_trap_snap', name: 'Trap Snap', maxCards: 2, usesPerTurn: 1,
-    condition: { type: 'pokerTier', tier: 1 }, baseMult: 1.05,
-    note: 'Needs a Pair. The rusty trap door still has some bite in it.' },
+    condition: { type: 'exactRank', rank: 8 }, flatAmount: 20,
+    note: `Needs an 8 among your played cards. The trap only springs on the right size bait.` },
   w1_rope_drag: { id: 'w1_rope_drag', name: 'Rope Drag', maxCards: 1, usesPerTurn: 1,
     condition: { type: 'any', exactCount: 1 }, flatAmount: 8,
     note: 'Needs exactly 1 card. The trailing rope catches under a tire.' },
@@ -1547,14 +1590,14 @@ const ITEMS = {
     condition: { type: 'pokerTier', tier: 1 }, baseMult: 1,
     note: 'Needs a Pair. Wobbles off balance and clips the fleet.' },
   w1_chain_rattle: { id: 'w1_chain_rattle', name: 'Chain Rattle', maxCards: 3, usesPerTurn: 1,
-    condition: { type: 'pokerTier', tier: 2 }, baseMult: 1.1,
-    note: 'Needs Two Pair. The snagged chain whips taut.' },
+    condition: { type: 'colorCount', color: 'blk', count: 3 }, baseMult: 1.2,
+    note: `Needs 3+ ${kw('Black')} cards. The rusted links finally give way all at once.` },
   w1_anchor_drag: { id: 'w1_anchor_drag', name: 'Anchor Drag', maxCards: 1, usesPerTurn: 1,
     condition: { type: 'any', exactCount: 1 }, flatAmount: 8,
     note: 'Needs exactly 1 card. Dead weight scrapes along the road.' },
-  w1_shell_bump: { id: 'w1_shell_bump', name: 'Shell Bump', maxCards: 2, usesPerTurn: 1,
-    condition: { type: 'pokerTier', tier: 1 }, baseMult: 0.9,
-    note: 'Needs a Pair. Slow, but that shell is solid.' },
+  w1_shell_bump: { id: 'w1_shell_bump', name: 'Shell Bump', maxCards: 4, usesPerTurn: 1,
+    condition: { type: 'allSuits' }, flatAmount: 26,
+    note: 'Needs one of each Suit (4 cards). Slow to line up, but that shell hits like a truck.' },
   w1_net_haul: { id: 'w1_net_haul', name: 'Net Haul', maxCards: 5, usesPerTurn: 1,
     condition: { type: 'any' }, perFaceCardDamage: 9,
     note: 'Needs any card. Damage scales with how many face cards (J/Q/K) it plays.' },
@@ -1607,15 +1650,15 @@ const ITEMS = {
     note: 'Needs Three of a Kind. Poison damage.' },
 
   /* ---- World 2 (Alligator Alley) attacks, round 2 - 10 more regulars for variety ---- */
-  w2_bullfrog_lunge: { id: 'w2_bullfrog_lunge', name: 'Bullfrog Lunge', maxCards: 2, usesPerTurn: 1,
-    condition: { type: 'pokerTier', tier: 1 }, baseMult: 1, kind: 'poison',
-    note: 'Needs a Pair. Poison damage.' },
+  w2_bullfrog_lunge: { id: 'w2_bullfrog_lunge', name: 'Bullfrog Lunge', maxCards: 1, usesPerTurn: 1,
+    condition: { type: 'exactRank', rank: 5 }, flatAmount: 16, kind: 'poison',
+    note: 'Needs a 5. Poison damage - the frog only lunges at the right size prey.' },
   w2_bullfrog_hop: { id: 'w2_bullfrog_hop', name: 'Bullfrog Hop', maxCards: 1, usesPerTurn: 1,
     condition: { type: 'any', exactCount: 1 }, flatAmount: 6,
     note: 'Needs exactly 1 card. Just an ordinary hop, right into your fender.' },
   w2_burrow_collapse: { id: 'w2_burrow_collapse', name: 'Burrow Collapse', maxCards: 3, usesPerTurn: 1,
-    condition: { type: 'pokerTier', tier: 2 }, baseMult: 1.1,
-    note: 'Needs Two Pair. The tunnel gives out right under a tire.' },
+    condition: { type: 'straightLen', len: 3 }, baseMult: 1.45,
+    note: 'Needs a 3-card straight (example: 6, 7, 8). The tunnel gives out in a line right under your tires.' },
   w2_burrow_nip: { id: 'w2_burrow_nip', name: 'Burrow Nip', maxCards: 2, usesPerTurn: 1,
     condition: { type: 'pokerTier', tier: 1 }, baseMult: 1,
     note: 'Needs a Pair. A quick nip from underground.' },
@@ -1635,8 +1678,8 @@ const ITEMS = {
     condition: { type: 'any' }, perFaceCardDamage: 8,
     note: 'Needs any card. Damage scales with how many face cards (J/Q/K) it plays.' },
   w2_reed_snare: { id: 'w2_reed_snare', name: 'Reed Snare', maxCards: 3, usesPerTurn: 1,
-    condition: { type: 'pokerTier', tier: 2 }, baseMult: 1, kind: 'poison',
-    note: 'Needs Two Pair. Poison damage.' },
+    condition: { type: 'suitCount', suit: '♣', count: 3 }, flatAmount: 22, kind: 'poison',
+    note: 'Needs at least 3 Clubs. Poison damage - the reeds tangle deep when there are enough of them.' },
   w2_reed_scratch: { id: 'w2_reed_scratch', name: 'Reed Scratch', maxCards: 1, usesPerTurn: 1,
     condition: { type: 'any', exactCount: 1 }, flatAmount: 6,
     note: 'Needs exactly 1 card. Sharp reeds scrape the paint.' },
@@ -3172,16 +3215,16 @@ function endTurn() {
           const slotKeyForBurn = `${itemId}_${slotPos}`;
        if (BATTLE.opponentItemBurns && BATTLE.opponentItemBurns[slotKeyForBurn]) {
             if (!burnBlockedPick) {
-              const bestBurn = bestHandFromPool(BATTLE.oppPool, effectiveMaxCards(item) ?? maxCards);
-              const condBurn = checkCondition(item.condition, bestBurn.cards);
+              const bestBurn = findOpponentCombo(BATTLE.oppPool, item.condition, effectiveMaxCards(item) ?? maxCards);
+              const condBurn = bestBurn ? checkCondition(item.condition, bestBurn.cards) : { met: false };
               if (condBurn.met) burnBlockedPick = { item, best: bestBurn, cond: condBurn, key: slotKeyForBurn };
             }
             continue;
           }
           const itemCap = effectiveMaxCards(item) ?? maxCards;
-          const best = bestHandFromPool(BATTLE.oppPool, itemCap);
-          const cond = checkCondition(item.condition, best.cards);
-          const validPokerAttack = opponentAttackIsValid(item, best, BATTLE.oppPool, itemCap);
+          const best = findOpponentCombo(BATTLE.oppPool, item.condition, itemCap);
+          const cond = best ? checkCondition(item.condition, best.cards) : { met: false };
+          const validPokerAttack = best && opponentAttackIsValid(item, best, BATTLE.oppPool, itemCap);
           if (cond.met && validPokerAttack) { itemPick = { item, best, cond, key: slotKeyForBurn }; break; }
         }
         if (!itemPick && burnBlockedPick) {
@@ -4550,7 +4593,7 @@ function metaScreen() {
         ${hasSave ? `<button class="wo-btn gray" id="startRunBtn" style="width:100%;margin-bottom:10px">New Run (overwrites save)</button>` : ''}
         <button class="wo-btn amber" id="viewUpgradesBtn" style="width:100%">Career Point Upgrades</button>
         <div style="display:flex;align-items:center;margin-top:16px;opacity:0.75">
-          <div class="note" style="margin:0;font-size:24px;white-space:nowrap">Made by Drew</div>
+          <div class="note" style="margin:0;font-size:24px;white-space:nowrap">Made by Drew.</div>
           <div class="note" style="margin:0;flex:1;text-align:center;font-size:12px">Please send Drew your feedback, high scores, bug findings, or confusing areas so he can update the master registry leaderboard. Work in Progress.</div>
         </div>
       </div>

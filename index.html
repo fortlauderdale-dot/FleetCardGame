@@ -960,67 +960,67 @@ function itemUsesCap(item, usesLevel) { return item.usesPerTurn + (item.usesPerT
 /* ========== ITEM CATALOG ========== */
 function equippedItemCount(hero) { return (hero.items || []).filter(id => !ITEMS[id]?.weightless).length; }
 const ITEMS = {
-  card_draw: { id: 'card_draw', name: 'Quick Draw', cost: 0, maxCards: 2, usesPerTurn: 1, condition: { type: 'pokerTier', tier: 1 }, baseMult: 0, drawAmount: 2, drawPerLevel: 1, levelCap: 3, note: 'Needs a Pair. Draw 2 additional cards.' },
- pair_draw: { id: 'pair_draw', name: 'Draw & Dash', cost: 40, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+  card_draw: { id: 'card_draw', name: 'Fast Pit Stop', cost: 0, maxCards: 2, usesPerTurn: 1, condition: { type: 'pokerTier', tier: 1 }, baseMult: 0, drawAmount: 2, drawPerLevel: 1, levelCap: 3, note: 'Needs a Pair. Draw 2 additional cards.' },
+ pair_draw: { id: 'pair_draw', name: 'Hit & Run', cost: 40, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'pokerTier', tier: 1 }, baseMult: 1,
     drawAmount: 2, drawPerLevel: 0,
     note: 'Needs a Pair. Deals damage and draws 2 cards immediately.' },
-  trips_draw: { id: 'trips_draw', name: 'Triple Draw', cost: 55, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+  trips_draw: { id: 'trips_draw', name: 'Triple Axle Slam', cost: 55, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'pokerTier', tier: 3, exactTier: true }, baseMult: 1.8,
     drawAmount: 3, drawPerLevel: 0,
     note: 'Needs Three of a Kind. Deals damage and draws 3 cards immediately.' },
-  diamond_draw: { id: 'diamond_draw', name: 'Diamond Dash', cost: 45, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+  diamond_draw: { id: 'diamond_draw', name: 'Diamond Lane Dash', cost: 45, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'suitCount', suit: '♦', count: 1 }, baseMult: 1,
     drawAmount: 1, drawPerLevel: 0,
     note: `Needs at least 1 ${kw('Diamond')}. Deals damage and draws 1 card immediately.` },
-  all_points: { id: 'all_points', name: 'All-Points Bulletin', cost: 70, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1, minRow: 3,
+  all_points: { id: 'all_points', name: 'Fleet-Wide Dispatch', cost: 70, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1, minRow: 3,
     condition: { type: 'allSuits' }, flatAmount: 40, flatAmountPerLevel: 5,
     note: `Needs one of each ${kw('Suit')} (4 cards). Flat ${kw('Attack')} for 40 damage.` },
-  repo_notice: { id: 'repo_notice', name: 'Repo Notice', cost: 55, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+  repo_notice: { id: 'repo_notice', name: 'Repossession Order', cost: 55, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'colorCount', color: 'blk', count: 2 }, baseMult: 1, kind: 'curse',
     note: `Needs 2+ ${kw('Black')} cards. Curses the opponent for ${SIGMA_TIP} of the cards played.` },
   safety_inspection: { id: 'safety_inspection', name: 'Safety Inspection', cost: 55, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'colorCount', color: 'red', count: 2 }, baseMult: 1, kind: 'defense',
     note: `Needs 2+ ${kw('Red')} cards. Blocks damage equal to ${SIGMA_TIP} of the cards played.` },
-  jinxed_duo: { id: 'jinxed_duo', name: 'Jinxed Duo', cost: 60, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+  jinxed_duo: { id: 'jinxed_duo', name: 'Cursed Carpool', cost: 60, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'cardIn', cards: [{ rank: 3, suit: '♣' }, { rank: 4, suit: '♣' }] }, baseMult: 1,
     flatBonus: 16, flatBonusPerLevel: 0, kind: 'poison',
     drawAmount: 1, drawPerLevel: 0,
     note: `Needs the ${rankLabel(3)}${suitMicroCardHTML('♣')} or ${rankLabel(4)}${suitMicroCardHTML('♣')}. Poison damage for ${SIGMA_TIP} of cards played + 16, then draw 1 card immediately.` },
-  heart_inferno: { id: 'heart_inferno', name: 'Heart Inferno', cost: 65, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+  heart_inferno: { id: 'heart_inferno', name: 'Heart Redline', cost: 65, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'exactCount', count: 4 }, baseMult: 1, kind: 'burn',
     bonus: { condition: { type: 'suitCount', suit: '♥', count: 4 }, base: 0.5, perLevel: 0, maxLevel: 0 },
     note: `Needs exactly 4 cards. Flame damage for ${SIGMA_TIP}, +50% if all 4 are ${kw('Heart',"heart")}.` },
-  diamond_inferno: { id: 'diamond_inferno', name: 'Diamond Inferno', cost: 65, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+  diamond_inferno: { id: 'diamond_inferno', name: 'Diamond Redline', cost: 65, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'exactCount', count: 4 }, baseMult: 1, kind: 'burn',
     bonus: { condition: { type: 'suitCount', suit: '♦', count: 4 }, base: 0.5, perLevel: 0, maxLevel: 0 },
     note: `Needs exactly 4 cards. Flame damage for ${SIGMA_TIP}, +50% if all 4 are ${kw('Diamond')}.` },
-  club_inferno: { id: 'club_inferno', name: 'Club Inferno', cost: 65, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+  club_inferno: { id: 'club_inferno', name: 'Club Redline', cost: 65, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'exactCount', count: 4 }, baseMult: 1, kind: 'burn',
     bonus: { condition: { type: 'suitCount', suit: '♣', count: 4 }, base: 0.5, perLevel: 0, maxLevel: 0 },
     note: `Needs exactly 4 cards. Flame damage for ${SIGMA_TIP}, +50% if all 4 are ${kw('Club',"club")}.` },
-  spade_inferno: { id: 'spade_inferno', name: 'Spade Inferno', cost: 65, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+  spade_inferno: { id: 'spade_inferno', name: 'Spade Redline', cost: 65, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'exactCount', count: 4 }, baseMult: 1, kind: 'burn',
     bonus: { condition: { type: 'suitCount', suit: '♠', count: 4 }, base: 0.5, perLevel: 0, maxLevel: 0 },
     note: `Needs exactly 4 cards. Flame damage for ${SIGMA_TIP}, +50% if all 4 are ${kw('Spade')}.` },
-  five_alarm_flush: { id: 'five_alarm_flush', name: 'Five-Alarm Flush', cost: 90, maxCards: 5, usesPerTurn: 2, usesPerTurnPerLevel: 1, minRow: 3,
+  five_alarm_flush: { id: 'five_alarm_flush', name: 'Code Five Response', cost: 90, maxCards: 5, usesPerTurn: 2, usesPerTurnPerLevel: 1, minRow: 3,
     condition: { type: 'pokerTier', tier: 5, exactCount: 5 }, baseMult: 1.5,
     note: `Needs exactly 5 cards making a ${kw('Flush')}. ${SIGMA_TIP} +50% damage. 2 uses per turn.` },
   exact_change: { id: 'exact_change', name: 'Exact Change', cost: 35, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'sumExact', value: 4 }, baseMult: 0,
     drawAmount: 0, drawUsesCardCount: true, drawBonusFlat: 2, drawPerLevel: 0,
     note: `Cards played must add up to exactly 4 (example: 2+2, or a single 4). Draws a card for each card played, +2. Draws immediately.` },
-  chain_starter: { id: 'chain_starter', name: 'Chain Starter', cost: 50, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1, minRow: 2,
+  chain_starter: { id: 'chain_starter', name: 'Jump Start', cost: 50, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1, minRow: 2,
     condition: { type: 'straightLen', len: 3 }, baseMult: 2.5,
     note: `Needs a 3-card ${kw('Straight')} (example: 6, 7, 8). ${SIGMA_TIP} +150% damage.` },
-  drawstone: { id: 'drawstone', name: 'Drawstone', cost: 40, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+  drawstone: { id: 'drawstone', name: 'Tow Cable', cost: 40, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'sumThreshold', min: 7 }, baseMult: 0,
     drawAmount: 2, drawPerLevel: 0,
     note: `Cards played must add up to 7+. Draws 2 cards immediately.` },
   impound_release: { id: 'impound_release', name: 'Impound Release', cost: 85, maxCards: 5, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'any' }, baseMult: 0, kind: 'unlock', unlockThreshold: 45,
     note: `Deals no damage. Playing cards through it counts down from 45 to 0 (based on the cards' value). Once fully charged, playing cards through it instead draws you 4 fresh cards, once per turn, for the rest of this battle - it never re-locks. Charge resets at the start of your next battle.` },
-  fender_bender: { id: 'fender_bender', name: 'One-Two Punch', cost: 0, sellValue: 25, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+  fender_bender: { id: 'fender_bender', name: 'Fender Bender', cost: 0, sellValue: 25, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'pokerTier', tier: 0 }, baseMult: 1,
     bonus: { condition: { type: 'pokerTier', tier: 1 }, base: 0.5, perLevel: 0.25, maxLevel: 2 }, 
     note: 'Up to 2 cards. A Pair adds a bonus that grows the more you tune it.' },
@@ -1198,37 +1198,37 @@ const ITEMS = {
   opp_early_escape_hatch: { id: 'opp_early_escape_hatch', name: 'Early Escape Hatch', maxCards: 4, usesPerTurn: 1,
     condition: { type: 'colorCount', color: 'blk', count: 4, exactCount: 4 }, flatAmount: 0, opponentEffect: 'earlyEscape',
     note: 'Needs exactly 4 Black cards. Instantly ends the fight - you clear the stop, but it flees with your fuel, costing you 3 Fuel.' },
-  triple_threat: { id: 'triple_threat', name: 'Triple Threat', cost: 45, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+  triple_threat: { id: 'triple_threat', name: 'Multi-Car Pileup', cost: 45, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'pokerTier', tier: 3, exactTier: true }, baseMult: 1.6,
     bonus: { base: 1.0, perLevel: 1.0, maxLevel: 3 }, 
     note: 'Needs Three of a Kind. A big hit that tunes even further with upgrades.' },
-  bike_dash: { id: 'bike_dash', name: 'Short Fuse', cost: 30, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+  bike_dash: { id: 'bike_dash', name: 'Bike Lane Dash', cost: 30, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'straightLen', len: 2 }, baseMult: straightMult(2),
     note: 'Needs a 2-card straight (example: 7-8, any suits).' },
   moto_escort: { id: 'moto_escort', name: 'Chain Reaction', cost: 75, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'straightLen', len: 4 }, baseMult: straightMult(4),
     note: 'Needs a 4-card straight.' },
-  diamond_run: { id: 'diamond_run', name: 'Diamond Hustle', cost: 50, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+  diamond_run: { id: 'diamond_run', name: 'Diamond Lane Convoy', cost: 50, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'suitCount', suit: '♦', count: 3 }, baseMult: 1.3,
     bonus: { base: 0, perLevel: 0.2, maxLevel: 3 },
     note: 'Needs at least 3 Diamonds among your played cards.' },
-  club_run: { id: 'club_run', name: 'Club Hustle', cost: 50, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+  club_run: { id: 'club_run', name: 'Club Convoy', cost: 50, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'suitCount', suit: '♣', count: 3 }, baseMult: 1.3,
     bonus: { base: 0, perLevel: 0.2, maxLevel: 3 },
     note: 'Needs at least 3 Clubs among your played cards.' },
-  spade_run: { id: 'spade_run', name: 'Spade Hustle', cost: 50, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+  spade_run: { id: 'spade_run', name: 'Spade Convoy', cost: 50, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'suitCount', suit: '♠', count: 3 }, baseMult: 1.3,
     bonus: { base: 0, perLevel: 0.2, maxLevel: 3 },
     note: 'Needs at least 3 Spades among your played cards.' },
-  heart_run: { id: 'heart_run', name: 'Heart Hustle', cost: 50, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+  heart_run: { id: 'heart_run', name: 'Heart Convoy', cost: 50, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'suitCount', suit: '♥', count: 3 }, baseMult: 1.3,
     bonus: { base: 0, perLevel: 0.2, maxLevel: 3 },
     note: 'Needs at least 3 Hearts among your played cards.' },
-  odd_job: { id: 'odd_job', name: 'Odd Job', cost: 40, maxCards: 5, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+  odd_job: { id: 'odd_job', name: 'Odd Shift', cost: 40, maxCards: 5, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'parity', parity: 'odd', mode: 'all' }, baseMult: 1.2,
     bonus: { base: 0, perLevel: 0.25, maxLevel: 3 },
     note: 'Upgrades up to 5 cards. Every loaded card must be an odd rank.' },
-  lucky_seven: { id: 'lucky_seven', name: 'Lucky Seven', cost: 60, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1, minRow: 2,
+  lucky_seven: { id: 'lucky_seven', name: 'Highway 7 Shortcut', cost: 60, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1, minRow: 2,
     condition: { type: 'exactRank', rank: 7 }, baseMult: 2.2,
     bonus: { base: 0, perLevel: 0.4, maxLevel: 3 },
     note: 'Needs a 7 among your played cards. Rare to have one ready, so it hits hard when you do.' },
@@ -1249,29 +1249,29 @@ const ITEMS = {
     condition: { type: 'any' }, baseMult: 0.75, kind: 'poison',
     bonus: { base: 0, perLevel: 0.2, maxLevel: 3 },
     note: 'Up to 4 cards. Poison equal to 75% of your total card value.' },
-  torch_burn: { id: 'torch_burn', name: 'Slow Burn', cost: 65, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+  torch_burn: { id: 'torch_burn', name: 'Smoldering Engine', cost: 65, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'pokerTier', tier: 1 }, baseMult: 1, kind: 'burn',
     note: 'Needs a Pair. Burns over 3 turns instead of hitting directly, and burns can stack.' },
-  supply_bag: { id: 'supply_bag', name: 'Card Stash', cost: 50, maxCards: 2, kind: 'storage', maxStore: 2, weightless: true,
+  supply_bag: { id: 'supply_bag', name: 'Cupholder Stash', cost: 50, maxCards: 2, kind: 'storage', maxStore: 2, weightless: true,
     note: 'Holds up to 2 cards of any kind turn to turn (up to 5 with Chop Shop upgrades). Weightless, does not use an Item slot. Never attacks, never gets cursed. Click a stored card to take it back.' },
-  supply_bag_big: { id: 'supply_bag_big', name: 'Elite Stash', cost: 50, maxCards: 5, kind: 'storage', maxStore: 5, weightless: true,
+  supply_bag_big: { id: 'supply_bag_big', name: 'Center Console Stash', cost: 50, maxCards: 5, kind: 'storage', maxStore: 5, weightless: true,
     note: 'Holds up to 5 cards of any kind turn to turn (up to 7 with Chop Shop upgrades). Weightless, does not use an Item slot. Never attacks, never gets cursed. Click a stored card to take it back.' },
-  spade_bag: { id: 'spade_bag', name: 'Spade Stash', cost: 30, maxCards: 13, kind: 'storage', maxStore: 13,
+  spade_bag: { id: 'spade_bag', name: 'Spade Trunk', cost: 30, maxCards: 13, kind: 'storage', maxStore: 13,
     acceptFilter: { suit: '♠' },
     note: 'Holds up to 13 Spades only (every Spade in the deck, so it will never run out of room). Click a stored card to take it back.' },
-  heart_bag: { id: 'heart_bag', name: 'Heart Stash', cost: 30, maxCards: 13, kind: 'storage', maxStore: 13,
+  heart_bag: { id: 'heart_bag', name: 'Heart Trunk', cost: 30, maxCards: 13, kind: 'storage', maxStore: 13,
     acceptFilter: { suit: '♥' },
     note: 'Holds up to 13 Hearts only (every Heart in the deck, so it will never run out of room). Click a stored card to take it back.' },
-  diamond_bag: { id: 'diamond_bag', name: 'Diamond Stash', cost: 30, maxCards: 13, kind: 'storage', maxStore: 13,
+  diamond_bag: { id: 'diamond_bag', name: 'Diamond Trunk', cost: 30, maxCards: 13, kind: 'storage', maxStore: 13,
     acceptFilter: { suit: '♦' },
     note: 'Holds up to 13 Diamonds only (every Diamond in the deck, so it will never run out of room). Click a stored card to take it back.' },
-  club_bag: { id: 'club_bag', name: 'Club Stash', cost: 30, maxCards: 13, kind: 'storage', maxStore: 13,
+  club_bag: { id: 'club_bag', name: 'Club Trunk', cost: 30, maxCards: 13, kind: 'storage', maxStore: 13,
     acceptFilter: { suit: '♣' },
     note: 'Holds up to 13 Clubs only (every Club in the deck, so it will never run out of room). Click a stored card to take it back.' },
-  red_bag: { id: 'red_bag', name: 'Red Stash', cost: 40, maxCards: 10, kind: 'storage', maxStore: 5,
+  red_bag: { id: 'red_bag', name: 'Red Glovebox', cost: 40, maxCards: 10, kind: 'storage', maxStore: 5,
     acceptFilter: { color: 'red' },
     note: `Holds up to 5 ${kw('Red')} cards only. Click a stored card to take it back.` },
-  black_bag: { id: 'black_bag', name: 'Black Stash', cost: 40, maxCards: 10, kind: 'storage', maxStore: 5,
+  black_bag: { id: 'black_bag', name: 'Black Glovebox', cost: 40, maxCards: 10, kind: 'storage', maxStore: 5,
     acceptFilter: { color: 'blk' },
     note: `Holds up to 5 ${kw('Black')} cards only. Click a stored card to take it back.` },
   w3_road_rage: { id: 'w3_road_rage', name: 'Road Rage', maxCards: 2, usesPerTurn: 1,
@@ -1284,20 +1284,20 @@ const ITEMS = {
     condition: { type: 'any', exactCount: 1 }, flatAmount: 9,
     note: 'Needs exactly 1 card. A quick slashing pass.' },
   w3_paper_jam: { id: 'w3_paper_jam', name: 'Paper Jam', maxCards: 2, usesPerTurn: 1,
-    condition: { type: 'pokerTier', tier: 1 }, baseMult: 1, kind: 'curse',
-    note: 'Needs a Pair. Jams and curses one of your Items.' },
+    condition: { type: 'pokerTier', tier: 1 }, baseMult: 1, kind: 'burn',
+    note: 'Needs a Pair. Jams and sparks into a small fire.' },
   w3_high_beam_glare: { id: 'w3_high_beam_glare', name: 'High-Beam Glare', maxCards: 1, usesPerTurn: 1,
     condition: { type: 'any' }, baseMult: 1,
     note: 'Needs any card. A blinding glare.' },
   w3_citation_blitz: { id: 'w3_citation_blitz', name: 'Citation Blitz', maxCards: 3, usesPerTurn: 1,
-    condition: { type: 'pokerTier', tier: 2 }, baseMult: 1, kind: 'curse',
-    note: 'Needs Two Pair. Issues a citation that curses one of your Items.' },
+    condition: { type: 'pokerTier', tier: 2 }, baseMult: 1, kind: 'burn',
+    note: 'Needs Two Pair. Issues a flaming citation.' },
   w3_signal_scramble: { id: 'w3_signal_scramble', name: 'Signal Scramble', maxCards: 3, usesPerTurn: 1,
     condition: { type: 'sumThreshold', min: 22 }, flatAmount: 30, kind: 'poison',
     note: `Needs cards totaling ${SIGMA_TIP}22+. Poison damage.` },
   opp_boot_lockdown: { id: 'opp_boot_lockdown', name: 'Boot Lockdown', maxCards: 5, usesPerTurn: 1,
-    condition: { type: 'pokerTier', tier: 3, exactTier: true }, baseMult: 1, kind: 'curse',
-    note: 'Needs Three of a Kind. Boots and curses one of your Items.' },
+    condition: { type: 'pokerTier', tier: 3, exactTier: true }, baseMult: 1, kind: 'burn',
+    note: 'Needs Three of a Kind. Boots your fleet and torches the paperwork.' },
   opp_impound_fury: { id: 'opp_impound_fury', name: 'Impound Fury', maxCards: 5, usesPerTurn: 1,
     condition: { type: 'any' }, perFaceCardDamage: 14,
     note: 'Needs any card. Damage scales with how many face cards (J/Q/K) it plays.' },
@@ -1328,6 +1328,94 @@ const ITEMS = {
   opp_warning_bell: { id: 'opp_warning_bell', name: 'Warning Bell', maxCards: 1, usesPerTurn: 1,
     condition: { type: 'any', exactCount: 1 }, flatAmount: 10, opponentEffect: 'stealFuel',
     note: 'Needs exactly 1 card. A small hit, and it siphons a bit of your fuel.' },
+
+  /* ---- World 1 (A1A Coastline) attacks - basic hits and armor only, no burn/poison/curse ---- */
+  w1_umbrella_gust: { id: 'w1_umbrella_gust', name: 'Umbrella Gust', maxCards: 2, usesPerTurn: 1,
+    condition: { type: 'pokerTier', tier: 1 }, baseMult: 1,
+    note: 'Needs a Pair. A gust flips the umbrella right at you.' },
+  w1_dive_bomb_peck: { id: 'w1_dive_bomb_peck', name: 'Dive-Bomb Peck', maxCards: 1, usesPerTurn: 1,
+    condition: { type: 'any', exactCount: 1 }, flatAmount: 9,
+    note: 'Needs exactly 1 card. Swoops down for your fries.' },
+  w1_bounce_barrage: { id: 'w1_bounce_barrage', name: 'Bounce Barrage', maxCards: 2, usesPerTurn: 1,
+    condition: { type: 'sumThreshold', min: 8 }, flatAmount: 10,
+    note: `Needs cards totaling ${SIGMA_TIP}8+. Keeps bouncing off your windshield.` },
+  w1_reckless_splash: { id: 'w1_reckless_splash', name: 'Reckless Splash', maxCards: 2, usesPerTurn: 1,
+    condition: { type: 'pokerTier', tier: 1 }, baseMult: 1,
+    note: 'Needs a Pair. Cannonballs way too close to the fleet.' },
+  w1_pinch_attack: { id: 'w1_pinch_attack', name: 'Pinch Attack', maxCards: 2, usesPerTurn: 1,
+    condition: { type: 'pokerTier', tier: 1 }, baseMult: 1,
+    note: 'Needs a Pair. Snaps out from its stolen shell.' },
+  w1_undertow_pull: { id: 'w1_undertow_pull', name: 'Undertow Pull', maxCards: 2, usesPerTurn: 1,
+    condition: { type: 'sumThreshold', min: 9 }, flatAmount: 11,
+    note: `Needs cards totaling ${SIGMA_TIP}9+. Drags at your tires.` },
+  w1_wild_swing: { id: 'w1_wild_swing', name: 'Wild Swing', maxCards: 1, usesPerTurn: 1,
+    condition: { type: 'any', exactCount: 1 }, flatAmount: 10,
+    note: 'Needs exactly 1 card. Swings the detector wildly, clips your bumper.' },
+  w1_splinter_snap: { id: 'w1_splinter_snap', name: 'Splinter Snap', maxCards: 2, usesPerTurn: 1,
+    condition: { type: 'pokerTier', tier: 1 }, baseMult: 1,
+    note: 'Needs a Pair. A rotten plank snaps upward.' },
+  w1_claw_skirmish: { id: 'w1_claw_skirmish', name: 'Claw Skirmish', maxCards: 3, usesPerTurn: 1,
+    condition: { type: 'pokerTier', tier: 2 }, baseMult: 1,
+    note: 'Needs Two Pair. The whole colony piles on.' },
+  w1_net_snare: { id: 'w1_net_snare', name: 'Net Snare', maxCards: 2, usesPerTurn: 1,
+    condition: { type: 'any' }, baseMult: 1,
+    note: 'Needs any card. Tangles around whatever it can reach.' },
+  w1_whistle_command: { id: 'w1_whistle_command', name: 'Whistle Command', maxCards: 3, usesPerTurn: 1,
+    condition: { type: 'pokerTier', tier: 2 }, baseMult: 1,
+    note: 'Needs Two Pair. Blows the whistle and waves everyone off the water.' },
+  w1_talon_dive: { id: 'w1_talon_dive', name: 'Talon Dive', maxCards: 3, usesPerTurn: 1,
+    condition: { type: 'pokerTier', tier: 3 }, baseMult: 1,
+    note: 'Needs Three of a Kind. Drops out of the sky, talons first.' },
+  w1_wave_crash: { id: 'w1_wave_crash', name: 'Wave Crash', maxCards: 5, usesPerTurn: 1,
+    condition: { type: 'sumThreshold', min: 25 }, flatAmount: 32,
+    note: `Needs cards totaling ${SIGMA_TIP}25+. A full wall of water comes down.` },
+  w1_riptide_sweep: { id: 'w1_riptide_sweep', name: 'Riptide Sweep', maxCards: 5, usesPerTurn: 1,
+    condition: { type: 'any' }, perFaceCardDamage: 10,
+    note: 'Needs any card. Damage scales with how many face cards (J/Q/K) it plays.' },
+
+  /* ---- World 2 (Alligator Alley) attacks - roughly half poison, rest basic, no burn/curse ---- */
+  w2_snapping_jaws: { id: 'w2_snapping_jaws', name: 'Snapping Jaws', maxCards: 2, usesPerTurn: 1,
+    condition: { type: 'pokerTier', tier: 1 }, baseMult: 1,
+    note: 'Needs a Pair. A sudden lunge from the shallows.' },
+  w2_buzzing_bite: { id: 'w2_buzzing_bite', name: 'Buzzing Bite', maxCards: 2, usesPerTurn: 1,
+    condition: { type: 'pokerTier', tier: 1 }, baseMult: 1, kind: 'poison',
+    note: 'Needs a Pair. Poison damage.' },
+  w2_prop_wash: { id: 'w2_prop_wash', name: 'Prop Wash', maxCards: 2, usesPerTurn: 1,
+    condition: { type: 'sumThreshold', min: 9 }, flatAmount: 11,
+    note: `Needs cards totaling ${SIGMA_TIP}9+. Kicks up a wake that rocks your fleet.` },
+  w2_venomous_strike: { id: 'w2_venomous_strike', name: 'Venomous Strike', maxCards: 1, usesPerTurn: 1,
+    condition: { type: 'any', exactCount: 1 }, flatAmount: 10, kind: 'poison',
+    note: 'Needs exactly 1 card. Poison damage.' },
+  w2_sucking_pull: { id: 'w2_sucking_pull', name: 'Sucking Pull', maxCards: 2, usesPerTurn: 1,
+    condition: { type: 'pokerTier', tier: 1 }, baseMult: 1,
+    note: 'Needs a Pair. The mud grabs a tire and won\'t let go.' },
+  w2_toxic_haze: { id: 'w2_toxic_haze', name: 'Toxic Haze', maxCards: 3, usesPerTurn: 1,
+    condition: { type: 'pokerTier', tier: 2 }, baseMult: 1, kind: 'poison',
+    note: 'Needs Two Pair. Poison damage.' },
+  w2_tusk_charge: { id: 'w2_tusk_charge', name: 'Tusk Charge', maxCards: 1, usesPerTurn: 1,
+    condition: { type: 'any', exactCount: 1 }, flatAmount: 12,
+    note: 'Needs exactly 1 card. The whole sounder scatters and charges.' },
+  w2_root_trip: { id: 'w2_root_trip', name: 'Root Trip', maxCards: 2, usesPerTurn: 1,
+    condition: { type: 'pokerTier', tier: 1 }, baseMult: 1,
+    note: 'Needs a Pair. Knuckled roots catch a wheel off guard.' },
+  w2_blood_drain: { id: 'w2_blood_drain', name: 'Blood Drain', maxCards: 2, usesPerTurn: 1,
+    condition: { type: 'pokerTier', tier: 1 }, baseMult: 1, kind: 'poison',
+    note: 'Needs a Pair. Poison damage.' },
+  w2_swarming_bite: { id: 'w2_swarming_bite', name: 'Swarming Bite', maxCards: 3, usesPerTurn: 1,
+    condition: { type: 'sumThreshold', min: 20 }, flatAmount: 26, kind: 'poison',
+    note: `Needs cards totaling ${SIGMA_TIP}20+. Poison damage.` },
+  w2_death_roll: { id: 'w2_death_roll', name: 'Death Roll', maxCards: 3, usesPerTurn: 1,
+    condition: { type: 'pokerTier', tier: 2 }, baseMult: 1,
+    note: 'Needs Two Pair. Locks on and rolls hard.' },
+  w2_twin_fang_strike: { id: 'w2_twin_fang_strike', name: 'Twin Fang Strike', maxCards: 3, usesPerTurn: 1,
+    condition: { type: 'pokerTier', tier: 2 }, baseMult: 1, kind: 'poison',
+    note: 'Needs Two Pair. Poison damage.' },
+  w2_death_roll_frenzy: { id: 'w2_death_roll_frenzy', name: 'Death Roll Frenzy', maxCards: 5, usesPerTurn: 1,
+    condition: { type: 'sumThreshold', min: 26 }, flatAmount: 34,
+    note: `Needs cards totaling ${SIGMA_TIP}26+. Its full-force roll.` },
+  w2_venomous_maw: { id: 'w2_venomous_maw', name: 'Venomous Maw', maxCards: 5, usesPerTurn: 1,
+    condition: { type: 'pokerTier', tier: 3 }, baseMult: 1, kind: 'poison',
+    note: 'Needs Three of a Kind. Poison damage.' },
 };
 
 /* ========== HERO ROSTER (6 total - 4 playable, 2 reserved for future vehicles) ========== */
@@ -1505,57 +1593,45 @@ function starterLockNote(id) {
 /****************************************************************************
 * OPPONENT ROSTER                                                          *
 ****************************************************************************/
-const OPPONENT_TIERS = [
-  
-  [ 
-    { id: 'trashfire', name: 'Trash Can Fire', icon: '🔥', image: 'Hazards/trash-fire.jpg', hp: 35, minTier: 0, drawRate: 1, items: ['high_card_gate'] },
-    { id: 'pothole', name: 'Nasty Pothole', icon: '🕳️', image: 'Hazards/pothole.jpg', hp: 34, minTier: 0, drawRate: 2, startHandSize: 1, items: ['fender_bender'] },
-    { id: 'flickerlight', name: 'Flickering Street Light', icon: '💡', image: 'Hazards/flicker-light.jpg', hp: 36, minTier: 0, drawRate: 2, startHandSize: 1, rewardMult: 1.6, items: ['fender_bender', 'heart_inferno'] },
-    { id: 'potholeAmbush', name: 'Ambush Pothole Cluster', icon: '⚡', image: 'Hazards/pothole.jpg', hp: 35, minTier: 0, drawRate: 2, startHandSize: 1, items: ['fender_bender'] }
+/* ========== WORLD 1 / WORLD 2 / WORLD 3 / WORLD 4 FLAT OPPONENT POOLS (Highway Nodes) ========== */
+const WORLD_1_POOLS = {
+  regulars: [
+    { id: 'w1_beach_umbrella', name: 'Rogue Beach Umbrella', icon: '⛱️', image: 'Hazards/pothole.jpg', hp: 48, minTier: 1, drawRate: 2, items: ['w1_umbrella_gust'] },
+    { id: 'w1_seagull', name: 'Territorial Seagull', icon: '🐦', image: 'Hazards/jaywalker.jpg', hp: 46, minTier: 1, drawRate: 2, items: ['w1_dive_bomb_peck'] },
+    { id: 'w1_beach_ball', name: 'Runaway Beach Ball', icon: '🏐', image: 'Hazards/flicker-light.jpg', hp: 44, minTier: 1, drawRate: 2, items: ['w1_bounce_barrage'] },
+    { id: 'w1_sunburnt_tourist', name: 'Sunburnt Tourist', icon: '🧴', image: 'Hazards/angry-citizen.jpg', hp: 50, minTier: 1, drawRate: 2, items: ['w1_reckless_splash'] },
+    { id: 'w1_hermit_crab', name: 'Hermit Crab in a Stolen Shell', icon: '🦀', image: 'Hazards/broken-meter.jpg', hp: 52, minTier: 1, drawRate: 2, startArmor: 15, items: ['w1_pinch_attack'] },
+    { id: 'w1_rip_current', name: 'Rip Current', icon: '🌊', image: 'Hazards/flash-flood.jpg', hp: 54, minTier: 1, drawRate: 2, items: ['w1_undertow_pull'] },
+    { id: 'w1_metal_detectorist', name: 'Overzealous Metal Detectorist', icon: '🔍', image: 'Hazards/jaywalker.jpg', hp: 56, minTier: 1, drawRate: 2, items: ['w1_wild_swing'] },
+    { id: 'w1_boardwalk_plank', name: 'Broken Boardwalk Plank', icon: '🪵', image: 'Hazards/pothole.jpg', hp: 58, minTier: 1, drawRate: 2, startArmor: 12, items: ['w1_splinter_snap'] },
+    { id: 'w1_beach_cats', name: 'Feral Beach Cat Colony', icon: '🐈', image: 'Hazards/loose-dog-2.jpg', hp: 60, minTier: 1, drawRate: 2, items: ['w1_claw_skirmish'] },
+    { id: 'w1_fishing_net', name: 'Tangled Fishing Net', icon: '🎣', image: 'Hazards/scrap-heap.jpg', hp: 62, minTier: 1, drawRate: 2, items: ['w1_net_snare'] },
   ],
-  [ 
-    { id: 'jaywalker', name: 'Jaywalker', icon: '🚶', image: 'Hazards/jaywalker.jpg', hp: 55, minTier: 1, drawRate: 2, items: ['opp_sudden_dash', 'fender_bender'] },
-    { id: 'grumpyMeter', name: 'Broken Meter', icon: '🅿️', image: 'Hazards/broken-meter.jpg', hp: 60, minTier: 1, drawRate: 2, items: ['opp_pair_curse', 'opp_single_steal'] },
-    { id: 'looseWire', name: 'Downed Power Line', icon: '⚡', image: 'Hazards/downed-line.jpg', hp: 65, minTier: 0, drawRate: 2, items: ['low_tier_threshold'] },
-    { id: 'meterBox', name: 'Reinforced Meter Box', icon: '🛡️', image: 'Hazards/broken-meter.jpg', hp: 45, minTier: 1, drawRate: 2, startArmor: 15, items: ['fender_bender'] }
+  elites: [
+    { id: 'w1_lifeguard_tower', name: 'Lifeguard Tower Sentinel', icon: '🛟', image: 'Hazards/angry-citizen.jpg', hp: 95, minTier: 2, drawRate: 3, startArmor: 20, armorRegen: 8, items: ['w1_whistle_command'] },
+    { id: 'w1_frigatebird', name: 'Alpha Frigatebird', icon: '🦅', image: 'Hazards/downed-line.jpg', hp: 92, minTier: 2, drawRate: 3, items: ['w1_talon_dive'] },
   ],
-  [ 
-    { id: 'angryCitizen', name: 'Angry Citizen', icon: '😠', image: 'Hazards/angry-citizen.jpg', hp: 75, minTier: 1, drawRate: 3, items: ['opp_harassment', 'opp_shouting_match', 'opp_grudge_match'] },
-    { id: 'hydrant', name: 'Burst Hydrant', icon: '💦', image: 'Hazards/burst-hydrant.jpg', hp: 80, minTier: 0, drawRate: 3, discardPoolEachTurn: true, hiddenOnDraw: 3, items: ['opp_hydrant_blast'] },
-    { id: 'dumpsterFire', name: 'Dumpster Fire', icon: '🔥', image: 'Hazards/dumpster-fire.jpg', hp: 85, minTier: 2, drawRate: 3, special: { type: 'redSteal', redThreshold: 3, fuelSteal: 1, extraDraw: 1 }, items: ['opp_rancid_blaze'] },
-    { id: 'scrapHeap', name: 'Shifting Scrap Heap', icon: '🗑️', image: 'Hazards/scrap-heap.jpg', hp: 90, minTier: 1, drawRate: 2, special: { type: 'drawOnHit', amount: 1 }, items: ['opp_debris_slam'] },
-    { id: 'twoToneHauler', name: 'Two-Tone Hauler', icon: '🚚', image: 'Hazards/dumpster-fire.jpg', hp: 95, minTier: 1, drawRate: 4, items: ['opp_patch_job', 'opp_red_alert', 'opp_black_ice'] }
+  boss: { id: 'rogue_wave', name: 'The Rogue Wave', icon: '🌊', image: 'Hazards/wildfire.jpg', hp: 150, minTier: 3, drawRate: 5, boss: true, usesPerTurn: 2, startArmor: 25, armorRegen: 12, items: ['w1_wave_crash', 'w1_riptide_sweep'], attackInfo: 'Attack: uses its best poker hand for heavy damage and can hit twice a turn. Builds a wall of water that keeps regenerating its own armor - no curses, just brute force.' },
+};
+const WORLD_2_POOLS = {
+  regulars: [
+    { id: 'w2_snapping_gator', name: 'Snapping Gator', icon: '🐊', image: 'Hazards/angry-citizen.jpg', hp: 52, minTier: 1, drawRate: 2, items: ['w2_snapping_jaws'] },
+    { id: 'w2_mosquito_cloud', name: 'Swamp Mosquito Cloud', icon: '🦟', image: 'Hazards/downed-line.jpg', hp: 46, minTier: 1, drawRate: 2, items: ['w2_buzzing_bite'] },
+    { id: 'w2_sunken_airboat', name: 'Sunken Airboat', icon: '⛵', image: 'Hazards/jaywalker.jpg', hp: 58, minTier: 1, drawRate: 2, items: ['w2_prop_wash'] },
+    { id: 'w2_cottonmouth', name: 'Cottonmouth Viper', icon: '🐍', image: 'Hazards/pothole.jpg', hp: 48, minTier: 1, drawRate: 2, items: ['w2_venomous_strike'] },
+    { id: 'w2_bog_sinkmud', name: 'Bog Sinkmud', icon: '🟫', image: 'Hazards/sinkhole.jpg', hp: 60, minTier: 1, drawRate: 2, items: ['w2_sucking_pull'] },
+    { id: 'w2_fog_swarm', name: 'Malarial Fog Swarm', icon: '🌫️', image: 'Hazards/blackout.jpg', hp: 50, minTier: 1, drawRate: 2, items: ['w2_toxic_haze'] },
+    { id: 'w2_feral_hogs', name: 'Feral Hog Sounder', icon: '🐗', image: 'Hazards/loose-dog-2.jpg', hp: 62, minTier: 1, drawRate: 2, items: ['w2_tusk_charge'] },
+    { id: 'w2_cypress_root', name: 'Cypress Root Snare', icon: '🌳', image: 'Hazards/scrap-heap.jpg', hp: 56, minTier: 1, drawRate: 2, items: ['w2_root_trip'] },
+    { id: 'w2_leech_shallows', name: 'Leech-Infested Shallows', icon: '🪱', image: 'Hazards/flash-flood.jpg', hp: 54, minTier: 1, drawRate: 2, items: ['w2_blood_drain'] },
+    { id: 'w2_fire_ants', name: 'Fire Ant Mound', icon: '🐜', image: 'Hazards/dumpster-fire.jpg', hp: 58, minTier: 1, drawRate: 2, items: ['w2_swarming_bite'] },
   ],
-  [ 
-    { id: 'evilMechanic1', name: 'Evil Mechanic', icon: '🔧', image: 'Hazards/evil-mechanic.jpg', hp: 95, minTier: 2, drawRate: 3, curse: { count: 1, amount: 10, chance: 0.6 }, items: ['opp_sabotage_engine'] },
-    { id: 'streetFire', name: 'Street Fire', icon: '🔥', image: 'Hazards/street-fire.jpg', hp: 100, minTier: 3, drawRate: 3, special: { type: 'lifesteal', pct: 0.5 }, items: ['opp_scorching_wave'] },
-    { id: 'sinkhole', name: 'Sinkhole', icon: '🕳️', image: 'Hazards/sinkhole.jpg', hp: 105, minTier: 1, drawRate: 3, items: ['opp_aftershock', 'opp_bulletin', 'opp_ground_collapse'] },
-    { id: 'gasLeak1', name: 'Gas Leak', icon: '⛽', image: 'Hazards/gas-leak.jpg', hp: 110, drawRate: 3, special: { type: 'countdownStrike', threshold: 55, damage: 35 }, items: ['opp_gas_leak'] },
-    { id: 'kingOfHearts', name: 'King of Hearts', icon: '🃏', image: 'Hazards/angry-citizen.jpg', hp: 100, minTier: 0, drawRate: 3, discardPoolEachTurn: true, items: ['opp_hearts_3', 'opp_hearts_2', 'opp_hearts_1', 'opp_hearts_0'] },
-    { id: 'roadblockSurge', name: 'Surge Roadblock', icon: '⚡', image: 'Hazards/sinkhole.jpg', hp: 105, minTier: 1, drawRate: 3, startPoolBonus: 2, items: ['opp_barrier_slam'] }
+  elites: [
+    { id: 'w2_bull_gator', name: 'Territorial Bull Gator', icon: '🐊', image: 'Hazards/angry-mob.jpg', hp: 100, minTier: 2, drawRate: 3, items: ['w2_death_roll'] },
+    { id: 'w2_water_moccasin', name: 'Giant Water Moccasin', icon: '🐍', image: 'Hazards/evil-mechanic.jpg', hp: 98, minTier: 2, drawRate: 3, items: ['w2_twin_fang_strike'] },
   ],
-  [ 
-    { id: 'flashFlood', name: 'Flash Flood', icon: '🌊', image: 'Hazards/flash-flood.jpg', hp: 115, minTier: 3, drawRate: 4, items: ['opp_toxic_spray', 'opp_flash_deluge', 'opp_rising_waters'] },
-    { id: 'riot', name: 'Angry Mob', icon: '📢', image: 'Hazards/angry-mob.jpg', hp: 120, minTier: 2, drawRate: 4, usesPerTurn: 2, items: ['opp_crowd_pressure', 'opp_crowd_surge', 'opp_mob_pileon'] },
-    { id: 'blackout', name: 'Blackout', icon: '🌑', image: 'Hazards/blackout.jpg', hp: 125, minTier: 1, drawRate: 3, items: ['opp_blackout_surge', 'opp_total_shutdown'] },
-    { id: 'hardenedBarricade', name: 'Hardened Barricade', icon: '🛡️', image: 'Hazards/sinkhole.jpg', hp: 130, minTier: 1, drawRate: 3, startArmor: 35, items: ['opp_ram_plate', 'opp_weld_patch'] },
-    { id: 'compactingWreckage', name: 'Compacting Wreckage', icon: '🗑️', image: 'Hazards/scrap-heap.jpg', hp: 135, minTier: 2, drawRate: 3, special: { type: 'drawOnHit', amount: 1 }, items: ['opp_crush_cycle'] }
-  ],
-  [ 
-    { id: 'stormSurge', name: 'Storm Surge', icon: '🌊', image: 'Hazards/storm-surge.jpg', hp: 130, minTier: 3, drawRate: 4, items: ['opp_tidal_slam', 'opp_undertow'] },
-    { id: 'buildingFire', name: 'Building Fire', icon: '🔥', image: 'Hazards/building-fire.jpg', hp: 135, minTier: 4, drawRate: 4, items: ['opp_inferno_blast', 'opp_structural_collapse'] },
-    { id: 'evilMechanic2', name: 'Evil Mechanic (Repeat Offender)', icon: '🔧', image: 'Hazards/evil-mechanic-2.jpg', hp: 140, minTier: 2, drawRate: 4, curse: { count: 'all', amount: 12, chance: 0.6 }, items: ['opp_curse_all', 'opp_total_wreckage'] },
-    { id: 'looseDog2', name: 'Loose Dog 2', icon: '🐕', image: 'Hazards/loose-dog-2.jpg', hp: 130, minTier: 0, drawRate: 2, items: ['opp_cornered_snarl', 'opp_snap_bite'] },
-    { id: 'gasLeak2', name: 'Major Gas Leak', icon: '⛽', image: 'Hazards/gas-leak-2.jpg', hp: 145, drawRate: 4, items: ['opp_major_gas_leak'] },
-    { id: 'streetlight_elite', name: 'Live Wire Street Light [Elite]', icon: '⚡', image: 'Hazards/downed-line.jpg', hp: 135, minTier: 2, drawRate: 4, items: ['opp_streetlight_shock', 'opp_ground_crackle'] },
-    { id: 'sinkhole_elite', name: 'Crumbling Sinkhole [Elite]', icon: '🕳️', image: 'Hazards/sinkhole.jpg', hp: 140, minTier: 1, drawRate: 4, items: ['opp_corrosive_mud', 'opp_chasm_collapse'] }
-  ],
-];
-
-const BOSS = { id: 'wildfire', name: 'Wildfire', tier: 6, icon: '🔥', image: 'Hazards/wildfire.jpg', hp: 160, minTier: 3, drawRate: 4, boss: true, usesPerTurn: 2, curse: { count: 2, amount: 12, chance: 0.55 }, items: ['opp_firestorm_surge', 'opp_ashfall', 'opp_total_engulfment'], attackInfo: 'Attack: uses its best poker hand for about 10-35 damage, depending on the hand, and can hit twice a turn. Can also curse your equipped Items - an Item that doesn\'t fire before turn end takes its curse damage.' };
-const BOSS_WORLD3 = { id: 'gridlock', name: 'The Gridlock', tier: 6, icon: '🚦', image: 'Hazards/wildfire.jpg', hp: 190, minTier: 3, drawRate: 5, boss: true, usesPerTurn: 2, startArmor: 20, armorRegen: 10, curse: { count: 2, amount: 15, chance: 0.6 }, items: ['opp_firestorm_surge', 'opp_ashfall', 'opp_total_engulfment'], attackInfo: 'Attack: uses its best poker hand for heavy damage and can hit twice a turn. Starts with armor that regenerates, and can curse your equipped Items - an Item that doesn\'t fire before turn end takes its curse damage.' };
-
-/* ========== WORLD 3 / WORLD 4 FLAT OPPONENT POOLS (Highway Nodes) ========== */
+  boss: { id: 'bog_matriarch', name: 'The Bog Matriarch', icon: '🐊', image: 'Hazards/wildfire.jpg', hp: 170, minTier: 3, drawRate: 5, boss: true, usesPerTurn: 2, items: ['w2_death_roll_frenzy', 'w2_venomous_maw'], attackInfo: 'Attack: uses its best poker hand for heavy damage and can hit twice a turn. Ancient and enormous - about half its hits carry poison.' },
+};
 const WORLD_3_POOLS = {
   regulars: [
     { id: 'w3_gridlock_commuter', name: 'Gridlock Commuter', icon: '🚗', image: 'Hazards/jaywalker.jpg', hp: 50, minTier: 1, drawRate: 2, items: ['w3_road_rage'] },
@@ -1568,7 +1644,7 @@ const WORLD_3_POOLS = {
     { id: 'w3_code_enforcement_enforcer', name: 'Code Enforcement Enforcer', icon: '🚔', image: 'Hazards/angry-citizen.jpg', hp: 90, minTier: 2, drawRate: 3, items: ['w3_citation_blitz'] },
     { id: 'w3_smart_city_mainframe', name: 'Smart-City Central Mainframe', icon: '🖥️', image: 'Hazards/blackout.jpg', hp: 95, minTier: 2, drawRate: 3, items: ['w3_signal_scramble'] },
   ],
-  boss: { id: 'congestion_charge', name: 'The Congestion Charge', icon: '🚧', image: 'Hazards/wildfire.jpg', hp: 160, minTier: 3, drawRate: 5, boss: true, usesPerTurn: 2, items: ['opp_boot_lockdown', 'opp_impound_fury'], attackInfo: 'Attack: uses its best poker hand for heavy damage and can hit twice a turn. Boots and curses your equipped Items - an Item that doesn\'t fire before turn end takes its curse damage.' },
+  boss: { id: 'congestion_charge', name: 'The Congestion Charge', icon: '🚧', image: 'Hazards/wildfire.jpg', hp: 160, minTier: 3, drawRate: 5, boss: true, usesPerTurn: 2, items: ['opp_boot_lockdown', 'opp_impound_fury'], attackInfo: 'Attack: uses its best poker hand for heavy damage and can hit twice a turn. Boots your fleet and burns - Fire damage from its boot lockdown.' },
 };
 const WORLD_4_POOLS = {
   regulars: [
@@ -1724,20 +1800,17 @@ function scaleMonsterForNewWorld(baseMonster, worldMultiplier, tier) {
   }
   return scaled;
 }
+const WORLD_POOLS_BY_WORLD = { 1: WORLD_1_POOLS, 2: WORLD_2_POOLS, 3: WORLD_3_POOLS, 4: WORLD_4_POOLS };
 function generateMap() {
   const nodes = [], edges = [];
-  const tierForRow = r => Math.min(OPPONENT_TIERS.length - 1, Math.floor(r / 3)); 
-  const tierDifficultyMult = tier => 1 + tier * 0.12;
   const castleRow = 10;
   const isWorld3 = RUN.world === 3;
   const rowCounts = [1,2,1,2,3,1,2,3,2,2,1,2,3,2,2,3,2,2,3,2];
-  if (isWorld3) rowCounts[castleRow] = 3; 
-  const castleCol = isWorld3 ? 1 : 0; 
-  const worldMultiplier = RUN.worldMultiplier || 1.0; 
-  const tierQueues = {};
-  const WORLD2_POISON_ITEMS = ['opp_aftershock', 'opp_toxic_spray', 'opp_corrosive_mud'];
-  const highwayPools = RUN.world === 3 ? WORLD_3_POOLS : RUN.world === 4 ? WORLD_4_POOLS : null;
-  const highwayRegularQueue = highwayPools ? shuffle([...highwayPools.regulars]) : null;
+  if (isWorld3) rowCounts[castleRow] = 3;
+  const castleCol = isWorld3 ? 1 : 0;
+  const worldMultiplier = RUN.worldMultiplier || 1.0;
+  const highwayPools = WORLD_POOLS_BY_WORLD[RUN.world] || WORLD_1_POOLS;
+  const highwayRegularQueue = shuffle([...highwayPools.regulars]);
   function nextHighwayRegular() {
     if (!highwayRegularQueue.length) highwayRegularQueue.push(...shuffle([...highwayPools.regulars]));
     return highwayRegularQueue.pop();
@@ -1747,17 +1820,8 @@ function generateMap() {
     scaled.hp = Math.round(base.hp * worldMultiplier * (1 + row * 0.05));
     return scaled;
   }
-  function pickOpponentForTier(tier) {
-    if (!tierQueues[tier] || !tierQueues[tier].length) tierQueues[tier] = shuffle([...OPPONENT_TIERS[tier]]);
-    const picked = tierQueues[tier].pop();
-    if (RUN.world >= 2 && Math.random() < 0.5) return { ...picked, items: WORLD2_POISON_ITEMS };
-    return picked;
-  }
   function makeOpponentForRow(row) {
-    if (highwayPools) return scaleHighwayOpponent(nextHighwayRegular(), row);
-    const tier = tierForRow(row);
-    const baseOpp = pickOpponentForTier(tier);
-    return scaleMonsterForNewWorld(baseOpp, worldMultiplier * tierDifficultyMult(tier), tier);
+    return scaleHighwayOpponent(nextHighwayRegular(), row);
   }
   for (let r=0;r<rowCounts.length;r++) {
     const row=[];
@@ -1786,7 +1850,7 @@ function generateMap() {
       nodes[r][c]={type:t};
     }
   });
-  const bossTemplate = highwayPools ? highwayPools.boss : BOSS;
+  const bossTemplate = highwayPools.boss;
   nodes.push([{type:'battle', opponent: scaleMonsterForNewWorld(bossTemplate, worldMultiplier * 1.3, 6)}]);
   for(let r=0;r<nodes.length-1;r++){
     const cur=nodes[r], next=nodes[r+1];
@@ -1808,40 +1872,15 @@ function generateMap() {
       for(let b=0;b<next.length;b++) if(!edges.some(e=>e.fromRow===r&&e.toCol===b)) add(Math.round(b*backwardRatio),b);
     }
   }
-  if (!highwayPools) {
-    const riskRow = rowCounts.findIndex((n, r) => n >= 2 && r > 2 && r < castleRow - 1 && r !== 4);
-    if (riskRow !== -1) {
-      const riskCol = nodes[riskRow].length - 1;
-      const riskTier = tierForRow(riskRow);
-      const baseOpp = pickOpponentForTier(riskTier);
-      const toughOpp = scaleMonsterForNewWorld(baseOpp, worldMultiplier * tierDifficultyMult(riskTier) * 1.35, riskTier);
-      toughOpp.name = `${baseOpp.name} [Elite]`;
-      nodes[riskRow][riskCol] = { type: 'battle', opponent: toughOpp };
-      const targetEdge = edges.find(e => e.fromRow === riskRow && e.fromCol === riskCol);
-      if (targetEdge) nodes[riskRow + 1][targetEdge.toCol] = { type: 'treasure', big: true };
+  [9, 15].forEach((eliteRow, idx) => {
+    if (nodes[eliteRow] && nodes[eliteRow].length) {
+      const col = idx === 0 ? nodes[eliteRow].length - 1 : 0;
+      const eliteBase = highwayPools.elites[idx % highwayPools.elites.length];
+      const eliteOpp = scaleHighwayOpponent(eliteBase, eliteRow);
+      eliteOpp.name = `${eliteBase.name} [Elite]`;
+      nodes[eliteRow][col] = { type: 'battle', opponent: eliteOpp };
     }
-    const stormRow = rowCounts.findIndex((n, r) => n >= 2 && r > 2 && r < castleRow - 1 && r !== 4 && r !== riskRow);
-    if (stormRow !== -1) {
-      const stormCol = 0;
-      const stormTier = tierForRow(stormRow);
-      const stormOpp = pickOpponentForTier(stormTier);
-      const scaledStormOpp = scaleMonsterForNewWorld(stormOpp, worldMultiplier * tierDifficultyMult(stormTier), stormTier);
-      scaledStormOpp.name = `${stormOpp.name} [Grid Storm]`;
-      nodes[stormRow][stormCol] = { type: 'battle', opponent: scaledStormOpp, gridStorm: true };
-      const stormEdge = edges.find(e => e.fromRow === stormRow && e.fromCol === stormCol);
-      if (stormEdge) nodes[stormRow + 1][stormEdge.toCol] = { type: 'match_hazard' };
-    }
-  } else {
-    [9, 15].forEach((eliteRow, idx) => {
-      if (nodes[eliteRow] && nodes[eliteRow].length) {
-        const col = idx === 0 ? nodes[eliteRow].length - 1 : 0;
-        const eliteBase = highwayPools.elites[idx % highwayPools.elites.length];
-        const eliteOpp = scaleHighwayOpponent(eliteBase, eliteRow);
-        eliteOpp.name = `${eliteBase.name} [Elite]`;
-        nodes[eliteRow][col] = { type: 'battle', opponent: eliteOpp };
-      }
-    });
-  }
+  });
   return {nodes,edges};
 }
 /* ========== RUN STATE ========== */
@@ -3346,7 +3385,7 @@ function mapScreen() {
       </div>`;
     }
   }
-  return `<div id="map-viewport">${noticeHTML()}<div class="panel">${currencyBar(`<div style="margin-left:auto;display:flex;gap:6px"><button class="wo-btn purple" id="openRunUpgradeFromMapBtn" style="padding:4px 9px;font-size:11px;white-space:nowrap;border-width:1px">Run Upgrade</button><button class="wo-btn gray" id="forfeitRunBtn" style="padding:4px 9px;font-size:11px;white-space:nowrap;border-width:1px;box-shadow:none">Forfeit Run</button></div>`)}</div><div class="panel"><div class="mapwrap" style="width:100%;height:${totalH}px;overflow-x:auto;overflow-y:hidden;position:relative"><div style="position:relative;width:${totalW}px;height:${totalH}px"><svg width="${totalW}" height="${totalH}" viewBox="0 0 ${totalW} ${totalH}" style="position:absolute;left:0;top:0;pointer-events:none">${svgLines}</svg>${nodesHTML}${(() => { const parsedName = String(META.playerName || 'Commander').trim().replace(/\w\S*/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()); return (RUN.currentRow === -1 && !RUN.onboardingDismissed) ? `<div class="floating-tutorial-card"><div class="wo-eyebrow">Fleet Onboarding</div><h3>Welcome, ${parsedName}!</h3><p>Click the node to the left to start your journey.</p></div>` : ''; })()}</div>${MAP_POPUP ? nodePopupScreen(MAP_POPUP.row, MAP_POPUP.col) : ''}${TREASURE_POPUP ? treasureScreen(TREASURE_POPUP) : ''}${GARAGE_POPUP ? garageScreen(GARAGE_MESSAGE) : ''}${MATCH_OVERLAY_ACTIVE ? castleMatchScreen() : ''}</div><div class="regionCaption">World ${RUN.world}: ${WORLD_NAMES[RUN.world] || WORLD_NAMES[1]}</div></div></div>`;
+  return `<div id="map-viewport">${noticeHTML()}<div class="panel">${currencyBar(`<div style="margin-left:auto;display:flex;gap:6px"><button class="wo-btn purple" id="openRunUpgradeFromMapBtn" style="padding:4px 9px;font-size:11px;white-space:nowrap;border-width:1px">Run Upgrade</button><button class="wo-btn gray" id="forfeitRunBtn" style="padding:4px 9px;font-size:11px;white-space:nowrap;border-width:1px;box-shadow:none">Forfeit Run</button></div>`)}</div><div class="panel"><div class="mapwrap" style="width:100%;height:${totalH}px;overflow-x:auto;overflow-y:hidden;position:relative"><div style="position:relative;width:${totalW}px;height:${totalH}px"><svg width="${totalW}" height="${totalH}" viewBox="0 0 ${totalW} ${totalH}" style="position:absolute;left:0;top:0;pointer-events:none">${svgLines}</svg>${nodesHTML}${(() => { const parsedName = String(META.playerName || 'Commander').trim().replace(/\w\S*/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()); return (RUN.world === 1 && RUN.currentRow === -1 && !RUN.onboardingDismissed) ? `<div class="floating-tutorial-card"><div class="wo-eyebrow">Fleet Onboarding</div><h3>Welcome, ${parsedName}!</h3><p>Click the node to the left to start your journey.</p></div>` : ''; })()}</div>${MAP_POPUP ? nodePopupScreen(MAP_POPUP.row, MAP_POPUP.col) : ''}${TREASURE_POPUP ? treasureScreen(TREASURE_POPUP) : ''}${GARAGE_POPUP ? garageScreen(GARAGE_MESSAGE) : ''}${MATCH_OVERLAY_ACTIVE ? castleMatchScreen() : ''}</div><div class="regionCaption">World ${RUN.world}: ${WORLD_NAMES[RUN.world] || WORLD_NAMES[1]}</div></div></div>`;
 }
 /* ========== RUN-SCOPED UPGRADES (paid with coins, last only for this run) ========== */
 const MAX_ITEM_CAP = 9; 
@@ -4230,13 +4269,14 @@ function metaScreen() {
         ${hasSave ? `<button class="wo-btn gray" id="startRunBtn" style="width:100%;margin-bottom:10px">New Run (overwrites save)</button>` : ''}
         <button class="wo-btn amber" id="viewUpgradesBtn" style="width:100%">Career Point Upgrades</button>
         <div style="display:flex;align-items:center;margin-top:16px;opacity:0.75">
-          <div class="note" style="margin:0;font-size:24px;white-space:nowrap">Made by Drew</div>
+          <div class="note" style="margin:0;font-size:24px;white-space:nowrap">Made by Drew.</div>
           <div class="note" style="margin:0;flex:1;text-align:center;font-size:12px">Please send Drew your feedback, high scores, bug findings, or confusing areas so he can update the master registry leaderboard. Work in Progress.</div>
         </div>
       </div>
     </div>
   `;
 }
+
 let MAP_SCROLL_X = 0;
 /* ========== RENDER + EVENTS ========== */
 function render(html) {

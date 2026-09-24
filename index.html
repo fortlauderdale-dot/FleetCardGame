@@ -2405,8 +2405,24 @@ let META = loadMeta();
 function saveMeta() { try { META.metaVersion = META_VERSION; localStorage.setItem(META_KEY, JSON.stringify(META)); } catch (e) {} }
 function earnPoints(n) { META.points += n; META.lifetimePoints += n; if (RUN) RUN.scoreThisRun += n; saveMeta(); }
 
+// Career Points are a flat, per-World bonus now, not a per-kill trickle. Reaching a World
+// pays out once; clearing its boss pays out more, and both grow with the World number so
+// getting further into the campaign is worth more than grinding fights in an early one.
+const WORLD_CP_BONUS = {
+  1: { reach: 20, clear: 40 },
+  2: { reach: 35, clear: 70 },
+  3: { reach: 55, clear: 110 },
+  4: { reach: 80, clear: 160 },
+  5: { reach: 110, clear: 220 },
+  6: { reach: 150, clear: 300 },
+};
+function worldCareerPoints(world, cleared) {
+  const tier = WORLD_CP_BONUS[world] || WORLD_CP_BONUS[6];
+  return cleared ? tier.clear : tier.reach;
+}
+
 /* ========== RUN SAVE (mid-run continuity, roguelite-style) ========== */
-const RUN_KEY = 'fleetduel-run-v81-scorereset';
+const RUN_KEY = 'fleetduel-run-v82-worldcp';
 function saveRun() { try { localStorage.setItem(RUN_KEY, JSON.stringify(RUN)); } catch (e) {} }
 function loadRunSave() { try { const raw = localStorage.getItem(RUN_KEY); if (raw) return JSON.parse(raw); } catch (e) {} return null; }
 function clearRunSave() { try { localStorage.removeItem(RUN_KEY); } catch (e) {} }
@@ -2601,6 +2617,7 @@ function initRunWithStarter(id) {
     castleState: { firstDone:false, secondDone:false, thirdDone:false, dungeonLocked:false, matchPlayed:false, matchLockReason:null, matchCards:null, matchGuesses:4, matchPick:[] },
   };
   RUN.world = 1;
+  RUN.worldCleared = false;
   RUN.map = generateMap();
   RUN.bossRow = RUN.map.nodes.length - 1;
   saveRun();
@@ -2917,14 +2934,16 @@ function rollTreasure(big=false) {
 function endRun(won) {
   IN_BATTLE = false; clearBattleSave();
   playSfx(won ? 'win' : 'lose');
-  const bonus = Math.round(RUN.path.length * (won ? 3 : 1.5) + (won ? 25 : 0));
+  const cleared = !!RUN.worldCleared;
+  const bonus = worldCareerPoints(RUN.world, cleared);
   earnPoints(bonus);
   META.bestRun = Math.max(META.bestRun, RUN.path.length);
   META.highScore = Math.max(META.highScore, RUN.scoreThisRun);
   META.runsPlayed++;
   saveMeta();
+  const bonusWorld = RUN.world;
   clearRunSave();
-  render(runEndScreen(won, bonus));
+  render(runEndScreen(won, bonus, bonusWorld, cleared));
 }
 window.forfeitRun = function() {
   if (!confirm('Forfeit this run? This will count as a loss.')) return;
@@ -3944,8 +3963,7 @@ function battleRewardsFor(opp, row) {
   const fuelReward = 0;
   const rewardMult = opp.rewardMult || 1;
   const chipReward = Math.round((9 + opp.hp / 11) * rewardMult);
-  const pointsReward = Math.round((3 + row * 1.4) * rewardMult);
-  return { chipReward, gemReward, fuelReward, pointsReward };
+  return { chipReward, gemReward, fuelReward };
 }
 function winBattle(outlast) {
   IN_BATTLE = false; clearBattleSave();
@@ -3996,17 +4014,15 @@ function winBattle(outlast) {
   const scale = outlast ? 0.7 : 1;
   const base = battleRewardsFor(BATTLE.opponent, BATTLE.row);
   let chipReward = Math.round(base.chipReward * scale);
-  let pointsReward = Math.round(base.pointsReward * scale);
   const exactKillBonus = BATTLE.exactKill && !outlast;
-  if (exactKillBonus) { chipReward += 15; pointsReward += 8; }
+  if (exactKillBonus) { chipReward += 15; }
   const gemReward = base.gemReward + (exactKillBonus ? 1 : 0);
   // Fuel is scarce on purpose now - only a Perfect Kill refuels you at all.
   const fuelReward = exactKillBonus ? 1 : 0;
   RUN.chips += chipReward; RUN.gems = Math.min(RUN.maxGems, RUN.gems + gemReward); RUN.fuel = Math.min(RUN.maxFuel, RUN.fuel + fuelReward);
-  earnPoints(pointsReward);
   battleLog(outlast ? `You outlasted the ${BATTLE.opponent.name}!` : `${BATTLE.opponent.name} is done for!`);
-  if (exactKillBonus) battleLog(`Perfect Win Bonus: +25 coins, +1 gem, +15 Career Points!`);
-  battleLog(formatRewardParts({ coins: chipReward, gems: gemReward, fuel: fuelReward, points: pointsReward }) + '.');
+  if (exactKillBonus) battleLog(`Perfect Win Bonus: +15 coins, +1 gem!`);
+  battleLog(formatRewardParts({ coins: chipReward, gems: gemReward, fuel: fuelReward }) + '.');
   if (BATTLE.row === RUN.bossRow) { RUN.pendingWorldWin = true; }
   if (!BATTLE.castleStage) {
     META.enemiesBeaten = (META.enemiesBeaten || 0) + 1;
@@ -4014,7 +4030,7 @@ function winBattle(outlast) {
     saveMeta();
   }
   playSfx(exactKillBonus ? 'perfect' : 'win');
-  render(nodeResultScreen(true, { chipReward, gemReward, fuelReward, pointsReward, exactKillBonus }));
+  render(nodeResultScreen(true, { chipReward, gemReward, fuelReward, exactKillBonus }));
 }
 
 /* ========== SCREENS ========== */
@@ -4080,7 +4096,7 @@ function nodePopupContent(r, c) {
   if (node.type === 'battle') {
     const o = node.opponent;
     const isElite = /\[Elite\]/.test(o.name || '');
-    const { chipReward, gemReward, fuelReward, pointsReward } = battleRewardsFor(o, r);
+    const { chipReward, gemReward, fuelReward } = battleRewardsFor(o, r);
     const specialNote = o.special?.type === 'drawOnHit' ? `<div class="note" style="margin-top:4px">Draws +${o.special.amount || 1} card${(o.special.amount||1)>1?'s':''} into its hand every time you land a direct hit on it.</div>`
       : o.startPoolBonus ? `<div class="note" style="margin-top:4px">Starts the fight with ${o.startPoolBonus} extra card${o.startPoolBonus>1?'s':''} already in hand.</div>`
       : o.special?.type === 'lifesteal' ? `<div class="note" style="margin-top:4px">Heals ${Math.round((o.special.pct||0.5)*100)}% of the damage its attacks deal.</div>`
@@ -4094,7 +4110,7 @@ function nodePopupContent(r, c) {
         ['Draws', `${o.drawRate}/turn`],
       ],
       extra: `<div class="popupItemRow">${opponentAttackBoxHTML(o)}</div>${specialNote}${armorNote}${o.boss ? `<div class="note" style="color:var(--red);font-weight:700;margin-top:4px">World Boss</div>` : isElite ? `<div class="note" style="color:#d9861f;font-weight:700;margin-top:4px">Elite Battle</div>` : ''}`,
-      rewards: { chipReward, gemReward, fuelReward, pointsReward },
+      rewards: { chipReward, gemReward, fuelReward },
       actionLabel: o.boss ? 'Battle Boss' : isElite ? 'Battle Elite' : 'Battle',
       eyebrow: o.boss ? 'Boss Battle' : isElite ? 'Elite Battle' : 'Stop Details',
       accent: o.boss ? '#7a0000' : isElite ? '#d9861f' : null,
@@ -4121,13 +4137,11 @@ function nodePopupScreen(r, c) {
       ${info.rewards.chipReward ? `<div class="cur chip">${ICON.coin} ${info.rewards.chipReward} coins</div>` : ''}
       ${info.rewards.gemReward ? `<div class="cur gem">${ICON.gem} ${info.rewards.gemReward} gems</div>` : ''}
       ${info.rewards.fuelReward ? `<div class="cur fuel">${ICON.fuel} ${info.rewards.fuelReward} fuel</div>` : ''}
-      ${info.rewards.pointsReward ? `<div class="cur pts">${ICON.star} ${info.rewards.pointsReward} Career Points</div>` : ''}
     </div>
     <div class="hdr" style="margin-top:8px"><span class="hoverTip" data-title="Awarded when your final hit exactly matches their remaining HP.">Perfect Win Bonus:</span><span></span></div>
     <div class="currencies">
-      <div class="cur chip">${ICON.coin} +25 coins</div>
+      <div class="cur chip">${ICON.coin} +15 coins</div>
       <div class="cur gem">${ICON.gem} +1 gem</div>
-      <div class="cur pts">${ICON.star} +15 Career Points</div>
     </div>` : '';
   return `<div class="map-popup-overlay">
     <div class="wo" style="width:100%${info.accent ? `;border-color:${info.accent}` : ''}">
@@ -4434,7 +4448,6 @@ function battleScreen() {
               <span class="cur chip" data-title="Coins earned for winning.">${ICON.coin} ${battleRewardsFor(opp, BATTLE.row).chipReward}</span>
               ${battleRewardsFor(opp, BATTLE.row).gemReward ? `<span class="cur gem" data-title="Gems earned for winning.">${ICON.gem} ${battleRewardsFor(opp, BATTLE.row).gemReward}</span>` : ''}
               ${battleRewardsFor(opp, BATTLE.row).fuelReward ? `<span class="cur fuel" data-title="Fuel earned for winning.">${ICON.fuel} ${battleRewardsFor(opp, BATTLE.row).fuelReward}</span>` : ''}
-              <span class="cur pts" data-title="Career Points earned for winning. More for a Perfect Win.">${ICON.star} ${battleRewardsFor(opp, BATTLE.row).pointsReward}</span>
             </span>
           </h3>
           <div class="bar-wrap"><div class="bar-fill bar-hp" style="width:${hpPct}%"></div><div class="bar-text">${opp.hpNow} / ${opp.hp}</div></div>
@@ -4583,14 +4596,12 @@ function nodeResultScreen(won, rewards) {
       ${rewards.chipReward ? `<div class="cur chip">${ICON.coin} ${rewards.chipReward} coins</div>` : ''}
       ${rewards.gemReward ? `<div class="cur gem">${ICON.gem} ${rewards.gemReward} gems</div>` : ''}
       ${rewards.fuelReward ? `<div class="cur fuel">${ICON.fuel} ${rewards.fuelReward} fuel</div>` : ''}
-      ${rewards.pointsReward ? `<div class="cur pts">${ICON.star} ${rewards.pointsReward} Career Points</div>` : ''}
     </div>
     ${rewards.exactKillBonus ? `
     <div class="hdr" style="margin-top:8px"><span class="hoverTip" data-title="Your final hit exactly matched their remaining HP.">Perfect Win Bonus</span><span></span></div>
     <div class="currencies">
-      <div class="cur chip">${ICON.coin} +25 coins</div>
+      <div class="cur chip">${ICON.coin} +15 coins</div>
       <div class="cur gem">${ICON.gem} +1 gem</div>
-      <div class="cur pts">${ICON.star} +15 Career Points</div>
     </div>` : ''}
   ` : `<div class="wo-sub">Your health ran out${rewards.lastHit ? ` after taking ${rewards.lastHit.amount} damage from ${rewards.lastHit.source}` : ''}. Run ends here.</div>`;
   return `
@@ -4894,14 +4905,16 @@ function victoryScreen() {
     </div>
   `;
 }
-function runEndScreen(won, bonus) {
+function runEndScreen(won, bonus, bonusWorld, cleared) {
+  const worldName = WORLD_NAMES[bonusWorld] || `World ${bonusWorld}`;
+  const bonusNote = cleared ? `for clearing ${worldName}` : `for reaching ${worldName}`;
   return `
     <div class="wo">
       <div class="wo-stripe"></div>
       <div class="wo-body">
         <div class="wo-eyebrow">${won ? 'Route Complete' : 'Run Ended'}</div>
         <h1>${won ? 'Route <em>Cleared</em>' : 'Back to <em>Base</em>'}</h1>
-        <div class="wo-sub">Reached stop ${RUN.path.length} of 21. This run's score: ${RUN.scoreThisRun} (+${bonus} completion bonus). High score: ${META.highScore}.</div>
+        <div class="wo-sub">Reached stop ${RUN.path.length} of 21. This run's score: ${RUN.scoreThisRun} (+${bonus} Career Points ${bonusNote}). High score: ${META.highScore}.</div>
         <button class="wo-btn" id="backToMetaBtn">Back to Home Base</button>
       </div>
     </div>
@@ -5189,6 +5202,8 @@ function render(html) {
       commitNode(BATTLE.row, BATTLE.col);
       if (RUN.pendingWorldWin) {
         RUN.pendingWorldWin = false;
+        RUN.worldCleared = true;
+        saveRun();
         if (RUN.world === 1) { RUN.pendingNextWorld = 2; render(worldCompleteScreen(1, 2)); }
         else if (RUN.world === 2) { META.world2Cleared = true; saveMeta(); RUN.pendingNextWorld = 3; render(worldCompleteScreen(2, 3)); }
         else if (RUN.world === 3) { META.world3Cleared = true; saveMeta(); RUN.pendingNextWorld = 4; render(world3ClearedScreen()); }
@@ -5203,6 +5218,7 @@ function render(html) {
   const advanceWorldBtn = document.getElementById('advanceWorldBtn');
   if (advanceWorldBtn) advanceWorldBtn.onclick = () => {
     RUN.world = RUN.pendingNextWorld || 2;
+    RUN.worldCleared = false;
     RUN.worldMultiplier = RUN.world === 3 ? 1.50 : RUN.world === 4 ? 1.75 : RUN.world === 5 ? 2.00 : RUN.world === 6 ? 2.25 : 1.25;
     RUN.map = generateMap();
     RUN.bossRow = RUN.map.nodes.length - 1;

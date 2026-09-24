@@ -86,8 +86,8 @@
   .matchGrid .card.mini.matchTile:not(.back) div:nth-child(2){font-size:46px !important;line-height:1;font-weight:800}
   .matchGrid .card.mini.matchTile.red:not(.back) div:nth-child(2){color:#c62828}
   .matchGrid .card.mini.matchTile:not(.back):not(.red) div:nth-child(2){color:#1a1a2e}
-  .joker-outline-red{outline:3px solid #e5484d !important;background:#3a1418 !important}
-  .joker-outline-black{outline:3px solid #ffffff !important;background:#0a0c18 !important}
+  .matchGrid .card.mini.matchTile.joker-outline-red:not(.back){outline:3px solid #ff8a80 !important;background:#c62828 !important}
+  .matchGrid .card.mini.matchTile.joker-outline-black:not(.back){outline:3px solid #e8e8ee !important;background:#26262e !important}
   .glitchWarningBanner{margin-top:10px;padding:6px 8px;border-radius:5px;background:rgba(229,72,77,0.12);border:1px solid var(--red);color:var(--red);font-weight:700;font-size:11px;text-align:center}
   .castleBtn-exit{order:-1}
   .duelHead{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:flex-start}
@@ -2818,6 +2818,10 @@ function initRunWithStarter(id) {
     careerPointsFromElites: 0,
     runUpgrades: { itemSlots: 0, drawPerTurn: 0, sightRange: 0, gemDraw: 0, health: 0 },
     castleState: { firstDone:false, secondDone:false, thirdDone:false, dungeonLocked:false, matchPlayed:false, matchLockReason:null, matchCards:null, matchGuesses:4, matchPick:[], plinkoPlayed:false },
+    // Tracked entirely separately from castleState's matching-game fields above - the map's Grid Anomaly
+    // (match_hazard) nodes and the Fleet Compound's Carnival Matching Game are two different games that
+    // happen to share the same rendering/click code, and must never lock each other out.
+    mapMatchState: { matchPlayed:false, matchLockReason:null, matchCards:null, matchGuesses:4, matchPick:[], matchLock:false, matchJackpotItemId:null },
   };
   RUN.world = 1;
   RUN.worldCleared = false;
@@ -2859,7 +2863,7 @@ function selectNode(row, col) {
     else { const found = rollTreasure(node.big); playSfx('open'); TREASURE_POPUP = found; render(mapScreen()); }
   }
   else if (node.type === 'match_hazard') {
-    resetCarnivalMatchState();
+    resetMapMatchState();
     MATCH_RETURN_TO_MAP = true;
     MATCH_OVERLAY_ACTIVE = true;
     renderMatchOverlay();
@@ -3012,6 +3016,25 @@ function resetCarnivalMatchState() {
   RUN.castleState.matchPick = [];
   RUN.castleState.matchLock = false;
 }
+// Resets the map's own Grid Anomaly (match_hazard node) matching-game state. This is intentionally
+// a separate object/function from resetCarnivalMatchState() above - playing the matching game at a
+// map node must never mark the Fleet Compound's Carnival Matching Game as played, or vice versa.
+function resetMapMatchState() {
+  if (!RUN.mapMatchState) RUN.mapMatchState = {};
+  RUN.mapMatchState.matchPlayed = false;
+  RUN.mapMatchState.matchLockReason = null;
+  RUN.mapMatchState.matchCards = null;
+  RUN.mapMatchState.matchGuesses = 4;
+  RUN.mapMatchState.matchPick = [];
+  RUN.mapMatchState.matchLock = false;
+}
+// Picks whichever matching-game state object applies to the session currently open - the map's Grid
+// Anomaly instance (MATCH_RETURN_TO_MAP true) or the Fleet Compound's Carnival Matching Game.
+function getMatchState() {
+  if (MATCH_RETURN_TO_MAP) { if (!RUN.mapMatchState) RUN.mapMatchState = {}; return RUN.mapMatchState; }
+  if (!RUN.castleState) RUN.castleState = {};
+  return RUN.castleState;
+}
 // The Fleet Compound Dungeon locks only for the world you left it in - leaving it in World 1
 // still lets you enter (and re-clear) it fresh in World 2, 3, etc. So its progress/lock flags
 // get reset here alongside the matching game's, every time a new world starts.
@@ -3064,7 +3087,8 @@ const FLEET_PLINKO_CONFIG = {
   boardWidth: 720,
   boardHeight: 460,
   pegRows: 10,
-  pegsPerRow: 11,
+  pegBaseCount: 3,
+  dropSlotFractions: [0.2, 0.5, 0.8],
   gravity: 0.20,
   bounce: 0.62,
   horizontalFriction: 0.995,
@@ -3089,21 +3113,24 @@ function openFleetPlinko(options) {
     <div class="wo wide" style="max-width:760px;width:100%">
       <div class="wo-stripe"></div>
       <div class="wo-body">
-        <div class="wo-eyebrow">Fleet Compound</div>
         <h1 style="margin:2px 0 0">Fleet <em>Plinko</em></h1>
-        <div class="note" style="margin-top:2px">Drop again or take your haul. One bad drop wipes the board.</div>
+        <div class="note" style="margin-top:2px">Pick a slot to drop from, or take your haul. One bad drop wipes the board.</div>
         <div id="fleetPlinkoStats">
           <div class="fleet-plinko-stat"><div class="fleet-plinko-stat-label">Current Haul</div><div class="fleet-plinko-stat-value" id="fleetPlinkoHaul">0</div></div>
           <div class="fleet-plinko-stat"><div class="fleet-plinko-stat-label">Drops</div><div class="fleet-plinko-stat-value" id="fleetPlinkoDrops">0</div></div>
           <div class="fleet-plinko-stat"><div class="fleet-plinko-stat-label">Risk</div><div class="fleet-plinko-stat-value" id="fleetPlinkoRisk">1.0x</div></div>
         </div>
         <div id="fleetPlinkoCanvasWrap"><canvas id="fleetPlinkoCanvas" width="${FLEET_PLINKO_CONFIG.boardWidth}" height="${FLEET_PLINKO_CONFIG.boardHeight}"></canvas></div>
-        <div id="fleetPlinkoMessage">Drop a chip to see where it lands.</div>
+        <div id="fleetPlinkoMessage">Pick a drop slot to send a chip down the board.</div>
         <div id="fleetPlinkoRewardList"></div>
+        <div id="fleetPlinkoDropSlots" style="display:flex;justify-content:center;gap:10px;padding-top:10px;flex-wrap:wrap">
+          <button class="wo-btn green" id="fleetPlinkoDropSlot0">Drop Left</button>
+          <button class="wo-btn green" id="fleetPlinkoDropSlot1">Drop Center</button>
+          <button class="wo-btn green" id="fleetPlinkoDropSlot2">Drop Right</button>
+        </div>
         <div id="fleetPlinkoControls">
-          <button class="wo-btn green" id="fleetPlinkoDropBtn">Drop Chip</button>
           <button class="wo-btn amber fleet-plinko-hidden" id="fleetPlinkoTakeBtn">Take Haul</button>
-          <button class="wo-btn gray" id="fleetPlinkoExitBtn">Leave</button>
+          <button class="wo-btn gray" id="fleetPlinkoExitBtn">Back to Compound</button>
         </div>
       </div>
     </div>
@@ -3112,7 +3139,11 @@ function openFleetPlinko(options) {
 
   const canvas = document.getElementById('fleetPlinkoCanvas');
   const ctx = canvas.getContext('2d');
-  const dropBtn = document.getElementById('fleetPlinkoDropBtn');
+  const dropSlotBtns = [
+    document.getElementById('fleetPlinkoDropSlot0'),
+    document.getElementById('fleetPlinkoDropSlot1'),
+    document.getElementById('fleetPlinkoDropSlot2'),
+  ];
   const takeBtn = document.getElementById('fleetPlinkoTakeBtn');
   const exitBtn = document.getElementById('fleetPlinkoExitBtn');
   const message = document.getElementById('fleetPlinkoMessage');
@@ -3129,20 +3160,33 @@ function openFleetPlinko(options) {
   const sidePadding = 22;
   const slotWidth = (W - sidePadding * 2) / slotCount;
 
+  // Real pyramid layout: each row has one more peg than the row above it, centered on the
+  // board's midline, with the same horizontal gap between pegs in every row. Because the peg
+  // count grows row over row while staying centered, each row's pegs land offset by half a gap
+  // from the row above automatically - a proper zigzag across the full board width, including
+  // the middle, instead of the old fixed-column-count layout that lined pegs up in straight
+  // vertical lanes down the center.
   const pegs = [];
   const pegTop = 60;
   const pegBottom = slotTop - 20;
-  const rowSpacing = (pegBottom - pegTop) / (FLEET_PLINKO_CONFIG.pegRows - 1);
-  for (let row = 0; row < FLEET_PLINKO_CONFIG.pegRows; row++) {
+  const pegRows = FLEET_PLINKO_CONFIG.pegRows;
+  const pegBaseCount = FLEET_PLINKO_CONFIG.pegBaseCount;
+  const rowSpacing = (pegBottom - pegTop) / (pegRows - 1);
+  const maxPegCount = pegBaseCount + (pegRows - 1);
+  const colGap = (W - sidePadding * 2) / (maxPegCount - 1);
+  for (let row = 0; row < pegRows; row++) {
     const y = pegTop + row * rowSpacing;
-    const offset = row % 2 === 0 ? 0 : 0.5;
-    const count = FLEET_PLINKO_CONFIG.pegsPerRow;
+    const count = pegBaseCount + row;
+    const rowWidth = (count - 1) * colGap;
+    const startX = W / 2 - rowWidth / 2;
     for (let col = 0; col < count; col++) {
-      const usableWidth = W - sidePadding * 2;
-      const spacing = usableWidth / (count - 1 + offset * 2);
-      let x = offset === 0 ? sidePadding + col * spacing : sidePadding + spacing / 2 + col * spacing;
-      if (x > sidePadding + 3 && x < W - sidePadding - 3) pegs.push({ x, y, r: 5 });
+      pegs.push({ x: startX + col * colGap, y, r: 5 });
     }
+  }
+  // The 3 discrete drop slots at the top of the board the player picks from before releasing a chip.
+  function dropSlotX(i) {
+    const usableWidth = W - sidePadding * 2;
+    return sidePadding + usableWidth * FLEET_PLINKO_CONFIG.dropSlotFractions[i];
   }
 
   function weightedSlot() {
@@ -3168,8 +3212,8 @@ function openFleetPlinko(options) {
     rewardList.innerHTML = state.rewardHistory.map(entry => `<div class="fleet-plinko-reward-pill">${entry}</div>`).join('');
   }
   function setMessage(text, type) { message.textContent = text; message.className = ''; if (type) message.classList.add(type); }
-  function hideButtons() { dropBtn.classList.add('fleet-plinko-hidden'); takeBtn.classList.add('fleet-plinko-hidden'); exitBtn.classList.add('fleet-plinko-hidden'); }
-  function showDecisionButtons() { dropBtn.classList.remove('fleet-plinko-hidden'); takeBtn.classList.remove('fleet-plinko-hidden'); exitBtn.classList.remove('fleet-plinko-hidden'); }
+  function hideButtons() { dropSlotBtns.forEach(b => b.classList.add('fleet-plinko-hidden')); takeBtn.classList.add('fleet-plinko-hidden'); exitBtn.classList.add('fleet-plinko-hidden'); }
+  function showDecisionButtons() { dropSlotBtns.forEach(b => b.classList.remove('fleet-plinko-hidden')); takeBtn.classList.remove('fleet-plinko-hidden'); exitBtn.classList.remove('fleet-plinko-hidden'); }
   function closeGame() { if (state.animationId) { cancelAnimationFrame(state.animationId); state.animationId = null; } overlay.remove(); }
   function finishWithHaul() {
     if (state.finished) return;
@@ -3220,10 +3264,11 @@ function openFleetPlinko(options) {
     }
   }
 
-  function startDrop() {
+  function startDrop(slotIndex) {
     if (state.animating || state.finished) return;
     state.animating = true; state.drops++; state.round++; state.currentSlot = null;
-    state.chip = { x: W / 2 + (Math.random() - 0.5) * 45, y: FLEET_PLINKO_CONFIG.dropStartY, vx: (Math.random() - 0.5) * 1.4, vy: 0, r: FLEET_PLINKO_CONFIG.chipRadius };
+    const dropX = dropSlotX(slotIndex);
+    state.chip = { x: dropX + (Math.random() - 0.5) * 14, y: FLEET_PLINKO_CONFIG.dropStartY, vx: (Math.random() - 0.5) * 1.4, vy: 0, r: FLEET_PLINKO_CONFIG.chipRadius };
     hideButtons();
     setMessage('The chip is in motion...', '');
     updateUI();
@@ -3286,7 +3331,7 @@ function openFleetPlinko(options) {
     updateUI();
     setMessage(`Total loss - ${lostText} was lost.`, 'danger');
     playSfx('lose');
-    dropBtn.classList.add('fleet-plinko-hidden'); takeBtn.classList.add('fleet-plinko-hidden');
+    dropSlotBtns.forEach(b => b.classList.add('fleet-plinko-hidden')); takeBtn.classList.add('fleet-plinko-hidden');
     setTimeout(finishAfterLoss, 1100);
   }
   function finishAfterLoss() {
@@ -3296,7 +3341,7 @@ function openFleetPlinko(options) {
     setTimeout(() => { closeGame(); onComplete({ coins: 0, gems: 0, fuel: 0, drops: state.drops, lost: true }); }, 250);
   }
 
-  dropBtn.addEventListener('click', startDrop);
+  dropSlotBtns.forEach((btn, i) => btn.addEventListener('click', () => startDrop(i)));
   takeBtn.addEventListener('click', () => { if (!state.animating && !state.finished) finishWithHaul(); });
   exitBtn.addEventListener('click', () => { if (state.animating || state.finished) return; if (numericHaulValue() > 0) finishWithHaul(); else closeGame(); });
 
@@ -3304,8 +3349,7 @@ function openFleetPlinko(options) {
   drawBoard();
 }
 function castleMatchScreen() {
-  if (!RUN.castleState) RUN.castleState = {};
-  const st = RUN.castleState;
+  const st = getMatchState();
   if (JOKER_GLITCH_POPUP) {
     return `<div class="map-popup-overlay"><div class="wo" style="max-width:440px;border-color:#7a0000">
       <div class="wo-stripe" style="background:#7a0000"></div>
@@ -5738,6 +5782,7 @@ const UPDATE_LOG = [
       'Fixed the Fleet Carnival matching game showing 50 Career Points for a Black Joker match when it actually pays 25.',
       'Red Joker and Black Joker now use distinct colors, so the two are easy to tell apart at a glance.',
       'World 1 now has a real shot (about 50%) of putting the Carnival matching game somewhere on your route before you even reach the Fleet Compound. It can still show up anywhere else too, at its normal odds.',
+      'Fixed a bug where playing the map\'s Grid Anomaly matching game could lock you out of the separate Carnival Matching Game at the Fleet Compound, and vice versa. The two are now tracked completely separately.',
     ],
     Visual: [
       'Spades and clubs are easier to tell apart at a glance now.',
@@ -5747,6 +5792,7 @@ const UPDATE_LOG = [
       'Update Log section headers (Opponents, Item cards, Visual, etc.) no longer render in all caps.',
       'The "Made by Drew" / feedback line is now part of the same box as the main menu instead of sitting in its own separate box underneath it.',
       'Removed bold from the hoverable, dotted-underline keywords on item cards (Poison, Burn, Curse, Hex, Ice, Draw, Charges, and the suit/hand names in requirement text) so they read consistently - some were bold and some weren\'t.',
+      'Fixed a CSS bug that was quietly overriding the Red/Black Joker card colors with plain white, so they still looked identical even after the earlier fix. Red Joker cards now show a clear red background, and Black Joker cards use a dark charcoal (not pure black) so the joker icon stays visible.',
     ],
     Misc: [
       'Career Points now pay out as one bonus at the end of a run based on how far you got, instead of a little bit for every kill. Perfect Kills earn a small Career Points bonus of their own too.',
@@ -5759,6 +5805,7 @@ const UPDATE_LOG = [
       'Fleet Compound Dungeon: now matches the other shop pages\' buttons and colors, only locks for the world you left it in (not the whole run), reduced its fuel and gem payouts, added Energy rewards, and added a difficulty label to each battle.',
       'Run Ended screen redesigned: a red "Run Ended" header in place of the old "Back to Base," plus a full run summary (world reached, Career Points, best world reached, opponents and Elites beaten this run and lifetime, items used, upgrades obtained). Also fixed the confusing "+20 points for reaching [world]" wording - it was just naming the world you were on, not a real bonus reason, so it\'s now shown as plain data instead.',
       'Added the Fleet Plinko Board: a new bonus stop at the Fleet Compound. Drop chips down a peg board for coins, gems, or fuel, with the option to keep pushing your luck for a bigger haul or bank what you\'ve got - one bad drop wipes the current haul. Playable once per world, same as the Carnival matching game.',
+      'Fleet Plinko: reshaped the board into an actual pyramid with a proper staggered peg layout, so drops bounce unpredictably across the whole width instead of mostly falling straight down. You now pick from 3 fixed drop slots (Left, Center, Right) instead of a freeform drop position. Also dropped the redundant "Fleet Compound" label from the board screen and renamed its Leave button to "Back to Compound" to match the rest of the game.',
     ],
   } },
 ];
@@ -5919,6 +5966,7 @@ function render(html) {
     RUN.path = [];
     RUN.pendingNextWorld = null;
     resetCarnivalMatchState();
+    resetMapMatchState();
     resetDungeonState();
     resetPlinkoState();
     META.bestWorld = Math.max(META.bestWorld || 1, RUN.world);
@@ -6177,7 +6225,7 @@ function render(html) {
   if (matchPopupContinueBtn) matchPopupContinueBtn.onclick = () => {
     const wasCleared = MATCH_POPUP && MATCH_POPUP.boardCleared;
     MATCH_POPUP = null;
-    const st = RUN.castleState;
+    const st = getMatchState();
     if (wasCleared) {
       
       st.matchCards = null;
@@ -6191,7 +6239,7 @@ function render(html) {
   app.querySelectorAll('[data-match]').forEach(el => {
     el.onclick = () => {
       const i = +el.dataset.match;
-      const st = RUN.castleState;
+      const st = getMatchState();
 
       if (!st || MATCH_POPUP || st.matchGuesses <= 0 || st.matchPick.includes(i) || st.matchCards[i].flipped || st.matchCards[i].matched || st.matchLock) return;
 

@@ -143,15 +143,18 @@
   .pickItemRow{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-start}
   .pickItemRow .itemCard{flex:0 0 125px;width:125px}
   #dealer-viewport .dealerRow{
-    display:flex; flex-direction:row; flex-wrap:nowrap; justify-content:flex-start;
-    align-items:flex-start; gap:10px; overflow-x:auto; padding:8px 4px 14px;
-    width:100%; max-width:960px; margin:0; -webkit-overflow-scrolling:touch;
+    display:grid; grid-template-columns:repeat(6, 141px); justify-content:center;
+    align-items:start; gap:10px; padding:8px 4px 14px;
+    width:100%; max-width:906px; margin:0 auto;
   }
   #dealer-viewport .dealerCardPanel{
-    flex:0 0 141px; width:141px; min-width:141px; max-width:141px;
+    width:141px; min-width:141px; max-width:141px;
     display:flex; flex-direction:column; justify-content:flex-start; align-items:center;
     padding:8px; box-sizing:border-box; overflow:hidden; margin:0;
   }
+  @media (max-width:850px){ #dealer-viewport .dealerRow{ grid-template-columns:repeat(4, 141px); } }
+  @media (max-width:600px){ #dealer-viewport .dealerRow{ grid-template-columns:repeat(3, minmax(0,141px)); gap:8px; } #dealer-viewport .dealerCardPanel{ width:auto; min-width:0; max-width:none; } }
+  @media (max-width:420px){ #dealer-viewport .dealerRow{ grid-template-columns:repeat(2, minmax(0,141px)); } }
   #dealer-viewport .dealerCardPanel .itemCard{ margin:0 auto; box-sizing:border-box; }
   #dealer-viewport .emptyItemSlot{
     border:2px dashed rgba(31,182,166,0.3); width:125px; height:150px;
@@ -192,7 +195,7 @@
     font-size:17px;border:2px solid #12163a;cursor:pointer;user-select:none;flex-shrink:0;gap:1px}
   .card div:last-child{font-size:23px;line-height:1}
   .card.red{color:#e5484d}
-  .card.suit-club{color:#12163a}
+  .card.suit-club{color:var(--green)}
   .card.selected{outline:3px solid var(--amber);transform:translateY(-6px)}
   .card.matched{outline:3px solid var(--green)}
   .card.cursed{outline:2px solid var(--purple)}
@@ -200,7 +203,7 @@
   .card.mini div:last-child{font-size:14px !important;line-height:1}
   .suitMicroCard{display:inline-flex;align-items:center;justify-content:center;width:16px;height:20px;border-radius:3px;background:#ffffff;color:#12163a;font-size:12px;font-weight:800;line-height:1;vertical-align:-3px;margin:0 1px;box-shadow:0 0 0 1px rgba(0,0,0,0.2)}
   .suitMicroCard.red{color:#e5484d}
-  .suitMicroCard.suit-club{color:#12163a}
+  .suitMicroCard.suit-club{color:var(--green)}
   .card.back{background:var(--blue);color:transparent;position:relative}
   .card.back::after{content:'?';color:var(--ink);position:absolute;font-size:16px}
   .card.back.mini::after{font-size:12px}
@@ -944,9 +947,9 @@ function itemRequirementText(item) {
   else if (cond?.type === 'straightLen') specific = `${cond.len}-card ${kw('Straight')}`;
   else if (cond?.type === 'sumThreshold') specific = `Card(s) need to total ${cond.min} or higher`;
   else if (cond?.type === 'sumExact') specific = `${SIGMA_TIP} = ${cond.value} exactly`;
-  else if (cond?.type === 'exactCount') specific = `${cond.count} cards`;
+  else if (cond?.type === 'exactCount') specific = cond.count === 1 ? 'Any card' : `Any ${cond.count} cards`;
   else if (cond?.type === 'pokerTier' && cond.tier > 0) specific = cond.tier === 5 ? kw('Flush') : cond.tier === 4 ? kw('Straight') : TIERS[cond.tier];
-  if (cond?.exactCount != null && cond?.type !== 'exactCount') specific = `${specific} (${cond.exactCount} cards)`;
+  if (cond?.exactCount != null && cond?.type !== 'exactCount') specific = `${specific} (${cond.exactCount === 1 ? '1 card' : `${cond.exactCount} cards`})`;
   const base = max === 1 ? '1 card' : `Up to ${max} cards`;
   return specific || base;
 }
@@ -2158,7 +2161,7 @@ const WORLD_1_POOLS = {
     { id: 'w1_boardwalk_plank', name: 'Broken Boardwalk Plank', icon: '🪵', image: 'Hazards/pothole.jpg', hp: 58, minTier: 1, drawRate: 2, startArmor: 12, items: ['w1_splinter_snap'] },
     { id: 'w1_beach_cats', name: 'Feral Beach Cat Colony', icon: '🐈', image: 'Hazards/loose-dog-2.jpg', hp: 60, minTier: 1, drawRate: 2, items: ['w1_claw_skirmish'] },
     { id: 'w1_fishing_net', name: 'Tangled Fishing Net', icon: '🎣', image: 'Hazards/scrap-heap.jpg', hp: 62, minTier: 1, drawRate: 2, items: ['w1_net_snare'] },
-    { id: 'w1_jellyfish_swarm', name: 'Drifting Jellyfish Swarm', icon: '🪼', image: 'Hazards/flash-flood.jpg', hp: 50, minTier: 1, drawRate: 2, items: ['w1_sting_barrage', 'w1_jelly_drift'] },
+    { id: 'w1_jellyfish', name: 'Drifting Jellyfish', icon: '🪼', image: 'Hazards/flash-flood.jpg', hp: 46, minTier: 1, drawRate: 2, items: ['w1_jelly_drift'] },
     { id: 'w1_sandcastle_sentinel', name: 'Sand Castle Sentinel', icon: '🏰', image: 'Hazards/broken-meter.jpg', hp: 58, minTier: 1, drawRate: 2, items: ['w1_moat_collapse', 'w1_turret_poke'] },
     { id: 'w1_runaway_kite', name: 'Runaway Kite', icon: '🪁', image: 'Hazards/downed-line.jpg', hp: 40, minTier: 1, drawRate: 2, items: ['w1_string_snap'] },
     { id: 'w1_lobster_trap', name: 'Loose Lobster Trap', icon: '🦞', image: 'Hazards/scrap-heap.jpg', hp: 60, minTier: 1, drawRate: 2, startArmor: 14, items: ['w1_trap_snap', 'w1_rope_drag'] },
@@ -2172,6 +2175,7 @@ const WORLD_1_POOLS = {
   elites: [
     { id: 'w1_lifeguard_tower', name: 'Lifeguard Tower Sentinel', icon: '🛟', image: 'Hazards/angry-citizen.jpg', hp: 95, minTier: 2, drawRate: 3, startArmor: 20, armorRegen: 8, items: ['w1_whistle_command'] },
     { id: 'w1_frigatebird', name: 'Alpha Frigatebird', icon: '🦅', image: 'Hazards/downed-line.jpg', hp: 92, minTier: 2, drawRate: 3, items: ['w1_talon_dive'] },
+    { id: 'w1_jellyfish_swarm', name: 'Drifting Jellyfish Swarm', icon: '🪼', image: 'Hazards/flash-flood.jpg', hp: 94, minTier: 2, drawRate: 3, items: ['w1_sting_barrage', 'w1_jelly_drift'] },
   ],
   boss: { id: 'rogue_wave', name: 'The Rogue Wave', icon: '🌊', image: 'Hazards/wildfire.jpg', hp: 150, minTier: 3, drawRate: 5, boss: true, usesPerTurn: 2, startArmor: 25, armorRegen: 12, items: ['w1_wave_crash', 'w1_riptide_sweep'], attackInfo: 'Attack: uses its best poker hand for heavy damage and can hit twice a turn. Builds a wall of water that keeps regenerating its own armor - no curses, just brute force.' },
 };
@@ -2223,7 +2227,7 @@ const WORLD_3_POOLS = {
     { id: 'w3_utility_panel', name: 'Loose Utility Panel', icon: '🧰', image: 'Hazards/blackout.jpg', hp: 58, minTier: 1, drawRate: 2, items: ['w3_panel_surge', 'w3_panel_rattle'] },
     { id: 'w3_overzealous_valet', name: 'Overzealous Valet', icon: '🛎️', image: 'Hazards/angry-citizen.jpg', hp: 54, minTier: 1, drawRate: 2, items: ['w3_valet_joyride'] },
     { id: 'w3_picket_line', name: 'Protest Picket Line', icon: '🪧', image: 'Hazards/angry-mob.jpg', hp: 62, minTier: 1, drawRate: 2, items: ['w3_picket_shove', 'w3_picket_chant'] },
-    { id: 'w3_steam_vent_mob', name: 'Manhole Steam Vent', icon: '🔥', image: 'Hazards/dumpster-fire.jpg', hp: 56, minTier: 1, drawRate: 2, items: ['w3_steam_vent'] },
+    { id: 'w3_steam_vent_mob', name: 'Sidewalk Manhole', icon: '🔥', image: 'Hazards/dumpster-fire.jpg', hp: 56, minTier: 1, drawRate: 2, items: ['w3_steam_vent'] },
     { id: 'w3_wifi_router', name: 'Rogue WiFi Router', icon: '📶', image: 'Hazards/blackout.jpg', hp: 46, minTier: 1, drawRate: 2, items: ['w3_router_jam'] },
     { id: 'w3_rideshare_driver', name: 'Aggressive Rideshare Driver', icon: '🚕', image: 'Hazards/jaywalker.jpg', hp: 58, minTier: 1, drawRate: 2, items: ['w3_rideshare_cutoff', 'w3_rideshare_honk'] },
   ],
@@ -2242,18 +2246,18 @@ const WORLD_4_POOLS = {
     { id: 'w4_bait_barge', name: 'Overloaded Bait Barge', icon: '🚢', image: 'Hazards/dumpster-fire.jpg', hp: 68, minTier: 1, drawRate: 2, items: ['w4_chum_slick'] },
     { id: 'w4_dock_crab_swarm', name: 'Dock Crab Swarm', icon: '🦀', image: 'Hazards/angry-mob.jpg', hp: 58, minTier: 1, drawRate: 2, items: ['w4_crab_swarm_nip'] },
     { id: 'w4_loose_cargo_crate', name: 'Loose Cargo Crate', icon: '📦', image: 'Hazards/scrap-heap.jpg', hp: 62, minTier: 1, drawRate: 2, items: ['w4_crate_topple', 'w4_crate_shift'] },
-    { id: 'w4_bait_bucket_spill', name: 'Bait Bucket Spill', icon: '🪣', image: 'Hazards/pothole.jpg', hp: 48, minTier: 1, drawRate: 2, items: ['w4_bait_spill'] },
-    { id: 'w4_tangled_fishing_line', name: 'Tangled Fishing Line', icon: '🪝', image: 'Hazards/scrap-heap.jpg', hp: 50, minTier: 1, drawRate: 2, items: ['w4_fishing_snag'] },
-    { id: 'w4_ice_machine_leak', name: 'Dockside Ice Leak', icon: '🧊', image: 'Hazards/pothole.jpg', hp: 54, minTier: 1, drawRate: 2, items: ['w4_ice_leak'] },
-    { id: 'w4_river_otter', name: 'River Otter Nip', icon: '🦦', image: 'Hazards/angry-citizen.jpg', hp: 46, minTier: 1, drawRate: 2, items: ['w4_otter_nip'] },
-    { id: 'w4_choked_piling', name: 'Cobweb-Choked Piling', icon: '🕸️', image: 'Hazards/downed-line.jpg', hp: 56, minTier: 1, drawRate: 2, items: ['w4_piling_scrape'] },
+    { id: 'w4_bait_bucket_spill', name: 'Bait Bucket', icon: '🪣', image: 'Hazards/pothole.jpg', hp: 48, minTier: 1, drawRate: 2, items: ['w4_bait_spill'] },
+    { id: 'w4_tangled_fishing_line', name: 'Snagged Fishing Line', icon: '🪝', image: 'Hazards/scrap-heap.jpg', hp: 50, minTier: 1, drawRate: 2, items: ['w4_fishing_snag'] },
+    { id: 'w4_ice_machine_leak', name: 'Ice Machine', icon: '🧊', image: 'Hazards/pothole.jpg', hp: 54, minTier: 1, drawRate: 2, items: ['w4_ice_leak'] },
+    { id: 'w4_river_otter', name: 'River Otter', icon: '🦦', image: 'Hazards/angry-citizen.jpg', hp: 46, minTier: 1, drawRate: 2, items: ['w4_otter_nip'] },
+    { id: 'w4_choked_piling', name: 'Dock Piling', icon: '🕸️', image: 'Hazards/downed-line.jpg', hp: 56, minTier: 1, drawRate: 2, items: ['w4_piling_scrape'] },
     { id: 'w4_cruise_ship_wake', name: 'Cruise Ship Wake', icon: '🛳️', image: 'Hazards/flash-flood.jpg', hp: 68, minTier: 1, drawRate: 2, startArmor: 14, items: ['w4_cruise_wake_swell', 'w4_cruise_wake_rock'] },
     { id: 'w4_patrol_chopper', name: 'Patrol Chopper Downwash', icon: '🚁', image: 'Hazards/wildfire.jpg', hp: 64, minTier: 1, drawRate: 2, items: ['w4_chopper_downwash', 'w4_chopper_buzz'] },
-    { id: 'w4_pufferfish', name: 'Pufferfish Puncture', icon: '🐡', image: 'Hazards/pothole.jpg', hp: 44, minTier: 1, drawRate: 2, items: ['w4_puffer_puncture'] },
+    { id: 'w4_pufferfish', name: 'Pufferfish', icon: '🐡', image: 'Hazards/pothole.jpg', hp: 44, minTier: 1, drawRate: 2, items: ['w4_puffer_puncture'] },
     { id: 'w4_haunted_piling', name: 'Haunted Dock Piling', icon: '👻', image: 'Hazards/downed-line.jpg', hp: 58, minTier: 1, drawRate: 2, items: ['w4_haunted_piling_hex', 'w4_haunted_piling_creak'] },
     { id: 'w4_fortune_teller', name: "Fortune Teller's Kiosk", icon: '🔮', image: 'Hazards/angry-citizen.jpg', hp: 54, minTier: 1, drawRate: 2, items: ['w4_fortune_tellers_hex'] },
     { id: 'w4_loose_deck_board', name: 'Loose Deck Board', icon: '🪵', image: 'Hazards/pothole.jpg', hp: 52, minTier: 1, drawRate: 2, items: ['w4_deck_board_snap'] },
-    { id: 'w4_bilge_pump', name: 'Overheated Bilge Pump', icon: '🔥', image: 'Hazards/dumpster-fire.jpg', hp: 56, minTier: 1, drawRate: 2, items: ['w4_bilge_overheat'] },
+    { id: 'w4_bilge_pump', name: 'Bilge Pump', icon: '🔥', image: 'Hazards/dumpster-fire.jpg', hp: 56, minTier: 1, drawRate: 2, items: ['w4_bilge_overheat'] },
     { id: 'w4_cargo_winch', name: 'Rusty Cargo Winch', icon: '🧱', image: 'Hazards/scrap-heap.jpg', hp: 60, minTier: 1, drawRate: 2, items: ['w4_cargo_winch_snap', 'w4_cargo_winch_swing'] },
   ],
   elites: [
@@ -2307,9 +2311,9 @@ const WORLD_6_POOLS = {
     { id: 'w6_pickpocket', name: 'Pickpocket in the Crowd', icon: '🤏', image: 'Hazards/angry-mob.jpg', hp: 52, minTier: 1, drawRate: 2, items: ['w6_pocket_lift'] },
     { id: 'w6_con_artist', name: 'Sidewalk Con Artist', icon: '🎩', image: 'Hazards/angry-citizen.jpg', hp: 56, minTier: 1, drawRate: 2, items: ['w6_con_swindle', 'w6_con_chatter'] },
     { id: 'w6_ticket_scam', name: 'Valet Ticket Scam', icon: '🎫', image: 'Hazards/broken-meter.jpg', hp: 54, minTier: 1, drawRate: 2, items: ['w6_ticket_switch'] },
-    { id: 'w6_lightning_awning', name: 'Lightning-Struck Awning', icon: '⛈️', image: 'Hazards/downed-line.jpg', hp: 62, minTier: 1, drawRate: 2, items: ['w6_awning_strike'] },
+    { id: 'w6_lightning_awning', name: 'Storefront Awning', icon: '⛈️', image: 'Hazards/downed-line.jpg', hp: 62, minTier: 1, drawRate: 2, items: ['w6_awning_strike'] },
     { id: 'w6_ac_short', name: 'Rooftop AC Unit Short', icon: '❄️', image: 'Hazards/blackout.jpg', hp: 60, minTier: 1, drawRate: 2, items: ['w6_ac_arc'] },
-    { id: 'w6_storm_drain', name: 'Storm Drain Whirlpool', icon: '🌀', image: 'Hazards/sinkhole.jpg', hp: 60, minTier: 1, drawRate: 2, items: ['w6_drain_curse', 'w6_drain_pull'] },
+    { id: 'w6_storm_drain', name: 'Storm Drain', icon: '🌀', image: 'Hazards/sinkhole.jpg', hp: 60, minTier: 1, drawRate: 2, items: ['w6_drain_curse', 'w6_drain_pull'] },
     { id: 'w6_broken_meter_hex', name: 'Broken Parking Meter', icon: '🅿️', image: 'Hazards/broken-meter.jpg', hp: 56, minTier: 1, drawRate: 2, items: ['w6_meter_curse'] },
     { id: 'w6_neon_sign', name: 'Waterlogged Neon Sign', icon: '🪧', image: 'Hazards/flicker-light.jpg', hp: 58, minTier: 1, drawRate: 2, items: ['w6_neon_flicker'] },
     { id: 'w6_cafe_table', name: 'Wind-Whipped Cafe Table', icon: '☕', image: 'Hazards/jaywalker.jpg', hp: 56, minTier: 1, drawRate: 2, items: ['w6_table_tip'] },
@@ -2395,11 +2399,12 @@ function loadMeta() {
       if (parsed.world2Cleared == null) parsed.world2Cleared = false;
       if (parsed.hasSeenTutorial == null) parsed.hasSeenTutorial = false;
       if (parsed.hasSeenPoisonTutorial == null) parsed.hasSeenPoisonTutorial = false;
+      if (parsed.hasSeenFuelHealTip == null) parsed.hasSeenFuelHealTip = false;
       return parsed;
     }
   } catch (e) {}
   const levels = {}; UPGRADE_DEFS.forEach(u => levels[u.id] = 0);
-  return { metaVersion: META_VERSION, points: 0, lifetimePoints: 0, highScore: 0, bestRun: 0, runsPlayed: 0, enemiesBeaten: 0, bestWorld: 1, perfectWins: 0, world2Cleared: false, hasSeenTutorial: false, hasSeenPoisonTutorial: false, levels };
+  return { metaVersion: META_VERSION, points: 0, lifetimePoints: 0, highScore: 0, bestRun: 0, runsPlayed: 0, enemiesBeaten: 0, bestWorld: 1, perfectWins: 0, world2Cleared: false, hasSeenTutorial: false, hasSeenPoisonTutorial: false, hasSeenFuelHealTip: false, levels };
 }
 let META = loadMeta();
 function saveMeta() { try { META.metaVersion = META_VERSION; localStorage.setItem(META_KEY, JSON.stringify(META)); } catch (e) {} }
@@ -2420,6 +2425,9 @@ function worldCareerPoints(world, cleared) {
   const tier = WORLD_CP_BONUS[world] || WORLD_CP_BONUS[6];
   return cleared ? tier.clear : tier.reach;
 }
+// A Perfect Kill only happens when your final hit exactly matches an opponent's remaining
+// HP, so it's a skill moment worth a small flat Career Points nod, not a trickle.
+const PERFECT_KILL_CP = 5;
 
 /* ========== RUN SAVE (mid-run continuity, roguelite-style) ========== */
 const RUN_KEY = 'fleetduel-run-v82-worldcp';
@@ -2518,8 +2526,25 @@ function generateMap() {
   eligible.slice(0,needBattles).forEach(({r,c})=> {
     nodes[r][c]={type:'battle', opponent: makeOpponentForRow(r)};
   });
+  // The upgrade shops (Tuning Garage, Chop Shop, Overdrive Bay) are one-time stops per world -
+  // hitting the same one twice on a route felt broken. The Dealership can show up twice since
+  // node 3 always guarantees one. Everything else (rest, treasure, the card match) stays
+  // unlimited since those are meant to recur.
+  const TYPE_CAPS = { shop: 2, blacksmith: 1, chopshop: 1, overdrive: 1 };
+  const typeCounts = { shop: 1 };
+  function pickNodeTypeCapped() {
+    for (let attempt = 0; attempt < 12; attempt++) {
+      const t = pickNodeType();
+      const cap = TYPE_CAPS[t];
+      if (cap == null || (typeCounts[t] || 0) < cap) {
+        typeCounts[t] = (typeCounts[t] || 0) + 1;
+        return t;
+      }
+    }
+    return 'battle';
+  }
   eligible.slice(needBattles).forEach(({r,c})=>{
-    const t=pickNodeType();
+    const t=pickNodeTypeCapped();
     if (t==='battle') {
       nodes[r][c]={type:'battle', opponent: makeOpponentForRow(r)};
     } else {
@@ -2548,10 +2573,14 @@ function generateMap() {
       for(let b=0;b<next.length;b++) if(!edges.some(e=>e.fromRow===r&&e.toCol===b)) add(Math.round(b*backwardRatio),b);
     }
   }
+  // Draw two elites without repeats from the world's elite pool, so a world with more than
+  // two defined elites (like World 1's three) actually rotates through all of them across
+  // runs instead of the same two always landing in these two slots.
+  const shuffledElites = shuffle([...highwayPools.elites]);
   [9, 15].forEach((eliteRow, idx) => {
     if (nodes[eliteRow] && nodes[eliteRow].length) {
       const col = idx === 0 ? nodes[eliteRow].length - 1 : 0;
-      const eliteBase = highwayPools.elites[idx % highwayPools.elites.length];
+      const eliteBase = shuffledElites[idx % shuffledElites.length];
       const eliteOpp = scaleHighwayOpponent(eliteBase, eliteRow);
       eliteOpp.name = `${eliteBase.name} [Elite]`;
       nodes[eliteRow][col] = { type: 'battle', opponent: eliteOpp };
@@ -2995,7 +3024,7 @@ function startBattle(opponentDef, row, col, castleStage=0) {
   drawCards(Math.min(openingDraw, RUN.handSize));
     resortHandAndRelink(RUN.handSortMode);
   drawOpponentStartingHand();
-  if (row === 0 && col === 0 && typeof window.renderCombatTrainingStep === 'function') setTimeout(() => window.renderCombatTrainingStep(1), 100);
+  if (row === 0 && col === 0 && !META.hasSeenTutorial && typeof window.renderCombatTrainingStep === 'function') setTimeout(() => window.renderCombatTrainingStep(1), 100);
   if (opponentDef.startPoolBonus) {
     drawOpponentPoolCards(opponentDef.startPoolBonus);
   }
@@ -4019,9 +4048,13 @@ function winBattle(outlast) {
   const gemReward = base.gemReward + (exactKillBonus ? 1 : 0);
   // Fuel is scarce on purpose now - only a Perfect Kill refuels you at all.
   const fuelReward = exactKillBonus ? 1 : 0;
+  // Career Points are otherwise a flat end-of-run bonus now, but a Perfect Kill is a
+  // skill-gated moment worth a small nod on its own, same as the fuel it grants.
+  const pointsReward = exactKillBonus ? PERFECT_KILL_CP : 0;
   RUN.chips += chipReward; RUN.gems = Math.min(RUN.maxGems, RUN.gems + gemReward); RUN.fuel = Math.min(RUN.maxFuel, RUN.fuel + fuelReward);
+  if (pointsReward) earnPoints(pointsReward);
   battleLog(outlast ? `You outlasted the ${BATTLE.opponent.name}!` : `${BATTLE.opponent.name} is done for!`);
-  if (exactKillBonus) battleLog(`Perfect Win Bonus: +15 coins, +1 gem!`);
+  if (exactKillBonus) battleLog(`Perfect Win Bonus: +15 coins, +1 gem, +${PERFECT_KILL_CP} Career Points!`);
   battleLog(formatRewardParts({ coins: chipReward, gems: gemReward, fuel: fuelReward }) + '.');
   if (BATTLE.row === RUN.bossRow) { RUN.pendingWorldWin = true; }
   if (!BATTLE.castleStage) {
@@ -4030,7 +4063,7 @@ function winBattle(outlast) {
     saveMeta();
   }
   playSfx(exactKillBonus ? 'perfect' : 'win');
-  render(nodeResultScreen(true, { chipReward, gemReward, fuelReward, exactKillBonus }));
+  render(nodeResultScreen(true, { chipReward, gemReward, fuelReward, pointsReward, exactKillBonus }));
 }
 
 /* ========== SCREENS ========== */
@@ -4142,6 +4175,7 @@ function nodePopupScreen(r, c) {
     <div class="currencies">
       <div class="cur chip">${ICON.coin} +15 coins</div>
       <div class="cur gem">${ICON.gem} +1 gem</div>
+      <div class="cur pts">${ICON.star} +${PERFECT_KILL_CP} Career Points</div>
     </div>` : '';
   return `<div class="map-popup-overlay">
     <div class="wo" style="width:100%${info.accent ? `;border-color:${info.accent}` : ''}">
@@ -4467,7 +4501,7 @@ function battleScreen() {
     </div>
     <div class="duelBoard">
       <div class="panel">
-        ${BATTLE.showTutorialBanner ? `<div class="note" style="border:1px solid var(--amber);border-radius:6px;padding:8px 10px;margin-bottom:8px;text-align:center;color:var(--amber)">Click or drag cards from your hand, then click an Item Slot below to load your weapon.</div>` : ''}
+        ${BATTLE.showTutorialBanner ? `<div class="note" style="border:1px solid var(--amber);border-radius:6px;padding:8px 10px;margin-bottom:8px;text-align:center;color:var(--amber)">Click or drag cards from your hand, then click a matching item slot below.</div>` : ''}
         <div class="handWorkspace"><div class="handCapacity hoverTip" data-title="Your Maximum Hand Size. New cards cannot be drawn past this cap.">Max ${RUN.handSize}</div><div class="hand">${handHTML}</div></div>
         ${BATTLE.turnDiscard.length ? `<div class="stagedDiscardPanel" style="margin-top:8px;padding:8px;border:1px dashed var(--dim);border-radius:8px">
           <div class="note" style="margin:0 0 6px;font-weight:700">[ Staged for Discard ]</div>
@@ -4561,6 +4595,17 @@ function battleScreen() {
         </div></div>
       </div>`;
     })()}
+    ${BATTLE.showFuelHealWarning ? `<div class="treasure-modal">
+      <div class="wo" style="max-width:420px">
+        <div class="wo-stripe"></div>
+        <div class="wo-body" style="text-align:center">
+          <div class="wo-eyebrow">Heads Up</div>
+          <h1>Spending <em>Fuel</em></h1>
+          <div class="wo-sub" style="margin:10px 0">Fuel also gets your fleet across the map. Healing with it here means less fuel left for travel, so spend it carefully.</div>
+          <button class="wo-btn amber" id="fuelHealWarningOkBtn" style="width:100%;margin-top:8px">Got It</button>
+        </div>
+      </div>
+    </div>` : ''}
   </div>`;
 }
 function handleCardDrop(e, slotKey, maxSlot) {
@@ -4602,6 +4647,7 @@ function nodeResultScreen(won, rewards) {
     <div class="currencies">
       <div class="cur chip">${ICON.coin} +15 coins</div>
       <div class="cur gem">${ICON.gem} +1 gem</div>
+      <div class="cur pts">${ICON.star} +${PERFECT_KILL_CP} Career Points</div>
     </div>` : ''}
   ` : `<div class="wo-sub">Your health ran out${rewards.lastHit ? ` after taking ${rewards.lastHit.amount} damage from ${rewards.lastHit.source}` : ''}. Run ends here.</div>`;
   return `
@@ -5116,6 +5162,38 @@ function chopShopScreen(returnTo) {
   </div></div></div>`;
 }
 
+const UPDATE_LOG = [
+  { date: '2026-09-24', notes: [
+    'Career Points now pay out as one bonus at the end of a run based on how far you got, instead of a little bit for every kill. Perfect Kills earn a small Career Points bonus of their own too.',
+    'Combat Training now makes you actually click each step to move on, and only shows up your first time through. It also reads less like a weapons manual.',
+    'Fixed a bug where a few opponents were showing their attack\'s name instead of their own (River Otter was displaying as "River Otter Nip", for example).',
+    'Drifting Jellyfish is now a regular stop on the map; the tougher swarm version only shows up as an Elite.',
+    'Fixed attack and item labels that were saying things like "(1 cards)" - they now read "Any card" or "Any 2 cards".',
+    'Healing with fuel now warns you the first time what it costs you, then stays out of your way after that. Also fixed a bug where clicking it (and some other buttons) could pop a tooltip into the top-left corner of the screen.',
+    'Spades and clubs are easier to tell apart at a glance now.',
+    'The upgrade shops (Tuning Garage, Chop Shop, Overdrive Bay) can each only show up once per world, so you will not run into the same one twice on a route. The Dealership can still show up twice.',
+    'Dealership layout tightened up into a proper grid.',
+    'Stop Details now always shows the coins and gems you will actually get.',
+  ] },
+];
+function updateLogHTML() {
+  return `
+    <div class="wo" style="margin-top:14px">
+      <div class="wo-stripe"></div>
+      <div class="wo-body">
+        <div class="hdr"><span>Update Log</span><span></span></div>
+        ${UPDATE_LOG.map(entry => `
+          <div style="margin-top:10px">
+            <div class="note" style="font-weight:800;color:var(--ink)">${entry.date}</div>
+            <ul style="margin:4px 0 0 18px;padding:0">
+              ${entry.notes.map(n => `<li class="note" style="margin:2px 0">${n}</li>`).join('')}
+            </ul>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
 function metaScreen() {
   const hasSave = !!loadRunSave();
   return `
@@ -5131,7 +5209,7 @@ function metaScreen() {
         </div>
         <div class="wo-sub">Career Points: ${META.points} &middot; Best route: ${META.bestRun}/21 &middot; High score: ${META.highScore} &middot; Runs played: ${META.runsPlayed}</div>
         <div class="panel" style="margin-bottom:10px">
-          <div class="hdr"><span>Fleet Name</span><span></span></div>
+          <div class="hdr"><span>${META.playerName ? `Welcome, ${META.playerName.replace(/</g,'&lt;')}` : 'Welcome! Name Your Fleet'}</span><span></span></div>
           <input id="playerNameInput" type="text" maxlength="18" placeholder="Your name" value="${(META.playerName||'').replace(/"/g,'&quot;')}" style="width:100%;padding:9px 10px;border:2px solid #1fb6a6;border-radius:6px;font-family:var(--disp);font-size:15px;color:#ffffff;background:#1a2038">
         </div>
         ${hasSave ? `<button class="wo-btn" id="continueRunBtn" style="margin-bottom:10px;width:100%">Continue Run</button>` : `<button class="wo-btn" id="startRunBtn" style="margin-bottom:10px;width:100%">New Run</button>`}
@@ -5143,6 +5221,7 @@ function metaScreen() {
         </div>
       </div>
     </div>
+    ${updateLogHTML()}
   `;
 }
 
@@ -5159,7 +5238,9 @@ function render(html) {
   app.querySelectorAll('[data-card]').forEach(el => { let ph = false; el.onclick = () => { if (ph) { ph = false; return; } toggleCardSelect(+el.dataset.card); }; el.onpointerdown = e => { if (e.pointerType !== 'mouse' || e.button === 0) { e.preventDefault(); ph = true; toggleCardSelect(+el.dataset.card); } }; });
   app.querySelectorAll('[data-assign]').forEach(el => el.onclick = (e) => {
     if (e.target.closest('[data-clear]') || e.target.closest('[data-unassign]') || e.target.closest('[data-ability]') || e.target.closest('[data-attack]')) return;
+    const hadSelection = selectedIdx.length > 0;
     assignSelectedTo(el.dataset.assign);
+    if (hadSelection && window.__combatTrainingStep === 2 && typeof window.renderCombatTrainingStep === 'function') window.renderCombatTrainingStep(3);
   });
   app.querySelectorAll('[data-unassign]').forEach(el => el.onclick = (e) => { e.stopPropagation(); const parts = el.dataset.unassign.split('|'); const idx = +parts.pop(); const slotKey = parts.join('|'); removeCardFromSlot(slotKey, idx); });
   app.querySelectorAll('[data-clear]').forEach(el => el.onclick = (e) => { e.stopPropagation(); clearSlot(el.dataset.clear); });
@@ -5169,23 +5250,43 @@ function render(html) {
     e.stopPropagation();
     const match = el.dataset.attack.match(/^(.+)_(\d+)$/);
     if (!match) return;
+    const wasStep3 = window.__combatTrainingStep === 3;
     executePlayerAttack(match[1], Number(match[2]));
+    if (wasStep3 && typeof window.renderCombatTrainingStep === 'function') window.renderCombatTrainingStep(4);
   };
 });
   const forfeitRunBtn = document.getElementById('forfeitRunBtn'); if (forfeitRunBtn) forfeitRunBtn.onclick = () => window.forfeitRun();
-  const endTurnBtn = document.getElementById('endTurnBtn'); if (endTurnBtn) endTurnBtn.onclick = () => { endTurn(); };
+  const endTurnBtn = document.getElementById('endTurnBtn'); if (endTurnBtn) endTurnBtn.onclick = () => {
+    const wasStep4 = window.__combatTrainingStep === 4;
+    endTurn();
+    if (wasStep4 && typeof window.finishCombatTraining === 'function') window.finishCombatTraining();
+  };
   const vehicleSpecialBtn = document.getElementById('vehicleSpecialBtn'); if (vehicleSpecialBtn) vehicleSpecialBtn.onclick = () => useVehicleSpecial();
   app.querySelectorAll('[data-detonate]').forEach(el => el.onclick = (e) => { e.stopPropagation(); detonateBurn(); });
   const sortToggleBtn = document.getElementById('sortToggleBtn'); if (sortToggleBtn) sortToggleBtn.onclick = toggleHandSort;
   const scoutBtn = document.getElementById('scoutBtn'); if (scoutBtn) scoutBtn.onclick = scoutOpponent;
   const gemDrawBtn = document.getElementById('gemDrawBtn'); if (gemDrawBtn) gemDrawBtn.onclick = drawWithGem;
-  const fuelHealBtn = document.getElementById('fuelHealBtn'); if (fuelHealBtn) fuelHealBtn.onclick = () => {
+  const performFuelHeal = () => {
     const fuelCost=FUEL_HESTORE_COST;
     const healAmount=FUEL_HEAL_AMOUNT+(BATTLE.opponent.fuelHealModifier||OPPONENT_FUEL_HEAL_MODIFIER_DEFAULT);
     if (RUN.fuel < fuelCost || RUN.health >= RUN.maxHealth) return;
     RUN.fuel -= fuelCost; RUN.health = Math.min(RUN.maxHealth, RUN.health + healAmount);
     battleLog(`Used ${FUEL_HESTORE_COST} fuel for +${healAmount} health. Health: ${RUN.health}/${RUN.maxHealth}, Fuel: ${RUN.fuel}/${RUN.maxFuel}.`);
     saveRun(); render(battleScreen());
+  };
+  const fuelHealBtn = document.getElementById('fuelHealBtn'); if (fuelHealBtn) fuelHealBtn.onclick = () => {
+    if (!META.hasSeenFuelHealTip) {
+      BATTLE.showFuelHealWarning = true;
+      render(battleScreen());
+      return;
+    }
+    performFuelHeal();
+  };
+  const fuelHealWarningOkBtn = document.getElementById('fuelHealWarningOkBtn'); if (fuelHealWarningOkBtn) fuelHealWarningOkBtn.onclick = () => {
+    BATTLE.showFuelHealWarning = false;
+    META.hasSeenFuelHealTip = true;
+    saveMeta();
+    performFuelHeal();
   };
   const discardSelectedBtn = document.getElementById('discardSelectedBtn'); if (discardSelectedBtn) discardSelectedBtn.onclick = markSelectedForDiscard;
   app.querySelectorAll('[data-unstage]').forEach(el => el.onclick = (e) => { e.stopPropagation(); unmarkDiscard(+el.dataset.unstage); });
@@ -5237,7 +5338,10 @@ function render(html) {
   if (upgradeContinueBtn) upgradeContinueBtn.onclick = () => render(metaScreen());
   if (upgradeContinueBtn2) upgradeContinueBtn2.onclick = () => render(metaScreen());
   const playerNameInput = document.getElementById('playerNameInput');
-  if (playerNameInput) playerNameInput.oninput = () => { META.playerName = playerNameInput.value.trim().slice(0, 18); META.devModeActive = META.playerName.toLowerCase() === 'devmode'; saveMeta(); if (META.devModeActive) render(metaScreen()); };
+  if (playerNameInput) {
+    playerNameInput.oninput = () => { META.playerName = playerNameInput.value.trim().slice(0, 18); META.devModeActive = META.playerName.toLowerCase() === 'devmode'; saveMeta(); if (META.devModeActive) render(metaScreen()); };
+    playerNameInput.onblur = () => { if (!META.devModeActive) render(metaScreen()); };
+  }
   const viewUpgradesBtn = document.getElementById('viewUpgradesBtn'); if (viewUpgradesBtn) viewUpgradesBtn.onclick = () => render(upgradeScreen());
   const leaveChopShopBtn = document.getElementById('leaveChopShopBtn'); if (leaveChopShopBtn) leaveChopShopBtn.onclick = () => render(RETURN_TO_CASTLE_MENU ? castleMenuScreen() : mapScreen());
   const leaveOverdriveBtn = document.getElementById('leaveOverdriveBtn'); if (leaveOverdriveBtn) leaveOverdriveBtn.onclick = () => render(RETURN_TO_CASTLE_MENU ? castleMenuScreen() : mapScreen());
@@ -5768,7 +5872,11 @@ META.devModeActive = META.playerName?.toLowerCase() === "devmode";
   document.addEventListener('click',e=>{
     if(e.target.closest(INTERACTIVE_SEL))return;
     const el=e.target.closest(STATIC_SEL);
-    if(!el){ hideTip(); return; }
+    // A button's own click handler often re-renders the screen (replacing #app's contents)
+    // before this bubbles up here, which leaves `el` detached from the document. A detached
+    // element's getBoundingClientRect() is all zeros, which is what was throwing this tooltip
+    // into the top-left corner - bail out instead of positioning against a stale node.
+    if(!el || !el.isConnected){ hideTip(); return; }
     if(activeEl===el){ hideTip(); return; }
     activeEl=el;
     showTip(el);
@@ -5781,33 +5889,42 @@ META.devModeActive = META.playerName?.toLowerCase() === "devmode";
   document.addEventListener('click',unlockAudio,true);
   document.addEventListener('touchend',unlockAudio,true);
 })();
+// Combat Training now makes the player actually do each step instead of just clicking
+// through "Next Step" - Drew wants people to see what they have to do, not skim past it.
+// window.__combatTrainingStep tracks which step is live so the real game actions (assigning
+// a card, firing an item, ending the turn) know when to advance the walkthrough themselves.
+window.__combatTrainingStep = null;
 window.renderCombatTrainingStep = function(step) {
   const targetBox = document.getElementById('combat-training-flow-card'); if (targetBox) targetBox.remove();
   document.querySelectorAll('.combat-spotlight-focus').forEach(el => el.classList.remove('combat-spotlight-focus'));
-  if (typeof IN_BATTLE === 'undefined' || !IN_BATTLE) return;
+  if (typeof IN_BATTLE === 'undefined' || !IN_BATTLE) { window.__combatTrainingStep = null; return; }
+  window.__combatTrainingStep = step;
   const tutorialBox = document.createElement('div'); tutorialBox.id = 'combat-training-flow-card'; tutorialBox.className = 'combat-training-box';
   if (step === 1) {
     const targetGrid = document.querySelector('.playerSide .itemGrid');
     if (targetGrid) {
       targetGrid.classList.add('combat-spotlight-focus'); const rect = targetGrid.getBoundingClientRect();
       tutorialBox.style.left = (rect.left + (rect.width / 2) - 140) + 'px'; tutorialBox.style.top = (rect.top - 180) + 'px';
-      tutorialBox.innerHTML = `<div class="wo-eyebrow">Combat Training &middot; Step 1 of 4</div><h3>Your Weapon System</h3><p>These dashed box panels are your equipped items. They hold your offensive cards and show the exact Poker hands you need to satisfy to activate an attack.</p><button class="wo-btn amber" style="padding:5px 12px; font-size:12px; width:100%; box-shadow:none;" onclick="window.renderCombatTrainingStep(2)">Next Step</button>`;
+      tutorialBox.innerHTML = `<div class="wo-eyebrow">Step 1 of 4</div><h3>Your Item Cards</h3><p>These dashed panels are your equipped item cards. Each one shows the exact hand you need to fire it, whether that's an attack, a defense, drawing more cards, or something else. Tap one to continue.</p>`;
       document.body.appendChild(tutorialBox);
-    }
+      const advance = () => { targetGrid.removeEventListener('click', advance); if (window.__combatTrainingStep === 1) window.renderCombatTrainingStep(2); };
+      targetGrid.addEventListener('click', advance);
+    } else { window.renderCombatTrainingStep(2); }
   } else if (step === 2) {
     const targetHand = document.querySelector('.handWorkspace');
     if (targetHand) {
       targetHand.classList.add('combat-spotlight-focus'); const rect = targetHand.getBoundingClientRect();
       tutorialBox.style.left = (rect.left + (rect.width / 2) - 140) + 'px'; tutorialBox.style.top = (rect.bottom + 20) + 'px';
-      tutorialBox.innerHTML = `<div class="wo-eyebrow">Combat Training &middot; Step 2 of 4</div><h3>Loading Ammo</h3><p>Tap a card inside your fleet hand to highlight it, then click any matching weapon slot beneath it to deposit the card and fulfill requirements.</p><button class="wo-btn amber" style="padding:5px 12px; font-size:12px; width:100%; box-shadow:none;" onclick="window.renderCombatTrainingStep(3)">Next Step</button>`;
+      tutorialBox.innerHTML = `<div class="wo-eyebrow">Step 2 of 4</div><h3>Using Your Cards</h3><p>Tap cards in your hand, then click any matching item slot to load them in.</p>`;
       document.body.appendChild(tutorialBox);
-    }
+    } else { window.renderCombatTrainingStep(3); }
   } else if (step === 3) {
     const firstAttackChip = document.querySelector('.attackChip');
-    if (firstAttackChip) {
-      const targetPanel = firstAttackChip.closest('.itemCard') || firstAttackChip; targetPanel.classList.add('combat-spotlight-focus'); const rect = targetPanel.getBoundingClientRect();
+    const targetPanel = (firstAttackChip && firstAttackChip.closest('.itemCard')) || document.querySelector('.playerSide .itemGrid');
+    if (targetPanel) {
+      targetPanel.classList.add('combat-spotlight-focus'); const rect = targetPanel.getBoundingClientRect();
       tutorialBox.style.left = (rect.right + 24) + 'px'; tutorialBox.style.top = (rect.top - 10) + 'px'; if (rect.right + 300 > window.innerWidth) tutorialBox.style.left = (rect.left - 304) + 'px';
-      tutorialBox.innerHTML = `<div class="wo-eyebrow">Combat Training &middot; Step 3 of 4</div><h3>Deploying Attacks</h3><p>When your loaded cards satisfy an item's rule metric condition, the green button lights up. Click the green chip to fire your attack straight at the opponent!</p><button class="wo-btn amber" style="padding:5px 12px; font-size:12px; width:100%; box-shadow:none;" onclick="window.renderCombatTrainingStep(4)">Next Step</button>`;
+      tutorialBox.innerHTML = `<div class="wo-eyebrow">Step 3 of 4</div><h3>Firing an Item</h3><p>Once the cards you've loaded satisfy an item's requirement, its button lights up green. Click it to fire that item.</p>`;
       document.body.appendChild(tutorialBox);
     } else { window.renderCombatTrainingStep(4); }
   } else if (step === 4) {
@@ -5815,10 +5932,15 @@ window.renderCombatTrainingStep = function(step) {
     if (endTurnBtn) {
       endTurnBtn.classList.add('combat-spotlight-focus'); const rect = endTurnBtn.getBoundingClientRect();
       tutorialBox.style.left = (rect.left + (rect.width / 2) - 140) + 'px'; tutorialBox.style.top = (rect.bottom + 24) + 'px';
-      tutorialBox.innerHTML = `<div class="wo-eyebrow">Combat Training &middot; Step 4 of 4</div><h3>Ending Your Turn</h3><p>When you run out of viable moves, cannot make any more poker pairs, or want to bank remaining cards, click the red button to clear your board turn timeline.</p><button class="wo-btn green" style="padding:5px 12px; font-size:12px; width:100%; box-shadow:none; text-transform:none;" onclick="this.parentElement.remove(); document.querySelectorAll('.combat-spotlight-focus').forEach(el=>el.classList.remove('combat-spotlight-focus'));">Finish Training</button>`;
+      tutorialBox.innerHTML = `<div class="wo-eyebrow">Step 4 of 4</div><h3>Ending Your Turn</h3><p>When you can't fire any more of your item cards, or just want to save what's left for next turn, click End Turn.</p>`;
       document.body.appendChild(tutorialBox);
-    }
+    } else { window.__combatTrainingStep = null; }
   }
+};
+window.finishCombatTraining = function() {
+  const box = document.getElementById('combat-training-flow-card'); if (box) box.remove();
+  document.querySelectorAll('.combat-spotlight-focus').forEach(el => el.classList.remove('combat-spotlight-focus'));
+  window.__combatTrainingStep = null;
 };
 (function boot() {
   const savedBattle = loadBattleSave();

@@ -86,8 +86,8 @@
   .matchGrid .card.mini.matchTile:not(.back) div:nth-child(2){font-size:46px !important;line-height:1;font-weight:800}
   .matchGrid .card.mini.matchTile.red:not(.back) div:nth-child(2){color:#c62828}
   .matchGrid .card.mini.matchTile:not(.back):not(.red) div:nth-child(2){color:#1a1a2e}
-  .joker-outline-red{outline:3px solid #e5484d !important}
-  .joker-outline-black{outline:3px solid #12163a !important}
+  .joker-outline-red{outline:3px solid #e5484d !important;background:#3a1418 !important}
+  .joker-outline-black{outline:3px solid #ffffff !important;background:#0a0c18 !important}
   .glitchWarningBanner{margin-top:10px;padding:6px 8px;border-radius:5px;background:rgba(229,72,77,0.12);border:1px solid var(--red);color:var(--red);font-weight:700;font-size:11px;text-align:center}
   .castleBtn-exit{order:-1}
   .duelHead{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:flex-start}
@@ -171,7 +171,7 @@
   }
   #dealer-viewport h1{ text-align:center; }
   .facilityExitBtn{background:#ffc44d !important;color:#12163a !important;border-color:#ffc44d !important;font-weight:800 !important;text-transform:none !important;}
-  #chopshop-viewport .wo{max-width:900px;margin-left:auto;margin-right:auto}
+  #chopshop-viewport .wo{max-width:640px;margin-left:auto;margin-right:auto}
   #overdrive-viewport .wo{max-width:820px;margin-left:auto;margin-right:auto}
 
   .itemCard{border-radius:8px;padding:6px 4px;background:rgba(10,14,26,0.9) !important;border:1px solid rgba(31,182,166,0.2);width:125px;min-width:125px;max-width:125px;min-height:150px;height:auto;display:flex;flex-direction:column;align-items:center;text-align:center;box-sizing:border-box;font-size:12px;position:relative;transition:box-shadow .15s ease}
@@ -222,11 +222,12 @@
     padding:7px 10px;border-radius:6px;white-space:nowrap;z-index:5;box-shadow:0 0 8px rgba(31,182,166,0.4);border:1px solid #1fb6a6;text-align:left}
   .mapnode{position:relative;width:40px;height:40px;border-radius:50%;
     font-size:19px;display:flex;align-items:center;justify-content:center;border:2px solid;background:var(--white)}
-  .mapnode.future{background:var(--blue-light);border-color:var(--blue-light);color:#9aa1c4;cursor:default;opacity:.85}
-  .mapnode.farfuture{background:var(--blue-light);border-color:var(--blue-light);color:#c3cae8;cursor:default;opacity:.5}
+  .mapnode.future{background:#8a8f9e;border-color:#8a8f9e;color:#d4d7e0;cursor:default;opacity:.6}
+  .mapnode.farfuture{background:#8a8f9e;border-color:#8a8f9e;color:#d4d7e0;cursor:default;opacity:.4}
   .mapnode.avail{background:var(--white);border-color:var(--amber);box-shadow:0 0 0 5px #1fb6a633;cursor:pointer}
-  .mapnode.done{background:var(--green);border-color:var(--green);color:#fff;cursor:default}
+  .mapnode.done{background:#6b7080;border-color:#6b7080;color:#dfe2ea;cursor:default;opacity:.7}
   .mapnode.current{background:var(--blue);border-color:var(--blue-dark);color:#fff;cursor:default;box-shadow:0 0 0 5px #4a5fc755;animation:herePulse 1.4s ease-in-out infinite}
+  .mapnode.future .vart,.mapnode.farfuture .vart,.mapnode.done .vart{filter:grayscale(1)}
   @keyframes herePulse{0%,100%{box-shadow:0 0 0 4px #4a5fc755}50%{box-shadow:0 0 0 9px #4a5fc722}}
   .mapnode.worldboss{width:72px;height:72px;font-size:32px;animation:world3BossGlow 1.3s ease-in-out infinite;border-color:#c81e1e}
   @keyframes world3BossGlow{0%,100%{box-shadow:0 0 10px 4px rgba(220,20,20,0.55)}50%{box-shadow:0 0 26px 10px rgba(255,40,40,0.95)}}
@@ -238,6 +239,7 @@
   .hereTag::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:4px solid transparent;border-top-color:var(--blue-dark)}
 
   .shopcard{border:1px solid var(--blue-light);background:var(--bg);border-radius:6px;padding:10px;margin-bottom:8px;box-sizing:border-box;width:100%}
+  .shopcard h3{margin:0 0 8px}
   .shopGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
   .shopGrid .shopcard{margin-bottom:0}
   @media (max-width:600px){.shopGrid{grid-template-columns:1fr}}
@@ -990,7 +992,7 @@ function itemRequirementText(item) {
   let cond = item.condition;
   if (item.id === 'drawstone' && cond?.type === 'sumThreshold') cond = { ...cond, min: Math.max(4, cond.min - utilityLevel('drawstone')) };
   let specific = '';
-  if (cond?.type === 'suitCount') specific = `${cond.count === 1 ? '1' : `Up to ${max}`} ${suitMicroCardHTML(cond.suit)}`;
+  if (cond?.type === 'suitCount') specific = `${cond.count === 1 ? 'Any' : `At least ${cond.count}`} ${suitMicroCardHTML(cond.suit)}`;
   else if (cond?.type === 'colorCount') specific = `${cond.count}+ ${kw(cond.color === 'red' ? 'Red' : 'Black')} cards`;
   else if (cond?.type === 'allSuits') specific = `one of each ${kw('Suit')}`;
   else if (cond?.type === 'cardIn') specific = describeCondition(cond);
@@ -1371,10 +1373,10 @@ const ITEMS = {
   moto_escort: { id: 'moto_escort', name: 'Chain Reaction', cost: 125, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'straightLen', len: 4 }, baseMult: straightMult(4),
     note: 'Needs a 4-card straight.' },
-  diamond_run: { id: 'diamond_run', name: 'Diamond Lane Convoy', cost: 65, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
-    condition: { type: 'suitCount', suit: '♦', count: 3 }, baseMult: 1.3,
-    bonus: { base: 0, perLevel: 0.2, maxLevel: 3 },
-    note: 'Needs at least 3 Diamonds among your played cards.' },
+  diamond_run: { id: 'diamond_run', name: 'Diamond Convoy', cost: 65, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+    condition: { type: 'suitCount', suit: '♦', count: 1 }, baseMult: 1,
+    bonus: { base: 0.25, perLevel: 0.2, maxLevel: 3, condition: { type: 'suitCount', suit: '♦', count: 3 } },
+    note: `Needs at least 1 Diamond among your played cards. ${SIGMA_TIP} for damage, plus 25% more if you play 3 or more Diamonds.` },
   club_run: { id: 'club_run', name: 'Club Convoy', cost: 65, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'suitCount', suit: '♣', count: 3 }, baseMult: 1.3,
     bonus: { base: 0, perLevel: 0.2, maxLevel: 3 },
@@ -2241,13 +2243,13 @@ const WORLD_1_POOLS = {
     { id: 'w1_jellyfish', name: 'Drifting Jellyfish', icon: '🪼', image: 'Hazards/flash-flood.jpg', hp: 46, minTier: 1, drawRate: 2, items: ['w1_jelly_drift'] },
     { id: 'w1_sandcastle_sentinel', name: 'Sand Castle Sentinel', icon: '🏰', image: 'Hazards/broken-meter.jpg', hp: 58, minTier: 1, drawRate: 2, items: ['w1_moat_collapse', 'w1_turret_poke'] },
     { id: 'w1_runaway_kite', name: 'Runaway Kite', icon: '🪁', image: 'Hazards/downed-line.jpg', hp: 40, minTier: 1, drawRate: 2, items: ['w1_string_snap'] },
-    { id: 'w1_lobster_trap', name: 'Loose Lobster Trap', icon: '🦞', image: 'Hazards/scrap-heap.jpg', hp: 60, minTier: 1, drawRate: 2, startArmor: 14, items: ['w1_trap_snap', 'w1_rope_drag'] },
+    { id: 'w1_lobster_trap', name: 'Lobster Trap', icon: '🦞', image: 'Hazards/scrap-heap.jpg', hp: 60, minTier: 1, drawRate: 2, startArmor: 14, items: ['w1_trap_snap', 'w1_rope_drag'] },
     { id: 'w1_falling_coconut', name: 'Falling Coconut', icon: '🥥', image: 'Hazards/pothole.jpg', hp: 44, minTier: 1, drawRate: 2, items: ['w1_coconut_drop'] },
     { id: 'w1_reckless_surfboard', name: 'Reckless Surfboard', icon: '🏄', image: 'Hazards/jaywalker.jpg', hp: 56, minTier: 1, drawRate: 2, items: ['w1_wave_slap', 'w1_board_wobble'] },
     { id: 'w1_snagged_anchor', name: 'Snagged Anchor Chain', icon: '⚓', image: 'Hazards/downed-line.jpg', hp: 64, minTier: 1, drawRate: 2, startArmor: 18, armorRegen: 6, items: ['w1_chain_rattle', 'w1_anchor_drag'] },
     { id: 'w1_sea_turtle', name: 'Grumpy Sea Turtle', icon: '🐢', image: 'Hazards/angry-citizen.jpg', hp: 66, minTier: 1, drawRate: 2, startArmor: 20, items: ['w1_shell_bump'] },
     { id: 'w1_shrimp_net_snag', name: 'Shrimp Boat Net Snag', icon: '🦐', image: 'Hazards/scrap-heap.jpg', hp: 52, minTier: 1, drawRate: 2, items: ['w1_net_haul'] },
-    { id: 'w1_lost_sunglasses', name: 'Lost Sunglasses Glare', icon: '🕶️', image: 'Hazards/flicker-light.jpg', hp: 46, minTier: 1, drawRate: 2, items: ['w1_glare_flash'] },
+    { id: 'w1_lost_sunglasses', name: 'Lost Sunglasses', icon: '🕶️', image: 'Hazards/flicker-light.jpg', hp: 46, minTier: 1, drawRate: 2, items: ['w1_glare_flash'] },
   ],
   elites: [
     { id: 'w1_lifeguard_tower', name: 'Lifeguard Tower Sentinel', icon: '🛟', image: 'Hazards/angry-citizen.jpg', hp: 95, minTier: 2, drawRate: 3, startArmor: 20, armorRegen: 8, items: ['w1_whistle_command'] },
@@ -2479,6 +2481,7 @@ function loadMeta() {
       parsed.levels = parsed.levels || {};
       UPGRADE_DEFS.forEach(u => { if (parsed.levels[u.id] == null) parsed.levels[u.id] = 0; });
       if (parsed.enemiesBeaten == null) parsed.enemiesBeaten = 0;
+      if (parsed.elitesBeaten == null) parsed.elitesBeaten = 0;
       if (parsed.bestWorld == null) parsed.bestWorld = 1;
       if (parsed.perfectWins == null) parsed.perfectWins = 0;
       if (parsed.world2Cleared == null) parsed.world2Cleared = false;
@@ -2489,7 +2492,7 @@ function loadMeta() {
     }
   } catch (e) {}
   const levels = {}; UPGRADE_DEFS.forEach(u => levels[u.id] = 0);
-  return { metaVersion: META_VERSION, points: 0, lifetimePoints: 0, highScore: 0, bestRun: 0, runsPlayed: 0, enemiesBeaten: 0, bestWorld: 1, perfectWins: 0, world2Cleared: false, hasSeenTutorial: false, hasSeenPoisonTutorial: false, hasSeenFuelHealTip: false, levels };
+  return { metaVersion: META_VERSION, points: 0, lifetimePoints: 0, highScore: 0, bestRun: 0, runsPlayed: 0, enemiesBeaten: 0, elitesBeaten: 0, bestWorld: 1, perfectWins: 0, world2Cleared: false, hasSeenTutorial: false, hasSeenPoisonTutorial: false, hasSeenFuelHealTip: false, levels };
 }
 let META = loadMeta();
 function saveMeta() { try { META.metaVersion = META_VERSION; localStorage.setItem(META_KEY, JSON.stringify(META)); } catch (e) {} }
@@ -2513,6 +2516,9 @@ function worldCareerPoints(world, cleared) {
 // A Perfect Kill only happens when your final hit exactly matches an opponent's remaining
 // HP, so it's a skill moment worth a small flat Career Points nod, not a trickle.
 const PERFECT_KILL_CP = 5;
+// A small flat Career Points nod for beating an Elite-tier opponent, tracked separately so the
+// end-of-run summary can show how much of that run's score came from Elite fights specifically.
+const ELITE_KILL_CP = 5;
 
 /* ========== RUN SAVE (mid-run continuity, roguelite-style) ========== */
 const RUN_KEY = 'fleetduel-run-v82-worldcp';
@@ -2671,6 +2677,46 @@ function generateMap() {
       nodes[eliteRow][col] = { type: 'battle', opponent: eliteOpp };
     }
   });
+  // Repair pass: a player should never fight the same opponent twice in a row they can
+  // actually walk through in one run - i.e. two directly-connected battle nodes with the same
+  // opponent id. The regular pool is smaller than the number of battle nodes in a world, so
+  // repeats somewhere on the map are unavoidable, but they should never land on nodes that are
+  // directly connected to each other. Do a few sweeps swapping opponents within the same row
+  // (which preserves the row's overall opponent distribution) whenever a direct-edge conflict
+  // is found and a same-row swap can resolve it.
+  const neighborsOf = (r, c) => edges.filter(e => (e.fromRow===r&&e.fromCol===c) || (e.toRow===r&&e.toCol===c))
+    .map(e => (e.fromRow===r&&e.fromCol===c) ? [e.toRow,e.toCol] : [e.fromRow,e.fromCol]);
+  for (let sweep = 0; sweep < 3; sweep++) {
+    let conflictFound = false;
+    for (let r = 0; r < nodes.length; r++) {
+      for (let c = 0; c < nodes[r].length; c++) {
+        const node = nodes[r][c];
+        if (node.type !== 'battle' || !node.opponent) continue;
+        const conflictingNeighbor = neighborsOf(r, c).find(([nr, nc]) => {
+          const nb = nodes[nr][nc];
+          return nb.type === 'battle' && nb.opponent && nb.opponent.id === node.opponent.id;
+        });
+        if (!conflictingNeighbor) continue;
+        conflictFound = true;
+        // Look for another battle node in the same row whose opponent id differs from this
+        // node's neighbors AND from the conflicting neighbor's own other neighbors, then swap.
+        const swapTarget = nodes[r].findIndex((other, oc) => {
+          if (oc === c || other.type !== 'battle' || !other.opponent) return false;
+          if (other.opponent.id === node.opponent.id) return false;
+          const otherConflicts = neighborsOf(r, oc).some(([nr, nc]) => nodes[nr][nc].opponent && nodes[nr][nc].opponent.id === other.opponent.id);
+          if (otherConflicts) return false;
+          const wouldStillConflict = neighborsOf(r, c).some(([nr, nc]) => nodes[nr][nc].opponent && nodes[nr][nc].opponent.id === other.opponent.id);
+          return !wouldStillConflict;
+        });
+        if (swapTarget !== -1) {
+          const tmp = node.opponent;
+          nodes[r][c] = { ...node, opponent: nodes[r][swapTarget].opponent };
+          nodes[r][swapTarget] = { ...nodes[r][swapTarget], opponent: tmp };
+        }
+      }
+    }
+    if (!conflictFound) break;
+  }
   return {nodes,edges};
 }
 /* ========== RUN STATE ========== */
@@ -2725,8 +2771,11 @@ function initRunWithStarter(id) {
     itemKindOverride: {}, 
     itemMaxCardsLevels: {}, 
     itemUtilityLevels: {}, 
-    handSortMode: 'value', 
+    handSortMode: 'value',
     innSleeps: 0,
+    opponentsBeatenThisRun: 0,
+    elitesBeatenThisRun: 0,
+    careerPointsFromElites: 0,
     runUpgrades: { itemSlots: 0, drawPerTurn: 0, sightRange: 0, gemDraw: 0, health: 0 },
     castleState: { firstDone:false, secondDone:false, thirdDone:false, dungeonLocked:false, matchPlayed:false, matchLockReason:null, matchCards:null, matchGuesses:4, matchPick:[] },
   };
@@ -2806,7 +2855,7 @@ function castleMenuScreen(message='') {
         <button class="castleBtn" id="castleChopShopNavBtn">Visit the Chop Shop.</button>
         <button class="castleBtn" id="castleOverdriveNavBtn">Visit the Overdrive Bay.</button>
         <button class="castleBtn" id="castleShopNavBtn">Visit the Dealership.</button>
-        <button class="castleBtn" id="castleInnNavBtn">Visit the Inn.</button>
+        <button class="castleBtn" id="castleInnNavBtn">Visit the Body Shop.</button>
       </div>
     </div>
   </div>
@@ -2822,7 +2871,7 @@ function castleDungeonScreen(message='') {
         <div class="wo-eyebrow">Dungeon Cleared</div>
         <h1>You <em>Won</em>!</h1>
         <div class="treasure-prize">${p.itemName}</div>
-        <div class="note">New Item Card added to your Fleet, plus ${formatRewardParts({ coins: p.reward.coins, gems: p.reward.gems, fuel: p.reward.fuel })}.</div>
+        <div class="note">New Item Card added to your Fleet, plus ${formatRewardParts({ coins: p.reward.coins, gems: p.reward.gems, fuel: p.reward.fuel, energy: p.reward.energy }, { coins: 'coins', gems: 'gems', fuel: 'fuel', energy: 'energy' })}.</div>
         <button class="wo-btn amber" id="dungeonWinContinueBtn" style="width:100%;margin-top:10px">Nice!</button>
       </div>
     </div></div>`;
@@ -2835,7 +2884,7 @@ function castleDungeonScreen(message='') {
       <div class="wo-body" style="text-align:center">
         <div class="wo-eyebrow">Battle ${p.stage} Won</div>
         <h1>Good <em>Job!</em></h1>
-        <div class="note">You earned ${formatRewardParts({ coins: p.reward.coins, gems: p.reward.gems, fuel: p.reward.fuel })}. Are you willing to risk your earnings and continue on?</div>
+        <div class="note">You earned ${formatRewardParts({ coins: p.reward.coins, gems: p.reward.gems, fuel: p.reward.fuel, energy: p.reward.energy }, { coins: 'coins', gems: 'gems', fuel: 'fuel', energy: 'energy' })}. Are you willing to risk your earnings and continue on?</div>
         <button class="wo-btn amber" id="dungeonContinueBtn" style="width:100%;margin-top:10px">Continue to ${nextLabel}</button>
         <button class="wo-btn gray" id="dungeonCashOutBtn" style="width:100%;margin-top:8px">Cash Out and Leave</button>
       </div>
@@ -2847,43 +2896,53 @@ function castleDungeonScreen(message='') {
     <div class="wo-stripe"></div><div class="wo-body">
       <h1>Fleet Compound <em>Dungeon</em></h1>
       ${currencyBar()}
-      <button class="wo-btn gray" id="backToCastleMenuBtn" style="width:100%;margin-bottom:10px">Back to Compound Menu</button>
-      ${message ? `<div class="panel"><div class="note">${message}</div></div>` : ''}
-      <div class="note" style="color:var(--red);font-weight:700;margin-bottom:8px">Leaving locks the dungeon for the rest of this run.</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
-        <div class="shopcard" style="text-align:center${RUN.castleState?.firstDone ? ';opacity:0.55' : ''}"><h3>Battle 1</h3><div class="currencies" style="justify-content:center"><div class="cur chip">${ICON.coin} 45</div><div class="cur gem">${ICON.gem} 3</div><div class="cur fuel">${ICON.fuel} 8</div></div></div>
-        <div class="shopcard" style="text-align:center${RUN.castleState?.secondDone ? ';opacity:0.55' : ''}"><h3>Battle 2</h3><div class="currencies" style="justify-content:center"><div class="cur chip">${ICON.coin} 100</div><div class="cur gem">${ICON.gem} 6</div><div class="cur fuel">${ICON.fuel} 14</div></div></div>
-        <div class="shopcard" style="text-align:center${RUN.castleState?.thirdDone ? ';opacity:0.55' : ''}"><h3>Battle 3</h3><div class="currencies" style="justify-content:center"><div class="cur chip">${ICON.coin} 160</div><div class="cur gem">${ICON.gem} 10</div><div class="cur fuel">${ICON.fuel} 20</div></div><div class="note" style="margin-top:4px">+ Item Card</div></div>
+      <div style="display:flex;gap:8px;margin:10px 0">
+        <button class="wo-btn facilityExitBtn" id="backToCastleMenuBtn" style="flex:1">Back to Compound</button>
+        <button class="wo-btn purple" id="openRunUpgradeFromDungeonBtn" style="flex:1">Upgrades</button>
       </div>
-      ${locked ? `<div class="note" style="margin-top:8px">Dungeon closed for this run. You cashed out after Battle ${RUN.castleState?.secondDone ? 2 : 1}.</div>` : !RUN.castleState?.firstDone ? `
-      <div class="shopcard"><button class="wo-btn amber" id="castleBattle1Btn" style="width:100%">Battle 1</button></div>` : RUN.castleState?.thirdDone ? `<div class="note" style="margin-top:8px">Dungeon cleared for this run.</div>` : ''}
+      ${message ? `<div class="panel"><div class="note">${message}</div></div>` : ''}
+      <div class="note" style="color:var(--red);font-weight:700;margin-bottom:8px">Leaving locks the dungeon for this world only - you can try again in a later world.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
+        <div class="shopcard" style="text-align:center${RUN.castleState?.firstDone ? ';opacity:0.55' : ''}"><h3>Battle 1</h3><div class="note" style="margin:0 0 4px;font-weight:700">Moderate</div><div class="currencies" style="justify-content:center"><div class="cur chip">${ICON.coin} 45</div><div class="cur gem">${ICON.gem} 1</div><div class="cur fuel">${ICON.fuel} 1</div><div class="cur energy">${ICON.energy} 2</div></div></div>
+        <div class="shopcard" style="text-align:center${RUN.castleState?.secondDone ? ';opacity:0.55' : ''}"><h3>Battle 2</h3><div class="note" style="margin:0 0 4px;font-weight:700">Hard</div><div class="currencies" style="justify-content:center"><div class="cur chip">${ICON.coin} 100</div><div class="cur gem">${ICON.gem} 2</div><div class="cur fuel">${ICON.fuel} 2</div><div class="cur energy">${ICON.energy} 4</div></div></div>
+        <div class="shopcard" style="text-align:center${RUN.castleState?.thirdDone ? ';opacity:0.55' : ''}"><h3>Battle 3</h3><div class="note" style="margin:0 0 4px;font-weight:700">Extreme</div><div class="currencies" style="justify-content:center"><div class="cur chip">${ICON.coin} 160</div><div class="cur gem">${ICON.gem} 4</div><div class="cur fuel">${ICON.fuel} 4</div><div class="cur energy">${ICON.energy} 8</div></div><div class="note" style="margin-top:4px">+ Item Card</div></div>
+      </div>
+      ${locked ? `<div class="note" style="margin-top:8px">Dungeon closed for this world. You cashed out after Battle ${RUN.castleState?.secondDone ? 2 : 1}.</div>` : !RUN.castleState?.firstDone ? `
+      <div class="shopcard"><button class="wo-btn amber" id="castleBattle1Btn" style="width:100%">Battle 1</button></div>` : RUN.castleState?.thirdDone ? `<div class="note" style="margin-top:8px">Dungeon cleared for this world.</div>` : ''}
     </div>
   </div>`;
 }
-function castleInnScreen(message='') { 
+const SERVICE_STATION_FUEL_COST_PER_UNIT = 5;
+const SERVICE_STATION_MAX_FUEL_PER_VISIT = 10;
+function castleInnScreen(message='') {
+  const missingFuel = RUN.maxFuel - RUN.fuel;
+  const maxAffordableFuel = Math.floor(RUN.chips / SERVICE_STATION_FUEL_COST_PER_UNIT);
+  const fuelPurchase = Math.max(0, Math.min(missingFuel, maxAffordableFuel, SERVICE_STATION_MAX_FUEL_PER_VISIT));
+  const fuelCost = fuelPurchase * SERVICE_STATION_FUEL_COST_PER_UNIT;
+  const sleepCost = RUN.innSleeps === 0 ? 0 : 20 * RUN.innSleeps;
   return `${noticeHTML()}
   <div class="wo">
     <div class="wo-stripe"></div>
     <div class="wo-body">
-      <div class="wo-eyebrow">Inn</div>
-      <h1>Rest &amp; <em>Refuel</em></h1>
+      <h1 style="text-align:center">Body <em>Shop</em></h1>
       ${currencyBar()}
-      <button class="wo-btn gray" id="backToCastleMenuBtn" style="width:100%;margin-bottom:10px">Back to Compound Menu</button>
-      ${message ? `<div class="panel"><div class="note">${message}</div></div>` : ''}
-      <div class="shopcard">
-        <h3>Cheap Refuel</h3>
-        <div class="note">Spend 5 coins to gain 10 fuel.</div>
-        <button class="wo-btn" id="castleFuelBtn" ${RUN.fuel >= RUN.maxFuel ? 'disabled' : ''}>Refuel +10</button>
+      <div style="display:flex;gap:8px;margin:10px 0">
+        <button class="wo-btn facilityExitBtn" id="backToCastleMenuBtn" style="flex:1">Back to Compound</button>
+        <button class="wo-btn purple" id="openRunUpgradeFromInnBtn" style="flex:1">Upgrades</button>
       </div>
-      <div class="shopcard">
-        <h3>Sleep</h3>
-        <div class="note">Restore a flat 30 health. First sleep is free; each later sleep costs 20 more coins.</div>
-        <button class="wo-btn" id="castleRestBtn" ${RUN.health >= RUN.maxHealth ? 'disabled' : ''}>
-          Sleep ${RUN.innSleeps === 0 ? 'Free' : `(${20 * RUN.innSleeps} coins)`}
-        </button>
+      ${message ? `<div class="panel"><div class="note">${message}</div></div>` : ''}
+      <div style="max-width:420px;margin:0 auto">
+        <div class="shopcard">
+          <h3>Refuel</h3>
+          <button class="wo-btn" id="castleFuelBtn" ${fuelPurchase <= 0 ? 'disabled' : ''}>+${fuelPurchase} Fuel${fuelCost ? ` = ${fuelCost} coins` : ''}</button>
+        </div>
+        <div class="shopcard">
+          <h3>Dent Repair</h3>
+          <button class="wo-btn" id="castleRestBtn" ${RUN.health >= RUN.maxHealth ? 'disabled' : ''}>+30 Health${sleepCost ? ` = ${sleepCost} coins` : ''}</button>
+        </div>
       </div>
     </div>
-  </div>`; 
+  </div>`;
 }
 const MATCH_SUIT_REWARDS = {
   '♦': { fuel: 2, label: '+2 fuel' },
@@ -2911,6 +2970,16 @@ function resetCarnivalMatchState() {
   RUN.castleState.matchGuesses = 4;
   RUN.castleState.matchPick = [];
   RUN.castleState.matchLock = false;
+}
+// The Fleet Compound Dungeon locks only for the world you left it in - leaving it in World 1
+// still lets you enter (and re-clear) it fresh in World 2, 3, etc. So its progress/lock flags
+// get reset here alongside the matching game's, every time a new world starts.
+function resetDungeonState() {
+  if (!RUN.castleState) RUN.castleState = {};
+  RUN.castleState.firstDone = false;
+  RUN.castleState.secondDone = false;
+  RUN.castleState.thirdDone = false;
+  RUN.castleState.dungeonLocked = false;
 }
 function castleMatchScreen() {
   if (!RUN.castleState) RUN.castleState = {};
@@ -2954,7 +3023,7 @@ function castleMatchScreen() {
   const cards = st.matchCards.map((c, i) => {
     const isRed = c.color === 'red' ? 'red' : '';
     const isClub = (c.group === '♣' && (c.flipped || c.matched)) ? 'club-card' : '';
-    const jokerOutline = (c.matched && c.group === 'RJ') ? 'joker-outline-red' : (c.matched && c.group === 'BJ') ? 'joker-outline-black' : '';
+    const jokerOutline = (c.flipped || c.matched) && c.group === 'RJ' ? 'joker-outline-red' : (c.flipped || c.matched) && c.group === 'BJ' ? 'joker-outline-black' : '';
     const displayState = (c.flipped || c.matched) ? '' : 'back';
     const isDisabled = (c.flipped || c.matched || st.matchLock) ? 'disabled' : '';
     return `<button class="card mini matchTile ${isRed} ${isClub} ${displayState} ${jokerOutline}" data-match="${i}" ${isDisabled}>
@@ -4086,13 +4155,14 @@ function winBattle(outlast) {
   if (BATTLE.castleStage) {
     const stage = BATTLE.castleStage;
     const reward = stage === 1
-      ? { coins: 45, gems: 3, fuel: 8 }
+      ? { coins: 45, gems: 1, fuel: 1, energy: 2 }
       : stage === 2
-      ? { coins: 100, gems: 6, fuel: 14 }
-      : { coins: 160, gems: 10, fuel: 20 };
+      ? { coins: 100, gems: 2, fuel: 2, energy: 4 }
+      : { coins: 160, gems: 4, fuel: 4, energy: 8 };
     RUN.chips += reward.coins;
     RUN.gems = Math.min(RUN.maxGems, RUN.gems + reward.gems);
     RUN.fuel = Math.min(RUN.maxFuel, RUN.fuel + reward.fuel);
+    RUN.energy = Math.min(RUN.maxEnergy, RUN.energy + reward.energy);
     if (!RUN.castleState) RUN.castleState = {};
     if (stage === 1) { RUN.castleState.firstDone = true; }
     if (stage === 2) RUN.castleState.secondDone = true;
@@ -4146,7 +4216,15 @@ function winBattle(outlast) {
   if (BATTLE.row === RUN.bossRow) { RUN.pendingWorldWin = true; }
   if (!BATTLE.castleStage) {
     META.enemiesBeaten = (META.enemiesBeaten || 0) + 1;
+    RUN.opponentsBeatenThisRun = (RUN.opponentsBeatenThisRun || 0) + 1;
     if (exactKillBonus) META.perfectWins = (META.perfectWins || 0) + 1;
+    if (/\[Elite\]/.test(BATTLE.opponent.name || '')) {
+      META.elitesBeaten = (META.elitesBeaten || 0) + 1;
+      RUN.elitesBeatenThisRun = (RUN.elitesBeatenThisRun || 0) + 1;
+      RUN.careerPointsFromElites = (RUN.careerPointsFromElites || 0) + ELITE_KILL_CP;
+      earnPoints(ELITE_KILL_CP);
+      battleLog(`Elite Bonus: +${ELITE_KILL_CP} Career Points!`);
+    }
     saveMeta();
   }
   playSfx(exactKillBonus ? 'perfect' : 'win');
@@ -4391,6 +4469,8 @@ function runUpgradeScreen() {
     : RUN_UPGRADE_RETURN === 'rest' ? 'Back to Service Station'
     : RUN_UPGRADE_RETURN === 'chopshop' ? 'Back to Chop Shop'
     : RUN_UPGRADE_RETURN === 'overdrive' ? 'Back to Overdrive Bay'
+    : RUN_UPGRADE_RETURN === 'dungeon' ? 'Back to Dungeon'
+    : RUN_UPGRADE_RETURN === 'inn' ? 'Back to Body Shop'
     : roadExitLabel();
   return `${noticeHTML()}<div class="wo" style="max-width:640px;margin-left:auto;margin-right:auto"><div class="wo-stripe"></div><div class="wo-body">
     <div class="wo-eyebrow">Run Upgrade</div><h1>Run <em>Upgrades</em></h1>${currencyBar()}
@@ -4781,7 +4861,10 @@ function pickShopStock() {
     if (picked.length >= 6) break;
     tryAdd(it);
   }
-  return picked;
+  // The guaranteed defense/armor card was always pushed in first above, which made it land in
+  // the same shelf slot every visit - shuffle the final picks so its position (and everything
+  // else's) is randomized each time instead of feeling staged.
+  return shuffle(picked);
 }
 
 function dealerItemCardHTML(item, opts) {
@@ -4802,7 +4885,16 @@ function dealerItemCardHTML(item, opts) {
 }
 function emptyItemSlotHTML(){return `<div class="dealerCardPanel panel"><div class="emptyItemSlot">Open Slot</div><div class="dealerMetaDivider"></div><div class="dealerMeta"></div></div>`;}
 function shopScreen(fromCastle=false) {
-  if (!RUN.shopStock) RUN.shopStock = pickShopStock().map(it => it.id);
+  // Stock is tied to the specific node you're standing on (row:col), not just "do we have any
+  // stock at all" - that way re-entering the same Dealership visit keeps the same 6 items, but
+  // arriving at a genuinely different node (a new world's Fleet Compound, a different roadside
+  // Dealership) always reshuffles, even via paths that don't explicitly clear RUN.shopStock
+  // (like the Fleet Compound's "Visit the Dealership" button).
+  const nodeKey = `${RUN.currentRow}:${RUN.currentCol}`;
+  if (!RUN.shopStock || RUN.shopStockNodeKey !== nodeKey) {
+    RUN.shopStock = pickShopStock().map(it => it.id);
+    RUN.shopStockNodeKey = nodeKey;
+  }
   const options = RUN.shopStock.map(id => ITEMS[id]).filter(Boolean);
   const itemRows = options.map(it => dealerItemCardHTML(it, {
     mode: 'buy',
@@ -4828,7 +4920,7 @@ function shopScreen(fromCastle=false) {
         </div>
         <div class="dealerRow" style="margin:10px 0 12px">${itemRows || '<div class="note">No items in this category.</div>'}</div>
         <div class="hdr" style="margin-top:14px;font-weight:800;font-size:14px"><span>Equipped Items</span><span>${equippedItemCount(RUN.hero)}/${RUN.itemCap}</span></div>
-        ${(ownedRows || emptySlotRows) ? `<div class="dealerRow" style="margin-top:8px">${ownedRows}${emptySlotRows}</div>` : `<div class="note" style="margin-top:6px">Nothing equipped yet.</div>`}
+        ${(ownedRows || emptySlotRows) ? `<div class="dealerRow" style="margin-top:8px;justify-content:start;margin-left:0">${ownedRows}${emptySlotRows}</div>` : `<div class="note" style="margin-top:6px">Nothing equipped yet.</div>`}
       </div>
       </div>
     </div>`;
@@ -4914,36 +5006,33 @@ function blacksmithScreen() {
     const before = renderStandardItemCard(item, { level: lvl });
     const after = maxed ? before : renderStandardItemCard(item, { level: lvl + 1 });
     return `<div class="shopcard">
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:14px">
+      <div style="display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:nowrap">
         <div>${before}</div>
-        <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0">
-          <span style="font-size:22px;color:var(--amber)">➔</span>
-          ${lvl > 0 ? `<button class="wo-btn gray" data-bonusdown="${id}" style="padding:4px 8px;font-size:11px">Refund</button>` : ''}
-          ${maxed ? `<span class="note" style="margin:0">Maxed</span>` : `<button class="wo-btn amber" data-bonusup="${id}" style="padding:4px 8px;font-size:11px" ${RUN.chips < cost ? 'disabled' : ''}>Level Up (${cost})</button>`}
+        <span style="font-size:20px;color:var(--dim)">➔</span>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:3px;flex-shrink:0">
+          ${maxed ? `<span class="wo-btn gray" style="padding:8px 12px;font-size:13px;opacity:0.7">Maxed</span>` : `<button class="wo-btn amber" data-bonusup="${id}" style="padding:6px 14px;font-size:14px;font-weight:800" ${RUN.chips < cost ? 'disabled' : ''}>Level Up</button>`}
+          ${maxed ? '' : `<span class="price" style="font-size:11px">${cost} coins</span>`}
+          ${lvl > 0 ? `<button class="wo-btn gray" data-bonusdown="${id}" style="padding:3px 8px;font-size:10px;margin-top:2px">Refund</button>` : ''}
         </div>
+        <span style="font-size:20px;color:var(--dim)">➔</span>
         <div>${after}</div>
       </div>
     </div>`;
   }).filter(Boolean).join('');
-  const visitNote = BLACKSMITH_VISIT.primary === null
-    ? `Pick one card to pay for a main upgrade. You can pay a bit more to also upgrade a second card in the same visit.`
-    : (BLACKSMITH_VISIT.secondary === null ? `You can pay extra to also upgrade one more card this visit, or move on.` : `You've used both upgrades this visit. Come back another time to tune more.`);
   return `${noticeHTML()}
     <div class="wo">
       <div class="wo-stripe"></div>
       <div class="wo-body">
-        <div class="wo-eyebrow">Tuning Garage &middot; Run Upgrade (resets next run)</div>
-        <h1>Tune Your <em>Fleet</em></h1>
-        <div class="wo-sub">${visitNote}</div>
+        <h1>Tuning <em>Garage</em></h1>
         ${currencyBar()}
         <div style="display:flex;gap:8px;margin:10px 0">
           <button class="wo-btn facilityExitBtn" id="leaveBlacksmithBtn" style="flex:1">${RETURN_TO_CASTLE_MENU ? 'Back to Compound' : roadExitLabel()}</button>
           <button class="wo-btn purple" id="openRunUpgradeFromBlacksmithBtn" style="flex:1">Upgrades</button>
         </div>
-        <div class="hdr"><span>[ Card Tuning Upgrades ]</span></div>
-        <div style="margin:12px 0">${rows}</div>
-        <div class="hdr" style="margin-top:14px"><span>[ Fleet Equipment Tuning ]</span></div>
-        <div style="margin-top:8px">${equippedChecklist || '<div class="note">No items with a Bonus Level track equipped.</div>'}</div>
+        <div style="font-weight:800;font-size:15px;text-align:center;margin:14px 0 8px">Card Upgrades</div>
+        <div class="panel" style="max-width:420px;margin:0 auto">${rows}</div>
+        <div style="font-weight:800;font-size:15px;text-align:center;margin:18px 0 8px">Item Tuning</div>
+        <div class="panel" style="max-width:420px;margin:0 auto">${equippedChecklist || '<div class="note">No items with a Bonus Level track equipped.</div>'}</div>
       </div>
     </div>
   `;
@@ -5044,15 +5133,33 @@ function victoryScreen() {
 }
 function runEndScreen(won, bonus, bonusWorld, cleared) {
   const worldName = WORLD_NAMES[bonusWorld] || `World ${bonusWorld}`;
-  const bonusNote = cleared ? `for clearing ${worldName}` : `for reaching ${worldName}`;
+  const bestWorldName = WORLD_NAMES[META.bestWorld] || `World ${META.bestWorld}`;
+  const items = [...new Set(RUN.hero.items)].map(id => ITEMS[id]).filter(Boolean);
+  const itemListHTML = items.length
+    ? `<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:8px">${items.map(it => renderStandardItemCard(it, {})).join('')}</div>`
+    : `<div class="note" style="text-align:center">No Items equipped.</div>`;
+  const statRow = (label, value) => `<div class="hdr" style="margin:0 0 6px"><span>${label}</span><span><b>${value}</b></span></div>`;
   return `
     <div class="wo">
       <div class="wo-stripe"></div>
       <div class="wo-body">
-        <div class="wo-eyebrow">${won ? 'Route Complete' : 'Run Ended'}</div>
-        <h1>${won ? 'Route <em>Cleared</em>' : 'Back to <em>Base</em>'}</h1>
-        <div class="wo-sub">Reached stop ${RUN.path.length} of 21. This run's score: ${RUN.scoreThisRun} (+${bonus} Career Points ${bonusNote}). High score: ${META.highScore}.</div>
-        <button class="wo-btn" id="backToMetaBtn">Back to Home Base</button>
+        <h1 style="${won ? '' : 'color:var(--red)'}">${won ? 'Route <em>Cleared</em>' : 'Run Ended'}</h1>
+        <div class="wo-sub">This run's score: ${RUN.scoreThisRun} &middot; High score: ${META.highScore}</div>
+        <div class="panel" style="text-align:left">
+          ${statRow('World Reached', worldName)}
+          ${statRow('Career Points Earned This World', `+${bonus}`)}
+          ${statRow('Best World Reached (all-time)', bestWorldName)}
+          ${statRow('Nodes Cleared', RUN.path.length)}
+          ${statRow('Opponents Beaten (this run / lifetime)', `${RUN.opponentsBeatenThisRun || 0} / ${META.enemiesBeaten || 0}`)}
+          ${statRow('Elites Beaten (this run / lifetime)', `${RUN.elitesBeatenThisRun || 0} / ${META.elitesBeaten || 0}`)}
+          ${statRow('Career Points From Elites', `+${RUN.careerPointsFromElites || 0}`)}
+          <div class="hdr" style="margin:0"><span>Upgrades Obtained</span><span><b>${runUpgradeCount()}</b></span></div>
+        </div>
+        <div style="font-weight:800;font-size:15px;margin:16px 0 4px;text-align:center">Items Used This Run</div>
+        ${itemListHTML}
+        <div style="font-weight:800;font-size:15px;margin:18px 0 4px;text-align:center">Run Dashboard</div>
+        <div class="runSummary">${runUpgradeRows().join('')}</div>
+        <button class="wo-btn" id="backToMetaBtn" style="width:100%;margin-top:14px">Back to Home Base</button>
       </div>
     </div>
   `;
@@ -5157,10 +5264,10 @@ function upgradeScreen() {
 * OVERDRIVE BAY                                                            *
 ****************************************************************************/
 function overdriveBayScreen() {
-  const holoCompareBlock = (beforeHTML, afterHTML, cost, cta) => `<div style="display:flex;align-items:center;gap:28px;justify-content:space-between;width:100%;margin:14px 0">
+  const holoCompareBlock = (beforeHTML, afterHTML, cost, cta) => `<div style="display:flex;align-items:center;gap:12px;justify-content:center;width:100%;margin:10px 0">
       <div style="flex:0 0 auto">${beforeHTML}</div>
-      <div style="display:flex;flex:1 1 auto;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-width:120px">
-        <span style="font-size:32px;color:var(--amber);line-height:1">➔</span>
+      <div style="display:flex;flex:0 0 auto;flex-direction:column;align-items:center;justify-content:center;gap:6px">
+        <span style="font-size:26px;color:var(--amber);line-height:1">➔</span>
         ${cta}
         <span class="price" style="white-space:nowrap">${cost} coins</span>
       </div>
@@ -5179,15 +5286,14 @@ function overdriveBayScreen() {
       after = renderStandardItemCard(item, { usesBadgeText: `${itemUsesCap(item, usesLvl + 1)}` });
       RUN.itemUsesLevels[id] = usesLvl;
     }
-    const cta = usesMaxed ? `<span class="note">Maxed</span>` : `<button class="wo-btn amber" data-usesup="${id}" style="padding:6px 10px;font-size:12px;white-space:nowrap" ${RUN.chips < usesCost ? 'disabled' : ''}>[ +1 Use Per Turn ]</button>`;
-    return `<div class="shopcard" style="padding:18px 22px">
-      <div class="hdr" style="justify-content:center"><span>${item.name}</span></div>
+    const cta = usesMaxed ? `<span class="note">Maxed</span>` : `<button class="wo-btn amber" data-usesup="${id}" style="padding:6px 10px;font-size:12px;white-space:nowrap" ${RUN.chips < usesCost ? 'disabled' : ''}>+1 Use Per Turn</button>`;
+    return `<div class="shopcard" style="padding:14px 16px">
       ${holoCompareBlock(before, after, usesMaxed ? '—' : usesCost, cta)}
       ${usesLvl > 0 ? `<div style="text-align:center"><button class="wo-btn gray" data-usesdown="${id}" style="padding:6px 10px;font-size:12px">Refund</button></div>` : ''}
     </div>`;
   }).join('');
   return `<div id="overdrive-viewport">${noticeHTML()}<div class="wo"><div class="wo-stripe"></div><div class="wo-body">
-    <div class="wo-eyebrow">Overdrive Bay &middot; Run Upgrade (resets next run)</div><h1>Boost <em>Uses Per Turn</em></h1>${currencyBar()}
+    <h1>Overdrive <em>Bay</em></h1>${currencyBar()}
     <div style="display:flex;gap:8px;margin:10px 0">
       <button class="wo-btn facilityExitBtn" id="leaveOverdriveBtn" style="flex:1">${RETURN_TO_CASTLE_MENU ? 'Back to Compound' : roadExitLabel()}</button>
       <button class="wo-btn purple" id="openRunUpgradeFromOverdriveBtn" style="flex:1">Upgrades</button>
@@ -5217,16 +5323,16 @@ function chopShopScreen(returnTo) {
         return `<div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:0 0 auto">
           ${previewCard}
           <button class="wo-btn ${k==='poison'?'green':k==='burn'?'red':'purple'}" data-kindconvert="${itemId}" data-item-index="${index}" data-kindto="${k}" style="padding:6px 10px;font-size:11px" ${RUN.chips<convertCost?'disabled':''}>Convert to ${k[0].toUpperCase()+k.slice(1)}</button>
-          <span class="price" style="font-size:10px">${convertCost} coins</span>
+          <span class="price" style="font-size:13px">${convertCost} coins</span>
         </div>`;
       }).join('');
       convertBlockHTML = `<div style="display:flex;gap:8px;flex-wrap:nowrap">${previewCols}</div>`;
     }
 
     return `<div class="shopcard">
-      <div style="display:flex;align-items:center;gap:12px;justify-content:flex-start;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;margin:8px 0;padding-bottom:4px">
+      <div style="display:flex;align-items:flex-start;gap:12px;justify-content:flex-start;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;margin:8px 0;padding-bottom:4px">
         ${original}
-        <span style="font-size:20px;color:var(--dim);flex:0 0 auto">➔</span>
+        <span style="font-size:20px;color:var(--dim);flex:0 0 auto;align-self:center">➔</span>
         ${convertBlockHTML}
       </div>
     </div>`;
@@ -5243,42 +5349,76 @@ function chopShopScreen(returnTo) {
     return '';
   }).join('');
   return `<div id="chopshop-viewport">${noticeHTML()}<div class="wo"><div class="wo-stripe"></div><div class="wo-body">
-    <div class="wo-eyebrow">Chop Shop</div><h1>Special <em>Modifications</em></h1>${currencyBar()}
+    <h1>Chop <em>Shop</em></h1>${currencyBar()}
     <div style="display:flex;gap:8px;margin:10px 0">
       <button class="wo-btn facilityExitBtn" id="leaveChopShopBtn" style="flex:1">${RETURN_TO_CASTLE_MENU?'Back to Compound':roadExitLabel()}</button>
       <button class="wo-btn purple" id="openRunUpgradeFromChopShopBtn" style="flex:1">Upgrades</button>
     </div>
-    <div class="note" style="margin:10px 0">Convert an Item to poison, burn, or curse (one per Item, run only), or add card slots.</div>
+    <div class="note" style="margin:10px 0">Convert an item to poison, burn, or curse.</div>
     <div style="margin:12px 0">${rows || '<div class="note">No Items available.</div>'}${utilityRows}</div>
   </div></div></div>`;
 }
 
 // Update Log entries are grouped by week, not by day. Each entry's "date" is the Monday that
 // starts the week the work was done in, and everything done that week (Monday-Sunday) gets
-// added to that same entry rather than getting its own dated line.
+// added to that same entry rather than getting its own dated line. Within a week, notes are
+// further grouped by category (see UPDATE_LOG_CATEGORY_ORDER) so related fixes read together
+// instead of as one flat chronological list.
+const UPDATE_LOG_CATEGORY_ORDER = ['Opponents', 'Item cards', 'Dealership', 'Card tuning', 'Match game', 'Visual', 'Audio', 'Misc'];
 const UPDATE_LOG = [
-  { date: '2026-09-21', notes: [
-    'Career Points now pay out as one bonus at the end of a run based on how far you got, instead of a little bit for every kill. Perfect Kills earn a small Career Points bonus of their own too.',
-    'Combat Training now makes you actually click each step to move on, and only shows up your first time through. It also reads less like a weapons manual.',
-    'Fixed a bug where a few opponents were showing their attack\'s name instead of their own (River Otter was displaying as "River Otter Nip", for example).',
-    'Drifting Jellyfish is now a regular stop on the map; the tougher swarm version only shows up as an Elite.',
-    'Fixed attack and item labels that were saying things like "(1 cards)" - they now read "Any card" or "Any 2 cards".',
-    'Healing with fuel now warns you the first time what it costs you, then stays out of your way after that. Also fixed a bug where clicking it (and some other buttons) could pop a tooltip into the top-left corner of the screen.',
-    'Spades and clubs are easier to tell apart at a glance now.',
-    'The upgrade shops (Tuning Garage, Chop Shop, Overdrive Bay) can each only show up once per world, so you will not run into the same one twice on a route. The Dealership can still show up twice.',
-    'Dealership layout tightened up into a proper grid.',
-    'Stop Details now always shows the coins and gems you will actually get.',
-    'Opponent hover tooltips on the map now just show HP and how many cards they draw per turn, instead of a generic (and often wrong) attack requirement.',
-    'Fixed a real bug behind the "(1 card)" text some opponents were showing instead of "Any card".',
-    'Armor no longer counts toward an opponent\'s HP total. Any opponent whose armor regenerates each turn now shows a small blue "+X armor" note next to its HP bar, and armor regen no longer caps out.',
-    'Added a Difficulty rating (Easy/Moderate/Hard/Brutal) to Stop Details so you can gauge a fight before engaging. Tougher opponents now pay out more coins and gems.',
-    'Item power ratings and shop prices for damage and lightning items now account for how likely their requirement actually is to come up, not just their raw numbers. Highway 7 Shortcut and Short Circuit were the worst offenders and got repriced along with a few others.',
-    'Feral Beach Cat Colony, Swamp Mosquito Cloud, Malarial Fog Swarm, Feral Hog Sounder, Fire Ant Mound, Biting Deer Fly Cloud, Sewer Rat Nest, and Dock Crab Swarm are now split into a regular single version and a tougher two-item Elite version, matching how Drifting Jellyfish already worked.',
-    'Item card bonus text is now gold instead of purple, for better contrast against the curse and base card backgrounds.',
-    'The fuel-heal warning now pops up near your hand instead of the top of the screen, and its text is shorter.',
-    'Home screen cleanup: smaller credit line, shorter feedback ask, and the credit/feedback bar now sits above the Update Log instead of below it.',
-    'Fixed the Fleet Carnival matching game showing 50 Career Points for a Black Joker match when it actually pays 25.',
-  ] },
+  { date: '2026-09-21', categories: {
+    Opponents: [
+      'Fixed a bug where a few opponents were showing their attack\'s name instead of their own (River Otter was displaying as "River Otter Nip", for example).',
+      'Drifting Jellyfish is now a regular stop on the map; the tougher swarm version only shows up as an Elite.',
+      'Opponent hover tooltips on the map now just show HP and how many cards they draw per turn, instead of a generic (and often wrong) attack requirement.',
+      'Fixed a real bug behind the "(1 card)" text some opponents were showing instead of "Any card".',
+      'Armor no longer counts toward an opponent\'s HP total. Any opponent whose armor regenerates each turn now shows a small blue "+X armor" note next to its HP bar, and armor regen no longer caps out.',
+      'Added a Difficulty rating (Easy/Moderate/Hard/Brutal) to Stop Details so you can gauge a fight before engaging. Tougher opponents now pay out more coins and gems.',
+      'Feral Beach Cat Colony, Swamp Mosquito Cloud, Malarial Fog Swarm, Feral Hog Sounder, Fire Ant Mound, Biting Deer Fly Cloud, Sewer Rat Nest, and Dock Crab Swarm are now split into a regular single version and a tougher two-item Elite version, matching how Drifting Jellyfish already worked.',
+      'Stop Details now always shows the coins and gems you will actually get.',
+      'Lost Sunglasses Glare renamed to Lost Sunglasses. Lobster Trap renamed from Loose Lobster Trap.',
+      'Reduced how often the map sends you into the same opponent twice within one world - conflicting nodes on the same branch now get swapped for a different opponent. This is a big reduction, not a total guarantee: when a world\'s opponent pool runs low, an occasional repeat can still slip through.',
+      'Elite fights now pay a small Career Points bonus on top of their usual coins and gems.',
+    ],
+    'Item cards': [
+      'Fixed attack and item labels that were saying things like "(1 cards)" - they now read "Any card" or "Any 2 cards".',
+      'Item power ratings and shop prices for damage and lightning items now account for how likely their requirement actually is to come up, not just their raw numbers. Highway 7 Shortcut and Short Circuit were the worst offenders and got repriced along with a few others.',
+      'Diamond Lane Convoy renamed to Diamond Convoy and reworked: it now only needs 1 Diamond to fire (used to silently require 3), does summation damage, and gets +25% more if you play 3 or more Diamonds.',
+      'Fixed the "Up to 4" wording on Diamond/Club/Spade/Heart Convoy-style items, which was misleading about how many of the suit you actually need - it now says "At least N" when a minimum count is required.',
+    ],
+    Dealership: [
+      'Dealership layout tightened up into a proper grid.',
+      'The upgrade shops (Tuning Garage, Chop Shop, Overdrive Bay) can each only show up once per world, so you will not run into the same one twice on a route. The Dealership can still show up twice.',
+      'Equipped items now line up on the left like the cards you can buy, instead of being centered.',
+      'Visiting a new node\'s Dealership now always reshuffles to a fresh set of 6 items; re-entering the same node\'s Dealership without moving keeps what you had.',
+      'The guaranteed armor card (and whatever storage card came with it) no longer always land in the same shop slots - their position is randomized like everything else.',
+    ],
+    'Card tuning': [
+      'Tuning Garage cleaned up: dropped the redundant subtitle text, renamed the page to "Tuning Garage," and grouped the three card upgrades and the item-tuning list into their own boxed, narrower panels that match the item card look.',
+      'Overdrive Bay cleaned up: tighter spacing between each item and its upgrade button, dropped the brackets around "+1 Use Per Turn," and removed the redundant item name line that repeated what the card already shows.',
+    ],
+    'Match game': [
+      'Fixed the Fleet Carnival matching game showing 50 Career Points for a Black Joker match when it actually pays 25.',
+      'Red Joker and Black Joker now use distinct colors, so the two are easy to tell apart at a glance.',
+    ],
+    Visual: [
+      'Spades and clubs are easier to tell apart at a glance now.',
+      'Item card bonus text is now gold instead of purple, for better contrast against the curse and base card backgrounds.',
+      'The fuel-heal warning now pops up near your hand instead of the top of the screen, and its text is shorter. Also fixed a bug where clicking it (and some other buttons) could pop a tooltip into the top-left corner of the screen.',
+      'Map nodes you\'ve already cleared, or can\'t currently reach, now show grayed-out icons so it\'s obvious at a glance where you\'ve been and where you can go next. They\'re still clickable for info.',
+    ],
+    Misc: [
+      'Career Points now pay out as one bonus at the end of a run based on how far you got, instead of a little bit for every kill. Perfect Kills earn a small Career Points bonus of their own too.',
+      'Combat Training now makes you actually click each step to move on, and only shows up your first time through. It also reads less like a weapons manual.',
+      'Home screen cleanup: smaller credit line, shorter feedback ask, and the credit/feedback bar now sits above the Update Log instead of below it. Update Log is now grouped by category instead of one flat list.',
+      'Fleet Compound\'s Inn renamed to Body Shop. Removed the old "rest and refuel" explainer text; each button now just shows its live cost (health repair reads "+30 Health," then "+30 Health = 20 coins" after your first free use that visit, and so on).',
+      'Fixed a bug where the refuel button\'s cost and the fuel it actually gave you didn\'t match what the button said. Refuel is now a flat 5 coins per fuel, capped at 10 fuel per visit.',
+      'The Chop Shop, Overdrive Bay, Tuning Garage, Body Shop, and Fleet Compound Dungeon now all share the same Back/Upgrades button placement and colors.',
+      'Chop Shop: narrower layout, renamed header to "Chop Shop," shorter description text, larger coin-cost text, and items now line up along the top of their row instead of being vertically centered.',
+      'Fleet Compound Dungeon: now matches the other shop pages\' buttons and colors, only locks for the world you left it in (not the whole run), reduced its fuel and gem payouts, added Energy rewards, and added a difficulty label to each battle.',
+      'Run Ended screen redesigned: a red "Run Ended" header in place of the old "Back to Base," plus a full run summary (world reached, Career Points, best world reached, opponents and Elites beaten this run and lifetime, items used, upgrades obtained). Also fixed the confusing "+20 points for reaching [world]" wording - it was just naming the world you were on, not a real bonus reason, so it\'s now shown as plain data instead.',
+    ],
+  } },
 ];
 function updateLogHTML() {
   return `
@@ -5289,9 +5429,14 @@ function updateLogHTML() {
         ${UPDATE_LOG.map(entry => `
           <div style="margin-top:10px">
             <div class="note" style="font-weight:800;color:var(--ink)">${entry.date}</div>
-            <ul style="margin:4px 0 0 18px;padding:0">
-              ${entry.notes.map(n => `<li class="note" style="margin:2px 0">${n}</li>`).join('')}
-            </ul>
+            ${UPDATE_LOG_CATEGORY_ORDER.filter(cat => entry.categories[cat] && entry.categories[cat].length).map(cat => `
+              <div style="margin-top:8px">
+                <div class="note" style="font-weight:700;color:var(--amber);font-size:12px;text-transform:uppercase;letter-spacing:0.03em">${cat}</div>
+                <ul style="margin:3px 0 0 18px;padding:0">
+                  ${entry.categories[cat].map(n => `<li class="note" style="margin:2px 0">${n}</li>`).join('')}
+                </ul>
+              </div>
+            `).join('')}
           </div>
         `).join('')}
       </div>
@@ -5432,6 +5577,7 @@ function render(html) {
     RUN.path = [];
     RUN.pendingNextWorld = null;
     resetCarnivalMatchState();
+    resetDungeonState();
     META.bestWorld = Math.max(META.bestWorld || 1, RUN.world);
     saveMeta();
     saveRun();
@@ -5480,19 +5626,19 @@ function render(html) {
     leaveStationBtn.onclick = () => { GARAGE_POPUP = false; render(mapScreen()); };
   }
 
-  const castleFuelBtn = document.getElementById('castleFuelBtn'); 
+  const castleFuelBtn = document.getElementById('castleFuelBtn');
   if (castleFuelBtn) {
-    castleFuelBtn.onclick = () => { 
+    castleFuelBtn.onclick = () => {
       const missingFuel = RUN.maxFuel - RUN.fuel;
-      const maxAffordable = Math.floor(RUN.chips / 8);
-      const purchaseLimit = Math.min(missingFuel, maxAffordable);
-      const totalCost = purchaseLimit * 8;
-      if (purchaseLimit > 0 && RUN.chips >= totalCost) { 
-        RUN.chips -= totalCost; 
-        RUN.fuel += purchaseLimit; 
-        saveRun(); 
-        render(castleInnScreen(`Topped off tank: Added +${purchaseLimit} fuel for ${totalCost} coins.`)); 
-      } 
+      const maxAffordable = Math.floor(RUN.chips / SERVICE_STATION_FUEL_COST_PER_UNIT);
+      const purchaseLimit = Math.max(0, Math.min(missingFuel, maxAffordable, SERVICE_STATION_MAX_FUEL_PER_VISIT));
+      const totalCost = purchaseLimit * SERVICE_STATION_FUEL_COST_PER_UNIT;
+      if (purchaseLimit > 0 && RUN.chips >= totalCost) {
+        RUN.chips -= totalCost;
+        RUN.fuel += purchaseLimit;
+        saveRun();
+        render(castleInnScreen(`Topped off tank: added +${purchaseLimit} fuel for ${totalCost} coins.`));
+      }
     };
   }
 
@@ -5623,6 +5769,8 @@ function render(html) {
       RUN_UPGRADE_RETURN === 'blacksmith' ? blacksmithScreen() :
       RUN_UPGRADE_RETURN === 'chopshop' ? chopShopScreen() :
       RUN_UPGRADE_RETURN === 'overdrive' ? overdriveBayScreen() :
+      RUN_UPGRADE_RETURN === 'dungeon' ? castleDungeonScreen() :
+      RUN_UPGRADE_RETURN === 'inn' ? castleInnScreen() :
       mapScreen());
   };
   const openRunUpgradeFromMapBtn = document.getElementById('openRunUpgradeFromMapBtn'); if (openRunUpgradeFromMapBtn) openRunUpgradeFromMapBtn.onclick = () => { RUN_UPGRADE_RETURN = 'map'; render(runUpgradeScreen()); };
@@ -5632,6 +5780,8 @@ function render(html) {
   const openRunUpgradeFromRestBtn = document.getElementById('openRunUpgradeFromRestBtn'); if (openRunUpgradeFromRestBtn) openRunUpgradeFromRestBtn.onclick = () => { RUN_UPGRADE_RETURN = 'rest'; render(runUpgradeScreen()); };
   const openRunUpgradeFromChopShopBtn = document.getElementById('openRunUpgradeFromChopShopBtn'); if (openRunUpgradeFromChopShopBtn) openRunUpgradeFromChopShopBtn.onclick = () => { RUN_UPGRADE_RETURN = 'chopshop'; render(runUpgradeScreen()); };
   const openRunUpgradeFromOverdriveBtn = document.getElementById('openRunUpgradeFromOverdriveBtn'); if (openRunUpgradeFromOverdriveBtn) openRunUpgradeFromOverdriveBtn.onclick = () => { RUN_UPGRADE_RETURN = 'overdrive'; render(runUpgradeScreen()); };
+  const openRunUpgradeFromDungeonBtn = document.getElementById('openRunUpgradeFromDungeonBtn'); if (openRunUpgradeFromDungeonBtn) openRunUpgradeFromDungeonBtn.onclick = () => { RUN_UPGRADE_RETURN = 'dungeon'; render(runUpgradeScreen()); };
+  const openRunUpgradeFromInnBtn = document.getElementById('openRunUpgradeFromInnBtn'); if (openRunUpgradeFromInnBtn) openRunUpgradeFromInnBtn.onclick = () => { RUN_UPGRADE_RETURN = 'inn'; render(runUpgradeScreen()); };
   app.querySelectorAll('[data-levelup]').forEach(el => el.onclick = () => {
     const u = UPGRADE_DEFS.find(x => x.id === el.dataset.levelup);
     if (!upgradeUnlocked(u)) return;
@@ -5898,8 +6048,9 @@ function render(html) {
   bindDev();
 }
 function itemIdFromKey(k) { return String(k).replace(/_\d+$/, ''); }
-function runSummaryScreen() {
-  if (!RUN) return metaScreen();
+// Shared by the Run Dashboard (mid-run) and the Run Ended summary, so both show the same
+// upgrade breakdown without duplicating the row-building logic.
+function runUpgradeRows() {
   const r = RUN.runUpgrades || {}; const rows = [];
   const addRow = (a, b, subs) => rows.push(`<div class="shopcard"><div class="hdr"><span><b>${a}</b></span><span>${b}</span></div>${(subs || []).map(s => `<div class="note">${s}</div>`).join('')}</div>`);
   rows.push(`<div class="shopcard"><div class="hdr"><span><b>Vehicle</b></span><span>${HEROES[RUN.hero?.heroId]?.name || ''}</span></div></div>`);
@@ -5912,6 +6063,22 @@ function runSummaryScreen() {
   Object.entries(RUN.itemMaxCardsLevels || {}).forEach(([id, l]) => l && addRow(ITEMS[id]?.name || id, `Capacity Lv ${l}`, [`${effectiveMaxCards(ITEMS[id])} cards`]));
   Object.entries(RUN.itemUtilityLevels || {}).forEach(([id, l]) => l && addRow(ITEMS[id]?.name || id, `Utility Lv ${l}`, [id === 'drawstone' ? `Requirement ${Math.max(4, 7 - l)}` : `Threshold ${Math.max(35, 45 - l * 5)}`]));
   Object.entries(RUN.itemKindOverride || {}).forEach(([id, k]) => k && addRow(ITEMS[itemIdFromKey(id)]?.name || id, k));
+  return rows;
+}
+// A single number for "how many upgrades did I pick up this run" - every Run Upgrade purchase
+// and every point of item Tune/Uses/Capacity/Utility level counts as one, plus one per Item
+// converted at the Chop Shop. Career Point (permanent, cross-run) upgrades aren't counted here
+// since those aren't something this run "obtained."
+function runUpgradeCount() {
+  const r = RUN.runUpgrades || {};
+  const sumLevels = obj => Object.values(obj || {}).reduce((a, l) => a + (l || 0), 0);
+  return (r.itemSlots || 0) + (r.drawPerTurn || 0) + (r.gemDraw || 0) + (r.sightRange || 0) + (r.health || 0)
+    + sumLevels(RUN.itemLevels) + sumLevels(RUN.itemUsesLevels) + sumLevels(RUN.itemMaxCardsLevels) + sumLevels(RUN.itemUtilityLevels)
+    + Object.values(RUN.itemKindOverride || {}).filter(Boolean).length;
+}
+function runSummaryScreen() {
+  if (!RUN) return metaScreen();
+  const rows = runUpgradeRows();
   return `<div class="wo"><div class="wo-stripe"></div><div class="wo-body"><h1>Run <em>Dashboard</em></h1>${currencyBar()}<div class="runSummary">${rows.join('')}</div><button class="wo-btn teal" id="leaveRunSummaryBtn" style="width:100%;margin-top:10px">Back</button></div></div>`;
 }
 function devPanel() { return `<div class="devModal"><div class="wo"><div class="wo-stripe"></div><div class="wo-body"><div class="wo-eyebrow">Diagnostic Tools</div><h1><em>Developer Mode</em></h1><div style="display:flex;gap:8px;margin:10px 0"><button class="wo-btn amber" id="devCoinsBtn">+500 Coins</button><button class="wo-btn purple" id="devMaxBtn">Max Resources</button></div><div class="devGrid">${Object.keys(ITEMS).map(id => `<button class="devItem" data-devitem="${id}"><b>${ITEMS[id].name}</b><br><span class="note">${id}</span></button>`).join('')}</div><button class="wo-btn gray" id="devCloseBtn" style="width:100%;margin-top:12px">Close</button></div></div></div>`; }

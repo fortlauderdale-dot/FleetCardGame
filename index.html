@@ -266,6 +266,7 @@
   .card[draggable]{cursor:grab}
   .card.dragging{opacity:.4}
   .depleted-lockout{filter:grayscale(1);pointer-events:none}
+  .depleted-lockout .hoverTip,.depleted-lockout .effectTip,.depleted-lockout [data-title]{pointer-events:auto}
   .attackChip{display:inline-block;margin-top:6px;padding:5px 10px;font-size:11px;font-weight:800;letter-spacing:.04em;
     background:var(--green);color:#fff;border-radius:6px;cursor:pointer;border:2px solid #1e8a4f}
   .attackChip:active{transform:translate(1px,1px)}
@@ -386,6 +387,21 @@
     .deckStack{order:2;padding-top:6px}
   }
    #app h1:has(+ .currencyHeader){text-align:center !important;width:100% !important;margin-bottom:4px !important;} #leaveShopBtn{background:linear-gradient(180deg,#ffc44d 0%,#e09f1a 100%) !important;color:#0b0f19 !important;border:3px solid #1a2038 !important;border-radius:8px !important;font-weight:800 !important;letter-spacing:0.03em !important;box-shadow:3px 3px 0 #0b0f19,0 0 10px rgba(255,196,77,0.4) !important;text-transform:none !important;font-size:13px !important;transition:transform 0.1s ease,box-shadow 0.1s ease !important;} #leaveShopBtn:active{transform:translate(2px,2px) !important;box-shadow:1px 1px 0 #0b0f19 !important;} .combat-training-box{position:fixed !important;z-index:2000000 !important;width:280px !important;background:#12163a !important;border:2px dashed var(--amber) !important;box-shadow:0 0 20px rgba(31,182,166,0.45),4px 4px 0 #0b0f19 !important;padding:16px !important;border-radius:10px !important;text-align:left !important;white-space:normal !important;font-family:var(--disp) !important;}.combat-training-box .wo-eyebrow{color:var(--energy) !important;font-size:10px !important;font-weight:600;letter-spacing:0.05em !important;margin-bottom:4px !important;}.combat-training-box h3{font-size:16px !important;margin:0 0 6px 0 !important;color:#ffffff !important;}.combat-training-box p{font-size:12.5px !important;line-height:1.45 !important;color:var(--dim) !important;margin:0 0 12px 0 !important;}.combat-spotlight-focus{outline:9999px solid rgba(11,15,25,0.65) !important;z-index:1999999 !important;position:relative !important;box-shadow:0 0 15px 5px var(--energy) !important;pointer-events:auto !important;}
+  /* ===== Fleet Plinko (Fleet Compound minigame) ===== */
+  #fleetPlinkoStats{display:flex;justify-content:center;gap:22px;padding:10px 0;margin-top:8px;border-top:1px solid rgba(255,255,255,0.1);border-bottom:1px solid rgba(255,255,255,0.1);flex-wrap:wrap}
+  .fleet-plinko-stat{text-align:center;min-width:86px}
+  .fleet-plinko-stat-label{font-size:11px;color:var(--dim);letter-spacing:.02em}
+  .fleet-plinko-stat-value{margin-top:2px;font-size:18px;font-weight:800;color:var(--ink)}
+  #fleetPlinkoCanvasWrap{position:relative;width:100%;padding-top:12px;box-sizing:border-box}
+  #fleetPlinkoCanvas{display:block;width:100%;height:auto;border-radius:10px;background:radial-gradient(circle at 50% 0%, rgba(31,182,166,0.20), transparent 55%),#0b0f19;border:1px solid rgba(31,182,166,0.28)}
+  #fleetPlinkoMessage{min-height:24px;padding:8px 4px 0;text-align:center;font-size:13px;color:var(--dim)}
+  #fleetPlinkoMessage.positive{color:var(--green)}
+  #fleetPlinkoMessage.danger{color:var(--red)}
+  #fleetPlinkoControls{display:flex;justify-content:center;gap:10px;padding-top:10px;flex-wrap:wrap}
+  .fleet-plinko-hidden{display:none !important}
+  #fleetPlinkoRewardList{display:flex;justify-content:center;flex-wrap:wrap;gap:5px;padding-top:8px;min-height:18px}
+  .fleet-plinko-reward-pill{padding:4px 8px;border-radius:5px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.10);font-size:10px;color:var(--dim)}
+  @media (max-width:650px){ #fleetPlinkoStats{gap:12px} .fleet-plinko-stat{min-width:74px} .fleet-plinko-stat-value{font-size:16px} }
 </style>
 </head>
 <body>
@@ -795,9 +811,10 @@ function opponentAttackBoxHTML(opp, showStatus) {
     return opp.items.map((itemId, i) => {
       const item = ITEMS[itemId];
       if (!item) return '';
-      const card = renderStandardItemCard(item, { usesBadgeText: swings === Infinity ? '∞' : String(swings) });
-      if (!showStatus) return card;
       const key = `${itemId}_${i}`;
+      const frozenAmt = showStatus && BATTLE.opponentItemFrozen && BATTLE.opponentItemFrozen[key];
+      const card = renderStandardItemCard(item, { usesBadgeText: swings === Infinity ? '∞' : String(swings), frozenState: frozenAmt || null });
+      if (!showStatus) return card;
       const curseAmt = BATTLE.opponentItemCurses && BATTLE.opponentItemCurses[key];
       const burnAmt = BATTLE.opponentItemBurns && BATTLE.opponentItemBurns[key];
       const hexStacks = BATTLE.opponentItemHexes && BATTLE.opponentItemHexes[key];
@@ -850,13 +867,13 @@ function opponentAttackBoxHTML(opp, showStatus) {
     }
     const STATUS_EFFECTS = { burn: 'Burn', poison: 'Poison', curse: 'Curse' };
     const effectLabel = STATUS_EFFECTS[effect];
-    const effectTag = effectLabel ? `<span class="effectTip ${effect}Text" data-tip="${EFFECT_TIP[effect]}"><b>${effectLabel}</b></span>` : '';
+    const effectTag = effectLabel ? `<span class="effectTip ${effect}Text" data-tip="${EFFECT_TIP[effect]}">${effectLabel}</span>` : '';
     const effectLine = effect === 'curse' ? `${effectTag} one of your Items`
       : effectTag ? `Applies ${effectTag}`
       : effect === 'heal' ? 'Restores its own HP'
       : effect === 'stealFuel' ? 'Can steal fuel'
       : effect === 'draw' ? 'Draws itself an extra card'
-      : effect === 'stun' ? `<span class="hoverTip" data-title="${EFFECT_TIP.stun}"><b>Stuns</b></span> your next counter-attack`
+      : effect === 'stun' ? `<span class="hoverTip" data-title="${EFFECT_TIP.stun}">Stuns</span> your next counter-attack`
       : '';
 
     return `<div class="itemCard ${kindClass(effect)}" style="cursor:default">
@@ -985,7 +1002,7 @@ const GLOSSARY = {
 };
 function kw(text, key) {
   const g = GLOSSARY[(key || text).toLowerCase()];
-  return g ? `<b class="hoverTip" data-title="${g}">${text}</b>` : `<b>${text}</b>`;
+  return g ? `<span class="hoverTip" data-title="${g}">${text}</span>` : text;
 }
 function itemRequirementText(item) {
   const max = effectiveMaxCards(item);
@@ -1010,7 +1027,7 @@ function itemRequirementText(item) {
 }
 function formatKindAmount(item, kindTagHTML) {
   const hasKindAmount = item.flatAmount != null || (item.baseMult ?? 1) > 0;
-  if (!hasKindAmount) return '';
+  if (!hasKindAmount) return kindTagHTML || '';
   if (item.flatAmount != null && (item.baseMult ?? 0) === 0) {
     const amountText = `${item.flatAmount}`;
     return kindTagHTML ? [kindTagHTML, amountText].filter(Boolean).join(' ') : `<b>Attack</b> ${amountText}`;
@@ -1635,14 +1652,14 @@ const ITEMS = {
     condition: { type: 'suitCount', suit: '♠', count: 2 }, baseMult: 1.2, kind: 'hex',
     note: 'Needs at least 2 Spades. Deals damage and swaps a card out of their hand before they notice.' },
   ice_coolant_burst: { id: 'ice_coolant_burst', name: 'Coolant Burst', cost: 75, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1, minRow: 1,
-    condition: { type: 'pokerTier', tier: 1 }, baseMult: 1.1, kind: 'ice',
-    note: 'Needs a Pair. Deals damage and freezes one of their Items solid for 2 turns.' },
+    condition: { type: 'pokerTier', tier: 1 }, baseMult: 0, kind: 'ice', freezeThreshold: 20,
+    note: 'Needs a Pair. No damage - freezes one of their Items solid until they work it off.' },
   ice_ac_overload: { id: 'ice_ac_overload', name: 'AC Overload', cost: 125, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1, minRow: 2,
-    condition: { type: 'straightLen', len: 3 }, baseMult: 1.45, kind: 'ice',
-    note: 'Needs a 3-card Straight (example: 6, 7, 8). Deals damage and freezes one of their Items solid for 2 turns.' },
+    condition: { type: 'straightLen', len: 3 }, baseMult: 0, kind: 'ice', freezeThreshold: 30,
+    note: 'Needs a 3-card Straight (example: 6, 7, 8). No damage - freezes one of their Items solid until they work it off.' },
   ice_brake_chill: { id: 'ice_brake_chill', name: 'Frozen Brake Line', cost: 55, maxCards: 1, usesPerTurn: 1, usesPerTurnPerLevel: 1, minRow: 1,
-    condition: { type: 'exactRank', rank: 2 }, flatAmount: 14, kind: 'ice',
-    note: 'Needs a 2. Small hit, but it freezes one of their Items solid for 2 turns regardless.' },
+    condition: { type: 'exactRank', rank: 2 }, baseMult: 0, kind: 'ice', freezeThreshold: 14,
+    note: 'Needs a 2. No damage - freezes one of their Items solid until they work it off.' },
   zap_power_surge: { id: 'zap_power_surge', name: 'Power Surge', cost: 70, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1, minRow: 1,
     condition: { type: 'pokerTier', tier: 1 }, baseMult: 1.9, kind: 'lightning',
     note: 'Needs a Pair. Damage is randomized between 25% and 100% power every time it fires - high risk, high reward.' },
@@ -2129,7 +2146,7 @@ function renderStandardItemCard(item, opts = {}) {
   const {
     interactive = false, slotKey = null, cards = [], cursedAmt = null, ready = false,
     usesBadgeText = null, usesDepleted = false, cooldownLeft = 0, hypPreviewHTML = '',
-    footerHTML = null, level = 0, kindOverride = null,
+    footerHTML = null, level = 0, kindOverride = null, frozenState = null,
   } = opts;
   const eKind = kindOverride || effectiveKind(item);
   const dragAttrs = interactive
@@ -2157,29 +2174,30 @@ function renderStandardItemCard(item, opts = {}) {
     </div>`;
   }
   const drawN = item.drawUsesCardCount ? (cards.length ? cards.length : item.maxCards) + (item.drawBonusFlat || 0) + (item.drawPerLevel || 0) * level : (item.drawAmount ? item.drawAmount + (item.drawPerLevel || 0) * level : 0);
-  const drawBonusLine = (item.drawAmount || item.drawUsesCardCount) ? `<div class="itemBonusLine hoverTip" data-title="Draws ${drawN} card${drawN === 1 ? '' : 's'} immediately after this item is used."><b>Draw</b> ${drawN} card${drawN === 1 ? '' : 's'}</div>` : '';
+  const drawBonusLine = (item.drawAmount || item.drawUsesCardCount) ? `<div class="itemBonusLine hoverTip" data-title="Draws ${drawN} card${drawN === 1 ? '' : 's'} immediately after this item is used.">Draw ${drawN} card${drawN === 1 ? '' : 's'}</div>` : '';
   const bonusLine = itemBonusLineHTML(item, level);
-  const kindTag = eKind === 'poison' ? `<span class="effectTip poisonText" data-tip="Poison deals its damage at the end of the opponent's turn, then drops by 3 each turn until it's gone."><b>Poison</b></span>`
-    : eKind === 'burn' ? `<span class="effectTip burnText" data-tip="Burn hits for full damage, then half, then a quarter, fading out over 3 turns."><b>Burn</b></span>`
-    : eKind === 'curse' ? `<span class="effectTip curseText" data-tip="Curse goes off if this item isn't fired again before the opponent's next turn."><b>Curse</b></span>`
-    : eKind === 'defense' ? `<span class="effectTip" style="color:var(--defense)" data-tip="Armor protects against incoming attacks, absorbing damage equal to the amount shown."><b>Armor</b></span>`
-    : eKind === 'hex' ? `<span class="effectTip" style="color:var(--hex)" data-tip="Hex messes with card flow between you and the opponent - firing a hexed Item feeds one of its cards to whoever cast the hex."><b>Hex</b></span>`
-    : eKind === 'ice' ? `<span class="effectTip" style="color:var(--ice)" data-tip="Ice deals damage and freezes an Item solid on top of it. Cards must be fed into a frozen Item to thaw it before it works again."><b>Ice</b></span>`
-    : eKind === 'lightning' ? `<span class="effectTip" style="color:var(--lightning)" data-tip="Lightning damage is randomized between 25% and 100% power every time it fires."><b>Lightning</b></span>`
+  const kindTag = eKind === 'poison' ? `<span class="effectTip poisonText" data-tip="Poison deals its damage at the end of the opponent's turn, then drops by 3 each turn until it's gone.">Poison</span>`
+    : eKind === 'burn' ? `<span class="effectTip burnText" data-tip="Burn hits for full damage, then half, then a quarter, fading out over 3 turns.">Burn</span>`
+    : eKind === 'curse' ? `<span class="effectTip curseText" data-tip="Curse goes off if this item isn't fired again before the opponent's next turn.">Curse</span>`
+    : eKind === 'defense' ? `<span class="effectTip" style="color:var(--defense)" data-tip="Armor protects against incoming attacks, absorbing damage equal to the amount shown.">Armor</span>`
+    : eKind === 'hex' ? `<span class="effectTip" style="color:var(--hex)" data-tip="Hex messes with card flow between you and the opponent - firing a hexed Item feeds one of its cards to whoever cast the hex.">Hex</span>`
+    : eKind === 'ice' ? `<span class="effectTip" style="color:var(--ice)" data-tip="Ice freezes an Item solid so it can't fire until it thaws out on its own.">Ice</span>`
+    : eKind === 'lightning' ? `<span class="effectTip" style="color:var(--lightning)" data-tip="Lightning damage is randomized between 25% and 100% power every time it fires.">Lightning</span>`
     : '';
   const effUnlockThreshold = item.id === 'impound_release' ? Math.max(35, (item.unlockThreshold || 45) - utilityLevel('impound_release') * 5) : item.unlockThreshold;
-  const unlockLine = item.unlockThreshold != null && footerHTML == null ? `<div class="note" style="margin:2px 0 0"><span class="hoverTip" data-title="Play cards through it to count down a ${effUnlockThreshold}-point charge (based on the cards' value, no damage dealt). Once charged, it draws 4 cards each use, once per turn, for the rest of that battle. Charge resets every new battle."><b>Charges</b> at ${effUnlockThreshold}</span></div>` : '';
+  const unlockLine = item.unlockThreshold != null && footerHTML == null ? `<div class="note" style="margin:2px 0 0"><span class="hoverTip" data-title="Play cards through it to count down a ${effUnlockThreshold}-point charge (based on the cards' value, no damage dealt). Once charged, it draws 4 cards each use, once per turn, for the rest of that battle. Charge resets every new battle.">Charges at ${effUnlockThreshold}</span></div>` : '';
   const staticKindLine = footerHTML == null ? `<div class="note" style="margin:0">${formatKindAmount(item, kindTag)}</div>` : '';
   const cardHTML = cards.map((c, i) => {
     const handIdx = opts.idxs ? opts.idxs[i] : i;
     return `<div class="card mini ${suitColorClass(c.color, c.suit)}" ${interactive ? `data-unassign="${slotKey}|${handIdx}"` : ''}><div>${rankLabel(c.rank)}</div><div>${c.suit}</div></div>`;
   }).join('');
 
-  return `<div class="itemCard kind-${eKind} ${ready ? 'ready' : ''} ${cursedAmt ? 'cursed' : ''}"${dragAttrs}>
+  const frozenReqLine = frozenState ? `<span class="hoverTip" data-title="This Item is frozen solid and can't fire. It thaws out on its own as its owner works through it.">Frozen: ${Math.max(0, frozenState.threshold - frozenState.progress)} to thaw</span>` : null;
+  return `<div class="itemCard kind-${eKind} ${ready ? 'ready' : ''} ${cursedAmt ? 'cursed' : ''} ${frozenState ? 'frozenLock' : ''}"${dragAttrs}>
     ${usesBadge}
     <div class="itemCard-sec">
       <div class="hdr" style="font-weight:600">${item.name}${cursedAmt ? ` <span class="vart" style="width:12px;height:12px;font-size:12px;color:var(--purple)">${ICON.curse}</span> cursed` : ''}</div>
-      <div class="itemReqLine">${itemRequirementText(item, eKind)}</div>
+      <div class="itemReqLine">${frozenReqLine || itemRequirementText(item, eKind)}</div>
     </div>
     <div class="itemDivider"></div>
     <div class="itemCard-cards-sec">
@@ -2189,7 +2207,7 @@ function renderStandardItemCard(item, opts = {}) {
     <div class="itemCard-footer">
       <div class="itemDivider"></div>
       <div class="itemCard-sec">
-        ${footerHTML != null ? footerHTML : `${staticKindLine}${unlockLine}`}
+        ${footerHTML != null ? footerHTML : frozenState ? `<div class="note" style="margin:0">Frozen solid</div>` : `${staticKindLine}${unlockLine}`}
       </div>
     </div>
   </div>`;
@@ -2717,6 +2735,28 @@ function generateMap() {
     }
     if (!conflictFound) break;
   }
+  // Drew wants the Carnival matching game (match_hazard) showing up a lot more in the early
+  // game on World 1 specifically, since it's a strong first-run hook - a 50% chance it shows
+  // up somewhere before the Fleet Compound (row 10), on top of whatever its normal per-node
+  // odds already gave it. Roll once per run; if World 1 didn't already naturally get one in
+  // rows 0-9, force one onto a random eligible battle node (skipping the tutorial rows 0-1,
+  // the guaranteed Dealership at row 2, and the reserved Elite row 9). It can still spawn
+  // anywhere else in the run at its normal odds - this only nudges World 1's early game.
+  if (RUN.world === 1) {
+    const alreadyHasEarlyMatch = nodes.slice(0, castleRow).some(row => row.some(n => n.type === 'match_hazard'));
+    if (!alreadyHasEarlyMatch && Math.random() < 0.5) {
+      const forceEligible = [];
+      for (let r = 3; r <= 8; r++) {
+        for (let c = 0; c < nodes[r].length; c++) {
+          if (nodes[r][c].type === 'battle') forceEligible.push({ r, c });
+        }
+      }
+      if (forceEligible.length) {
+        const { r, c } = forceEligible[Math.floor(Math.random() * forceEligible.length)];
+        nodes[r][c] = { type: 'match_hazard' };
+      }
+    }
+  }
   return {nodes,edges};
 }
 /* ========== RUN STATE ========== */
@@ -2777,7 +2817,7 @@ function initRunWithStarter(id) {
     elitesBeatenThisRun: 0,
     careerPointsFromElites: 0,
     runUpgrades: { itemSlots: 0, drawPerTurn: 0, sightRange: 0, gemDraw: 0, health: 0 },
-    castleState: { firstDone:false, secondDone:false, thirdDone:false, dungeonLocked:false, matchPlayed:false, matchLockReason:null, matchCards:null, matchGuesses:4, matchPick:[] },
+    castleState: { firstDone:false, secondDone:false, thirdDone:false, dungeonLocked:false, matchPlayed:false, matchLockReason:null, matchCards:null, matchGuesses:4, matchPick:[], plinkoPlayed:false },
   };
   RUN.world = 1;
   RUN.worldCleared = false;
@@ -2851,6 +2891,7 @@ function castleMenuScreen(message='') {
         <button class="castleBtn castleBtn-exit" id="leaveCastleBtn" style="background:#ffc44d;color:#12163a;border-color:#ffc44d;font-weight:800">Back to World Map.</button>
         <button class="castleBtn" id="castleDungeonNavBtn">Visit the Fleet Compound Dungeon.</button>
         <button class="castleBtn" id="castleWizardNavBtn" ${RUN.castleState?.matchPlayed ? 'disabled' : ''}>${RUN.castleState?.matchPlayed ? 'Matching Game Played' : 'Visit the Fleet Carnival Matching Game.'}</button>
+        <button class="castleBtn" id="castlePlinkoNavBtn" ${RUN.castleState?.plinkoPlayed ? 'disabled' : ''}>${RUN.castleState?.plinkoPlayed ? 'Plinko Board Played' : 'Visit the Fleet Plinko Board.'}</button>
         <button class="castleBtn" id="castleBlacksmithNavBtn">Visit the Tuning Garage.</button>
         <button class="castleBtn" id="castleChopShopNavBtn">Visit the Chop Shop.</button>
         <button class="castleBtn" id="castleOverdriveNavBtn">Visit the Overdrive Bay.</button>
@@ -2980,6 +3021,287 @@ function resetDungeonState() {
   RUN.castleState.secondDone = false;
   RUN.castleState.thirdDone = false;
   RUN.castleState.dungeonLocked = false;
+}
+// Fleet Plinko locks for the world once played, same as the Carnival matching game and the
+// Dungeon - reset alongside them every time a new world starts.
+function resetPlinkoState() {
+  if (!RUN.castleState) RUN.castleState = {};
+  RUN.castleState.plinkoPlayed = false;
+}
+// Applies a finished Plinko run's haul into the actual run economy (coins/gems/fuel are capped
+// the same way every other reward source in the game caps them), marks the board played for
+// this world, and drops the player back on the Fleet Compound menu.
+function applyPlinkoHaul(haul) {
+  if (!RUN) return;
+  if (!RUN.castleState) RUN.castleState = {};
+  RUN.castleState.plinkoPlayed = true;
+  if (!haul.lost) {
+    if (haul.coins) RUN.chips += haul.coins;
+    if (haul.gems) RUN.gems = Math.min(RUN.maxGems, RUN.gems + haul.gems);
+    if (haul.fuel) RUN.fuel = Math.min(RUN.maxFuel, RUN.fuel + haul.fuel);
+    if (haul.coins || haul.gems || haul.fuel) RUN.lastNotice = `Plinko haul banked: ${[haul.coins ? `${haul.coins} coins` : '', haul.gems ? `${haul.gems} gem${haul.gems > 1 ? 's' : ''}` : '', haul.fuel ? `${haul.fuel} fuel` : ''].filter(Boolean).join(', ')}.`;
+  }
+  saveRun();
+  render(castleMenuScreen());
+}
+/* ============================================================
+   FLEET PLINKO - Fleet Compound bonus minigame.
+   Drop chips down a peg board for coins/gems/fuel, or wipe the board on a bad landing.
+   Opened with openFleetPlinko({ onComplete(haul) }); reward weights live in
+   FLEET_PLINKO_CONFIG below.
+   ============================================================ */
+const FLEET_PLINKO_CONFIG = {
+  slots: [
+    { id: 'coins_small', label: '+8 Coins', type: 'coins', amount: 8, weight: 18 },
+    { id: 'fuel', label: '+1 Fuel', type: 'fuel', amount: 1, weight: 14 },
+    { id: 'coins_medium', label: '+15 Coins', type: 'coins', amount: 15, weight: 14 },
+    { id: 'gems', label: '+1 Gem', type: 'gems', amount: 1, weight: 8 },
+    { id: 'coins_large', label: '+25 Coins', type: 'coins', amount: 25, weight: 7 },
+    { id: 'fuel_big', label: '+2 Fuel', type: 'fuel', amount: 2, weight: 6 },
+    { id: 'premium', label: '+2 Gems', type: 'gems', amount: 2, weight: 3 },
+    { id: 'loss', label: 'Total Loss', type: 'loss', amount: 0, weight: 4 },
+  ],
+  boardWidth: 720,
+  boardHeight: 460,
+  pegRows: 10,
+  pegsPerRow: 11,
+  gravity: 0.20,
+  bounce: 0.62,
+  horizontalFriction: 0.995,
+  chipRadius: 7,
+  dropStartY: 24,
+  riskMultiplier: 1.0,
+  riskIncrease: 0.10,
+};
+function openFleetPlinko(options) {
+  options = options || {};
+  const onComplete = typeof options.onComplete === 'function' ? options.onComplete : function () {};
+  const old = document.getElementById('fleetPlinkoOverlay');
+  if (old) old.remove();
+
+  const state = { drops: 0, round: 0, animating: false, finished: false, currentSlot: null, haul: { coins: 0, gems: 0, fuel: 0 }, rewardHistory: [], chip: null, animationId: null };
+
+  const overlay = document.createElement('div');
+  overlay.id = 'fleetPlinkoOverlay';
+  overlay.className = 'map-popup-overlay';
+  overlay.style.paddingTop = '20px';
+  overlay.innerHTML = `
+    <div class="wo wide" style="max-width:760px;width:100%">
+      <div class="wo-stripe"></div>
+      <div class="wo-body">
+        <div class="wo-eyebrow">Fleet Compound</div>
+        <h1 style="margin:2px 0 0">Fleet <em>Plinko</em></h1>
+        <div class="note" style="margin-top:2px">Drop again or take your haul. One bad drop wipes the board.</div>
+        <div id="fleetPlinkoStats">
+          <div class="fleet-plinko-stat"><div class="fleet-plinko-stat-label">Current Haul</div><div class="fleet-plinko-stat-value" id="fleetPlinkoHaul">0</div></div>
+          <div class="fleet-plinko-stat"><div class="fleet-plinko-stat-label">Drops</div><div class="fleet-plinko-stat-value" id="fleetPlinkoDrops">0</div></div>
+          <div class="fleet-plinko-stat"><div class="fleet-plinko-stat-label">Risk</div><div class="fleet-plinko-stat-value" id="fleetPlinkoRisk">1.0x</div></div>
+        </div>
+        <div id="fleetPlinkoCanvasWrap"><canvas id="fleetPlinkoCanvas" width="${FLEET_PLINKO_CONFIG.boardWidth}" height="${FLEET_PLINKO_CONFIG.boardHeight}"></canvas></div>
+        <div id="fleetPlinkoMessage">Drop a chip to see where it lands.</div>
+        <div id="fleetPlinkoRewardList"></div>
+        <div id="fleetPlinkoControls">
+          <button class="wo-btn green" id="fleetPlinkoDropBtn">Drop Chip</button>
+          <button class="wo-btn amber fleet-plinko-hidden" id="fleetPlinkoTakeBtn">Take Haul</button>
+          <button class="wo-btn gray" id="fleetPlinkoExitBtn">Leave</button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  const canvas = document.getElementById('fleetPlinkoCanvas');
+  const ctx = canvas.getContext('2d');
+  const dropBtn = document.getElementById('fleetPlinkoDropBtn');
+  const takeBtn = document.getElementById('fleetPlinkoTakeBtn');
+  const exitBtn = document.getElementById('fleetPlinkoExitBtn');
+  const message = document.getElementById('fleetPlinkoMessage');
+  const haulDisplay = document.getElementById('fleetPlinkoHaul');
+  const dropsDisplay = document.getElementById('fleetPlinkoDrops');
+  const riskDisplay = document.getElementById('fleetPlinkoRisk');
+  const rewardList = document.getElementById('fleetPlinkoRewardList');
+
+  const W = FLEET_PLINKO_CONFIG.boardWidth;
+  const H = FLEET_PLINKO_CONFIG.boardHeight;
+  const slotCount = FLEET_PLINKO_CONFIG.slots.length;
+  const slotHeight = 78;
+  const slotTop = H - slotHeight;
+  const sidePadding = 22;
+  const slotWidth = (W - sidePadding * 2) / slotCount;
+
+  const pegs = [];
+  const pegTop = 60;
+  const pegBottom = slotTop - 20;
+  const rowSpacing = (pegBottom - pegTop) / (FLEET_PLINKO_CONFIG.pegRows - 1);
+  for (let row = 0; row < FLEET_PLINKO_CONFIG.pegRows; row++) {
+    const y = pegTop + row * rowSpacing;
+    const offset = row % 2 === 0 ? 0 : 0.5;
+    const count = FLEET_PLINKO_CONFIG.pegsPerRow;
+    for (let col = 0; col < count; col++) {
+      const usableWidth = W - sidePadding * 2;
+      const spacing = usableWidth / (count - 1 + offset * 2);
+      let x = offset === 0 ? sidePadding + col * spacing : sidePadding + spacing / 2 + col * spacing;
+      if (x > sidePadding + 3 && x < W - sidePadding - 3) pegs.push({ x, y, r: 5 });
+    }
+  }
+
+  function weightedSlot() {
+    const slots = FLEET_PLINKO_CONFIG.slots;
+    let total = 0;
+    for (const slot of slots) total += Math.max(0, slot.weight || 0);
+    let roll = Math.random() * total;
+    for (const slot of slots) { roll -= Math.max(0, slot.weight || 0); if (roll <= 0) return slot; }
+    return slots[slots.length - 1];
+  }
+  function formatHaul() {
+    const parts = [];
+    if (state.haul.coins > 0) parts.push(`${state.haul.coins} Coins`);
+    if (state.haul.gems > 0) parts.push(`${state.haul.gems} Gem${state.haul.gems > 1 ? 's' : ''}`);
+    if (state.haul.fuel > 0) parts.push(`${state.haul.fuel} Fuel`);
+    return parts.length ? parts.join(' + ') : '0';
+  }
+  function numericHaulValue() { return state.haul.coins + state.haul.gems * 25 + state.haul.fuel * 10; }
+  function updateUI() {
+    haulDisplay.textContent = formatHaul();
+    dropsDisplay.textContent = state.drops;
+    riskDisplay.textContent = state.round === 0 ? '1.0x' : (FLEET_PLINKO_CONFIG.riskMultiplier + state.round * FLEET_PLINKO_CONFIG.riskIncrease).toFixed(1) + 'x';
+    rewardList.innerHTML = state.rewardHistory.map(entry => `<div class="fleet-plinko-reward-pill">${entry}</div>`).join('');
+  }
+  function setMessage(text, type) { message.textContent = text; message.className = ''; if (type) message.classList.add(type); }
+  function hideButtons() { dropBtn.classList.add('fleet-plinko-hidden'); takeBtn.classList.add('fleet-plinko-hidden'); exitBtn.classList.add('fleet-plinko-hidden'); }
+  function showDecisionButtons() { dropBtn.classList.remove('fleet-plinko-hidden'); takeBtn.classList.remove('fleet-plinko-hidden'); exitBtn.classList.remove('fleet-plinko-hidden'); }
+  function closeGame() { if (state.animationId) { cancelAnimationFrame(state.animationId); state.animationId = null; } overlay.remove(); }
+  function finishWithHaul() {
+    if (state.finished) return;
+    state.finished = true;
+    hideButtons();
+    const finalHaul = { coins: state.haul.coins, gems: state.haul.gems, fuel: state.haul.fuel, drops: state.drops };
+    setMessage(`Haul secured: ${formatHaul()}`, 'positive');
+    setTimeout(() => { closeGame(); onComplete(finalHaul); }, 550);
+  }
+
+  function drawBoard() {
+    ctx.clearRect(0, 0, W, H);
+    const bg = ctx.createLinearGradient(0, 0, 0, H);
+    bg.addColorStop(0, '#0e1726'); bg.addColorStop(1, '#0b0f19');
+    ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+    ctx.strokeStyle = 'rgba(31,182,166,0.05)'; ctx.lineWidth = 1;
+    for (let x = 0; x < W; x += 40) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
+    for (const peg of pegs) {
+      ctx.beginPath(); ctx.arc(peg.x, peg.y, peg.r + 3, 0, Math.PI * 2); ctx.fillStyle = 'rgba(31,182,166,0.10)'; ctx.fill();
+      ctx.beginPath(); ctx.arc(peg.x, peg.y, peg.r, 0, Math.PI * 2); ctx.fillStyle = '#4fb8ae'; ctx.fill();
+      ctx.beginPath(); ctx.arc(peg.x - 1.5, peg.y - 1.5, 1.7, 0, Math.PI * 2); ctx.fillStyle = '#e7fbf8'; ctx.fill();
+    }
+    for (let i = 0; i < slotCount; i++) {
+      const slot = FLEET_PLINKO_CONFIG.slots[i];
+      const x = sidePadding + i * slotWidth;
+      const isLoss = slot.type === 'loss';
+      ctx.fillStyle = isLoss ? 'rgba(229,72,77,0.22)' : 'rgba(31,182,166,0.14)';
+      ctx.fillRect(x + 2, slotTop + 2, slotWidth - 4, slotHeight - 4);
+      ctx.strokeStyle = isLoss ? 'rgba(229,72,77,0.4)' : 'rgba(31,182,166,0.30)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(x + 1, slotTop + 1, slotWidth - 2, slotHeight - 2);
+      ctx.fillStyle = isLoss ? '#ff9a9d' : '#bfeee8';
+      ctx.font = 'bold 10px Aptos, Arial'; ctx.textAlign = 'center';
+      const words = slot.label.split(' ');
+      if (words.length > 1) {
+        ctx.fillText(words[0], x + slotWidth / 2, slotTop + 32);
+        ctx.fillText(words.slice(1).join(' '), x + slotWidth / 2, slotTop + 47);
+      } else ctx.fillText(slot.label, x + slotWidth / 2, slotTop + 40);
+    }
+    if (state.chip) {
+      const chip = state.chip;
+      ctx.beginPath(); ctx.arc(chip.x, chip.y, chip.r + 5, 0, Math.PI * 2); ctx.fillStyle = 'rgba(31,182,166,0.20)'; ctx.fill();
+      ctx.beginPath(); ctx.arc(chip.x, chip.y, chip.r, 0, Math.PI * 2);
+      const chipGradient = ctx.createRadialGradient(chip.x - 2, chip.y - 2, 1, chip.x, chip.y, chip.r);
+      chipGradient.addColorStop(0, '#eafffb'); chipGradient.addColorStop(0.4, '#6fe8d9'); chipGradient.addColorStop(1, '#0d8377');
+      ctx.fillStyle = chipGradient; ctx.fill();
+      ctx.strokeStyle = 'rgba(230,255,250,0.85)'; ctx.stroke();
+    }
+  }
+
+  function startDrop() {
+    if (state.animating || state.finished) return;
+    state.animating = true; state.drops++; state.round++; state.currentSlot = null;
+    state.chip = { x: W / 2 + (Math.random() - 0.5) * 45, y: FLEET_PLINKO_CONFIG.dropStartY, vx: (Math.random() - 0.5) * 1.4, vy: 0, r: FLEET_PLINKO_CONFIG.chipRadius };
+    hideButtons();
+    setMessage('The chip is in motion...', '');
+    updateUI();
+    runPhysics();
+  }
+  function runPhysics() {
+    const chip = state.chip;
+    chip.vy += FLEET_PLINKO_CONFIG.gravity;
+    chip.vx *= FLEET_PLINKO_CONFIG.horizontalFriction;
+    chip.x += chip.vx; chip.y += chip.vy;
+    if (chip.x - chip.r < 8) { chip.x = 8 + chip.r; chip.vx = Math.abs(chip.vx) * FLEET_PLINKO_CONFIG.bounce; }
+    if (chip.x + chip.r > W - 8) { chip.x = W - 8 - chip.r; chip.vx = -Math.abs(chip.vx) * FLEET_PLINKO_CONFIG.bounce; }
+    for (const peg of pegs) {
+      const dx = chip.x - peg.x, dy = chip.y - peg.y;
+      const minDistance = chip.r + peg.r;
+      const distanceSquared = dx * dx + dy * dy;
+      if (distanceSquared < minDistance * minDistance) {
+        const distance = Math.sqrt(distanceSquared) || 0.001;
+        const nx = dx / distance, ny = dy / distance;
+        const overlap = minDistance - distance;
+        chip.x += nx * overlap; chip.y += ny * overlap;
+        const dot = chip.vx * nx + chip.vy * ny;
+        chip.vx = chip.vx - 2 * dot * nx; chip.vy = chip.vy - 2 * dot * ny;
+        chip.vx += (Math.random() - 0.5) * 0.35;
+        chip.vx *= FLEET_PLINKO_CONFIG.bounce; chip.vy *= FLEET_PLINKO_CONFIG.bounce;
+      }
+    }
+    if (chip.y >= slotTop - chip.r) { settleChip(); return; }
+    drawBoard();
+    state.animationId = requestAnimationFrame(runPhysics);
+  }
+  function settleChip() {
+    state.animating = false;
+    let index = Math.floor((state.chip.x - sidePadding) / slotWidth);
+    index = Math.max(0, Math.min(slotCount - 1, index));
+    const slot = FLEET_PLINKO_CONFIG.slots[index];
+    state.currentSlot = slot;
+    state.chip.x = sidePadding + index * slotWidth + slotWidth / 2;
+    state.chip.y = slotTop + 20;
+    drawBoard();
+    if (slot.type === 'loss') { handleLoss(); return; }
+    handleReward(slot);
+  }
+  function handleReward(slot) {
+    const multiplier = FLEET_PLINKO_CONFIG.riskMultiplier + (state.round - 1) * FLEET_PLINKO_CONFIG.riskIncrease;
+    let amount = slot.amount || 0;
+    if (slot.type === 'coins') amount = Math.max(1, Math.round(amount * multiplier));
+    if (slot.type === 'coins') { state.haul.coins += amount; state.rewardHistory.push(`+${amount} Coins`); }
+    else if (slot.type === 'gems') { state.haul.gems += amount; state.rewardHistory.push(`+${amount} Gem${amount === 1 ? '' : 's'}`); }
+    else if (slot.type === 'fuel') { state.haul.fuel += amount; state.rewardHistory.push(`+${amount} Fuel`); }
+    updateUI();
+    setMessage(`Landed on ${slot.label}.`, 'positive');
+    playSfx('open');
+    showDecisionButtons();
+  }
+  function handleLoss() {
+    const lostText = formatHaul();
+    state.haul = { coins: 0, gems: 0, fuel: 0 };
+    state.rewardHistory = [];
+    updateUI();
+    setMessage(`Total loss - ${lostText} was lost.`, 'danger');
+    playSfx('lose');
+    dropBtn.classList.add('fleet-plinko-hidden'); takeBtn.classList.add('fleet-plinko-hidden');
+    setTimeout(finishAfterLoss, 1100);
+  }
+  function finishAfterLoss() {
+    if (state.finished) return;
+    state.finished = true;
+    hideButtons();
+    setTimeout(() => { closeGame(); onComplete({ coins: 0, gems: 0, fuel: 0, drops: state.drops, lost: true }); }, 250);
+  }
+
+  dropBtn.addEventListener('click', startDrop);
+  takeBtn.addEventListener('click', () => { if (!state.animating && !state.finished) finishWithHaul(); });
+  exitBtn.addEventListener('click', () => { if (state.animating || state.finished) return; if (numericHaulValue() > 0) finishWithHaul(); else closeGame(); });
+
+  updateUI();
+  drawBoard();
 }
 function castleMatchScreen() {
   if (!RUN.castleState) RUN.castleState = {};
@@ -3358,6 +3680,18 @@ function chooseHexTarget(key) {
   saveRun();
   render(battleScreen());
 }
+function chooseIceTarget(key) {
+  if (!BATTLE.pendingTarget || BATTLE.pendingTarget.type !== 'ice') return;
+  const { itemName, threshold } = BATTLE.pendingTarget;
+  BATTLE.pendingTarget = null;
+  BATTLE.opponentItemFrozen = BATTLE.opponentItemFrozen || {};
+  BATTLE.opponentItemFrozen[key] = { threshold: threshold || 20, progress: 0 };
+  const name = ITEMS[key.replace(/_\d+$/, '')]?.name || 'Item';
+  battleLog(`${itemName} freezes ${BATTLE.opponent.name}'s ${name} solid - it'll thaw out on its own over their next few turns.`);
+  playSfx('freeze');
+  saveRun();
+  render(battleScreen());
+}
 function cancelPendingTarget() {
   BATTLE.pendingTarget = null;
   render(battleScreen());
@@ -3566,7 +3900,19 @@ if (idxs.some(i => BATTLE.usedThisTurn.has(i))) {
     render(battleScreen());
     return;
   }
- if (amount > 0 || item.flatAmount != null) {
+ if (eKind === 'ice') {
+    const freezeEligible = (BATTLE.opponent.items || []).map((id, i) => `${id}_${i}`).filter(key => {
+      const it = ITEMS[key.replace(/_\d+$/, '')];
+      return it && it.kind !== 'storage' && !(BATTLE.opponentItemFrozen && BATTLE.opponentItemFrozen[key]);
+    });
+    if (freezeEligible.length) {
+      BATTLE.pendingTarget = { type: 'ice', itemName: item.name, threshold: item.freezeThreshold || 20 };
+      battleLog(`${item.name} [${cardsStr}] - ${condResult.label}! Select an item slot on ${BATTLE.opponent.name}'s inventory to freeze.`);
+    } else {
+      battleLog(`${item.name} [${cardsStr}] - ${condResult.label}! No eligible Item to freeze right now.`);
+    }
+    playSfx('freeze');
+  } else if (amount > 0 || item.flatAmount != null) {
     if (eKind === 'defense') {
       BATTLE.playerArmor += amount;
       battleLog(`${item.name} [${cardsStr}] - ${condResult.label}! +${amount} armor - ${breakdown}`);
@@ -3584,28 +3930,6 @@ if (idxs.some(i => BATTLE.usedThisTurn.has(i))) {
       BATTLE.pendingTarget = { type: 'curse', amount, itemName: item.name };
       battleLog(`${item.name} [${cardsStr}] - ${condResult.label}! Select an item slot on ${BATTLE.opponent.name}'s inventory to curse for ${amount} (${breakdown}).`);
       playSfx('curse');
-    } else if (eKind === 'ice') {
-      const atkBefore = BATTLE.opponent.hpNow;
-      let dmgToApply = amount;
-      let armorAbsorbed = 0;
-      if (BATTLE.opponent.armor > 0) {
-        armorAbsorbed = Math.min(BATTLE.opponent.armor, dmgToApply);
-        BATTLE.opponent.armor -= armorAbsorbed;
-        dmgToApply -= armorAbsorbed;
-      }
-      BATTLE.opponent.hpNow = Math.max(0, BATTLE.opponent.hpNow - dmgToApply);
-      if (dmgToApply === atkBefore && atkBefore > 0) BATTLE.exactKill = true;
-      let freezeNote = '';
-      const freezeEligible = (BATTLE.opponent.items || []).filter(id => id !== itemId);
-      if (freezeEligible.length) {
-        const targetId = freezeEligible[Math.floor(Math.random() * freezeEligible.length)];
-        BATTLE.opponentItemFrozenTurns = BATTLE.opponentItemFrozenTurns || {};
-        BATTLE.opponentItemFrozenTurns[targetId] = 2;
-        freezeNote = ` Freezes their ${ITEMS[targetId]?.name || 'item'} solid for 2 turns.`;
-      }
-      const armorNote = armorAbsorbed > 0 ? ` (${armorAbsorbed} blocked by their armor${BATTLE.opponent.armor > 0 ? `, ${BATTLE.opponent.armor} left` : ''})` : '';
-      battleLog(`${item.name} [${cardsStr}] - ${condResult.label}! ${amount} damage${armorNote} (${breakdown}).${freezeNote}`);
-      playSfx('freeze'); flashScreen('hit-opponent');
     } else if (eKind === 'hex') {
       const atkBefore = BATTLE.opponent.hpNow;
       let dmgToApply = amount;
@@ -3850,12 +4174,18 @@ function endTurn() {
   if (BATTLE.opponent.hpNow <= 0) { winBattle(); return; }
 
   let opponentLandedHit = false;
-  if (BATTLE.opponentItemFrozenTurns) {
-    Object.keys(BATTLE.opponentItemFrozenTurns).forEach(id => {
-      BATTLE.opponentItemFrozenTurns[id] -= 1;
-      if (BATTLE.opponentItemFrozenTurns[id] <= 0) {
-        delete BATTLE.opponentItemFrozenTurns[id];
-        battleLog(`${BATTLE.opponent.name}'s ${ITEMS[id]?.name || 'frozen item'} thaws out.`);
+  if (BATTLE.opponentItemFrozen && Object.keys(BATTLE.opponentItemFrozen).length) {
+    const thawFeed = Math.max(6, Math.round((BATTLE.opponent.drawRate || 2) * AVG_CARD_VALUE));
+    Object.keys(BATTLE.opponentItemFrozen).forEach(key => {
+      const frozen = BATTLE.opponentItemFrozen[key];
+      frozen.progress += thawFeed;
+      const remaining = Math.max(0, frozen.threshold - frozen.progress);
+      const name = ITEMS[key.replace(/_\d+$/, '')]?.name || 'frozen item';
+      if (remaining <= 0) {
+        delete BATTLE.opponentItemFrozen[key];
+        battleLog(`${BATTLE.opponent.name}'s ${name} thaws out.`);
+      } else {
+        battleLog(`${BATTLE.opponent.name}'s ${name} is still frozen - ${remaining} more to thaw.`);
       }
     });
   }
@@ -3897,10 +4227,10 @@ function endTurn() {
           const itemId = BATTLE.opponent.items[slotPos];
           const item = ITEMS[itemId];
           if (!item) continue;
-          if (BATTLE.opponentItemFrozenTurns && BATTLE.opponentItemFrozenTurns[itemId] > 0) continue;
+          const slotKeyForBurn = `${itemId}_${slotPos}`;
+          if (BATTLE.opponentItemFrozen && BATTLE.opponentItemFrozen[slotKeyForBurn]) continue;
           const cap = item.usesPerTurn ?? 1;
           if ((oppItemUsesThisTurn[itemId] || 0) >= cap) continue;
-          const slotKeyForBurn = `${itemId}_${slotPos}`;
        if (BATTLE.opponentItemBurns && BATTLE.opponentItemBurns[slotKeyForBurn]) {
             if (!burnBlockedPick) {
               const bestBurn = findOpponentCombo(BATTLE.oppPool, item.condition, effectiveMaxCards(item) ?? maxCards);
@@ -4555,7 +4885,7 @@ function battleScreen() {
     }).join('');
     const bonusLine = itemBonusLineHTML(item, level);
     const drawNPreview = item.drawUsesCardCount ? (cards.length + (item.drawBonusFlat||0) + (item.drawPerLevel||0)*level) : (item.drawAmount ? item.drawAmount + (item.drawPerLevel||0)*level : 0);
-    const drawBonusLine = (item.drawAmount || item.drawUsesCardCount) ? `<div class="itemBonusLine hoverTip" data-title="Draws ${drawNPreview} card${drawNPreview===1?'':'s'} immediately after this item is used."><b>Draw</b> ${drawNPreview} card${drawNPreview===1?'':'s'}</div>` : '';
+    const drawBonusLine = (item.drawAmount || item.drawUsesCardCount) ? `<div class="itemBonusLine hoverTip" data-title="Draws ${drawNPreview} card${drawNPreview===1?'':'s'} immediately after this item is used.">Draw ${drawNPreview} card${drawNPreview===1?'':'s'}</div>` : '';
 
     const usesBadgeText = isChargingUnlockItem ? '∞' : cap === Infinity ? '∞' : `${Math.max(0, usesLeft)}`;
     const cooldownLeft = item.cooldown != null ? (BATTLE.itemCooldowns?.[slotKey] || 0) : 0;
@@ -4581,22 +4911,22 @@ function battleScreen() {
       ${cooldownLeft > 0 ? `<div class="note" style="margin:4px 0 0"><span class="hoverTip" data-title="This item can't be used again until its cooldown runs out.">On cooldown: ${cooldownLeft} turn${cooldownLeft > 1 ? 's' : ''} left</span></div>` : ''}
       ${(() => {
         const hasKindAmount = item.flatAmount != null || (item.baseMult ?? 1) > 0;
-        const kindTag = eKind==='poison'?`<span class="effectTip poisonText" data-tip="Poison deals its damage at the end of the opponent's turn, then drops by 3 each turn until it's gone."><b>Poison</b></span>`
-          :eKind==='burn'?`<span class="effectTip burnText" data-tip="Burn hits for full damage, then half, then a quarter, fading out over 3 turns."><b>Burn</b></span>`
-          :eKind==='curse'?`<span class="effectTip curseText" data-tip="Curse goes off if this item isn't fired again before the opponent's next turn."><b>Curse</b></span>`
-          :eKind==='defense'?`<span class="effectTip" style="color:var(--defense)" data-tip="Armor protects against incoming attacks, absorbing damage equal to the amount shown."><b>Armor</b></span>`
-          :eKind==='hex'?`<span class="effectTip" style="color:var(--hex)" data-tip="Hex messes with card flow between you and the opponent - firing a hexed Item feeds one of its cards to whoever cast the hex."><b>Hex</b></span>`
-          :eKind==='ice'?`<span class="effectTip" style="color:var(--ice)" data-tip="Ice deals damage and freezes an Item solid on top of it. Cards must be fed into a frozen Item to thaw it before it works again."><b>Ice</b></span>`
-          :eKind==='lightning'?`<span class="effectTip" style="color:var(--lightning)" data-tip="Lightning damage is randomized between 25% and 100% power every time it fires."><b>Lightning</b></span>`
+        const kindTag = eKind==='poison'?`<span class="effectTip poisonText" data-tip="Poison deals its damage at the end of the opponent's turn, then drops by 3 each turn until it's gone.">Poison</span>`
+          :eKind==='burn'?`<span class="effectTip burnText" data-tip="Burn hits for full damage, then half, then a quarter, fading out over 3 turns.">Burn</span>`
+          :eKind==='curse'?`<span class="effectTip curseText" data-tip="Curse goes off if this item isn't fired again before the opponent's next turn.">Curse</span>`
+          :eKind==='defense'?`<span class="effectTip" style="color:var(--defense)" data-tip="Armor protects against incoming attacks, absorbing damage equal to the amount shown.">Armor</span>`
+          :eKind==='hex'?`<span class="effectTip" style="color:var(--hex)" data-tip="Hex messes with card flow between you and the opponent - firing a hexed Item feeds one of its cards to whoever cast the hex.">Hex</span>`
+          :eKind==='ice'?`<span class="effectTip" style="color:var(--ice)" data-tip="Ice freezes an Item solid so it can't fire until it thaws out on its own.">Ice</span>`
+          :eKind==='lightning'?`<span class="effectTip" style="color:var(--lightning)" data-tip="Lightning damage is randomized between 25% and 100% power every time it fires.">Lightning</span>`
           :'';
         const effUnlockThreshold = item.id === 'impound_release' ? Math.max(35, (item.unlockThreshold || 45) - utilityLevel('impound_release') * 5) : item.unlockThreshold;
-        const unlockText = item.unlockThreshold != null ? (BATTLE.itemUnlocked && BATTLE.itemUnlocked[slotKey] ? '<span class="hoverTip" data-title="Charged for the rest of this battle - playing cards through it now draws 4, once per turn."><b>Charged: Draw 4/turn</b></span>' : `<span class="hoverTip" data-title="Locked: This card cannot trigger actions until you drop cards into it to fulfill the listed point total.">Locked</span>: ${Math.max(0, effUnlockThreshold - ((BATTLE.itemUnlockProgress && BATTLE.itemUnlockProgress[slotKey]) || 0))} to charge`) : '';
+        const unlockText = item.unlockThreshold != null ? (BATTLE.itemUnlocked && BATTLE.itemUnlocked[slotKey] ? '<span class="hoverTip" data-title="Charged for the rest of this battle - playing cards through it now draws 4, once per turn.">Charged: Draw 4/turn</span>' : `<span class="hoverTip" data-title="Locked: This card cannot trigger actions until you drop cards into it to fulfill the listed point total.">Locked</span>: ${Math.max(0, effUnlockThreshold - ((BATTLE.itemUnlockProgress && BATTLE.itemUnlockProgress[slotKey]) || 0))} to charge`) : '';
         if (frozenState) {
           const feedText = cards.length ? `<b>Feeds the ice ${cards.reduce((a,c)=>a+cardValue(c.rank),0)} points</b>` : '<b>Frozen</b> - drop cards in to thaw';
           return `<div class="note" style="margin:4px 0 0">${feedText}</div>`;
         }
         if (cards.length && ready) {
-          const kindText = hasKindAmount ? `${previewCalc.breakdown} ${kindTag || '<b>Damage</b>'}` : '<b>Ready</b>';
+          const kindText = hasKindAmount ? `${previewCalc.breakdown} ${kindTag || '<b>Damage</b>'}` : (kindTag || '<b>Ready</b>');
           return `<div class="note" style="margin:4px 0 0">${kindText}</div>${unlockText?`<div class="note" style="margin:2px 0 0">${unlockText}</div>`:''}`;
         }
         if (cards.length && !ready) return `<div class="note" style="margin:4px 0 0">Requirement not met</div>`;
@@ -4666,6 +4996,7 @@ function battleScreen() {
               ${BATTLE.opponentItemCurses && Object.keys(BATTLE.opponentItemCurses).length ? `<span class="status curseStatus hoverTip" data-title="${Object.entries(BATTLE.opponentItemCurses).map(([k,v])=>`${ITEMS[k.replace(/_\d+$/,'')]?.name||'Item'}: ${v} if not fired`).join(' | ')}">${ICON.curse} ${Object.keys(BATTLE.opponentItemCurses).length} Item${Object.keys(BATTLE.opponentItemCurses).length>1?'s':''} cursed</span>` : ''}
               ${BATTLE.opponentItemBurns && Object.keys(BATTLE.opponentItemBurns).length ? `<span class="status burnStatus hoverTip" data-title="${Object.entries(BATTLE.opponentItemBurns).map(([k,v])=>`${ITEMS[k.replace(/_\d+$/,'')]?.name||'Item'}: ${v} if fired`).join(' | ')}">${ICON.fire} ${Object.keys(BATTLE.opponentItemBurns).length} Item${Object.keys(BATTLE.opponentItemBurns).length>1?'s':''} burned</span>` : ''}
               ${BATTLE.opponentItemHexes && Object.keys(BATTLE.opponentItemHexes).length ? `<span class="status hoverTip" style="color:var(--hex)" data-title="${Object.entries(BATTLE.opponentItemHexes).map(([k,v])=>`${ITEMS[k.replace(/_\d+$/,'')]?.name||'Item'}: steals ${v} card${v>1?'s':''} when fired`).join(' | ')}">${ICON.hex} ${Object.keys(BATTLE.opponentItemHexes).length} Item${Object.keys(BATTLE.opponentItemHexes).length>1?'s':''} hexed</span>` : ''}
+              ${BATTLE.opponentItemFrozen && Object.keys(BATTLE.opponentItemFrozen).length ? `<span class="status hoverTip" style="color:var(--ice)" data-title="${Object.entries(BATTLE.opponentItemFrozen).map(([k,v])=>`${ITEMS[k.replace(/_\d+$/,'')]?.name||'Item'}: ${Math.max(0,v.threshold-v.progress)} to thaw`).join(' | ')}">${ICON.ice} ${Object.keys(BATTLE.opponentItemFrozen).length} Item${Object.keys(BATTLE.opponentItemFrozen).length>1?'s':''} frozen</span>` : ''}
             </div>
           </div>
         </div>
@@ -4743,19 +5074,23 @@ function battleScreen() {
       const targetType = BATTLE.pendingTarget.type;
       const isBurn = targetType === 'burn';
       const isHex = targetType === 'hex';
+      const isIce = targetType === 'ice';
       const cardsHTML = (BATTLE.opponent.items || []).map((id, i) => {
         const it = ITEMS[id]; if (!it || it.kind === 'storage') return '';
         const key = `${id}_${i}`;
         const curseAmt = BATTLE.opponentItemCurses && BATTLE.opponentItemCurses[key];
         const burnAmt = BATTLE.opponentItemBurns && BATTLE.opponentItemBurns[key];
         const hexStacks = BATTLE.opponentItemHexes && BATTLE.opponentItemHexes[key];
-        const tag = curseAmt ? `<span class="curseBadge">Cursed: ${curseAmt}</span>` : burnAmt ? `<span class="curseBadge">Burn: ${burnAmt}</span>` : hexStacks ? `<span class="curseBadge">Hexed x${hexStacks}</span>` : '';
+        const frozenAmt = BATTLE.opponentItemFrozen && BATTLE.opponentItemFrozen[key];
+        const tag = curseAmt ? `<span class="curseBadge">Cursed: ${curseAmt}</span>` : burnAmt ? `<span class="curseBadge">Burn: ${burnAmt}</span>` : hexStacks ? `<span class="curseBadge">Hexed x${hexStacks}</span>` : frozenAmt ? `<span class="curseBadge">Frozen: ${Math.max(0, frozenAmt.threshold - frozenAmt.progress)} to thaw</span>` : '';
         const card = renderStandardItemCard(it);
+        if (isIce && frozenAmt) return `<div class="targetableCard" style="opacity:0.55">${card}${tag ? `<div class="note" style="margin:2px 0 0;text-align:center">${tag}</div>` : ''}</div>`;
         return `<div class="targetableCard" data-targetkey="${key}" data-title="Click to target ${it.name}">${card}${tag ? `<div class="note" style="margin:2px 0 0;text-align:center">${tag}</div>` : ''}</div>`;
       }).join('');
-      const title = isBurn ? 'Ignite an Item' : isHex ? 'Hex an Item' : 'Curse an Item';
+      const title = isBurn ? 'Ignite an Item' : isHex ? 'Hex an Item' : isIce ? 'Freeze an Item' : 'Curse an Item';
       const explain = isBurn ? `This item slot is trapped. If ${BATTLE.opponent.name} fires it, the burn backfires into their own health instead of yours.`
         : isHex ? `This item slot gets marked. The next time ${BATTLE.opponent.name} fires it, you pull one of the cards they use straight into your hand. Hex the same Item again before they fire it and the steal stacks.`
+        : isIce ? `This item slot freezes solid and can't fire. It thaws out as ${BATTLE.opponent.name} works through it over their next few turns.`
         : `This item slot is trapped. It stays cursed until ${BATTLE.opponent.name} fires it before their turn ends, or it detonates.`;
       return `<div class="targetPickerOverlay" style="position:fixed;inset:0;background:#12163acc;display:flex;align-items:center;justify-content:center;z-index:110;padding:20px">
         <div class="wo" style="max-width:460px;width:100%"><div class="wo-stripe"></div><div class="wo-body">
@@ -5385,6 +5720,8 @@ const UPDATE_LOG = [
       'Item power ratings and shop prices for damage and lightning items now account for how likely their requirement actually is to come up, not just their raw numbers. Highway 7 Shortcut and Short Circuit were the worst offenders and got repriced along with a few others.',
       'Diamond Lane Convoy renamed to Diamond Convoy and reworked: it now only needs 1 Diamond to fire (used to silently require 3), does summation damage, and gets +25% more if you play 3 or more Diamonds.',
       'Fixed the "Up to 4" wording on Diamond/Club/Spade/Heart Convoy-style items, which was misleading about how many of the suit you actually need - it now says "At least N" when a minimum count is required.',
+      'Ice items (Coolant Burst, AC Overload, Frozen Brake Line) reworked: they no longer deal damage, and now let you pick which of the opponent\'s Items to freeze instead of picking one at random. A frozen Item shows the same frost overlay and thaw countdown your own frozen Items already use, and it thaws on its own as its owner works through it over their next few turns instead of a flat "2 turns" lock.',
+      'Grayed-out item cards you\'ve already used this turn now let their hover tooltips pop up again - they were being blocked along with the rest of the card.',
     ],
     Dealership: [
       'Dealership layout tightened up into a proper grid.',
@@ -5400,12 +5737,16 @@ const UPDATE_LOG = [
     'Match game': [
       'Fixed the Fleet Carnival matching game showing 50 Career Points for a Black Joker match when it actually pays 25.',
       'Red Joker and Black Joker now use distinct colors, so the two are easy to tell apart at a glance.',
+      'World 1 now has a real shot (about 50%) of putting the Carnival matching game somewhere on your route before you even reach the Fleet Compound. It can still show up anywhere else too, at its normal odds.',
     ],
     Visual: [
       'Spades and clubs are easier to tell apart at a glance now.',
       'Item card bonus text is now gold instead of purple, for better contrast against the curse and base card backgrounds.',
       'The fuel-heal warning now pops up near your hand instead of the top of the screen, and its text is shorter. Also fixed a bug where clicking it (and some other buttons) could pop a tooltip into the top-left corner of the screen.',
       'Map nodes you\'ve already cleared, or can\'t currently reach, now show grayed-out icons so it\'s obvious at a glance where you\'ve been and where you can go next. They\'re still clickable for info.',
+      'Update Log section headers (Opponents, Item cards, Visual, etc.) no longer render in all caps.',
+      'The "Made by Drew" / feedback line is now part of the same box as the main menu instead of sitting in its own separate box underneath it.',
+      'Removed bold from the hoverable, dotted-underline keywords on item cards (Poison, Burn, Curse, Hex, Ice, Draw, Charges, and the suit/hand names in requirement text) so they read consistently - some were bold and some weren\'t.',
     ],
     Misc: [
       'Career Points now pay out as one bonus at the end of a run based on how far you got, instead of a little bit for every kill. Perfect Kills earn a small Career Points bonus of their own too.',
@@ -5417,6 +5758,7 @@ const UPDATE_LOG = [
       'Chop Shop: narrower layout, renamed header to "Chop Shop," shorter description text, larger coin-cost text, and items now line up along the top of their row instead of being vertically centered.',
       'Fleet Compound Dungeon: now matches the other shop pages\' buttons and colors, only locks for the world you left it in (not the whole run), reduced its fuel and gem payouts, added Energy rewards, and added a difficulty label to each battle.',
       'Run Ended screen redesigned: a red "Run Ended" header in place of the old "Back to Base," plus a full run summary (world reached, Career Points, best world reached, opponents and Elites beaten this run and lifetime, items used, upgrades obtained). Also fixed the confusing "+20 points for reaching [world]" wording - it was just naming the world you were on, not a real bonus reason, so it\'s now shown as plain data instead.',
+      'Added the Fleet Plinko Board: a new bonus stop at the Fleet Compound. Drop chips down a peg board for coins, gems, or fuel, with the option to keep pushing your luck for a bigger haul or bank what you\'ve got - one bad drop wipes the current haul. Playable once per world, same as the Carnival matching game.',
     ],
   } },
 ];
@@ -5431,7 +5773,7 @@ function updateLogHTML() {
             <div class="note" style="font-weight:800;color:var(--ink)">${entry.date}</div>
             ${UPDATE_LOG_CATEGORY_ORDER.filter(cat => entry.categories[cat] && entry.categories[cat].length).map(cat => `
               <div style="margin-top:8px">
-                <div class="note" style="font-weight:700;color:var(--amber);font-size:12px;text-transform:uppercase;letter-spacing:0.03em">${cat}</div>
+                <div class="note" style="font-weight:700;color:var(--amber);font-size:12px;letter-spacing:0.03em">${cat}</div>
                 <ul style="margin:3px 0 0 18px;padding:0">
                   ${entry.categories[cat].map(n => `<li class="note" style="margin:2px 0">${n}</li>`).join('')}
                 </ul>
@@ -5464,12 +5806,12 @@ function metaScreen() {
         ${hasSave ? `<button class="wo-btn" id="continueRunBtn" style="margin-bottom:10px;width:100%">Continue Run</button>` : `<button class="wo-btn" id="startRunBtn" style="margin-bottom:10px;width:100%">New Run</button>`}
         ${hasSave ? `<button class="wo-btn gray" id="startRunBtn" style="width:100%;margin-bottom:10px">New Run (overwrites save)</button>` : ''}
         <button class="wo-btn amber" id="viewUpgradesBtn" style="width:100%">Career Point Upgrades</button>
+        <div style="display:flex;align-items:center;gap:10px;opacity:0.7;margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.08)">
+          <div class="note" style="margin:0;font-size:11px;white-space:nowrap">Made by Drew</div>
+          <div class="note" style="margin:0;flex:1;text-align:right;font-size:11px">Feedback and bug reports welcome, send them to Drew.</div>
+        </div>
       </div>
     </div>
-    <div class="wo" style="margin-top:14px"><div class="wo-body" style="display:flex;align-items:center;gap:10px;opacity:0.7;padding:8px 14px">
-      <div class="note" style="margin:0;font-size:11px;white-space:nowrap">Made by Drew</div>
-      <div class="note" style="margin:0;flex:1;text-align:right;font-size:11px">Feedback and bug reports welcome, send them to Drew.</div>
-    </div></div>
     ${updateLogHTML()}
   `;
 }
@@ -5578,6 +5920,7 @@ function render(html) {
     RUN.pendingNextWorld = null;
     resetCarnivalMatchState();
     resetDungeonState();
+    resetPlinkoState();
     META.bestWorld = Math.max(META.bestWorld || 1, RUN.world);
     saveMeta();
     saveRun();
@@ -5806,6 +6149,7 @@ function render(html) {
 
   const castleDungeonNavBtn = document.getElementById('castleDungeonNavBtn'); if (castleDungeonNavBtn) castleDungeonNavBtn.onclick = () => render(castleDungeonScreen());
   const castleWizardNavBtn = document.getElementById('castleWizardNavBtn'); if (castleWizardNavBtn) castleWizardNavBtn.onclick = () => { if (!RUN.castleState) RUN.castleState = {}; if (RUN.castleState.matchPlayed) return; MATCH_RETURN_TO_MAP = false; MATCH_OVERLAY_ACTIVE = true; renderMatchOverlay(); };
+  const castlePlinkoNavBtn = document.getElementById('castlePlinkoNavBtn'); if (castlePlinkoNavBtn) castlePlinkoNavBtn.onclick = () => { if (!RUN.castleState) RUN.castleState = {}; if (RUN.castleState.plinkoPlayed) return; openFleetPlinko({ onComplete: applyPlinkoHaul }); };
   const castleBlacksmithNavBtn = document.getElementById('castleBlacksmithNavBtn'); if (castleBlacksmithNavBtn) castleBlacksmithNavBtn.onclick = () => { RETURN_TO_CASTLE_MENU = true; BLACKSMITH_OPTIONS = pickBlacksmithOptions(); BLACKSMITH_VISIT = { primary: null, secondary: null }; render(blacksmithScreen()); };
   const castleChopShopNavBtn = document.getElementById('castleChopShopNavBtn'); if (castleChopShopNavBtn) castleChopShopNavBtn.onclick = () => { RETURN_TO_CASTLE_MENU = true; render(chopShopScreen()); };
   const castleOverdriveNavBtn = document.getElementById('castleOverdriveNavBtn'); if (castleOverdriveNavBtn) castleOverdriveNavBtn.onclick = () => { RETURN_TO_CASTLE_MENU = true; render(overdriveBayScreen()); };
@@ -6041,6 +6385,7 @@ function render(html) {
     if (!BATTLE.pendingTarget) return;
     if (BATTLE.pendingTarget.type === 'burn') chooseBurnTarget(k);
     else if (BATTLE.pendingTarget.type === 'hex') chooseHexTarget(k);
+    else if (BATTLE.pendingTarget.type === 'ice') chooseIceTarget(k);
     else chooseCurseTarget(k);
   });
   const cancelTargetBtn = document.getElementById('cancelPendingTargetBtn'); if (cancelTargetBtn) cancelTargetBtn.onclick = () => cancelPendingTarget();

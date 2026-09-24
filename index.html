@@ -12,6 +12,7 @@
     --blue:#4a5fc7; --blue-dark:#1a2038; --blue-light:#232a4d;
     --white:#2b3350; --bg:linear-gradient(135deg, #0b0f19 0%, #151b2d 100%); --ink:#ffffff; --dim:#8b93c4;
     --amber:#1fb6a6; --red:#e5484d; --green:#2fae66; --purple:#8a4fe0; --gold:#d4af00; --energy:#00f5d4; --defense:#2563a8; --defense-light:#e8f0f8; --defense-border:#6a94c4;
+    --hex:#c23fc4; --ice:#3fcfef; --lightning:#f2c94c;
     --disp:'Aptos','Aptos Display',ui-sans-serif,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
     --mono:'Aptos','Aptos Display',ui-sans-serif,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
   }
@@ -20,6 +21,8 @@
   body.world-1 .mapwrap{background:linear-gradient(0deg,rgba(31,182,166,.08) 1px,transparent 1px) 0 0/100% 32px,linear-gradient(90deg,rgba(31,182,166,.08) 1px,transparent 1px) 0 0/32px 100%,linear-gradient(135deg,#061b36 0%,#082d4d 52%,#075b68 100%)}
   body.world-2 .mapwrap{background:linear-gradient(0deg,rgba(132,170,84,.07) 1px,transparent 1px) 0 0/100% 32px,linear-gradient(90deg,rgba(132,170,84,.07) 1px,transparent 1px) 0 0/32px 100%,linear-gradient(135deg,#18261b 0%,#253323 52%,#17251d 100%)}
   body.world-3 .mapwrap{background:linear-gradient(0deg,rgba(151,105,214,.07) 1px,transparent 1px) 0 0/100% 32px,linear-gradient(90deg,rgba(151,105,214,.07) 1px,transparent 1px) 0 0/32px 100%,linear-gradient(135deg,#130f20 0%,#20152f 52%,#29183c 100%)}
+  body.world-5 .mapwrap{background:linear-gradient(0deg,rgba(63,207,239,.08) 1px,transparent 1px) 0 0/100% 32px,linear-gradient(90deg,rgba(63,207,239,.08) 1px,transparent 1px) 0 0/32px 100%,linear-gradient(135deg,#0a1826 0%,#0f2438 52%,#123044 100%)}
+  body.world-6 .mapwrap{background:linear-gradient(0deg,rgba(242,201,76,.07) 1px,transparent 1px) 0 0/100% 32px,linear-gradient(90deg,rgba(242,201,76,.07) 1px,transparent 1px) 0 0/32px 100%,linear-gradient(135deg,#1c1526 0%,#241a2e 52%,#2e1a24 100%)}
   button{font-family:var(--disp);cursor:pointer}
   #app{max-width:1180px;margin:0 auto;padding:60px 18px 100px}
   .game-stage{}
@@ -104,6 +107,9 @@
   .deckStack .card.back::after{content:none}
   .wo-btn.red{background:var(--red);border-color:#a83236}
   .wo-btn.teal{background:transparent;border:2px solid #1fb6a6;color:#1fb6a6;box-shadow:none}
+  .wo-btn.cyan{background:#3fcfef;border-color:#1c9fb8;color:#062733}
+  .wo-btn.magenta{background:#c23fc4;border-color:#8a2c8c}
+  .wo-btn.gold{background:#f2c94c;border-color:#b8931f;color:#3a2c05}
   .duelMatchup {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -275,6 +281,14 @@
   .itemCard.kind-storage .hdr{color:#3d8fa8 !important}
   .itemCard.kind-defense{background:rgba(205,127,50,0.12) !important;border-color:#cd7f32 !important;box-shadow:none}
   .itemCard.kind-defense .hdr{color:#cd7f32 !important}
+  .itemCard.kind-hex{background:rgba(194,63,196,0.12) !important;border-color:#c23fc4 !important;box-shadow:none}
+  .itemCard.kind-hex .hdr{color:#c23fc4 !important}
+  .itemCard.kind-ice{background:rgba(63,207,239,0.12) !important;border-color:#3fcfef !important;box-shadow:none}
+  .itemCard.kind-ice .hdr{color:#3fcfef !important}
+  .itemCard.kind-lightning{background:rgba(242,201,76,0.12) !important;border-color:#f2c94c !important;box-shadow:none}
+  .itemCard.kind-lightning .hdr{color:#f2c94c !important}
+  .itemCard.frozenLock{position:relative;filter:saturate(0.85)}
+  .itemCard.frozenLock::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(135deg,rgba(63,207,239,0.10) 0 6px,transparent 6px 12px);border-radius:inherit;pointer-events:none}
   .itemCard.kind-weightless{background:#f5f7fa !important;border:2px solid #ffffff !important;box-shadow:0 0 0 1px rgba(0,0,0,0.15)}
   .itemCard.kind-weightless .hdr,.itemCard.kind-weightless .note{color:#1a1a2e !important;font-weight:700}
   .itemCard.cursed{border-color:var(--purple) !important;box-shadow:inset 0 0 12px rgba(138,79,224,0.3)}
@@ -571,6 +585,9 @@ function playSfx(kind) {
       else if (kind === 'curse') { tone(120, 60, 0.5, 'sawtooth', 0.14); tone(127, 64, 0.5, 'sawtooth', 0.06, 0.02); }
       else if (kind === 'burn') { tone(150, 650, 0.25, 'triangle', 0.16); }
       else if (kind === 'armor') { clang(3100, 0.08, 0.18); ring(2080, 0.2, 0.1, 0.005); ring(3020, 0.14, 0.07, 0.011); tone(220, 85, 0.16, 'triangle', 0.14, 0.012); }
+      else if (kind === 'freeze') { tone(1900, 700, 0.22, 'sine', 0.12); tone(2400, 1100, 0.16, 'sine', 0.07, 0.05); }
+      else if (kind === 'zap') { clang(4200, 0.05, 0.22, 0, 22); tone(1400, 300, 0.14, 'sawtooth', 0.14, 0.01); }
+      else if (kind === 'hex') { tone(320, 520, 0.1, 'sawtooth', 0.12); tone(190, 90, 0.35, 'sawtooth', 0.1, 0.05); }
     } catch (e) {}
   };
   if (ctx.state === 'suspended') { ctx.resume().then(fire).catch(() => {}); }
@@ -632,7 +649,8 @@ function itemPowerScore(item) {
   const maxCards = item.maxCards || 1;
   const usesPerTurn = item.usesPerTurn || 1;
   const bonusMult = 1 + (item.bonus ? (item.bonus.base || 0) : 0);
-  return Math.round(usesPerTurn * maxCards * AVG_CARD_VALUE * (item.baseMult ?? 1) * bonusMult);
+  const lightningDiscount = item.kind === 'lightning' ? LIGHTNING_AVG_MULT : 1;
+  return Math.round(usesPerTurn * maxCards * AVG_CARD_VALUE * (item.baseMult ?? 1) * bonusMult * lightningDiscount);
 }
 function opponentTraitTags(opp) {
   const tags = [];
@@ -646,12 +664,14 @@ function opponentTraitTags(opp) {
   if (opp.special?.type === 'redSteal') tags.push('Punishes you for discarding red cards');
   if (opp.usesPerTurn > 1) tags.push(`Attacks ${opp.usesPerTurn} times per turn`);
   const legacyEffects = new Set((opp.attacks || []).map(a => a.effect).filter(Boolean));
-  const itemEffects = new Set((opp.items || []).map(id => ITEMS[id]).filter(Boolean).map(it => (it.kind === 'curse' || it.kind === 'poison' || it.kind === 'burn') ? it.kind : it.opponentEffect).filter(Boolean));
+  const itemEffects = new Set((opp.items || []).map(id => ITEMS[id]).filter(Boolean).map(it => (it.kind === 'curse' || it.kind === 'poison' || it.kind === 'burn' || it.kind === 'hex' || it.kind === 'ice') ? it.kind : it.opponentEffect).filter(Boolean));
   const effects = new Set([...legacyEffects, ...itemEffects]);
   if (effects.has('heal')) tags.push('Can heal itself mid-fight');
   if (effects.has('curse')) tags.push('Can curse one of your Items');
   if (effects.has('poison')) tags.push('Can poison you');
   if (effects.has('burn')) tags.push('Can burn you');
+  if (effects.has('hex')) tags.push('Can hex one of your Items - fire it and it feeds a card back to them');
+  if (effects.has('ice')) tags.push('Can freeze one of your Items - drop cards in to thaw it');
   if (effects.has('stun')) tags.push('Can stun your counter-attack');
   if (effects.has('stealFuel')) tags.push('Can steal fuel');
   if ((opp.attacks || []).some(a => a.discardHand)) tags.push('Can knock cards out of your hand');
@@ -659,6 +679,7 @@ function opponentTraitTags(opp) {
   if ((opp.attacks || []).some(a => a.exactSuitCount)) tags.push('Its attack strength depends on one suit in its hand');
   if ((opp.attacks || []).some(a => a.effect === 'reinforceArmor')) tags.push('Can reinforce its own armor');
   if ((opp.items || []).some(id => ITEMS[id]?.unlockThreshold != null)) tags.push('Builds up a charge, then unleashes one big hit once it fully charges');
+  if ((opp.items || []).some(id => ITEMS[id]?.kind === 'lightning')) tags.push('Its attacks are randomized - damage swings wildly between hits');
   return tags;
 }
 function isConsecutive(cards) {
@@ -695,6 +716,9 @@ const ICON = {
   stash:  `📦`,
   palm:   `🌴`,
   sun:    `☀️`,
+  hex:    `🔮`,
+  ice:    `❄️`,
+  lightning: `⚡`,
 };
 function art(entity, px) {
   const fb = (entity && entity.icon) || ICON.truck;
@@ -928,7 +952,21 @@ function formatKindAmount(item, kindTagHTML) {
   if (!amountText) return kindTagHTML || '';
   return kindTagHTML ? [kindTagHTML, amountText].filter(Boolean).join(' ') : `<b>Attack</b> ${amountText}`;
 }
-function computeItemAmount(item, cards, level, condResult, isOpponent) {
+const LIGHTNING_MIN_ROLL = 0.25;
+const LIGHTNING_MAX_ROLL = 1.0;
+const LIGHTNING_AVG_MULT = (LIGHTNING_MIN_ROLL + LIGHTNING_MAX_ROLL) / 2;
+function rollLightningMultiplier() { return LIGHTNING_MIN_ROLL + Math.random() * (LIGHTNING_MAX_ROLL - LIGHTNING_MIN_ROLL); }
+function computeItemAmount(item, cards, level, condResult, isOpponent, lightningRoll) {
+  const base = computeItemAmountBase(item, cards, level, condResult, isOpponent);
+  if (item.kind !== 'lightning' || !base.amount) return base;
+  if (lightningRoll == null) {
+    const previewAmount = Math.round(base.amount * LIGHTNING_AVG_MULT);
+    return { amount: previewAmount, breakdown: `${base.breakdown} ⚡ rolls ${Math.round(LIGHTNING_MIN_ROLL * 100)}-${Math.round(LIGHTNING_MAX_ROLL * 100)}% power on fire` };
+  }
+  const finalAmount = Math.round(base.amount * lightningRoll);
+  return { amount: finalAmount, breakdown: `${base.breakdown} ⚡ ${Math.round(lightningRoll * 100)}% surge = ${finalAmount}` };
+}
+function computeItemAmountBase(item, cards, level, condResult, isOpponent) {
   const worldMult = isOpponent ? (RUN.worldMultiplier || 1.0) : 1;
   if (item.perFaceCardDamage != null) {
     const faceCount = cards.filter(c => c.rank >= 11 && c.rank <= 13).length;
@@ -1514,6 +1552,35 @@ const ITEMS = {
     condition: { type: 'any', exactCount: 1 }, flatAmount: 10, opponentEffect: 'stealFuel',
     note: 'Needs exactly 1 card. A small hit, and it siphons a bit of your fuel.' },
 
+  /* ---- New mechanics: Hex, Ice, and Lightning items (available to the player from any world) ---- */
+  hex_five_finger: { id: 'hex_five_finger', name: 'Five-Finger Discount', cost: 50, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1, minRow: 1,
+    condition: { type: 'pokerTier', tier: 1 }, baseMult: 1.1, kind: 'hex',
+    note: 'Needs a Pair. Deals damage and pickpockets a card straight out of their hand.' },
+  hex_black_market: { id: 'hex_black_market', name: 'Black Market Parts', cost: 70, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1, minRow: 2,
+    condition: { type: 'colorCount', color: 'blk', count: 3 }, baseMult: 1.3, kind: 'hex',
+    note: 'Needs 3+ Black cards. Deals damage and swipes a card off the black market - straight into your hand.' },
+  hex_repo_switch: { id: 'hex_repo_switch', name: 'Repo Switcheroo', cost: 60, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1, minRow: 2,
+    condition: { type: 'suitCount', suit: '♠', count: 2 }, baseMult: 1.2, kind: 'hex',
+    note: 'Needs at least 2 Spades. Deals damage and swaps a card out of their hand before they notice.' },
+  ice_coolant_burst: { id: 'ice_coolant_burst', name: 'Coolant Burst', cost: 55, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1, minRow: 1,
+    condition: { type: 'pokerTier', tier: 1 }, baseMult: 1.1, kind: 'ice',
+    note: 'Needs a Pair. Deals damage and freezes one of their Items solid for 2 turns.' },
+  ice_ac_overload: { id: 'ice_ac_overload', name: 'AC Overload', cost: 75, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1, minRow: 2,
+    condition: { type: 'straightLen', len: 3 }, baseMult: 1.45, kind: 'ice',
+    note: 'Needs a 3-card Straight (example: 6, 7, 8). Deals damage and freezes one of their Items solid for 2 turns.' },
+  ice_brake_chill: { id: 'ice_brake_chill', name: 'Frozen Brake Line', cost: 45, maxCards: 1, usesPerTurn: 1, usesPerTurnPerLevel: 1, minRow: 1,
+    condition: { type: 'exactRank', rank: 2 }, flatAmount: 14, kind: 'ice',
+    note: 'Needs a 2. Small hit, but it freezes one of their Items solid for 2 turns regardless.' },
+  zap_power_surge: { id: 'zap_power_surge', name: 'Power Surge', cost: 60, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1, minRow: 1,
+    condition: { type: 'pokerTier', tier: 1 }, baseMult: 1.9, kind: 'lightning',
+    note: 'Needs a Pair. Damage is randomized between 25% and 100% power every time it fires - high risk, high reward.' },
+  zap_short_circuit: { id: 'zap_short_circuit', name: 'Short Circuit', cost: 80, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1, minRow: 2,
+    condition: { type: 'pokerTier', tier: 2 }, baseMult: 1.8, kind: 'lightning',
+    note: 'Needs Two Pair. Damage is randomized between 25% and 100% power every time it fires.' },
+  zap_faulty_alternator: { id: 'zap_faulty_alternator', name: 'Faulty Alternator', cost: 40, maxCards: 1, usesPerTurn: 1, usesPerTurnPerLevel: 1, minRow: 1,
+    condition: { type: 'any', exactCount: 1 }, flatAmount: 18, kind: 'lightning',
+    note: 'Needs exactly 1 card. Damage is randomized between 25% and 100% power every time it fires.' },
+
   /* ---- World 1 (A1A Coastline) attacks - basic hits and armor only, no burn/poison/curse ---- */
   w1_umbrella_gust: { id: 'w1_umbrella_gust', name: 'Umbrella Gust', maxCards: 2, usesPerTurn: 1,
     condition: { type: 'pokerTier', tier: 1 }, baseMult: 1,
@@ -1692,6 +1759,202 @@ const ITEMS = {
   w2_fever_microbe: { id: 'w2_fever_microbe', name: 'Swamp Fever', maxCards: 1, usesPerTurn: 1,
     condition: { type: 'any', exactCount: 1 }, flatAmount: 8, kind: 'poison',
     note: 'Needs exactly 1 card. Poison damage.' },
+
+  /* ---- World 5 (Sunrise Industrial) attacks - Ice is the signature mechanic, Hex mixed in ---- */
+  w5_forklift_freeze: { id: 'w5_forklift_freeze', name: 'Forklift Cold Snap', maxCards: 2, usesPerTurn: 1,
+    condition: { type: 'pokerTier', tier: 1 }, baseMult: 1.1, kind: 'ice',
+    note: 'Needs a Pair. The forks are frosted solid and freeze one of your Items for 2 turns on contact.' },
+  w5_forklift_bump: { id: 'w5_forklift_bump', name: 'Forklift Bump', maxCards: 1, usesPerTurn: 1,
+    condition: { type: 'any', exactCount: 1 }, flatAmount: 8,
+    note: 'Needs exactly 1 card. Backs into you at low speed, beeping the whole time.' },
+  w5_fog_chill: { id: 'w5_fog_chill', name: 'Dry Ice Fog Chill', maxCards: 3, usesPerTurn: 1,
+    condition: { type: 'straightLen', len: 3 }, baseMult: 1.45, kind: 'ice',
+    note: 'Needs a 3-card straight (example: 6, 7, 8). Rolling fog drops the temperature and freezes an Item solid.' },
+  w5_door_freeze: { id: 'w5_door_freeze', name: 'Locker Door Seal', maxCards: 3, usesPerTurn: 1,
+    condition: { type: 'colorCount', color: 'blk', count: 3 }, baseMult: 1.3, kind: 'ice',
+    note: 'Needs 3+ Black cards. The cold storage door slams and seals an Item under a foot of frost.' },
+  w5_hoist_swing: { id: 'w5_hoist_swing', name: 'Chain Hoist Swing', maxCards: 3, usesPerTurn: 1,
+    condition: { type: 'sumThreshold', min: 14 }, flatAmount: 18,
+    note: `Needs cards totaling ${SIGMA_TIP}14+. A loose meat hook swings wide across the fleet.` },
+  w5_beeper_blare: { id: 'w5_beeper_blare', name: 'Backup Beeper Blare', maxCards: 1, usesPerTurn: 1,
+    condition: { type: 'any', exactCount: 1 }, flatAmount: 9,
+    note: 'Needs exactly 1 card. The reefer truck never actually looks before backing up.' },
+  w5_bumper_thud: { id: 'w5_bumper_thud', name: 'Dock Bumper Thud', maxCards: 2, usesPerTurn: 1,
+    condition: { type: 'parity', parity: 'even', mode: 'all' }, baseMult: 1,
+    note: 'Needs all played cards Even. A rubber dock bumper only really connects on a clean, even hit.' },
+  w5_wrap_snag: { id: 'w5_wrap_snag', name: 'Shrink Wrap Snag', maxCards: 2, usesPerTurn: 1,
+    condition: { type: 'suitCount', suit: '♦', count: 2 }, baseMult: 1.2, kind: 'hex',
+    note: 'Needs at least 2 Diamonds. The wrap machine catches an Item mid-spin and feeds a card back to the arm.' },
+  w5_wrap_spin: { id: 'w5_wrap_spin', name: 'Wrap Machine Spin', maxCards: 1, usesPerTurn: 1,
+    condition: { type: 'any', exactCount: 1 }, flatAmount: 7,
+    note: 'Needs exactly 1 card. Just a stray whip of plastic film across the windshield.' },
+  w5_scan_grab: { id: 'w5_scan_grab', name: 'Scanner Grab', maxCards: 1, usesPerTurn: 1,
+    condition: { type: 'exactRank', rank: 7 }, flatAmount: 14, kind: 'hex',
+    note: 'Needs a 7. The drone flags one of your Items as misplaced inventory and grabs a card off it.' },
+  w5_bot_grab: { id: 'w5_bot_grab', name: 'Inventory Bot Grab', maxCards: 2, usesPerTurn: 1,
+    condition: { type: 'pokerTier', tier: 1 }, baseMult: 1.1, kind: 'hex',
+    note: 'Needs a Pair. Rolls up, scans an Item, and quietly walks off with a card.' },
+  w5_bot_beep: { id: 'w5_bot_beep', name: 'Inventory Bot Beep', maxCards: 1, usesPerTurn: 1,
+    condition: { type: 'any', exactCount: 1 }, flatAmount: 7,
+    note: 'Needs exactly 1 card. Clips your ankle on its way past.' },
+  w5_arm_snatch: { id: 'w5_arm_snatch', name: 'Pallet Arm Snatch', maxCards: 3, usesPerTurn: 1,
+    condition: { type: 'colorCount', color: 'red', count: 3 }, baseMult: 1.3, kind: 'hex',
+    note: 'Needs 3+ Red cards. The robot arm mis-wraps your gear and one card ends up on its pallet instead.' },
+  w5_ammonia_fumes: { id: 'w5_ammonia_fumes', name: 'Ammonia Fumes', maxCards: 3, usesPerTurn: 1,
+    condition: { type: 'sumThreshold', min: 12 }, flatAmount: 16, kind: 'poison',
+    note: `Needs cards totaling ${SIGMA_TIP}12+. Poison damage - a coolant line lets go right next to you.` },
+  w5_leak_drip: { id: 'w5_leak_drip', name: 'Coolant Drip', maxCards: 1, usesPerTurn: 1,
+    condition: { type: 'any', exactCount: 1 }, flatAmount: 6,
+    note: 'Needs exactly 1 card. A slow drip finds the one gap in your windshield.' },
+  w5_coil_corrode: { id: 'w5_coil_corrode', name: 'Freezer Coil Corrosion', maxCards: 3, usesPerTurn: 1,
+    condition: { type: 'suitCount', suit: '♣', count: 3 }, flatAmount: 20, kind: 'poison',
+    note: 'Needs at least 3 Clubs. Poison damage - decades of rust flake off in one bad breath.' },
+  w5_compressor_blowout: { id: 'w5_compressor_blowout', name: 'Compressor Blowout', maxCards: 3, usesPerTurn: 1,
+    condition: { type: 'sumExact', value: 18 }, flatAmount: 27, kind: 'burn',
+    note: `Cards played must total exactly ${SIGMA_TIP}18. The compressor finally cooks off in one loud burst.` },
+  w5_compressor_hum: { id: 'w5_compressor_hum', name: 'Compressor Hum', maxCards: 1, usesPerTurn: 1,
+    condition: { type: 'any', exactCount: 1 }, flatAmount: 6,
+    note: 'Needs exactly 1 card. A dull vibration you feel more than hear.' },
+  w5_panel_arc: { id: 'w5_panel_arc', name: 'Breaker Panel Arc', maxCards: 1, usesPerTurn: 1,
+    condition: { type: 'cardIn', cards: [{ rank: 11, suit: '♣' }] }, flatAmount: 13, kind: 'burn',
+    note: 'Needs the Jack of Clubs. Burn damage - the panel only ever picks the worst possible moment to arc.' },
+  w5_catwalk_slip: { id: 'w5_catwalk_slip', name: 'Catwalk Slip', maxCards: 1, usesPerTurn: 1,
+    condition: { type: 'exactRank', rank: 5 }, flatAmount: 13, kind: 'ice',
+    note: 'Needs a 5. Black ice on a steel grate freezes an Item before you can catch your balance.' },
+  w5_frost_seal: { id: 'w5_frost_seal', name: 'Frost Door Seal', maxCards: 4, usesPerTurn: 1,
+    condition: { type: 'pokerTier', tier: 2 }, baseMult: 1.35, kind: 'ice',
+    note: 'Needs Two Pair. The roll-up door freezes mid-close and seals an Item shut with it.' },
+  w5_chiller_blast: { id: 'w5_chiller_blast', name: 'Blast Chiller Vent', maxCards: 3, usesPerTurn: 1,
+    condition: { type: 'straightLen', len: 3 }, baseMult: 1.45, kind: 'ice',
+    note: 'Needs a 3-card straight (example: 6, 7, 8). A full blast of negative-forty air locks an Item solid.' },
+  w5_chiller_hiss: { id: 'w5_chiller_hiss', name: 'Chiller Hiss', maxCards: 1, usesPerTurn: 1,
+    condition: { type: 'any', exactCount: 1 }, flatAmount: 7,
+    note: 'Needs exactly 1 card. Just the pressure venting off.' },
+  w5_freezer_gust: { id: 'w5_freezer_gust', name: 'Walk-In Freezer Gust', maxCards: 4, usesPerTurn: 1,
+    condition: { type: 'allSuits' }, flatAmount: 32, kind: 'ice',
+    note: 'Needs one of each Suit (4 cards). Slow to line up, but the door opens on a full blast that freezes an Item solid.' },
+  w5_machine_jam: { id: 'w5_machine_jam', name: 'Ice Machine Jam', maxCards: 2, usesPerTurn: 1,
+    condition: { type: 'suitCount', suit: '♠', count: 2 }, baseMult: 1.2, kind: 'ice',
+    note: 'Needs at least 2 Spades. It jams, sprays cubes everywhere, and freezes an Item in the mess.' },
+  w5_plate_skid: { id: 'w5_plate_skid', name: 'Dock Plate Skid', maxCards: 1, usesPerTurn: 1,
+    condition: { type: 'any', exactCount: 1 }, flatAmount: 8,
+    note: 'Needs exactly 1 card. A steel plate skates out from under your tires.' },
+  w5_elite_cryo_blast: { id: 'w5_elite_cryo_blast', name: 'Cryo-Compressor Blast', maxCards: 4, usesPerTurn: 1,
+    condition: { type: 'pokerTier', tier: 2 }, baseMult: 1.5, kind: 'ice',
+    note: 'Needs Two Pair. The whole compressor unit vents at once and freezes an Item hard.' },
+  w5_elite_cryo_slam: { id: 'w5_elite_cryo_slam', name: 'Cryo-Compressor Slam', maxCards: 4, usesPerTurn: 1,
+    condition: { type: 'sumThreshold', min: 18 }, flatAmount: 26,
+    note: `Needs cards totaling ${SIGMA_TIP}18+. Industrial-grade, and it hits like it.` },
+  w5_elite_ai_hex: { id: 'w5_elite_ai_hex', name: 'Warehouse AI Skim', maxCards: 3, usesPerTurn: 1,
+    condition: { type: 'colorCount', color: 'blk', count: 3 }, baseMult: 1.35, kind: 'hex',
+    note: 'Needs 3+ Black cards. The rogue AI reroutes one of your Items through its own inventory system.' },
+  w5_elite_ai_purge: { id: 'w5_elite_ai_purge', name: 'Warehouse AI Purge', maxCards: 3, usesPerTurn: 1,
+    condition: { type: 'sumThreshold', min: 14 }, flatAmount: 20, kind: 'poison',
+    note: `Needs cards totaling ${SIGMA_TIP}14+. Poison damage - it vents the whole coolant loop at once out of spite.` },
+  w5_boss_deepfreeze: { id: 'w5_boss_deepfreeze', name: 'Deep Freeze Purge', maxCards: 5, usesPerTurn: 1,
+    condition: { type: 'sumThreshold', min: 24 }, flatAmount: 34, kind: 'ice',
+    note: `Needs cards totaling ${SIGMA_TIP}24+. The whole facility drops to blast-chill temperature and locks an Item in ice.` },
+  w5_boss_coldsnap_hex: { id: 'w5_boss_coldsnap_hex', name: 'Cold Snap Repossession', maxCards: 4, usesPerTurn: 1,
+    condition: { type: 'pokerTier', tier: 2 }, baseMult: 1.6, kind: 'hex',
+    note: 'Needs Two Pair. The Blast Chiller flags an Item as inventory shrinkage and takes a card for itself.' },
+
+  /* ---- World 6 (Las Olas Boulevard) attacks - Lightning is the signature mechanic, Hex and Curse mixed in ---- */
+  w6_cart_careen: { id: 'w6_cart_careen', name: 'Valet Cart Careen', maxCards: 1, usesPerTurn: 1,
+    condition: { type: 'any', exactCount: 1 }, flatAmount: 9,
+    note: 'Needs exactly 1 card. Nobody told it valets aren\'t supposed to floor it.' },
+  w6_umbrella_flip: { id: 'w6_umbrella_flip', name: 'Patio Umbrella Flip', maxCards: 2, usesPerTurn: 1,
+    condition: { type: 'sumThreshold', min: 8 }, flatAmount: 11,
+    note: `Needs cards totaling ${SIGMA_TIP}8+. Storm wind turns a cafe umbrella into a spear.` },
+  w6_streetlight_arc: { id: 'w6_streetlight_arc', name: 'Streetlight Arc', maxCards: 2, usesPerTurn: 1,
+    condition: { type: 'pokerTier', tier: 1 }, baseMult: 1.9, kind: 'lightning',
+    note: 'Needs a Pair. Damage is randomized between 25% and 100% power every time it fires - a live wire whipping in the wind.' },
+  w6_streetlight_sway: { id: 'w6_streetlight_sway', name: 'Streetlight Sway', maxCards: 1, usesPerTurn: 1,
+    condition: { type: 'any', exactCount: 1 }, flatAmount: 7,
+    note: 'Needs exactly 1 card. Just a loose pole knocking against your mirror.' },
+  w6_lights_short: { id: 'w6_lights_short', name: 'String Lights Short', maxCards: 1, usesPerTurn: 1,
+    condition: { type: 'exactRank', rank: 3 }, flatAmount: 22, kind: 'lightning',
+    note: 'Needs a 3. Damage is randomized between 25% and 100% power every time it fires. A whole strand pops at once.' },
+  w6_alarm_shock: { id: 'w6_alarm_shock', name: 'Boutique Alarm Shock', maxCards: 2, usesPerTurn: 1,
+    condition: { type: 'suitCount', suit: '♥', count: 2 }, baseMult: 2.0, kind: 'lightning',
+    note: 'Needs at least 2 Hearts. Damage is randomized between 25% and 100% power every time it fires. The panel overloads and arcs straight at you.' },
+  w6_charger_surge: { id: 'w6_charger_surge', name: 'EV Charger Surge', maxCards: 4, usesPerTurn: 1,
+    condition: { type: 'pokerTier', tier: 2 }, baseMult: 2.0, kind: 'lightning',
+    note: 'Needs Two Pair. Damage is randomized between 25% and 100% power every time it fires. The cable arcs the second it catches rain.' },
+  w6_charger_beep: { id: 'w6_charger_beep', name: 'Charger Error Beep', maxCards: 1, usesPerTurn: 1,
+    condition: { type: 'any', exactCount: 1 }, flatAmount: 7,
+    note: 'Needs exactly 1 card. It just beeps at you, furious and uncharged.' },
+  w6_flood_surge: { id: 'w6_flood_surge', name: 'Storm Surge Flood', maxCards: 3, usesPerTurn: 1,
+    condition: { type: 'sumThreshold', min: 14 }, flatAmount: 18,
+    note: `Needs cards totaling ${SIGMA_TIP}14+. The gutters can't keep up and the boulevard floods ankle-deep in seconds.` },
+  w6_frond_smack: { id: 'w6_frond_smack', name: 'Palm Frond Smack', maxCards: 1, usesPerTurn: 1,
+    condition: { type: 'any', exactCount: 1 }, flatAmount: 8,
+    note: 'Needs exactly 1 card. A whole frond comes down sideways in the wind.' },
+  w6_line_arc: { id: 'w6_line_arc', name: 'Downed Power Line Arc', maxCards: 3, usesPerTurn: 1,
+    condition: { type: 'straightLen', len: 3 }, baseMult: 2.5, kind: 'lightning',
+    note: 'Needs a 3-card straight (example: 6, 7, 8). Damage is randomized between 25% and 100% power every time it fires - the line is still live and whipping across the road.' },
+  w6_line_snap: { id: 'w6_line_snap', name: 'Power Line Snap', maxCards: 1, usesPerTurn: 1,
+    condition: { type: 'any', exactCount: 1 }, flatAmount: 8,
+    note: 'Needs exactly 1 card. A snapped end skitters off your hood.' },
+  w6_signal_flicker: { id: 'w6_signal_flicker', name: 'Traffic Signal Flicker', maxCards: 2, usesPerTurn: 1,
+    condition: { type: 'colorCount', color: 'red', count: 2 }, baseMult: 1.9, kind: 'lightning',
+    note: 'Needs 2+ Red cards. Damage is randomized between 25% and 100% power every time it fires. Every bulb flashes at once, then dies.' },
+  w6_laser_grab: { id: 'w6_laser_grab', name: 'Jewelry Laser Grid Grab', maxCards: 4, usesPerTurn: 1,
+    condition: { type: 'allSuits' }, flatAmount: 30, kind: 'hex', startArmor: 15,
+    note: 'Needs one of each Suit (4 cards). Slow to trip, but the grid catches an Item in the beams and swaps a card straight into the display case.' },
+  w6_laser_scan: { id: 'w6_laser_scan', name: 'Laser Grid Scan', maxCards: 1, usesPerTurn: 1,
+    condition: { type: 'any', exactCount: 1 }, flatAmount: 7,
+    note: 'Needs exactly 1 card. A stray beam catches your bumper.' },
+  w6_pocket_lift: { id: 'w6_pocket_lift', name: 'Crowd Pocket Lift', maxCards: 2, usesPerTurn: 1,
+    condition: { type: 'pokerTier', tier: 1 }, baseMult: 1.1, kind: 'hex',
+    note: 'Needs a Pair. Slips through the crowd and lifts a card off an Item without you noticing.' },
+  w6_con_swindle: { id: 'w6_con_swindle', name: 'Sidewalk Swindle', maxCards: 1, usesPerTurn: 1,
+    condition: { type: 'cardIn', cards: [{ rank: 13, suit: '♥' }] }, flatAmount: 14, kind: 'hex',
+    note: 'Needs the King of Hearts. The charm only works on that one card, but when it lands he walks off with a card of yours.' },
+  w6_con_chatter: { id: 'w6_con_chatter', name: 'Con Artist Chatter', maxCards: 1, usesPerTurn: 1,
+    condition: { type: 'any', exactCount: 1 }, flatAmount: 6,
+    note: 'Needs exactly 1 card. Keeps you distracted just long enough to clip your mirror.' },
+  w6_ticket_switch: { id: 'w6_ticket_switch', name: 'Valet Ticket Switch', maxCards: 2, usesPerTurn: 1,
+    condition: { type: 'suitCount', suit: '♣', count: 2 }, baseMult: 1.2, kind: 'hex',
+    note: 'Needs at least 2 Clubs. Hands you back the wrong ticket, and somehow a card of yours besides.' },
+  w6_awning_strike: { id: 'w6_awning_strike', name: 'Lightning-Struck Awning', maxCards: 3, usesPerTurn: 1,
+    condition: { type: 'sumThreshold', min: 14 }, flatAmount: 30, kind: 'lightning',
+    note: `Needs cards totaling ${SIGMA_TIP}14+. Damage is randomized between 25% and 100% power every time it fires. A direct strike sends the whole frame down.` },
+  w6_ac_arc: { id: 'w6_ac_arc', name: 'Rooftop AC Arc', maxCards: 2, usesPerTurn: 1,
+    condition: { type: 'parity', parity: 'even', mode: 'all' }, baseMult: 1.8, kind: 'lightning',
+    note: 'Needs all played cards Even. Damage is randomized between 25% and 100% power every time it fires. The unit shorts and drops sparks three stories down.' },
+  w6_drain_curse: { id: 'w6_drain_curse', name: 'Storm Drain Whirlpool', maxCards: 3, usesPerTurn: 1,
+    condition: { type: 'sumThreshold', min: 12 }, flatAmount: 16, kind: 'curse',
+    note: `Needs cards totaling ${SIGMA_TIP}12+. Something about a whirlpool swallowing your hubcap curses one of your Items.` },
+  w6_drain_pull: { id: 'w6_drain_pull', name: 'Gutter Pull', maxCards: 1, usesPerTurn: 1,
+    condition: { type: 'any', exactCount: 1 }, flatAmount: 7,
+    note: 'Needs exactly 1 card. The current tugs you a foot sideways.' },
+  w6_meter_curse: { id: 'w6_meter_curse', name: 'Broken Meter Curse', maxCards: 1, usesPerTurn: 1,
+    condition: { type: 'cardIn', cards: [{ rank: 12, suit: '♦' }] }, flatAmount: 13, kind: 'curse',
+    note: 'Needs the Queen of Diamonds. Overstay a meter that\'s already broken and something old and petty curses an Item.' },
+  w6_neon_flicker: { id: 'w6_neon_flicker', name: 'Neon Sign Flicker', maxCards: 1, usesPerTurn: 1,
+    condition: { type: 'exactRank', rank: 9 }, flatAmount: 23, kind: 'lightning',
+    note: 'Needs a 9. Damage is randomized between 25% and 100% power every time it fires. Waterlogged wiring finally lets go all at once.' },
+  w6_table_tip: { id: 'w6_table_tip', name: 'Cafe Table Tip', maxCards: 1, usesPerTurn: 1,
+    condition: { type: 'any', exactCount: 1 }, flatAmount: 8,
+    note: 'Needs exactly 1 card. Wind catches it wrong and it goes end over end.' },
+  w6_elite_van_bolt: { id: 'w6_elite_van_bolt', name: 'Storm Chaser Bolt', maxCards: 4, usesPerTurn: 1,
+    condition: { type: 'pokerTier', tier: 2 }, baseMult: 2.0, kind: 'lightning',
+    note: 'Needs Two Pair. Damage is randomized between 25% and 100% power every time it fires. The van\'s own mast rig takes a direct hit and redirects it at you.' },
+  w6_elite_van_ram: { id: 'w6_elite_van_ram', name: 'Storm Chaser Ram', maxCards: 4, usesPerTurn: 1,
+    condition: { type: 'sumThreshold', min: 18 }, flatAmount: 26,
+    note: `Needs cards totaling ${SIGMA_TIP}18+. It's chasing the story, and the story is currently your fleet.` },
+  w6_elite_thief_snatch: { id: 'w6_elite_thief_snatch', name: 'Jewel Thief Snatch', maxCards: 3, usesPerTurn: 1,
+    condition: { type: 'colorCount', color: 'blk', count: 3 }, baseMult: 1.35, kind: 'hex',
+    note: 'Needs 3+ Black cards. Smooth, fast, and gone with a card off an Item before you clock the move.' },
+  w6_elite_thief_curse: { id: 'w6_elite_thief_curse', name: 'Jewel Thief Curse', maxCards: 2, usesPerTurn: 1,
+    condition: { type: 'pokerTier', tier: 1 }, baseMult: 1.15, kind: 'curse',
+    note: 'Needs a Pair. Leaves a fake behind, and it curses one of your Items on the way out.' },
+  w6_boss_lightning_barrage: { id: 'w6_boss_lightning_barrage', name: 'Squall Line Barrage', maxCards: 5, usesPerTurn: 1,
+    condition: { type: 'sumThreshold', min: 24 }, flatAmount: 56, kind: 'lightning',
+    note: `Needs cards totaling ${SIGMA_TIP}24+. Damage is randomized between 25% and 100% power every time it fires. The whole boulevard goes white for a second.` },
+  w6_boss_static_curse: { id: 'w6_boss_static_curse', name: 'Squall Line Static Curse', maxCards: 4, usesPerTurn: 1,
+    condition: { type: 'pokerTier', tier: 2 }, baseMult: 1.6, kind: 'curse',
+    note: 'Needs Two Pair. The static charge alone is enough to curse one of your Items before the thunder even hits.' },
 };
 
 /* ========== HERO ROSTER (6 total - 4 playable, 2 reserved for future vehicles) ========== */
@@ -1807,6 +2070,9 @@ function renderStandardItemCard(item, opts = {}) {
     : eKind === 'burn' ? `<span class="effectTip burnText" data-tip="Burn hits for full damage, then half, then a quarter, fading out over 3 turns."><b>Burn</b></span>`
     : eKind === 'curse' ? `<span class="effectTip curseText" data-tip="Curse goes off if this item isn't fired again before the opponent's next turn."><b>Curse</b></span>`
     : eKind === 'defense' ? `<span class="effectTip" style="color:var(--defense)" data-tip="Armor protects against incoming attacks, absorbing damage equal to the amount shown."><b>Armor</b></span>`
+    : eKind === 'hex' ? `<span class="effectTip" style="color:var(--hex)" data-tip="Hex messes with card flow between you and the opponent - firing a hexed Item feeds one of its cards to whoever cast the hex."><b>Hex</b></span>`
+    : eKind === 'ice' ? `<span class="effectTip" style="color:var(--ice)" data-tip="Ice deals damage and freezes an Item solid on top of it. Cards must be fed into a frozen Item to thaw it before it works again."><b>Ice</b></span>`
+    : eKind === 'lightning' ? `<span class="effectTip" style="color:var(--lightning)" data-tip="Lightning damage is randomized between 25% and 100% power every time it fires."><b>Lightning</b></span>`
     : '';
   const effUnlockThreshold = item.id === 'impound_release' ? Math.max(35, (item.unlockThreshold || 45) - utilityLevel('impound_release') * 5) : item.unlockThreshold;
   const unlockLine = item.unlockThreshold != null && footerHTML == null ? `<div class="note" style="margin:2px 0 0"><span class="hoverTip" data-title="Play cards through it to count down a ${effUnlockThreshold}-point charge (based on the cards' value, no damage dealt). Once charged, it draws 4 cards each use, once per turn, for the rest of that battle. Charge resets every new battle."><b>Charges</b> at ${effUnlockThreshold}</span></div>` : '';
@@ -1985,6 +2251,64 @@ const WORLD_4_POOLS = {
   ],
   boss: { id: 'bridge_overlord', name: 'The Bridge Overlord', icon: '🌉', image: 'Hazards/wildfire.jpg', hp: 190, minTier: 3, drawRate: 5, boss: true, usesPerTurn: 2, items: ['opp_bascule_crush', 'opp_warning_bell'], attackInfo: 'Attack: uses its best poker hand for heavy damage and can hit twice a turn. Crushes with its bascule span and siphons your fuel.' },
 };
+const WORLD_5_POOLS = {
+  regulars: [
+    { id: 'w5_frozen_forklift', name: 'Frozen Forklift Pallet', icon: '🧊', image: 'Hazards/scrap-heap.jpg', hp: 58, minTier: 1, drawRate: 2, items: ['w5_forklift_freeze', 'w5_forklift_bump'] },
+    { id: 'w5_dry_ice_fog', name: 'Dry Ice Fog Vent', icon: '❄️', image: 'Hazards/blackout.jpg', hp: 56, minTier: 1, drawRate: 2, items: ['w5_fog_chill'] },
+    { id: 'w5_locker_door', name: 'Cold Storage Locker Door', icon: '🚪', image: 'Hazards/broken-meter.jpg', hp: 62, minTier: 1, drawRate: 2, startArmor: 18, items: ['w5_door_freeze'] },
+    { id: 'w5_chain_hoist', name: 'Meat Locker Chain Hoist', icon: '⛓️', image: 'Hazards/scrap-heap.jpg', hp: 60, minTier: 1, drawRate: 2, items: ['w5_hoist_swing'] },
+    { id: 'w5_backup_beeper', name: 'Refrigerated Truck Backup Beeper', icon: '🚛', image: 'Hazards/jaywalker.jpg', hp: 64, minTier: 1, drawRate: 2, items: ['w5_beeper_blare'] },
+    { id: 'w5_dock_bumper', name: 'Loading Dock Bumper', icon: '🛑', image: 'Hazards/pothole.jpg', hp: 58, minTier: 1, drawRate: 2, items: ['w5_bumper_thud'] },
+    { id: 'w5_shrink_wrap', name: 'Shrink Wrap Robot Arm', icon: '🤖', image: 'Hazards/evil-mechanic.jpg', hp: 60, minTier: 1, drawRate: 2, items: ['w5_wrap_snag', 'w5_wrap_spin'] },
+    { id: 'w5_scanner_drone', name: 'Warehouse Scanner Drone', icon: '📡', image: 'Hazards/flicker-light.jpg', hp: 54, minTier: 1, drawRate: 2, items: ['w5_scan_grab'] },
+    { id: 'w5_inventory_bot', name: 'Automated Inventory Robot', icon: '🦾', image: 'Hazards/evil-mechanic.jpg', hp: 60, minTier: 1, drawRate: 2, items: ['w5_bot_grab', 'w5_bot_beep'] },
+    { id: 'w5_pallet_wrap_arm', name: 'Pallet Wrap Robot', icon: '🎞️', image: 'Hazards/scrap-heap.jpg', hp: 58, minTier: 1, drawRate: 2, items: ['w5_arm_snatch'] },
+    { id: 'w5_ammonia_leak', name: 'Leaking Ammonia Coolant Line', icon: '☣️', image: 'Hazards/gas-leak.jpg', hp: 54, minTier: 1, drawRate: 2, items: ['w5_ammonia_fumes', 'w5_leak_drip'] },
+    { id: 'w5_rusted_coil', name: 'Rusted Freezer Coil', icon: '🥶', image: 'Hazards/sinkhole.jpg', hp: 56, minTier: 1, drawRate: 2, items: ['w5_coil_corrode'] },
+    { id: 'w5_overheated_compressor', name: 'Overheated Compressor', icon: '🔥', image: 'Hazards/dumpster-fire.jpg', hp: 60, minTier: 1, drawRate: 2, items: ['w5_compressor_blowout', 'w5_compressor_hum'] },
+    { id: 'w5_breaker_panel', name: 'Blown Circuit Breaker Panel', icon: '⚡', image: 'Hazards/downed-line.jpg', hp: 52, minTier: 1, drawRate: 2, items: ['w5_panel_arc'] },
+    { id: 'w5_icy_catwalk', name: 'Icy Catwalk Grate', icon: '🧊', image: 'Hazards/pothole.jpg', hp: 54, minTier: 1, drawRate: 2, items: ['w5_catwalk_slip'] },
+    { id: 'w5_frost_door', name: 'Frost-Covered Roll-Up Door', icon: '❄️', image: 'Hazards/broken-meter.jpg', hp: 62, minTier: 1, drawRate: 2, startArmor: 14, items: ['w5_frost_seal'] },
+    { id: 'w5_blast_chiller', name: 'Cryo-Freeze Blast Chiller', icon: '🥶', image: 'Hazards/scrap-heap.jpg', hp: 60, minTier: 1, drawRate: 2, items: ['w5_chiller_blast', 'w5_chiller_hiss'] },
+    { id: 'w5_walkin_freezer', name: 'Subzero Walk-In Freezer', icon: '🧊', image: 'Hazards/blackout.jpg', hp: 66, minTier: 1, drawRate: 2, items: ['w5_freezer_gust'] },
+    { id: 'w5_ice_machine', name: 'Malfunctioning Ice Machine', icon: '🧊', image: 'Hazards/flicker-light.jpg', hp: 56, minTier: 1, drawRate: 2, items: ['w5_machine_jam'] },
+    { id: 'w5_slippery_plate', name: 'Slippery Dock Plate', icon: '🛼', image: 'Hazards/pothole.jpg', hp: 52, minTier: 1, drawRate: 2, items: ['w5_plate_skid'] },
+  ],
+  elites: [
+    { id: 'w5_cryo_compressor', name: 'Industrial Cryo-Compressor', icon: '🏭', image: 'Hazards/evil-mechanic.jpg', hp: 120, minTier: 2, drawRate: 3, items: ['w5_elite_cryo_blast', 'w5_elite_cryo_slam'] },
+    { id: 'w5_warehouse_ai', name: 'Rogue Warehouse AI', icon: '🖥️', image: 'Hazards/blackout.jpg', hp: 118, minTier: 2, drawRate: 3, items: ['w5_elite_ai_hex', 'w5_elite_ai_purge'] },
+  ],
+  boss: { id: 'blast_chiller_behemoth', name: 'The Blast Chiller', icon: '🥶', image: 'Hazards/wildfire.jpg', hp: 205, minTier: 3, drawRate: 5, boss: true, usesPerTurn: 2, items: ['w5_boss_deepfreeze', 'w5_boss_coldsnap_hex'], attackInfo: 'Attack: uses its best poker hand for heavy damage and can hit twice a turn. Freezes your Items solid and repossesses cards off whatever\'s left thawed.' },
+};
+const WORLD_6_POOLS = {
+  regulars: [
+    { id: 'w6_valet_cart', name: 'Runaway Valet Cart', icon: '🛺', image: 'Hazards/jaywalker.jpg', hp: 62, minTier: 1, drawRate: 2, items: ['w6_cart_careen'] },
+    { id: 'w6_patio_umbrella', name: 'Storm-Tossed Patio Umbrella', icon: '⛱️', image: 'Hazards/pothole.jpg', hp: 58, minTier: 1, drawRate: 2, items: ['w6_umbrella_flip'] },
+    { id: 'w6_streetlight', name: 'Toppled Streetlight', icon: '💡', image: 'Hazards/downed-line.jpg', hp: 64, minTier: 1, drawRate: 2, items: ['w6_streetlight_arc', 'w6_streetlight_sway'] },
+    { id: 'w6_string_lights', name: 'Shorted-Out String Lights', icon: '🎇', image: 'Hazards/flicker-light.jpg', hp: 56, minTier: 1, drawRate: 2, items: ['w6_lights_short'] },
+    { id: 'w6_boutique_alarm', name: 'Overloaded Boutique Alarm', icon: '🚨', image: 'Hazards/angry-citizen.jpg', hp: 60, minTier: 1, drawRate: 2, items: ['w6_alarm_shock'] },
+    { id: 'w6_ev_charger', name: 'Arcing EV Charging Station', icon: '🔌', image: 'Hazards/downed-line.jpg', hp: 64, minTier: 1, drawRate: 2, items: ['w6_charger_surge', 'w6_charger_beep'] },
+    { id: 'w6_gutter_flood', name: 'Storm Surge Gutter Flood', icon: '🌊', image: 'Hazards/flash-flood.jpg', hp: 62, minTier: 1, drawRate: 2, items: ['w6_flood_surge'] },
+    { id: 'w6_palm_frond', name: 'Falling Palm Frond', icon: '🌴', image: 'Hazards/flash-flood.jpg', hp: 54, minTier: 1, drawRate: 2, items: ['w6_frond_smack'] },
+    { id: 'w6_power_line', name: 'Downed Power Line', icon: '⚡', image: 'Hazards/downed-line.jpg', hp: 66, minTier: 1, drawRate: 2, items: ['w6_line_arc', 'w6_line_snap'] },
+    { id: 'w6_traffic_signal', name: 'Sparking Traffic Signal', icon: '🚦', image: 'Hazards/flicker-light.jpg', hp: 58, minTier: 1, drawRate: 2, items: ['w6_signal_flicker'] },
+    { id: 'w6_laser_grid', name: 'Jewelry Store Laser Grid', icon: '💎', image: 'Hazards/broken-meter.jpg', hp: 60, minTier: 1, drawRate: 2, items: ['w6_laser_grab', 'w6_laser_scan'] },
+    { id: 'w6_pickpocket', name: 'Pickpocket in the Crowd', icon: '🤏', image: 'Hazards/angry-mob.jpg', hp: 52, minTier: 1, drawRate: 2, items: ['w6_pocket_lift'] },
+    { id: 'w6_con_artist', name: 'Sidewalk Con Artist', icon: '🎩', image: 'Hazards/angry-citizen.jpg', hp: 56, minTier: 1, drawRate: 2, items: ['w6_con_swindle', 'w6_con_chatter'] },
+    { id: 'w6_ticket_scam', name: 'Valet Ticket Scam', icon: '🎫', image: 'Hazards/broken-meter.jpg', hp: 54, minTier: 1, drawRate: 2, items: ['w6_ticket_switch'] },
+    { id: 'w6_lightning_awning', name: 'Lightning-Struck Awning', icon: '⛈️', image: 'Hazards/downed-line.jpg', hp: 62, minTier: 1, drawRate: 2, items: ['w6_awning_strike'] },
+    { id: 'w6_ac_short', name: 'Rooftop AC Unit Short', icon: '❄️', image: 'Hazards/blackout.jpg', hp: 60, minTier: 1, drawRate: 2, items: ['w6_ac_arc'] },
+    { id: 'w6_storm_drain', name: 'Storm Drain Whirlpool', icon: '🌀', image: 'Hazards/sinkhole.jpg', hp: 60, minTier: 1, drawRate: 2, items: ['w6_drain_curse', 'w6_drain_pull'] },
+    { id: 'w6_broken_meter_hex', name: 'Broken Parking Meter', icon: '🅿️', image: 'Hazards/broken-meter.jpg', hp: 56, minTier: 1, drawRate: 2, items: ['w6_meter_curse'] },
+    { id: 'w6_neon_sign', name: 'Waterlogged Neon Sign', icon: '🪧', image: 'Hazards/flicker-light.jpg', hp: 58, minTier: 1, drawRate: 2, items: ['w6_neon_flicker'] },
+    { id: 'w6_cafe_table', name: 'Wind-Whipped Cafe Table', icon: '☕', image: 'Hazards/jaywalker.jpg', hp: 56, minTier: 1, drawRate: 2, items: ['w6_table_tip'] },
+  ],
+  elites: [
+    { id: 'w6_storm_chaser_van', name: 'Storm Chaser News Van', icon: '📡', image: 'Hazards/evil-mechanic.jpg', hp: 124, minTier: 2, drawRate: 3, items: ['w6_elite_van_bolt', 'w6_elite_van_ram'] },
+    { id: 'w6_jewel_thief', name: 'Boulevard Jewel Thief', icon: '💍', image: 'Hazards/angry-mob.jpg', hp: 120, minTier: 2, drawRate: 3, items: ['w6_elite_thief_snatch', 'w6_elite_thief_curse'] },
+  ],
+  boss: { id: 'squall_line', name: 'The Squall Line', icon: '⛈️', image: 'Hazards/wildfire.jpg', hp: 220, minTier: 3, drawRate: 5, boss: true, usesPerTurn: 2, items: ['w6_boss_lightning_barrage', 'w6_boss_static_curse'], attackInfo: 'Attack: uses its best poker hand for heavy damage and can hit twice a turn. Damage swings wildly with the storm, and every hit risks cursing one of your Items.' },
+};
 const OPPONENT_SWING_CAP = [22, 28, 34, 40, 46, 52, 60];
 function revealFraction(row) { return [1.0, 0.8, 0.6, 0.4, 0.25, 0.1, 0][Math.min(row, 6)]; }
 
@@ -2125,7 +2449,7 @@ function scaleMonsterForNewWorld(baseMonster, worldMultiplier, tier) {
   }
   return scaled;
 }
-const WORLD_POOLS_BY_WORLD = { 1: WORLD_1_POOLS, 2: WORLD_2_POOLS, 3: WORLD_3_POOLS, 4: WORLD_4_POOLS };
+const WORLD_POOLS_BY_WORLD = { 1: WORLD_1_POOLS, 2: WORLD_2_POOLS, 3: WORLD_3_POOLS, 4: WORLD_4_POOLS, 5: WORLD_5_POOLS, 6: WORLD_6_POOLS };
 function generateMap() {
   const nodes = [], edges = [];
   const castleRow = 10;
@@ -2704,8 +3028,8 @@ function battleLog(msg) {
     if (el) el.scrollTop = el.scrollHeight;
   }
 }
-function tryApplyCurse() {
-  const spec = BATTLE.opponent.curse;
+function tryApplyCurse(specOverride) {
+  const spec = specOverride || BATTLE.opponent.curse;
   if (!spec) return;
   if (Math.random() > (spec.chance ?? 1)) return;
   const eligible = RUN.hero.items.map((id, i) => `${id}_${i}`).filter(key => {
@@ -2727,6 +3051,38 @@ function tryApplyCurse() {
   });
   const names = chosen.map(key => ITEMS[key.replace(/_\d+$/, '')].name).join(', ');
   battleLog(`${BATTLE.opponent.name} curses your ${names} - fire ${chosen.length > 1 ? 'them' : 'it'} this turn or take ${spec.amount} damage${chosen.length > 1 ? ' each' : ''}.`);
+}
+function tryApplyHex(specOverride) {
+  const spec = specOverride || BATTLE.opponent.hex;
+  if (!spec) return;
+  if (Math.random() > (spec.chance ?? 1)) return;
+  const eligible = RUN.hero.items.map((id, i) => `${id}_${i}`).filter(key => {
+    const item = ITEMS[key.replace(/_\d+$/, '')];
+    return item && item.kind !== 'storage' && !(BATTLE.itemHexes && BATTLE.itemHexes[key]);
+  });
+  if (!eligible.length) return;
+  const count = Math.min(spec.count || 1, eligible.length);
+  const chosen = shuffle([...eligible]).slice(0, count);
+  BATTLE.itemHexes = BATTLE.itemHexes || {};
+  chosen.forEach(key => { BATTLE.itemHexes[key] = true; });
+  const names = chosen.map(key => ITEMS[key.replace(/_\d+$/, '')].name).join(', ');
+  battleLog(`${BATTLE.opponent.name} hexes your ${names} - the next time you fire ${chosen.length > 1 ? 'them' : 'it'}, one of the cards you play gets fed straight into ${BATTLE.opponent.name}'s hand.`);
+}
+function tryApplyFreeze(specOverride) {
+  const spec = specOverride || BATTLE.opponent.ice;
+  if (!spec) return;
+  if (Math.random() > (spec.chance ?? 1)) return;
+  const eligible = RUN.hero.items.map((id, i) => `${id}_${i}`).filter(key => {
+    const item = ITEMS[key.replace(/_\d+$/, '')];
+    return item && item.kind !== 'storage' && !(BATTLE.itemFrozen && BATTLE.itemFrozen[key]);
+  });
+  if (!eligible.length) return;
+  const count = Math.min(spec.count || 1, eligible.length);
+  const chosen = shuffle([...eligible]).slice(0, count);
+  BATTLE.itemFrozen = BATTLE.itemFrozen || {};
+  chosen.forEach(key => { BATTLE.itemFrozen[key] = { threshold: spec.threshold || 20, progress: 0 }; });
+  const names = chosen.map(key => ITEMS[key.replace(/_\d+$/, '')].name).join(', ');
+  battleLog(`${BATTLE.opponent.name} freezes your ${names} solid - drop cards into it to thaw it before you can use it again.`);
 }
 function detonateBurn() {
   if (!BATTLE || !BATTLE.opponent.burns?.length) return;
@@ -2879,7 +3235,29 @@ function executePlayerAttack(itemId, index) {
     return;
   }
 
-  if (item.kind === 'storage') { render(battleScreen()); return; } 
+  if (item.kind === 'storage') { render(battleScreen()); return; }
+
+  const frozenState = BATTLE.itemFrozen && BATTLE.itemFrozen[slotKey];
+  if (frozenState) {
+    if (!idxs.length) { battleLog(`${item.name} is frozen solid - drop cards into it to thaw it.`); render(battleScreen()); return; }
+    const frozenCards = idxs.map(i => BATTLE.hand[i]);
+    const rawSum = frozenCards.reduce((a, c) => a + cardValue(c.rank), 0);
+    frozenState.progress += rawSum;
+    const remaining = Math.max(0, frozenState.threshold - frozenState.progress);
+    const frozenCardsStr = frozenCards.map(c => `${rankLabel(c.rank)}${c.suit}`).join(' ');
+    idxs.forEach(i => BATTLE.usedThisTurn.add(i));
+    BATTLE.slots[slotKey] = [];
+    if (remaining <= 0) {
+      delete BATTLE.itemFrozen[slotKey];
+      battleLog(`${item.name} thaws out! [${frozenCardsStr}] - it's ready to fire normally again.`);
+      playSfx('freeze');
+    } else {
+      battleLog(`${item.name} - fed [${frozenCardsStr}] into the ice, ${remaining} more needed to thaw.`);
+    }
+    saveRun();
+    render(battleScreen());
+    return;
+  }
 
   if (!idxs.length) {
     battleLog(`${item.name} has no cards assigned.`);
@@ -2930,7 +3308,8 @@ if (idxs.some(i => BATTLE.usedThisTurn.has(i))) {
   }
   BATTLE.stagedFireCards = BATTLE.stagedFireCards || [];
   cards.forEach(c => { if (c && !BATTLE.stagedFireCards.includes(c)) BATTLE.stagedFireCards.push(c); });
-  const { amount, breakdown } = computeItemAmount(item, cards, level, condResult);
+  const lightningRoll = item.kind === 'lightning' ? rollLightningMultiplier() : null;
+  const { amount, breakdown } = computeItemAmount(item, cards, level, condResult, false, lightningRoll);
   const eKind = effectiveKind(item, index);
   const cardsStr = cards.map(c => `${rankLabel(c.rank)}${c.suit}`).join(' ');
  if (item.unlockThreshold != null) {
@@ -2979,6 +3358,51 @@ if (idxs.some(i => BATTLE.usedThisTurn.has(i))) {
       BATTLE.pendingTarget = { type: 'curse', amount, itemName: item.name };
       battleLog(`${item.name} [${cardsStr}] - ${condResult.label}! Select an item slot on ${BATTLE.opponent.name}'s inventory to curse for ${amount} (${breakdown}).`);
       playSfx('curse');
+    } else if (eKind === 'ice') {
+      const atkBefore = BATTLE.opponent.hpNow;
+      let dmgToApply = amount;
+      let armorAbsorbed = 0;
+      if (BATTLE.opponent.armor > 0) {
+        armorAbsorbed = Math.min(BATTLE.opponent.armor, dmgToApply);
+        BATTLE.opponent.armor -= armorAbsorbed;
+        dmgToApply -= armorAbsorbed;
+      }
+      BATTLE.opponent.hpNow = Math.max(0, BATTLE.opponent.hpNow - dmgToApply);
+      if (dmgToApply === atkBefore && atkBefore > 0) BATTLE.exactKill = true;
+      let freezeNote = '';
+      const freezeEligible = (BATTLE.opponent.items || []).filter(id => id !== itemId);
+      if (freezeEligible.length) {
+        const targetId = freezeEligible[Math.floor(Math.random() * freezeEligible.length)];
+        BATTLE.opponentItemFrozenTurns = BATTLE.opponentItemFrozenTurns || {};
+        BATTLE.opponentItemFrozenTurns[targetId] = 2;
+        freezeNote = ` Freezes their ${ITEMS[targetId]?.name || 'item'} solid for 2 turns.`;
+      }
+      const armorNote = armorAbsorbed > 0 ? ` (${armorAbsorbed} blocked by their armor${BATTLE.opponent.armor > 0 ? `, ${BATTLE.opponent.armor} left` : ''})` : '';
+      battleLog(`${item.name} [${cardsStr}] - ${condResult.label}! ${amount} damage${armorNote} (${breakdown}).${freezeNote}`);
+      playSfx('freeze'); flashScreen('hit-opponent');
+    } else if (eKind === 'hex') {
+      const atkBefore = BATTLE.opponent.hpNow;
+      let dmgToApply = amount;
+      let armorAbsorbed = 0;
+      if (BATTLE.opponent.armor > 0) {
+        armorAbsorbed = Math.min(BATTLE.opponent.armor, dmgToApply);
+        BATTLE.opponent.armor -= armorAbsorbed;
+        dmgToApply -= armorAbsorbed;
+      }
+      BATTLE.opponent.hpNow = Math.max(0, BATTLE.opponent.hpNow - dmgToApply);
+      if (dmgToApply === atkBefore && atkBefore > 0) BATTLE.exactKill = true;
+      let stealNote = '';
+      if (BATTLE.oppPool.length) {
+        const si = Math.floor(Math.random() * BATTLE.oppPool.length);
+        const [stolen] = BATTLE.oppPool.splice(si, 1);
+        stolen.revealed = true;
+        BATTLE.hand.push(stolen);
+        resortHandAndRelink(RUN.handSortMode);
+        stealNote = ` Hexes a card straight out of their hand - drew ${rankLabel(stolen.rank)}${stolen.suit}.`;
+      }
+      const armorNote = armorAbsorbed > 0 ? ` (${armorAbsorbed} blocked by their armor${BATTLE.opponent.armor > 0 ? `, ${BATTLE.opponent.armor} left` : ''})` : '';
+      battleLog(`${item.name} [${cardsStr}] - ${condResult.label}! ${amount} damage${armorNote} (${breakdown}).${stealNote}`);
+      playSfx('hex'); flashScreen('hit-opponent');
     } else {
       const atkBefore = BATTLE.opponent.hpNow;
       let dmgToApply = amount;
@@ -3002,6 +3426,16 @@ if (idxs.some(i => BATTLE.usedThisTurn.has(i))) {
     }
   }
   if (BATTLE.itemCurses && BATTLE.itemCurses[slotKey]) { delete BATTLE.itemCurses[slotKey]; battleLog(`${item.name}'s curse cleared.`); }
+  if (BATTLE.itemHexes && BATTLE.itemHexes[slotKey]) {
+    delete BATTLE.itemHexes[slotKey];
+    if (cards.length) {
+      const stolenCard = cards[Math.floor(Math.random() * cards.length)];
+      BATTLE.pendingHexSteal = BATTLE.pendingHexSteal || [];
+      BATTLE.pendingHexSteal.push(stolenCard);
+      battleLog(`${item.name}'s hex triggers - the ${rankLabel(stolenCard.rank)}${stolenCard.suit} gets fed straight to ${BATTLE.opponent.name}.`);
+      playSfx('hex');
+    }
+  }
   BATTLE.itemUses[slotKey] = (BATTLE.itemUses[slotKey] || 0) + 1;
   if (item.cooldown != null) {
     BATTLE.itemCooldowns = BATTLE.itemCooldowns || {};
@@ -3062,7 +3496,16 @@ function resolveOpponentAttackEffect(attack, oppDmg) {
     return ` Applied ${amount} poison.`;
   }
   if (attack.effect === 'curse') {
-    tryApplyCurse(); playSfx('curse'); return ' Applied a curse.';
+    tryApplyCurse({ amount: attack.curseAmount ?? Math.max(4, Math.round(oppDmg * 0.6)), chance: 1, count: 1 });
+    playSfx('curse'); return ' Applied a curse.';
+  }
+  if (attack.effect === 'hex') {
+    tryApplyHex({ chance: 1, count: 1 });
+    playSfx('hex'); return ' Applied a hex.';
+  }
+  if (attack.effect === 'ice') {
+    tryApplyFreeze({ threshold: attack.freezeThreshold ?? Math.max(14, Math.round(oppDmg * 0.9)), chance: 1, count: 1 });
+    playSfx('freeze'); return ' Froze one of your Items.';
   }
   if (attack.effect === 'stun') { BATTLE.opponentStunned=true; return ' Stunned your fleet for the next counter-attack.'; }
   if (attack.effect === 'heal') {
@@ -3133,10 +3576,18 @@ function endTurn() {
   });
   const allRemove = new Set([...BATTLE.usedThisTurn, ...BATTLE.turnDiscard]);
   const sorted = [...allRemove].sort((a, b) => b - a);
+  const hexSteal = BATTLE.pendingHexSteal || [];
   for (const i of sorted) {
-    BATTLE.discard.push(BATTLE.hand[i]);
+    const removedCard = BATTLE.hand[i];
+    if (hexSteal.includes(removedCard)) {
+      removedCard.revealed = false;
+      BATTLE.oppPool.push(removedCard);
+    } else {
+      BATTLE.discard.push(removedCard);
+    }
     BATTLE.hand.splice(i, 1);
   }
+  BATTLE.pendingHexSteal = [];
   BATTLE.slots = {};
   Object.entries(preservedStorage).forEach(([key, cards]) => {
     BATTLE.slots[key] = cards.map(c => BATTLE.hand.indexOf(c)).filter(i => i !== -1);
@@ -3172,6 +3623,15 @@ function endTurn() {
   if (BATTLE.opponent.hpNow <= 0) { winBattle(); return; }
 
   let opponentLandedHit = false;
+  if (BATTLE.opponentItemFrozenTurns) {
+    Object.keys(BATTLE.opponentItemFrozenTurns).forEach(id => {
+      BATTLE.opponentItemFrozenTurns[id] -= 1;
+      if (BATTLE.opponentItemFrozenTurns[id] <= 0) {
+        delete BATTLE.opponentItemFrozenTurns[id];
+        battleLog(`${BATTLE.opponent.name}'s ${ITEMS[id]?.name || 'frozen item'} thaws out.`);
+      }
+    });
+  }
   if (BATTLE.opponentStunned) {
     battleLog(`${BATTLE.opponent.name} is stunned and doesn't counter-attack.`);
     BATTLE.opponentStunned = false;
@@ -3210,6 +3670,7 @@ function endTurn() {
           const itemId = BATTLE.opponent.items[slotPos];
           const item = ITEMS[itemId];
           if (!item) continue;
+          if (BATTLE.opponentItemFrozenTurns && BATTLE.opponentItemFrozenTurns[itemId] > 0) continue;
           const cap = item.usesPerTurn ?? 1;
           if ((oppItemUsesThisTurn[itemId] || 0) >= cap) continue;
           const slotKeyForBurn = `${itemId}_${slotPos}`;
@@ -3272,7 +3733,8 @@ function endTurn() {
             continue;
           }
         }
-        const { amount: baseAmount } = computeItemAmount(item, best.cards, 0, cond, true);
+        const oppLightningRoll = item.kind === 'lightning' ? rollLightningMultiplier() : null;
+        const { amount: baseAmount } = computeItemAmount(item, best.cards, 0, cond, true, oppLightningRoll);
         let oppDmg = Math.round(baseAmount);
         const swingCap = OPPONENT_SWING_CAP[BATTLE.opponent.tier ?? OPPONENT_SWING_CAP.length - 1] ?? 60;
         oppDmg = Math.min(oppDmg, swingCap);
@@ -3287,7 +3749,7 @@ function endTurn() {
         if (oppDmg > 0) { playSfx('hurt'); flashScreen('hurt'); BATTLE.lastHit = { amount: oppDmg, source: BATTLE.opponent.name }; showDamagePopup(oppDmg, BATTLE.opponent.name); }
         const usedText = best.cards.map(c => `${rankLabel(c.rank)}${c.suit}`).join(' ');
         attackDef = {
-          effect: (item.kind === 'curse' || item.kind === 'poison' || item.kind === 'burn') ? item.kind : item.opponentEffect,
+          effect: (item.kind === 'curse' || item.kind === 'poison' || item.kind === 'burn' || item.kind === 'hex' || item.kind === 'ice') ? item.kind : item.opponentEffect,
           discardHand: item.utilityEffect === 'discardHand' ? { count: item.discardCount || 1 } : undefined,
         };
         let specialLog = resolveOpponentAttackEffect(attackDef, oppDmg);
@@ -3775,6 +4237,8 @@ function battleScreen() {
     const cards = idxs.map(i => BATTLE.hand[i]);
     const level = itemLevel(itemId);
     const cursedAmt = BATTLE.itemCurses && BATTLE.itemCurses[slotKey];
+    const hexedFlag = BATTLE.itemHexes && BATTLE.itemHexes[slotKey];
+    const frozenState = BATTLE.itemFrozen && BATTLE.itemFrozen[slotKey];
 
     if (item.kind === 'storage') {
       const cardHTML = idxs.map(cardHandIdx => {
@@ -3797,12 +4261,12 @@ function battleScreen() {
       </div>`;
     }
 
-    const condResult = cards.length ? checkCondition(item.condition, cards) : { met: false, label: '' };
+    const condResult = frozenState ? { met: cards.length > 0, label: 'Thawing' } : (cards.length ? checkCondition(item.condition, cards) : { met: false, label: '' });
     const ready = condResult.met;
-    const previewCalc = ready ? computeItemAmount(item, cards, level, condResult) : null;
+    const previewCalc = (ready && !frozenState) ? computeItemAmount(item, cards, level, condResult) : null;
     
     let hypPreviewHTML = '';
-    if (!idxs.length && typeof selectedIdx !== 'undefined' && selectedIdx.length) {
+    if (!frozenState && !idxs.length && typeof selectedIdx !== 'undefined' && selectedIdx.length) {
       const hypCards = selectedIdx.filter(i => !BATTLE.usedThisTurn.has(i)).slice(0, effectiveMaxCards(item)).map(i => BATTLE.hand[i]);
       const hypCond = hypCards.length ? checkCondition(item.condition, hypCards) : { met: false };
       if (hypCond.met) {
@@ -3829,12 +4293,12 @@ function battleScreen() {
     const usesBadgeText = isChargingUnlockItem ? '∞' : cap === Infinity ? '∞' : `${Math.max(0, usesLeft)}`;
     const cooldownLeft = item.cooldown != null ? (BATTLE.itemCooldowns?.[slotKey] || 0) : 0;
     const isDepletedThisTurn = !isChargingUnlockItem && cap !== Infinity && usesLeft <= 0;
-    return `<div class="itemCard kind-${eKind} ${ready ? 'ready' : ''} ${cursedAmt ? 'cursed' : ''} ${isDepletedThisTurn ? 'depleted-lockout' : ''}" data-assign="${slotKey}" style="border-style:dashed;border-width:2px"
+    return `<div class="itemCard kind-${eKind} ${ready ? 'ready' : ''} ${cursedAmt ? 'cursed' : ''} ${frozenState ? 'frozenLock' : ''} ${isDepletedThisTurn ? 'depleted-lockout' : ''}" data-assign="${slotKey}" style="border-style:dashed;border-width:2px"
         ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleCardDrop(event,'${slotKey}',${effectiveMaxCards(item)})">
       ${isDepletedThisTurn ? '' : `<div class="usesBadge hoverTip" data-title="Uses left this turn">${usesBadgeText}</div>`}
       <div class="itemCard-sec">
-        <div class="hdr" style="font-weight:600">${item.name}${cursedAmt ? ` <span class="vart" style="width:12px;height:12px;font-size:12px;color:var(--purple)">${ICON.curse}</span> cursed` : ''}</div>
-        <div class="itemReqLine">${itemRequirementText(item, eKind)}</div>
+        <div class="hdr" style="font-weight:600">${item.name}${cursedAmt ? ` <span class="vart" style="width:12px;height:12px;font-size:12px;color:var(--purple)">${ICON.curse}</span> cursed` : ''}${hexedFlag ? ` <span class="vart" style="width:12px;height:12px;font-size:12px;color:var(--hex)">${ICON.hex}</span> hexed` : ''}${frozenState ? ` <span class="vart" style="width:12px;height:12px;font-size:12px;color:var(--ice)">${ICON.ice}</span> frozen` : ''}</div>
+        <div class="itemReqLine">${frozenState ? `<span class="hoverTip" data-title="This Item is frozen and can't fire normally. Drop any cards into it - their value counts toward thawing it out.">Frozen: ${Math.max(0, frozenState.threshold - frozenState.progress)} to thaw</span>` : itemRequirementText(item, eKind)}</div>
       </div>
       <div class="itemDivider"></div>
       <div class="itemCard-cards-sec">
@@ -3854,9 +4318,16 @@ function battleScreen() {
           :eKind==='burn'?`<span class="effectTip burnText" data-tip="Burn hits for full damage, then half, then a quarter, fading out over 3 turns."><b>Burn</b></span>`
           :eKind==='curse'?`<span class="effectTip curseText" data-tip="Curse goes off if this item isn't fired again before the opponent's next turn."><b>Curse</b></span>`
           :eKind==='defense'?`<span class="effectTip" style="color:var(--defense)" data-tip="Armor protects against incoming attacks, absorbing damage equal to the amount shown."><b>Armor</b></span>`
+          :eKind==='hex'?`<span class="effectTip" style="color:var(--hex)" data-tip="Hex messes with card flow between you and the opponent - firing a hexed Item feeds one of its cards to whoever cast the hex."><b>Hex</b></span>`
+          :eKind==='ice'?`<span class="effectTip" style="color:var(--ice)" data-tip="Ice deals damage and freezes an Item solid on top of it. Cards must be fed into a frozen Item to thaw it before it works again."><b>Ice</b></span>`
+          :eKind==='lightning'?`<span class="effectTip" style="color:var(--lightning)" data-tip="Lightning damage is randomized between 25% and 100% power every time it fires."><b>Lightning</b></span>`
           :'';
         const effUnlockThreshold = item.id === 'impound_release' ? Math.max(35, (item.unlockThreshold || 45) - utilityLevel('impound_release') * 5) : item.unlockThreshold;
         const unlockText = item.unlockThreshold != null ? (BATTLE.itemUnlocked && BATTLE.itemUnlocked[slotKey] ? '<span class="hoverTip" data-title="Charged for the rest of this battle - playing cards through it now draws 4, once per turn."><b>Charged: Draw 4/turn</b></span>' : `<span class="hoverTip" data-title="Locked: This card cannot trigger actions until you drop cards into it to fulfill the listed point total.">Locked</span>: ${Math.max(0, effUnlockThreshold - ((BATTLE.itemUnlockProgress && BATTLE.itemUnlockProgress[slotKey]) || 0))} to charge`) : '';
+        if (frozenState) {
+          const feedText = cards.length ? `<b>Feeds the ice ${cards.reduce((a,c)=>a+cardValue(c.rank),0)} points</b>` : '<b>Frozen</b> - drop cards in to thaw';
+          return `<div class="note" style="margin:4px 0 0">${feedText}</div>`;
+        }
         if (cards.length && ready) {
           const kindText = hasKindAmount ? `${previewCalc.breakdown} ${kindTag || '<b>Damage</b>'}` : '<b>Ready</b>';
           return `<div class="note" style="margin:4px 0 0">${kindText}</div>${unlockText?`<div class="note" style="margin:2px 0 0">${unlockText}</div>`:''}`;
@@ -3867,7 +4338,7 @@ function battleScreen() {
       })()}
       <div>
         <div style="margin-top:4px">
-          ${ready && (usesLeft > 0 || isChargingUnlockItem) && cooldownLeft <= 0 ? `<span class="attackChip ${eKind==='defense' ? 'defendChip' : ''}" data-attack="${slotKey}" style="font-size:10px; padding:3px 6px">${item.unlockThreshold != null ? (isChargingUnlockItem ? 'Deposit Card(s) ▶' : 'Draw ▶') : eKind==='defense' ? 'Defend ▶' : (item.flatAmount==null && (item.baseMult ?? 1)===0 && (item.drawAmount || item.drawUsesCardCount)) ? 'Draw ▶' : 'Attack ▶'}</span>` : ''}
+          ${ready && (usesLeft > 0 || isChargingUnlockItem || frozenState) && cooldownLeft <= 0 ? `<span class="attackChip ${eKind==='defense' ? 'defendChip' : ''}" data-attack="${slotKey}" style="font-size:10px; padding:3px 6px">${frozenState ? 'Feed Cards ▶' : item.unlockThreshold != null ? (isChargingUnlockItem ? 'Deposit Card(s) ▶' : 'Draw ▶') : eKind==='defense' ? 'Defend ▶' : (item.flatAmount==null && (item.baseMult ?? 1)===0 && (item.drawAmount || item.drawUsesCardCount)) ? 'Draw ▶' : 'Attack ▶'}</span>` : ''}
         </div>
       </div>
       </div>
@@ -3898,6 +4369,8 @@ function battleScreen() {
             <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-start">
               ${BATTLE.playerArmor ? `<span class="armorText hoverTip" style="font-weight:800;font-size:13px" data-title="Armor protects against incoming attacks, absorbing damage equal to the amount shown."><span class="vart" style="width:12px;height:12px;font-size:12px">${ICON.shield}</span> ${BATTLE.playerArmor} ARMOR</span>` : ''}
               ${BATTLE.itemCurses && Object.keys(BATTLE.itemCurses).length ? `<span class="status curseStatus hoverTip" data-title="One or more of your Items is cursed - fire it before your turn ends or take its curse damage."><span class="vart" style="width:12px;height:12px;font-size:12px">${ICON.curse}</span> ${Object.keys(BATTLE.itemCurses).length} Item${Object.keys(BATTLE.itemCurses).length > 1 ? 's' : ''} cursed</span>` : ''}
+              ${BATTLE.itemHexes && Object.keys(BATTLE.itemHexes).length ? `<span class="status hoverTip" style="color:var(--hex);font-weight:800;font-size:13px" data-title="One or more of your Items is hexed - firing it will feed a card to the opponent."><span class="vart" style="width:12px;height:12px;font-size:12px">${ICON.hex}</span> ${Object.keys(BATTLE.itemHexes).length} Item${Object.keys(BATTLE.itemHexes).length > 1 ? 's' : ''} hexed</span>` : ''}
+              ${BATTLE.itemFrozen && Object.keys(BATTLE.itemFrozen).length ? `<span class="status hoverTip" style="color:var(--ice);font-weight:800;font-size:13px" data-title="One or more of your Items is frozen - drop cards into it to thaw it."><span class="vart" style="width:12px;height:12px;font-size:12px">${ICON.ice}</span> ${Object.keys(BATTLE.itemFrozen).length} Item${Object.keys(BATTLE.itemFrozen).length > 1 ? 's' : ''} frozen</span>` : ''}
             </div>
             <button class="wo-btn green" id="fuelHealBtn" data-title="Fuel also gets you across the map - spending it here means less for travel." style="padding:6px 10px;font-size:11px;white-space:nowrap" ${RUN.fuel < FUEL_HESTORE_COST || RUN.health >= RUN.maxHealth ? 'disabled' : ''}>Heal ${FUEL_HEAL_AMOUNT} = ${FUEL_HESTORE_COST} ${ICON.fuel}</button>
           </div>
@@ -4353,9 +4826,9 @@ function victoryScreen() {
       <div class="wo">
         <div class="wo-stripe"></div>
         <div class="wo-body" style="text-align:center">
-          <div class="wo-eyebrow">Riverwalk District Secured</div>
+          <div class="wo-eyebrow">Las Olas Boulevard Secured</div>
           <h1>Campaign <em>Complete</em></h1>
-          <div class="wo-sub" style="margin:10px 0">More worlds coming soon! Thanks for playing.</div>
+          <div class="wo-sub" style="margin:10px 0">Six worlds down and Fort Lauderdale's fleet is clear from the coast to the boulevard. More worlds coming soon - thanks for playing.</div>
           <button class="wo-btn amber" id="claimVictoryBtn" style="width:100%;margin-top:8px">Finish Run</button>
         </div>
       </div>
@@ -4660,7 +5133,9 @@ function render(html) {
         if (RUN.world === 1) { RUN.pendingNextWorld = 2; render(worldCompleteScreen(1, 2)); }
         else if (RUN.world === 2) { META.world2Cleared = true; saveMeta(); RUN.pendingNextWorld = 3; render(worldCompleteScreen(2, 3)); }
         else if (RUN.world === 3) { META.world3Cleared = true; saveMeta(); RUN.pendingNextWorld = 4; render(world3ClearedScreen()); }
-        else if (RUN.world === 4) { META.world4Cleared = true; saveMeta(); render(victoryScreen()); }
+        else if (RUN.world === 4) { META.world4Cleared = true; saveMeta(); RUN.pendingNextWorld = 5; render(worldCompleteScreen(4, 5)); }
+        else if (RUN.world === 5) { META.world5Cleared = true; saveMeta(); RUN.pendingNextWorld = 6; render(worldCompleteScreen(5, 6)); }
+        else if (RUN.world === 6) { META.world6Cleared = true; saveMeta(); render(victoryScreen()); }
         else { endRun(true); }
       } else render(mapScreen());
     }
@@ -4669,7 +5144,7 @@ function render(html) {
   const advanceWorldBtn = document.getElementById('advanceWorldBtn');
   if (advanceWorldBtn) advanceWorldBtn.onclick = () => {
     RUN.world = RUN.pendingNextWorld || 2;
-    RUN.worldMultiplier = RUN.world === 3 ? 1.50 : RUN.world === 4 ? 1.75 : 1.25;
+    RUN.worldMultiplier = RUN.world === 3 ? 1.50 : RUN.world === 4 ? 1.75 : RUN.world === 5 ? 2.00 : RUN.world === 6 ? 2.25 : 1.25;
     RUN.map = generateMap();
     RUN.bossRow = RUN.map.nodes.length - 1;
     RUN.currentRow = -1;
@@ -5123,7 +5598,7 @@ function render(html) {
  RUN.itemUnlocked=RUN.itemUnlocked||{}; RUN.itemUnlockPending=RUN.itemUnlockPending||{}; 
  RUN.castleState=RUN.castleState||{}; RUN.world=RUN.world||1; RUN.bossRow=(RUN.bossRow!=null)?RUN.bossRow:(RUN.map.nodes.length-1); saveRun(); const savedBattle = loadBattleSave(); if (savedBattle) { BATTLE = savedBattle; IN_BATTLE = true; render(battleScreen()); } else { render(mapScreen()); } };
   app.querySelectorAll('[data-pick]').forEach(el => el.onclick = () => initRunWithStarter(el.dataset.pick));
-  document.body.classList.toggle('world-1', !!(RUN && RUN.world === 1)); document.body.classList.toggle('world-2', !!(RUN && RUN.world === 2)); document.body.classList.toggle('world-3', !!(RUN && RUN.world >= 3));
+  document.body.classList.toggle('world-1', !!(RUN && RUN.world === 1)); document.body.classList.toggle('world-2', !!(RUN && RUN.world === 2)); document.body.classList.toggle('world-3', !!(RUN && RUN.world >= 3 && RUN.world <= 4)); document.body.classList.toggle('world-5', !!(RUN && RUN.world === 5)); document.body.classList.toggle('world-6', !!(RUN && RUN.world === 6));
   const battleLogEl = document.getElementById('battleLogEl'); if (battleLogEl) battleLogEl.scrollTop = battleLogEl.scrollHeight;
   const devPanelBtn = document.getElementById('devPanelBtn'); if (devPanelBtn) devPanelBtn.onclick = () => { app.insertAdjacentHTML('beforeend', devPanel()); bindDev(); };
   const openRunSummaryBtn = document.getElementById('openRunSummaryBtn'); if (openRunSummaryBtn) openRunSummaryBtn.onclick = () => render(runSummaryScreen());

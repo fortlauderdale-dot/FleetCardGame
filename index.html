@@ -291,6 +291,10 @@
   .itemCard.frozenLock::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(135deg,rgba(63,207,239,0.10) 0 6px,transparent 6px 12px);border-radius:inherit;pointer-events:none}
   .itemCard.kind-weightless{background:#f5f7fa !important;border:2px solid #ffffff !important;box-shadow:0 0 0 1px rgba(0,0,0,0.15)}
   .itemCard.kind-weightless .hdr,.itemCard.kind-weightless .note{color:#1a1a2e !important;font-weight:700}
+  .targetableCard{cursor:pointer;transition:transform .1s ease}
+  .targetableCard .itemCard{cursor:pointer;box-shadow:0 0 0 2px var(--amber);transition:box-shadow .15s ease}
+  .targetableCard:hover{transform:translateY(-2px)}
+  .targetableCard:hover .itemCard{box-shadow:0 0 0 3px var(--amber),0 0 14px rgba(212,175,0,0.5)}
   .itemCard.cursed{border-color:var(--purple) !important;box-shadow:inset 0 0 12px rgba(138,79,224,0.3)}
   .defenseText,.armorText{color:var(--defense) !important}
   .defenseText{font-weight:800}
@@ -727,14 +731,21 @@ function art(entity, px) {
 const PLAYER_ART = { name: 'Your Fleet', icon: '🚚', image: 'vehicles/work-truck.jpg' };
 function fleetLabel() { return META.playerName ? `${META.playerName}'s Fleet` : 'Your Fleet'; }
 function roadExitLabel() { return `Back to ${WORLD_NAMES[RUN && RUN.world] || WORLD_NAMES[1]}`; }
-function opponentAttackBoxHTML(opp) {
+function opponentAttackBoxHTML(opp, showStatus) {
   const rawAttacks = (opp.attacks && opp.attacks.length ? opp.attacks : [{}]);
   const swings = opp.usesPerTurn ?? OPPONENT_USES_PER_TURN_DEFAULT;
   if (opp.items && opp.items.length) {
-    return opp.items.map(itemId => {
+    return opp.items.map((itemId, i) => {
       const item = ITEMS[itemId];
       if (!item) return '';
-      return renderStandardItemCard(item, { usesBadgeText: swings === Infinity ? '∞' : String(swings) });
+      const card = renderStandardItemCard(item, { usesBadgeText: swings === Infinity ? '∞' : String(swings) });
+      if (!showStatus) return card;
+      const key = `${itemId}_${i}`;
+      const curseAmt = BATTLE.opponentItemCurses && BATTLE.opponentItemCurses[key];
+      const burnAmt = BATTLE.opponentItemBurns && BATTLE.opponentItemBurns[key];
+      const hexStacks = BATTLE.opponentItemHexes && BATTLE.opponentItemHexes[key];
+      const tag = curseAmt ? `<span class="curseBadge">Cursed: ${curseAmt}</span>` : burnAmt ? `<span class="curseBadge">Burn: ${burnAmt}</span>` : hexStacks ? `<span class="curseBadge">Hexed x${hexStacks}</span>` : '';
+      return tag ? `${card}<div class="note" style="margin:2px 0 0;text-align:center">${tag}</div>` : card;
     }).join('');
   }
   const EFFECT_TIP = {
@@ -1057,63 +1068,63 @@ function itemUsesCap(item, usesLevel) { return item.usesPerTurn + (item.usesPerT
 function equippedItemCount(hero) { return (hero.items || []).filter(id => !ITEMS[id]?.weightless).length; }
 const ITEMS = {
   card_draw: { id: 'card_draw', name: 'Fast Pit Stop', cost: 0, maxCards: 2, usesPerTurn: 1, condition: { type: 'pokerTier', tier: 1 }, baseMult: 0, drawAmount: 2, drawPerLevel: 1, levelCap: 3, note: 'Needs a Pair. Draw 2 additional cards.' },
- pair_draw: { id: 'pair_draw', name: 'Hit & Run', cost: 40, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+ pair_draw: { id: 'pair_draw', name: 'Hit & Run', cost: 45, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'pokerTier', tier: 1 }, baseMult: 1,
     drawAmount: 2, drawPerLevel: 0,
     note: 'Needs a Pair. Deals damage and draws 2 cards immediately.' },
-  trips_draw: { id: 'trips_draw', name: 'Triple Axle Slam', cost: 55, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+  trips_draw: { id: 'trips_draw', name: 'Triple Axle Slam', cost: 75, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'pokerTier', tier: 3, exactTier: true }, baseMult: 1.8,
     drawAmount: 3, drawPerLevel: 0,
     note: 'Needs Three of a Kind. Deals damage and draws 3 cards immediately.' },
-  diamond_draw: { id: 'diamond_draw', name: 'Diamond Lane Dash', cost: 45, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+  diamond_draw: { id: 'diamond_draw', name: 'Diamond Lane Dash', cost: 55, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'suitCount', suit: '♦', count: 1 }, baseMult: 1,
     drawAmount: 1, drawPerLevel: 0,
     note: `Needs at least 1 ${kw('Diamond')}. Deals damage and draws 1 card immediately.` },
-  all_points: { id: 'all_points', name: 'Fleet-Wide Dispatch', cost: 70, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1, minRow: 3,
+  all_points: { id: 'all_points', name: 'Fleet-Wide Dispatch', cost: 110, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1, minRow: 3,
     condition: { type: 'allSuits' }, flatAmount: 40, flatAmountPerLevel: 5,
     note: `Needs one of each ${kw('Suit')} (4 cards). Flat ${kw('Attack')} for 40 damage.` },
-  repo_notice: { id: 'repo_notice', name: 'Repossession Order', cost: 55, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+  repo_notice: { id: 'repo_notice', name: 'Repossession Order', cost: 75, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'colorCount', color: 'blk', count: 2 }, baseMult: 1, kind: 'curse',
     note: `Needs 2+ ${kw('Black')} cards. Curses the opponent for ${SIGMA_TIP} of the cards played.` },
-  safety_inspection: { id: 'safety_inspection', name: 'Safety Inspection', cost: 55, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+  safety_inspection: { id: 'safety_inspection', name: 'Safety Inspection', cost: 75, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'colorCount', color: 'red', count: 2 }, baseMult: 1, kind: 'defense',
     note: `Needs 2+ ${kw('Red')} cards. Blocks damage equal to ${SIGMA_TIP} of the cards played.` },
-  jinxed_duo: { id: 'jinxed_duo', name: 'Cursed Carpool', cost: 60, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+  jinxed_duo: { id: 'jinxed_duo', name: 'Cursed Carpool', cost: 85, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'cardIn', cards: [{ rank: 3, suit: '♣' }, { rank: 4, suit: '♣' }] }, baseMult: 1,
     flatBonus: 16, flatBonusPerLevel: 0, kind: 'poison',
     drawAmount: 1, drawPerLevel: 0,
     note: `Needs the ${rankLabel(3)}${suitMicroCardHTML('♣')} or ${rankLabel(4)}${suitMicroCardHTML('♣')}. Poison damage for ${SIGMA_TIP} of cards played + 16, then draw 1 card immediately.` },
-  heart_inferno: { id: 'heart_inferno', name: 'Heart Redline', cost: 65, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+  heart_inferno: { id: 'heart_inferno', name: 'Heart Redline', cost: 100, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'exactCount', count: 4 }, baseMult: 1, kind: 'burn',
     bonus: { condition: { type: 'suitCount', suit: '♥', count: 4 }, base: 0.5, perLevel: 0, maxLevel: 0 },
     note: `Needs exactly 4 cards. Flame damage for ${SIGMA_TIP}, +50% if all 4 are ${kw('Heart',"heart")}.` },
-  diamond_inferno: { id: 'diamond_inferno', name: 'Diamond Redline', cost: 65, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+  diamond_inferno: { id: 'diamond_inferno', name: 'Diamond Redline', cost: 100, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'exactCount', count: 4 }, baseMult: 1, kind: 'burn',
     bonus: { condition: { type: 'suitCount', suit: '♦', count: 4 }, base: 0.5, perLevel: 0, maxLevel: 0 },
     note: `Needs exactly 4 cards. Flame damage for ${SIGMA_TIP}, +50% if all 4 are ${kw('Diamond')}.` },
-  club_inferno: { id: 'club_inferno', name: 'Club Redline', cost: 65, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+  club_inferno: { id: 'club_inferno', name: 'Club Redline', cost: 100, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'exactCount', count: 4 }, baseMult: 1, kind: 'burn',
     bonus: { condition: { type: 'suitCount', suit: '♣', count: 4 }, base: 0.5, perLevel: 0, maxLevel: 0 },
     note: `Needs exactly 4 cards. Flame damage for ${SIGMA_TIP}, +50% if all 4 are ${kw('Club',"club")}.` },
-  spade_inferno: { id: 'spade_inferno', name: 'Spade Redline', cost: 65, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+  spade_inferno: { id: 'spade_inferno', name: 'Spade Redline', cost: 100, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'exactCount', count: 4 }, baseMult: 1, kind: 'burn',
     bonus: { condition: { type: 'suitCount', suit: '♠', count: 4 }, base: 0.5, perLevel: 0, maxLevel: 0 },
     note: `Needs exactly 4 cards. Flame damage for ${SIGMA_TIP}, +50% if all 4 are ${kw('Spade')}.` },
-  five_alarm_flush: { id: 'five_alarm_flush', name: 'Code Five Response', cost: 90, maxCards: 5, usesPerTurn: 2, usesPerTurnPerLevel: 1, minRow: 3,
+  five_alarm_flush: { id: 'five_alarm_flush', name: 'Code Five Response', cost: 170, maxCards: 5, usesPerTurn: 2, usesPerTurnPerLevel: 1, minRow: 3,
     condition: { type: 'pokerTier', tier: 5, exactCount: 5 }, baseMult: 1.5,
     note: `Needs exactly 5 cards making a ${kw('Flush')}. ${SIGMA_TIP} +50% damage. 2 uses per turn.` },
-  exact_change: { id: 'exact_change', name: 'Exact Change', cost: 35, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+  exact_change: { id: 'exact_change', name: 'Exact Change', cost: 40, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'sumExact', value: 4 }, baseMult: 0,
     drawAmount: 0, drawUsesCardCount: true, drawBonusFlat: 2, drawPerLevel: 0,
     note: `Cards played must add up to exactly 4 (example: 2+2, or a single 4). Draws a card for each card played, +2. Draws immediately.` },
-  chain_starter: { id: 'chain_starter', name: 'Jump Start', cost: 50, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1, minRow: 2,
+  chain_starter: { id: 'chain_starter', name: 'Jump Start', cost: 65, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1, minRow: 2,
     condition: { type: 'straightLen', len: 3 }, baseMult: straightMult(3),
     note: `Needs a 3-card ${kw('Straight')} (example: 6, 7, 8). ${SIGMA_TIP} +45% damage.` },
-  drawstone: { id: 'drawstone', name: 'Tow Cable', cost: 40, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+  drawstone: { id: 'drawstone', name: 'Tow Cable', cost: 45, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'sumThreshold', min: 7 }, baseMult: 0,
     drawAmount: 2, drawPerLevel: 0,
     note: `Cards played must add up to 7+. Draws 2 cards immediately.` },
-  impound_release: { id: 'impound_release', name: 'Impound Release', cost: 85, maxCards: 5, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+  impound_release: { id: 'impound_release', name: 'Impound Release', cost: 155, maxCards: 5, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'any' }, baseMult: 0, kind: 'unlock', unlockThreshold: 45,
     note: `Deals no damage. Playing cards through it counts down from 45 to 0 (based on the cards' value). Once fully charged, playing cards through it instead draws you 4 fresh cards, once per turn, for the rest of this battle - it never re-locks. Charge resets at the start of your next battle.` },
   fender_bender: { id: 'fender_bender', name: 'Fender Bender', cost: 0, sellValue: 25, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1,
@@ -1294,63 +1305,63 @@ const ITEMS = {
   opp_early_escape_hatch: { id: 'opp_early_escape_hatch', name: 'Early Escape Hatch', maxCards: 4, usesPerTurn: 1,
     condition: { type: 'colorCount', color: 'blk', count: 4, exactCount: 4 }, flatAmount: 0, opponentEffect: 'earlyEscape',
     note: 'Needs exactly 4 Black cards. Instantly ends the fight - you clear the stop, but it flees with your fuel, costing you 3 Fuel.' },
-  triple_threat: { id: 'triple_threat', name: 'Multi-Car Pileup', cost: 45, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+  triple_threat: { id: 'triple_threat', name: 'Multi-Car Pileup', cost: 55, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'pokerTier', tier: 3, exactTier: true }, baseMult: 2.2,
     bonus: { base: 0, perLevel: 0.3, maxLevel: 3 },
     note: 'Needs Three of a Kind. A big hit that tunes even further with upgrades.' },
   bike_dash: { id: 'bike_dash', name: 'Bike Lane Dash', cost: 30, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'straightLen', len: 2 }, baseMult: straightMult(2),
     note: 'Needs a 2-card straight (example: 7-8, any suits).' },
-  moto_escort: { id: 'moto_escort', name: 'Chain Reaction', cost: 75, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+  moto_escort: { id: 'moto_escort', name: 'Chain Reaction', cost: 125, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'straightLen', len: 4 }, baseMult: straightMult(4),
     note: 'Needs a 4-card straight.' },
-  diamond_run: { id: 'diamond_run', name: 'Diamond Lane Convoy', cost: 50, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+  diamond_run: { id: 'diamond_run', name: 'Diamond Lane Convoy', cost: 65, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'suitCount', suit: '♦', count: 3 }, baseMult: 1.3,
     bonus: { base: 0, perLevel: 0.2, maxLevel: 3 },
     note: 'Needs at least 3 Diamonds among your played cards.' },
-  club_run: { id: 'club_run', name: 'Club Convoy', cost: 50, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+  club_run: { id: 'club_run', name: 'Club Convoy', cost: 65, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'suitCount', suit: '♣', count: 3 }, baseMult: 1.3,
     bonus: { base: 0, perLevel: 0.2, maxLevel: 3 },
     note: 'Needs at least 3 Clubs among your played cards.' },
-  spade_run: { id: 'spade_run', name: 'Spade Convoy', cost: 50, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+  spade_run: { id: 'spade_run', name: 'Spade Convoy', cost: 65, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'suitCount', suit: '♠', count: 3 }, baseMult: 1.3,
     bonus: { base: 0, perLevel: 0.2, maxLevel: 3 },
     note: 'Needs at least 3 Spades among your played cards.' },
-  heart_run: { id: 'heart_run', name: 'Heart Convoy', cost: 50, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+  heart_run: { id: 'heart_run', name: 'Heart Convoy', cost: 65, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'suitCount', suit: '♥', count: 3 }, baseMult: 1.3,
     bonus: { base: 0, perLevel: 0.2, maxLevel: 3 },
     note: 'Needs at least 3 Hearts among your played cards.' },
-  odd_job: { id: 'odd_job', name: 'Odd Shift', cost: 40, maxCards: 5, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+  odd_job: { id: 'odd_job', name: 'Odd Shift', cost: 45, maxCards: 5, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'parity', parity: 'odd', mode: 'all' }, baseMult: 1.2,
     bonus: { base: 0, perLevel: 0.25, maxLevel: 3 },
     note: 'Upgrades up to 5 cards. Every loaded card must be an odd rank.' },
-  lucky_seven: { id: 'lucky_seven', name: 'Highway 7 Shortcut', cost: 60, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1, minRow: 2,
+  lucky_seven: { id: 'lucky_seven', name: 'Highway 7 Shortcut', cost: 85, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1, minRow: 2,
     condition: { type: 'exactRank', rank: 7 }, baseMult: 2.2,
     bonus: { base: 0, perLevel: 0.4, maxLevel: 3 },
     note: 'Needs a 7 among your played cards. Rare to have one ready, so it hits hard when you do.' },
-  escort_wall: { id: 'escort_wall', name: 'Roadblock', cost: 45, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+  escort_wall: { id: 'escort_wall', name: 'Roadblock', cost: 55, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'pokerTier', tier: 1 }, baseMult: 1, kind: 'defense',
     note: `Needs a Pair. Blocks damage equal to ${SIGMA_TIP} of the cards played, instead of dealing damage.` },
-  guard_rail: { id: 'guard_rail', name: 'Guard Rail', cost: 40, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+  guard_rail: { id: 'guard_rail', name: 'Guard Rail', cost: 45, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'any' }, baseMult: 0.8, kind: 'defense',
     note: `Needs any card. Blocks damage equal to ${SIGMA_TIP} of the cards played × 0.8.` },
-  spare_tire: { id: 'spare_tire', name: 'Spare Tire', cost: 50, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+  spare_tire: { id: 'spare_tire', name: 'Spare Tire', cost: 65, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'colorCount', color: 'blk', count: 2 }, baseMult: 1.1, kind: 'defense',
     note: `Needs 2+ ${kw('Black')} cards. Blocks damage equal to ${SIGMA_TIP} of the cards played × 1.1.` },
-  toxic_spill: { id: 'toxic_spill', name: 'Toxic Spill', cost: 40, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+  toxic_spill: { id: 'toxic_spill', name: 'Toxic Spill', cost: 45, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'any' }, baseMult: 0.5, kind: 'poison',
     bonus: { base: 0, perLevel: 0.15, maxLevel: 3 },
     note: 'Up to 3 cards. Poison equal to half your total card value.' },
-  toxic_flood: { id: 'toxic_flood', name: 'Toxic Flood', cost: 65, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+  toxic_flood: { id: 'toxic_flood', name: 'Toxic Flood', cost: 100, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'any' }, baseMult: 0.75, kind: 'poison',
     bonus: { base: 0, perLevel: 0.2, maxLevel: 3 },
     note: 'Up to 4 cards. Poison equal to 75% of your total card value.' },
-  torch_burn: { id: 'torch_burn', name: 'Smoldering Engine', cost: 65, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+  torch_burn: { id: 'torch_burn', name: 'Smoldering Engine', cost: 100, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'pokerTier', tier: 1 }, baseMult: 1, kind: 'burn',
     note: 'Needs a Pair. Burns over 3 turns instead of hitting directly, and burns can stack.' },
-  supply_bag: { id: 'supply_bag', name: 'Cupholder Stash', cost: 50, maxCards: 2, kind: 'storage', maxStore: 2, weightless: true,
+  supply_bag: { id: 'supply_bag', name: 'Cupholder Stash', cost: 65, maxCards: 2, kind: 'storage', maxStore: 2, weightless: true,
     note: 'Holds up to 2 cards of any kind turn to turn (up to 5 with Chop Shop upgrades). Weightless, does not use an Item slot. Never attacks, never gets cursed. Click a stored card to take it back.' },
-  supply_bag_big: { id: 'supply_bag_big', name: 'Center Console Stash', cost: 50, maxCards: 5, kind: 'storage', maxStore: 5, weightless: true,
+  supply_bag_big: { id: 'supply_bag_big', name: 'Center Console Stash', cost: 65, maxCards: 5, kind: 'storage', maxStore: 5, weightless: true,
     note: 'Holds up to 5 cards of any kind turn to turn (up to 7 with Chop Shop upgrades). Weightless, does not use an Item slot. Never attacks, never gets cursed. Click a stored card to take it back.' },
   spade_bag: { id: 'spade_bag', name: 'Spade Trunk', cost: 30, maxCards: 13, kind: 'storage', maxStore: 13,
     acceptFilter: { suit: '♠' },
@@ -1364,10 +1375,10 @@ const ITEMS = {
   club_bag: { id: 'club_bag', name: 'Club Trunk', cost: 30, maxCards: 13, kind: 'storage', maxStore: 13,
     acceptFilter: { suit: '♣' },
     note: 'Holds up to 13 Clubs only (every Club in the deck, so it will never run out of room). Click a stored card to take it back.' },
-  red_bag: { id: 'red_bag', name: 'Red Glovebox', cost: 40, maxCards: 10, kind: 'storage', maxStore: 5,
+  red_bag: { id: 'red_bag', name: 'Red Glovebox', cost: 45, maxCards: 10, kind: 'storage', maxStore: 5,
     acceptFilter: { color: 'red' },
     note: `Holds up to 5 ${kw('Red')} cards only. Click a stored card to take it back.` },
-  black_bag: { id: 'black_bag', name: 'Black Glovebox', cost: 40, maxCards: 10, kind: 'storage', maxStore: 5,
+  black_bag: { id: 'black_bag', name: 'Black Glovebox', cost: 45, maxCards: 10, kind: 'storage', maxStore: 5,
     acceptFilter: { color: 'blk' },
     note: `Holds up to 5 ${kw('Black')} cards only. Click a stored card to take it back.` },
   w3_road_rage: { id: 'w3_road_rage', name: 'Road Rage', maxCards: 1, usesPerTurn: 1,
@@ -1553,31 +1564,31 @@ const ITEMS = {
     note: 'Needs exactly 1 card. A small hit, and it siphons a bit of your fuel.' },
 
   /* ---- New mechanics: Hex, Ice, and Lightning items (available to the player from any world) ---- */
-  hex_five_finger: { id: 'hex_five_finger', name: 'Five-Finger Discount', cost: 50, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1, minRow: 1,
+  hex_five_finger: { id: 'hex_five_finger', name: 'Five-Finger Discount', cost: 65, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1, minRow: 1,
     condition: { type: 'pokerTier', tier: 1 }, baseMult: 1.1, kind: 'hex',
     note: 'Needs a Pair. Deals damage and pickpockets a card straight out of their hand.' },
-  hex_black_market: { id: 'hex_black_market', name: 'Black Market Parts', cost: 70, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1, minRow: 2,
+  hex_black_market: { id: 'hex_black_market', name: 'Black Market Parts', cost: 110, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1, minRow: 2,
     condition: { type: 'colorCount', color: 'blk', count: 3 }, baseMult: 1.3, kind: 'hex',
     note: 'Needs 3+ Black cards. Deals damage and swipes a card off the black market - straight into your hand.' },
-  hex_repo_switch: { id: 'hex_repo_switch', name: 'Repo Switcheroo', cost: 60, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1, minRow: 2,
+  hex_repo_switch: { id: 'hex_repo_switch', name: 'Repo Switcheroo', cost: 85, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1, minRow: 2,
     condition: { type: 'suitCount', suit: '♠', count: 2 }, baseMult: 1.2, kind: 'hex',
     note: 'Needs at least 2 Spades. Deals damage and swaps a card out of their hand before they notice.' },
-  ice_coolant_burst: { id: 'ice_coolant_burst', name: 'Coolant Burst', cost: 55, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1, minRow: 1,
+  ice_coolant_burst: { id: 'ice_coolant_burst', name: 'Coolant Burst', cost: 75, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1, minRow: 1,
     condition: { type: 'pokerTier', tier: 1 }, baseMult: 1.1, kind: 'ice',
     note: 'Needs a Pair. Deals damage and freezes one of their Items solid for 2 turns.' },
-  ice_ac_overload: { id: 'ice_ac_overload', name: 'AC Overload', cost: 75, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1, minRow: 2,
+  ice_ac_overload: { id: 'ice_ac_overload', name: 'AC Overload', cost: 125, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1, minRow: 2,
     condition: { type: 'straightLen', len: 3 }, baseMult: 1.45, kind: 'ice',
     note: 'Needs a 3-card Straight (example: 6, 7, 8). Deals damage and freezes one of their Items solid for 2 turns.' },
-  ice_brake_chill: { id: 'ice_brake_chill', name: 'Frozen Brake Line', cost: 45, maxCards: 1, usesPerTurn: 1, usesPerTurnPerLevel: 1, minRow: 1,
+  ice_brake_chill: { id: 'ice_brake_chill', name: 'Frozen Brake Line', cost: 55, maxCards: 1, usesPerTurn: 1, usesPerTurnPerLevel: 1, minRow: 1,
     condition: { type: 'exactRank', rank: 2 }, flatAmount: 14, kind: 'ice',
     note: 'Needs a 2. Small hit, but it freezes one of their Items solid for 2 turns regardless.' },
-  zap_power_surge: { id: 'zap_power_surge', name: 'Power Surge', cost: 60, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1, minRow: 1,
+  zap_power_surge: { id: 'zap_power_surge', name: 'Power Surge', cost: 85, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1, minRow: 1,
     condition: { type: 'pokerTier', tier: 1 }, baseMult: 1.9, kind: 'lightning',
     note: 'Needs a Pair. Damage is randomized between 25% and 100% power every time it fires - high risk, high reward.' },
-  zap_short_circuit: { id: 'zap_short_circuit', name: 'Short Circuit', cost: 80, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1, minRow: 2,
+  zap_short_circuit: { id: 'zap_short_circuit', name: 'Short Circuit', cost: 140, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1, minRow: 2,
     condition: { type: 'pokerTier', tier: 2 }, baseMult: 1.8, kind: 'lightning',
     note: 'Needs Two Pair. Damage is randomized between 25% and 100% power every time it fires.' },
-  zap_faulty_alternator: { id: 'zap_faulty_alternator', name: 'Faulty Alternator', cost: 40, maxCards: 1, usesPerTurn: 1, usesPerTurnPerLevel: 1, minRow: 1,
+  zap_faulty_alternator: { id: 'zap_faulty_alternator', name: 'Faulty Alternator', cost: 45, maxCards: 1, usesPerTurn: 1, usesPerTurnPerLevel: 1, minRow: 1,
     condition: { type: 'any', exactCount: 1 }, flatAmount: 18, kind: 'lightning',
     note: 'Needs exactly 1 card. Damage is randomized between 25% and 100% power every time it fires.' },
 
@@ -1937,9 +1948,9 @@ const ITEMS = {
   w6_table_tip: { id: 'w6_table_tip', name: 'Cafe Table Tip', maxCards: 1, usesPerTurn: 1,
     condition: { type: 'any', exactCount: 1 }, flatAmount: 8,
     note: 'Needs exactly 1 card. Wind catches it wrong and it goes end over end.' },
-  w6_elite_van_bolt: { id: 'w6_elite_van_bolt', name: 'Storm Chaser Bolt', maxCards: 4, usesPerTurn: 1,
+  w6_elite_van_bolt: { id: 'w6_elite_van_bolt', name: 'Storm Chaser Bolt', maxCards: 4, usesPerTurn: 2,
     condition: { type: 'pokerTier', tier: 2 }, baseMult: 2.0, kind: 'lightning',
-    note: 'Needs Two Pair. Damage is randomized between 25% and 100% power every time it fires. The van\'s own mast rig takes a direct hit and redirects it at you.' },
+    note: 'Needs Two Pair. Damage is randomized between 25% and 100% power every time it fires. The van\'s own mast rig takes a direct hit and redirects it at you - and can fire twice in one turn.' },
   w6_elite_van_ram: { id: 'w6_elite_van_ram', name: 'Storm Chaser Ram', maxCards: 4, usesPerTurn: 1,
     condition: { type: 'sumThreshold', min: 18 }, flatAmount: 26,
     note: `Needs cards totaling ${SIGMA_TIP}18+. It's chasing the story, and the story is currently your fleet.` },
@@ -1949,9 +1960,9 @@ const ITEMS = {
   w6_elite_thief_curse: { id: 'w6_elite_thief_curse', name: 'Jewel Thief Curse', maxCards: 2, usesPerTurn: 1,
     condition: { type: 'pokerTier', tier: 1 }, baseMult: 1.15, kind: 'curse',
     note: 'Needs a Pair. Leaves a fake behind, and it curses one of your Items on the way out.' },
-  w6_boss_lightning_barrage: { id: 'w6_boss_lightning_barrage', name: 'Squall Line Barrage', maxCards: 5, usesPerTurn: 1,
+  w6_boss_lightning_barrage: { id: 'w6_boss_lightning_barrage', name: 'Squall Line Barrage', maxCards: 5, usesPerTurn: 2,
     condition: { type: 'sumThreshold', min: 24 }, flatAmount: 56, kind: 'lightning',
-    note: `Needs cards totaling ${SIGMA_TIP}24+. Damage is randomized between 25% and 100% power every time it fires. The whole boulevard goes white for a second.` },
+    note: `Needs cards totaling ${SIGMA_TIP}24+. Damage is randomized between 25% and 100% power every time it fires. The whole boulevard goes white for a second - and it can strike twice in the same turn.` },
   w6_boss_static_curse: { id: 'w6_boss_static_curse', name: 'Squall Line Static Curse', maxCards: 4, usesPerTurn: 1,
     condition: { type: 'pokerTier', tier: 2 }, baseMult: 1.6, kind: 'curse',
     note: 'Needs Two Pair. The static charge alone is enough to curse one of your Items before the thunder even hits.' },
@@ -2304,7 +2315,7 @@ const WORLD_6_POOLS = {
     { id: 'w6_cafe_table', name: 'Wind-Whipped Cafe Table', icon: '☕', image: 'Hazards/jaywalker.jpg', hp: 56, minTier: 1, drawRate: 2, items: ['w6_table_tip'] },
   ],
   elites: [
-    { id: 'w6_storm_chaser_van', name: 'Storm Chaser News Van', icon: '📡', image: 'Hazards/evil-mechanic.jpg', hp: 124, minTier: 2, drawRate: 3, items: ['w6_elite_van_bolt', 'w6_elite_van_ram'] },
+    { id: 'w6_storm_chaser_van', name: 'Storm Chaser News Van', icon: '📡', image: 'Hazards/evil-mechanic.jpg', hp: 124, minTier: 2, drawRate: 3, usesPerTurn: 2, items: ['w6_elite_van_bolt', 'w6_elite_van_ram'] },
     { id: 'w6_jewel_thief', name: 'Boulevard Jewel Thief', icon: '💍', image: 'Hazards/angry-mob.jpg', hp: 120, minTier: 2, drawRate: 3, items: ['w6_elite_thief_snatch', 'w6_elite_thief_curse'] },
   ],
   boss: { id: 'squall_line', name: 'The Squall Line', icon: '⛈️', image: 'Hazards/wildfire.jpg', hp: 220, minTier: 3, drawRate: 5, boss: true, usesPerTurn: 2, items: ['w6_boss_lightning_barrage', 'w6_boss_static_curse'], attackInfo: 'Attack: uses its best poker hand for heavy damage and can hit twice a turn. Damage swings wildly with the storm, and every hit risks cursing one of your Items.' },
@@ -2314,9 +2325,9 @@ function revealFraction(row) { return [1.0, 0.8, 0.6, 0.4, 0.25, 0.1, 0][Math.mi
 
   /* ========== LEVELED UPGRADE TREE (permanent, up to 20 levels each) ========== */
 const UPGRADE_TIERS = {
-  high:   { baseCost: 50, growth: 1.55 },
-  medium: { baseCost: 30, growth: 1.5 },
-  low:    { baseCost: 18, growth: 1.45 },
+  high:   { baseCost: 55, growth: 1.62 },
+  medium: { baseCost: 33, growth: 1.56 },
+  low:    { baseCost: 20, growth: 1.5 },
 };
 const UPGRADE_DEFS = [
   { id: 'draw',    label: 'Cards Drawn Per Turn', desc: '+1 card drawn at the start of each turn (also raises your opening hand).', tier: 'high',
@@ -2744,12 +2755,12 @@ function castleInnScreen(message='') {
   </div>`; 
 }
 const MATCH_SUIT_REWARDS = {
-  '♦': { coins: 20, label: '+20 coins' },
+  '♦': { fuel: 2, label: '+2 fuel' },
   '♣': { gems: 1, label: '+1 gem' },
   '♥': { health: 20, label: '+20 health' },
   '♠': { energy: 4, label: '+4 energy' },
   'RJ': { gems: 3, label: '+3 gems' },
-  'BJ': { points: 50, label: '+50 Career Points' },
+  'BJ': { points: 25, label: '+25 Career Points' },
 };
 let MATCH_POPUP = null; 
 let MATCH_RETURN_TO_MAP = false; 
@@ -2891,7 +2902,7 @@ function rollTreasure(big=false) {
     { kind:'fuel', label:'Fuel', amount:1*mult, icon: ICON.fuel },
     { kind:'gems', label:'Gems', amount:(1 + Math.floor(Math.random()*2))*mult, icon: ICON.gem },
     { kind:'energy', label:'Energy', amount:(5 + Math.floor(Math.random()*6))*mult, icon: ICON.energy },
-    { kind:'points', label:'Career Points', amount:(10 + Math.floor(Math.random()*16))*mult, icon: ICON.star }
+    { kind:'points', label:'Career Points', amount:(6 + Math.floor(Math.random()*10))*mult, icon: ICON.star }
   ];
   const prize = choices[Math.floor(Math.random()*choices.length)];
   let actual = prize.amount;
@@ -2906,7 +2917,7 @@ function rollTreasure(big=false) {
 function endRun(won) {
   IN_BATTLE = false; clearBattleSave();
   playSfx(won ? 'win' : 'lose');
-  const bonus = Math.round(RUN.path.length * (won ? 5 : 2) + (won ? 40 : 0));
+  const bonus = Math.round(RUN.path.length * (won ? 3 : 1.5) + (won ? 25 : 0));
   earnPoints(bonus);
   META.bestRun = Math.max(META.bestRun, RUN.path.length);
   META.highScore = Math.max(META.highScore, RUN.scoreThisRun);
@@ -3058,15 +3069,15 @@ function tryApplyHex(specOverride) {
   if (Math.random() > (spec.chance ?? 1)) return;
   const eligible = RUN.hero.items.map((id, i) => `${id}_${i}`).filter(key => {
     const item = ITEMS[key.replace(/_\d+$/, '')];
-    return item && item.kind !== 'storage' && !(BATTLE.itemHexes && BATTLE.itemHexes[key]);
+    return item && item.kind !== 'storage';
   });
   if (!eligible.length) return;
   const count = Math.min(spec.count || 1, eligible.length);
   const chosen = shuffle([...eligible]).slice(0, count);
   BATTLE.itemHexes = BATTLE.itemHexes || {};
-  chosen.forEach(key => { BATTLE.itemHexes[key] = true; });
-  const names = chosen.map(key => ITEMS[key.replace(/_\d+$/, '')].name).join(', ');
-  battleLog(`${BATTLE.opponent.name} hexes your ${names} - the next time you fire ${chosen.length > 1 ? 'them' : 'it'}, one of the cards you play gets fed straight into ${BATTLE.opponent.name}'s hand.`);
+  chosen.forEach(key => { BATTLE.itemHexes[key] = (BATTLE.itemHexes[key] || 0) + 1; });
+  const names = chosen.map(key => `${ITEMS[key.replace(/_\d+$/, '')].name}${BATTLE.itemHexes[key] > 1 ? ` (x${BATTLE.itemHexes[key]})` : ''}`).join(', ');
+  battleLog(`${BATTLE.opponent.name} hexes your ${names} - the next time you fire ${chosen.length > 1 ? 'them' : 'it'}, that many of the cards you play get fed straight into ${BATTLE.opponent.name}'s hand.`);
 }
 function tryApplyFreeze(specOverride) {
   const spec = specOverride || BATTLE.opponent.ice;
@@ -3130,6 +3141,18 @@ function chooseBurnTarget(key) {
   applyOpponentItemBurn(key, amount);
   const name = ITEMS[key.replace(/_\d+$/, '')]?.name || 'Item';
   battleLog(`${itemName} ignites ${BATTLE.opponent.name}'s ${name} for ${BATTLE.opponentItemBurns[key]} burn. Firing it will backfire into their own health.`);
+  saveRun();
+  render(battleScreen());
+}
+function chooseHexTarget(key) {
+  if (!BATTLE.pendingTarget || BATTLE.pendingTarget.type !== 'hex') return;
+  const { itemName } = BATTLE.pendingTarget;
+  BATTLE.pendingTarget = null;
+  BATTLE.opponentItemHexes = BATTLE.opponentItemHexes || {};
+  BATTLE.opponentItemHexes[key] = (BATTLE.opponentItemHexes[key] || 0) + 1;
+  const stacks = BATTLE.opponentItemHexes[key];
+  const name = ITEMS[key.replace(/_\d+$/, '')]?.name || 'Item';
+  battleLog(`${itemName} hexes ${BATTLE.opponent.name}'s ${name}${stacks > 1 ? ` (now stacked ${stacks}x)` : ''} - the next time they fire it, you pull ${stacks > 1 ? `${stacks} of the cards` : 'one of the cards'} they use straight into your hand.`);
   saveRun();
   render(battleScreen());
 }
@@ -3308,7 +3331,8 @@ if (idxs.some(i => BATTLE.usedThisTurn.has(i))) {
   }
   BATTLE.stagedFireCards = BATTLE.stagedFireCards || [];
   cards.forEach(c => { if (c && !BATTLE.stagedFireCards.includes(c)) BATTLE.stagedFireCards.push(c); });
-  const lightningRoll = item.kind === 'lightning' ? rollLightningMultiplier() : null;
+  const lightningRoll = item.kind === 'lightning' ? ((BATTLE.lightningRolls && BATTLE.lightningRolls[slotKey] != null) ? BATTLE.lightningRolls[slotKey] : rollLightningMultiplier()) : null;
+  if (item.kind === 'lightning' && BATTLE.lightningRolls) delete BATTLE.lightningRolls[slotKey];
   const { amount, breakdown } = computeItemAmount(item, cards, level, condResult, false, lightningRoll);
   const eKind = effectiveKind(item, index);
   const cardsStr = cards.map(c => `${rankLabel(c.rank)}${c.suit}`).join(' ');
@@ -3391,17 +3415,13 @@ if (idxs.some(i => BATTLE.usedThisTurn.has(i))) {
       }
       BATTLE.opponent.hpNow = Math.max(0, BATTLE.opponent.hpNow - dmgToApply);
       if (dmgToApply === atkBefore && atkBefore > 0) BATTLE.exactKill = true;
-      let stealNote = '';
-      if (BATTLE.oppPool.length) {
-        const si = Math.floor(Math.random() * BATTLE.oppPool.length);
-        const [stolen] = BATTLE.oppPool.splice(si, 1);
-        stolen.revealed = true;
-        BATTLE.hand.push(stolen);
-        resortHandAndRelink(RUN.handSortMode);
-        stealNote = ` Hexes a card straight out of their hand - drew ${rankLabel(stolen.rank)}${stolen.suit}.`;
-      }
       const armorNote = armorAbsorbed > 0 ? ` (${armorAbsorbed} blocked by their armor${BATTLE.opponent.armor > 0 ? `, ${BATTLE.opponent.armor} left` : ''})` : '';
-      battleLog(`${item.name} [${cardsStr}] - ${condResult.label}! ${amount} damage${armorNote} (${breakdown}).${stealNote}`);
+      if (BATTLE.opponent.hpNow > 0) {
+        BATTLE.pendingTarget = { type: 'hex', itemName: item.name };
+        battleLog(`${item.name} [${cardsStr}] - ${condResult.label}! ${amount} damage${armorNote} (${breakdown}). Pick one of ${BATTLE.opponent.name}'s Items to hex.`);
+      } else {
+        battleLog(`${item.name} [${cardsStr}] - ${condResult.label}! ${amount} damage${armorNote} (${breakdown}).`);
+      }
       playSfx('hex'); flashScreen('hit-opponent');
     } else {
       const atkBefore = BATTLE.opponent.hpNow;
@@ -3427,12 +3447,16 @@ if (idxs.some(i => BATTLE.usedThisTurn.has(i))) {
   }
   if (BATTLE.itemCurses && BATTLE.itemCurses[slotKey]) { delete BATTLE.itemCurses[slotKey]; battleLog(`${item.name}'s curse cleared.`); }
   if (BATTLE.itemHexes && BATTLE.itemHexes[slotKey]) {
+    const stacks = BATTLE.itemHexes[slotKey];
     delete BATTLE.itemHexes[slotKey];
     if (cards.length) {
-      const stolenCard = cards[Math.floor(Math.random() * cards.length)];
+      const stealCount = Math.min(stacks, cards.length);
+      const shuffledCards = shuffle([...cards]);
+      const stolenCards = shuffledCards.slice(0, stealCount);
       BATTLE.pendingHexSteal = BATTLE.pendingHexSteal || [];
-      BATTLE.pendingHexSteal.push(stolenCard);
-      battleLog(`${item.name}'s hex triggers - the ${rankLabel(stolenCard.rank)}${stolenCard.suit} gets fed straight to ${BATTLE.opponent.name}.`);
+      BATTLE.pendingHexSteal.push(...stolenCards);
+      const stolenText = stolenCards.map(c => `${rankLabel(c.rank)}${c.suit}`).join(' ');
+      battleLog(`${item.name}'s hex triggers - the ${stolenText} ${stolenCards.length > 1 ? 'get' : 'gets'} fed straight to ${BATTLE.opponent.name}.`);
       playSfx('hex');
     }
   }
@@ -3599,6 +3623,7 @@ function endTurn() {
   }
   BATTLE.usedThisTurn = new Set();
   BATTLE.itemUses = {};
+  BATTLE.lightningRolls = {};
   if (BATTLE.itemCooldowns) {
     Object.keys(BATTLE.itemCooldowns).forEach(key => {
       BATTLE.itemCooldowns[key] = Math.max(0, BATTLE.itemCooldowns[key] - 1);
@@ -3713,6 +3738,13 @@ function endTurn() {
           delete BATTLE.opponentItemCurses[key];
           battleLog(`${BATTLE.opponent.name}'s ${item.name} fires and breaks the curse trap on it.`);
         }
+        let hexStolenCards = [];
+        if (BATTLE.opponentItemHexes && BATTLE.opponentItemHexes[key]) {
+          const hexStacks = BATTLE.opponentItemHexes[key];
+          delete BATTLE.opponentItemHexes[key];
+          const hexStealCount = Math.min(hexStacks, best.cards.length);
+          hexStolenCards = shuffle([...best.cards]).slice(0, hexStealCount);
+        }
         anyAttack = true;
         if (item.unlockThreshold != null) {
           BATTLE.opponentItemUnlockProgress = BATTLE.opponentItemUnlockProgress || {};
@@ -3769,8 +3801,16 @@ function endTurn() {
         const dmgPhrase = armorBlocked > 0
           ? `${rawDmg} damage, but your armor absorbed ${armorBlocked}${oppDmg > 0 ? ` (${oppDmg} got through)` : ''}${BATTLE.playerArmor > 0 ? ` and you have ${BATTLE.playerArmor} armor remaining` : ', and your armor is gone'}`
           : `${oppDmg} damage`;
-        battleLog(`${BATTLE.opponent.name} used ${item.name}${cond.label ? ` with ${cond.label}` : ''} (${usedText}) - ${dmgPhrase}.${specialLog} Your health: ${RUN.health}/${RUN.maxHealth}.`);
-        BATTLE.discard.push(...best.cards);
+        let hexLog = '';
+        if (hexStolenCards.length) {
+          hexStolenCards.forEach(c => { c.revealed = true; });
+          BATTLE.hand.push(...hexStolenCards);
+          resortHandAndRelink(RUN.handSortMode);
+          const stolenText = hexStolenCards.map(c => `${rankLabel(c.rank)}${c.suit}`).join(' ');
+          hexLog = ` The hex trap kicks in - you pull the ${stolenText} straight into your hand.`;
+        }
+        battleLog(`${BATTLE.opponent.name} used ${item.name}${cond.label ? ` with ${cond.label}` : ''} (${usedText}) - ${dmgPhrase}.${specialLog}${hexLog} Your health: ${RUN.health}/${RUN.maxHealth}.`);
+        BATTLE.discard.push(...best.cards.filter(c => !hexStolenCards.includes(c)));
         BATTLE.oppPool = BATTLE.oppPool.filter(c => !best.cards.includes(c));
         if (RUN.health <= 0) break;
         continue;
@@ -3898,10 +3938,13 @@ function endTurn() {
 function battleRewardsFor(opp, row) {
   const isElite = /\[Elite\]/.test(opp.name || '');
   const gemReward = opp.boss ? 5 : isElite ? 2 : 0;
-  const fuelReward = 2 + Math.floor(row / 5);
+  // Regular kills no longer hand out fuel - fuel now comes from Perfect Kills, node stops,
+  // and chests, so it stays a real resource you have to plan a route around instead of a
+  // side effect of just fighting.
+  const fuelReward = 0;
   const rewardMult = opp.rewardMult || 1;
-  const chipReward = Math.round((22 + opp.hp / 7) * rewardMult);
-  const pointsReward = Math.round((5 + row * 3) * rewardMult);
+  const chipReward = Math.round((9 + opp.hp / 11) * rewardMult);
+  const pointsReward = Math.round((3 + row * 1.4) * rewardMult);
   return { chipReward, gemReward, fuelReward, pointsReward };
 }
 function winBattle(outlast) {
@@ -3955,9 +3998,10 @@ function winBattle(outlast) {
   let chipReward = Math.round(base.chipReward * scale);
   let pointsReward = Math.round(base.pointsReward * scale);
   const exactKillBonus = BATTLE.exactKill && !outlast;
-  if (exactKillBonus) { chipReward += 25; pointsReward += 15; }
+  if (exactKillBonus) { chipReward += 15; pointsReward += 8; }
   const gemReward = base.gemReward + (exactKillBonus ? 1 : 0);
-  const fuelReward = base.fuelReward;
+  // Fuel is scarce on purpose now - only a Perfect Kill refuels you at all.
+  const fuelReward = exactKillBonus ? 1 : 0;
   RUN.chips += chipReward; RUN.gems = Math.min(RUN.maxGems, RUN.gems + gemReward); RUN.fuel = Math.min(RUN.maxFuel, RUN.fuel + fuelReward);
   earnPoints(pointsReward);
   battleLog(outlast ? `You outlasted the ${BATTLE.opponent.name}!` : `${BATTLE.opponent.name} is done for!`);
@@ -4263,7 +4307,13 @@ function battleScreen() {
 
     const condResult = frozenState ? { met: cards.length > 0, label: 'Thawing' } : (cards.length ? checkCondition(item.condition, cards) : { met: false, label: '' });
     const ready = condResult.met;
-    const previewCalc = (ready && !frozenState) ? computeItemAmount(item, cards, level, condResult) : null;
+    let lightningRollForPreview = null;
+    if (ready && !frozenState && item.kind === 'lightning') {
+      BATTLE.lightningRolls = BATTLE.lightningRolls || {};
+      if (BATTLE.lightningRolls[slotKey] == null) BATTLE.lightningRolls[slotKey] = rollLightningMultiplier();
+      lightningRollForPreview = BATTLE.lightningRolls[slotKey];
+    }
+    const previewCalc = (ready && !frozenState) ? computeItemAmount(item, cards, level, condResult, false, lightningRollForPreview) : null;
     
     let hypPreviewHTML = '';
     if (!frozenState && !idxs.length && typeof selectedIdx !== 'undefined' && selectedIdx.length) {
@@ -4297,7 +4347,7 @@ function battleScreen() {
         ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleCardDrop(event,'${slotKey}',${effectiveMaxCards(item)})">
       ${isDepletedThisTurn ? '' : `<div class="usesBadge hoverTip" data-title="Uses left this turn">${usesBadgeText}</div>`}
       <div class="itemCard-sec">
-        <div class="hdr" style="font-weight:600">${item.name}${cursedAmt ? ` <span class="vart" style="width:12px;height:12px;font-size:12px;color:var(--purple)">${ICON.curse}</span> cursed` : ''}${hexedFlag ? ` <span class="vart" style="width:12px;height:12px;font-size:12px;color:var(--hex)">${ICON.hex}</span> hexed` : ''}${frozenState ? ` <span class="vart" style="width:12px;height:12px;font-size:12px;color:var(--ice)">${ICON.ice}</span> frozen` : ''}</div>
+        <div class="hdr" style="font-weight:600">${item.name}${cursedAmt ? ` <span class="vart" style="width:12px;height:12px;font-size:12px;color:var(--purple)">${ICON.curse}</span> cursed` : ''}${hexedFlag ? ` <span class="vart" style="width:12px;height:12px;font-size:12px;color:var(--hex)">${ICON.hex}</span> hexed${hexedFlag > 1 ? ` x${hexedFlag}` : ''}` : ''}${frozenState ? ` <span class="vart" style="width:12px;height:12px;font-size:12px;color:var(--ice)">${ICON.ice}</span> frozen` : ''}</div>
         <div class="itemReqLine">${frozenState ? `<span class="hoverTip" data-title="This Item is frozen and can't fire normally. Drop any cards into it - their value counts toward thawing it out.">Frozen: ${Math.max(0, frozenState.threshold - frozenState.progress)} to thaw</span>` : itemRequirementText(item, eKind)}</div>
       </div>
       <div class="itemDivider"></div>
@@ -4396,6 +4446,7 @@ function battleScreen() {
               ${BATTLE.opponent.burns?.length ? (() => { const burns=BATTLE.opponent.burns; const now=burns.reduce((a,b)=>a+(b.stages[b.stageIdx]||0),0); const future=[1,2].map(offset=>burns.reduce((a,b)=>a+(b.stages[b.stageIdx+offset]||0),0)).filter(n=>n>0); const nextText=future.length ? `Next: ${future.join(', ')}` : 'No more burn damage.'; return `<span class="status burnStatus hoverTip" data-title="${nextText}">${ICON.fire} ${now} <b><u>Burn Damage</u></b></span>`; })() : ''}
               ${BATTLE.opponentItemCurses && Object.keys(BATTLE.opponentItemCurses).length ? `<span class="status curseStatus hoverTip" data-title="${Object.entries(BATTLE.opponentItemCurses).map(([k,v])=>`${ITEMS[k.replace(/_\d+$/,'')]?.name||'Item'}: ${v} if not fired`).join(' | ')}">${ICON.curse} ${Object.keys(BATTLE.opponentItemCurses).length} Item${Object.keys(BATTLE.opponentItemCurses).length>1?'s':''} cursed</span>` : ''}
               ${BATTLE.opponentItemBurns && Object.keys(BATTLE.opponentItemBurns).length ? `<span class="status burnStatus hoverTip" data-title="${Object.entries(BATTLE.opponentItemBurns).map(([k,v])=>`${ITEMS[k.replace(/_\d+$/,'')]?.name||'Item'}: ${v} if fired`).join(' | ')}">${ICON.fire} ${Object.keys(BATTLE.opponentItemBurns).length} Item${Object.keys(BATTLE.opponentItemBurns).length>1?'s':''} burned</span>` : ''}
+              ${BATTLE.opponentItemHexes && Object.keys(BATTLE.opponentItemHexes).length ? `<span class="status hoverTip" style="color:var(--hex)" data-title="${Object.entries(BATTLE.opponentItemHexes).map(([k,v])=>`${ITEMS[k.replace(/_\d+$/,'')]?.name||'Item'}: steals ${v} card${v>1?'s':''} when fired`).join(' | ')}">${ICON.hex} ${Object.keys(BATTLE.opponentItemHexes).length} Item${Object.keys(BATTLE.opponentItemHexes).length>1?'s':''} hexed</span>` : ''}
             </div>
           </div>
         </div>
@@ -4457,7 +4508,7 @@ function battleScreen() {
       <div class="matchupSide opponentSide">
         <div class="panel">
           <div class="itemGrid">
-            ${opponentAttackBoxHTML(opp)}
+            ${opponentAttackBoxHTML(opp, true)}
           </div>
         </div>
       </div>
@@ -4470,21 +4521,29 @@ function battleScreen() {
     </div>
     ${(() => {
       if (!BATTLE.pendingTarget) return '';
-      const isBurn = BATTLE.pendingTarget.type === 'burn';
-      const rows = (BATTLE.opponent.items || []).map((id, i) => {
+      const targetType = BATTLE.pendingTarget.type;
+      const isBurn = targetType === 'burn';
+      const isHex = targetType === 'hex';
+      const cardsHTML = (BATTLE.opponent.items || []).map((id, i) => {
         const it = ITEMS[id]; if (!it || it.kind === 'storage') return '';
         const key = `${id}_${i}`;
         const curseAmt = BATTLE.opponentItemCurses && BATTLE.opponentItemCurses[key];
         const burnAmt = BATTLE.opponentItemBurns && BATTLE.opponentItemBurns[key];
-        const tag = curseAmt ? ` <span class="curseBadge">Cursed: ${curseAmt}</span>` : burnAmt ? ` <span class="curseBadge">Burn: ${burnAmt}</span>` : '';
-        return `<button class="wo-btn ${isBurn ? 'amber' : 'purple'} targetSlotBtn" data-targetkey="${key}" style="width:100%;text-align:left;margin-bottom:6px">${it.name}${tag}</button>`;
+        const hexStacks = BATTLE.opponentItemHexes && BATTLE.opponentItemHexes[key];
+        const tag = curseAmt ? `<span class="curseBadge">Cursed: ${curseAmt}</span>` : burnAmt ? `<span class="curseBadge">Burn: ${burnAmt}</span>` : hexStacks ? `<span class="curseBadge">Hexed x${hexStacks}</span>` : '';
+        const card = renderStandardItemCard(it);
+        return `<div class="targetableCard" data-targetkey="${key}" data-title="Click to target ${it.name}">${card}${tag ? `<div class="note" style="margin:2px 0 0;text-align:center">${tag}</div>` : ''}</div>`;
       }).join('');
+      const title = isBurn ? 'Ignite an Item' : isHex ? 'Hex an Item' : 'Curse an Item';
+      const explain = isBurn ? `This item slot is trapped. If ${BATTLE.opponent.name} fires it, the burn backfires into their own health instead of yours.`
+        : isHex ? `This item slot gets marked. The next time ${BATTLE.opponent.name} fires it, you pull one of the cards they use straight into your hand. Hex the same Item again before they fire it and the steal stacks.`
+        : `This item slot is trapped. It stays cursed until ${BATTLE.opponent.name} fires it before their turn ends, or it detonates.`;
       return `<div class="targetPickerOverlay" style="position:fixed;inset:0;background:#12163acc;display:flex;align-items:center;justify-content:center;z-index:110;padding:20px">
-        <div class="wo" style="max-width:380px;width:100%"><div class="wo-stripe"></div><div class="wo-body">
-          <div class="wo-eyebrow">${isBurn ? 'Ignite an Item' : 'Curse an Item'}</div>
+        <div class="wo" style="max-width:460px;width:100%"><div class="wo-stripe"></div><div class="wo-body">
+          <div class="wo-eyebrow">${title}</div>
           <h1>Pick ${BATTLE.opponent.name}'s <em>Item</em></h1>
-          <div class="note" style="margin-bottom:10px">${isBurn ? `This item slot is trapped. If ${BATTLE.opponent.name} fires it, the burn backfires into their own health instead of yours.` : `This item slot is trapped. It stays cursed until ${BATTLE.opponent.name} fires it before their turn ends, or it detonates.`}</div>
-          ${rows || '<div class="note">No eligible item slots.</div>'}
+          <div class="note" style="margin-bottom:10px">${explain}</div>
+          <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-bottom:10px">${cardsHTML || '<div class="note">No eligible item slots.</div>'}</div>
             <button class="wo-btn gray" id="cancelPendingTargetBtn" style="width:100%;margin-top:4px">Cancel</button>
         </div></div>
       </div>`;
@@ -5606,7 +5665,9 @@ function render(html) {
   app.querySelectorAll('[data-targetkey]').forEach(el => el.onclick = () => {
     const k = el.dataset.targetkey;
     if (!BATTLE.pendingTarget) return;
-    if (BATTLE.pendingTarget.type === 'burn') chooseBurnTarget(k); else chooseCurseTarget(k);
+    if (BATTLE.pendingTarget.type === 'burn') chooseBurnTarget(k);
+    else if (BATTLE.pendingTarget.type === 'hex') chooseHexTarget(k);
+    else chooseCurseTarget(k);
   });
   const cancelTargetBtn = document.getElementById('cancelPendingTargetBtn'); if (cancelTargetBtn) cancelTargetBtn.onclick = () => cancelPendingTarget();
   const claimVictoryBtn = document.getElementById('claimVictoryBtn'); if (claimVictoryBtn) claimVictoryBtn.onclick = () => endRun(true);

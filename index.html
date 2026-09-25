@@ -144,7 +144,7 @@
   .vslot .vcards{display:flex;gap:3px;flex-wrap:wrap;min-height:30px;margin-top:6px}
   #battle-viewport .itemGrid{display:flex;flex-wrap:wrap;justify-content:flex-start;width:100%;gap:10px;} #battle-viewport .itemGrid .itemCard{flex:0 0 calc(25% - 7.5px);box-sizing:border-box;margin:0;}
   .popupItemRow{display:grid;grid-template-columns:repeat(auto-fill,125px);justify-content:center;gap:8px}
-  .pickItemRow{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-start}
+  .pickItemRow{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-start;margin-left:178px}
   .pickItemRow .itemCard{flex:0 0 125px;width:125px}
   #dealer-viewport .dealerRow{
     display:grid; grid-template-columns:repeat(6, 141px); justify-content:center;
@@ -201,6 +201,7 @@
   .card.red{color:#e5484d}
   .card.suit-club{color:var(--green)}
   .card.selected{outline:3px solid var(--amber);transform:translateY(-6px)}
+  .card.sweepRemove{outline:3px solid var(--red);transform:translateY(-6px)}
   .card.matched{outline:3px solid var(--green)}
   .card.cursed{outline:2px solid var(--purple)}
   .card.mini{width:30px;height:42px;font-size:11px;cursor:pointer;gap:0}
@@ -247,8 +248,11 @@
   .shopGrid .shopcard{margin-bottom:0}
   @media (max-width:600px){.shopGrid{grid-template-columns:1fr}}
   .pickcard{border:2px solid var(--blue-light);background:var(--bg);border-radius:10px;padding:16px;width:160px;text-align:center}
-  .pickrow{border:2px solid var(--blue-dark);background:var(--bg);border-radius:10px}
+  .pickrow{border:2px solid var(--blue-dark);background:var(--bg);border-radius:10px;position:relative}
   .pickrow.locked{opacity:.55}
+  .pickLeftCol{position:absolute;top:0;left:0;width:170px;display:flex;flex-direction:column;align-items:center}
+  .pickLeftCol .pname{text-align:center;margin:0 0 4px;white-space:normal}
+  .chooseBtnWrap{display:flex;justify-content:center;margin-bottom:6px}
   .pickcard .picon{font-size:46px;display:flex;align-items:center;justify-content:center}
   .pname{font-weight:700;font-size:17px;letter-spacing:.01em;color:var(--blue);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   @media (max-width:420px){.pname{font-size:13px}}
@@ -262,7 +266,7 @@
   .ic{width:1em;height:1em;vertical-align:-0.15em;display:inline-block}
   .vart{display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;line-height:1;flex-shrink:0}
   .vart img{width:100%;height:100%;object-fit:contain;display:block}
-  .pickPortrait{width:150px;height:150px;flex:0 0 150px;display:flex;align-items:center;justify-content:center}
+  .pickPortrait{width:150px;height:150px;flex:0 0 150px;display:flex;align-items:center;justify-content:center;margin-top:-4px}
   .pickPortrait .vart{width:100% !important;height:100% !important;font-size:60px !important}
   .pickPortrait .vart span{font-size:60px !important}
   .fleetgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -309,6 +313,12 @@
   .targetableCard:hover{transform:translateY(-2px)}
   .targetableCard:hover .itemCard{box-shadow:0 0 0 3px var(--amber),0 0 14px rgba(212,175,0,0.5)}
   .itemCard.cursed{border-color:var(--purple) !important;box-shadow:inset 0 0 12px rgba(138,79,224,0.3)}
+  .itemCard.burnTargetable{box-shadow:0 0 0 2px var(--red);transition:box-shadow .15s ease,transform .1s ease}
+  .itemCard.burnTargetable:hover{box-shadow:0 0 0 3px var(--red),0 0 14px rgba(220,40,40,0.5);transform:translateY(-2px)}
+  .burnTargetOverlay{position:absolute;inset:0;border-radius:8px;pointer-events:none;display:flex;align-items:center;justify-content:center;z-index:2;
+    background:repeating-linear-gradient(45deg, rgba(220,40,40,0.45) 0 10px, rgba(255,140,40,0.45) 10px 20px);}
+  .burnTargetOverlay span{background:rgba(20,8,8,0.82);color:#ffffff;font-weight:800;font-size:12px;padding:4px 9px;border-radius:6px;text-shadow:0 1px 2px rgba(0,0,0,0.6);white-space:nowrap}
+  .burnTargetBanner{display:flex;align-items:center;justify-content:space-between;gap:10px;background:rgba(220,40,40,0.15);border:1px solid rgba(220,40,40,0.4);border-radius:8px;padding:8px 10px;margin-bottom:10px;font-size:12px;font-weight:700;color:#ffffff}
   .defenseText,.armorText{color:var(--defense) !important}
   .defenseText{font-weight:800}
   .attackChip.defendChip{background:var(--defense);border-color:#075e57}
@@ -330,6 +340,8 @@
     .pickPortrait{width:110px;height:110px;flex:0 0 110px}
     .pickPortrait .vart{font-size:44px !important}
     .pickPortrait .vart span{font-size:44px !important}
+    .pickLeftCol{width:110px}
+    .pickItemRow{margin-left:118px}
   }
   @media (max-width:850px) and (orientation:portrait){
     .itemGrid .itemCard{flex:0 0 calc(50% - 6px)}
@@ -856,13 +868,19 @@ function opponentAttackBoxHTML(opp, showStatus) {
   const rawAttacks = (opp.attacks && opp.attacks.length ? opp.attacks : [{}]);
   const swings = opp.usesPerTurn ?? OPPONENT_USES_PER_TURN_DEFAULT;
   if (opp.items && opp.items.length) {
+    const pendingBurn = showStatus && BATTLE.pendingTarget && BATTLE.pendingTarget.type === 'burn' ? BATTLE.pendingTarget : null;
     return opp.items.map((itemId, i) => {
       const item = ITEMS[itemId];
       if (!item) return '';
       const key = `${itemId}_${i}`;
       const frozenAmt = showStatus && BATTLE.opponentItemFrozen && BATTLE.opponentItemFrozen[key];
-      const card = renderStandardItemCard(item, { usesBadgeText: swings === Infinity ? '∞' : String(swings), frozenState: frozenAmt || null });
+      const isBurnTarget = !!(pendingBurn && item.kind !== 'storage');
+      const card = renderStandardItemCard(item, {
+        usesBadgeText: swings === Infinity ? '∞' : String(swings), frozenState: frozenAmt || null,
+        burnTargetKey: isBurnTarget ? key : null, burnTargetAmount: isBurnTarget ? pendingBurn.amount : null,
+      });
       if (!showStatus) return card;
+      if (isBurnTarget) return card;
       const curseAmt = BATTLE.opponentItemCurses && BATTLE.opponentItemCurses[key];
       const burnAmt = BATTLE.opponentItemBurns && BATTLE.opponentItemBurns[key];
       const hexStacks = BATTLE.opponentItemHexes && BATTLE.opponentItemHexes[key];
@@ -2308,9 +2326,13 @@ function renderStandardItemCard(item, opts = {}) {
     interactive = false, slotKey = null, cards = [], cursedAmt = null, ready = false,
     usesBadgeText = null, usesDepleted = false, cooldownLeft = 0, hypPreviewHTML = '',
     footerHTML = null, level = 0, kindOverride = null, frozenState = null,
+    burnTargetKey = null, burnTargetAmount = null,
   } = opts;
   const eKind = kindOverride || effectiveKind(item);
-  const dragAttrs = interactive
+  const burnOverlayHTML = burnTargetKey ? `<div class="burnTargetOverlay"><span>Burn: ${burnTargetAmount}</span></div>` : '';
+  const dragAttrs = burnTargetKey
+    ? ` data-targetkey="${burnTargetKey}" data-title="Click to ignite ${item.name}" style="cursor:pointer"`
+    : interactive
     ? ` data-assign="${slotKey}" style="border-style:dashed;border-width:2px" ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleCardDrop(event,'${slotKey}',${effectiveMaxCards(item)})"`
     : ` style="cursor:default"`;
   const usesBadge = usesBadgeText != null ? `<div class="usesBadge ${usesDepleted ? 'depleted' : ''} hoverTip" data-title="Uses left this turn">${usesBadgeText}</div>` : '';
@@ -2320,7 +2342,7 @@ function renderStandardItemCard(item, opts = {}) {
       return `<div class="card mini ${suitColorClass(c.color, c.suit)}" ${interactive ? `data-unassign="${slotKey}|${handIdx}" data-title="Click to take this card back"` : ''}><div>${rankLabel(c.rank)}</div><div>${c.suit}</div></div>`;
     }).join('');
     const weightlessTag = item.weightless ? `<span class="effectTip" style="color:#1a1a2e" data-tip="Doesn't consume an item card slot">Weightless</span>` : '';
-    return `<div class="itemCard kind-storage${item.weightless ? ' kind-weightless' : ''}"${dragAttrs}>
+    return `<div class="itemCard kind-storage${item.weightless ? ' kind-weightless' : ''}${burnTargetKey ? ' burnTargetable' : ''}"${dragAttrs}>
       ${interactive ? `<div class="usesBadge hoverTip" data-title="Cards currently held">${cards.length}/${effectiveMaxCards(item)}</div>` : ''}
       <div class="itemCard-sec">
         <div class="hdr" style="font-weight:600">${item.name}</div>
@@ -2332,6 +2354,7 @@ function renderStandardItemCard(item, opts = {}) {
         ${interactive ? `<div class="vcards">${cardHTML}</div>${cards.length > 0 ? `<button class="wo-btn gray" style="padding:3px 6px;font-size:10px;margin-top:6px" data-clear="${slotKey}">Release All</button>` : ''}` : ''}
       </div>
       ${footerHTML != null ? `<div class="itemCard-footer"><div class="itemDivider"></div><div class="itemCard-sec">${footerHTML}</div></div>` : ''}
+      ${burnOverlayHTML}
     </div>`;
   }
   const drawN = item.drawUsesCardCount ? (cards.length ? cards.length : item.maxCards) + (item.drawBonusFlat || 0) + (item.drawPerLevel || 0) * level : (item.drawAmount ? item.drawAmount + (item.drawPerLevel || 0) * level : 0);
@@ -2354,7 +2377,7 @@ function renderStandardItemCard(item, opts = {}) {
   }).join('');
 
   const frozenReqLine = frozenState ? `<span class="hoverTip" data-title="This Item is frozen solid and can't fire. It thaws out on its own as its owner works through it.">Frozen: ${Math.max(0, frozenState.threshold - frozenState.progress)} to thaw</span>` : null;
-  return `<div class="itemCard kind-${eKind} ${ready ? 'ready' : ''} ${cursedAmt ? 'cursed' : ''} ${frozenState ? 'frozenLock' : ''}"${dragAttrs}>
+  return `<div class="itemCard kind-${eKind} ${ready ? 'ready' : ''} ${cursedAmt ? 'cursed' : ''} ${frozenState ? 'frozenLock' : ''} ${burnTargetKey ? 'burnTargetable' : ''}"${dragAttrs}>
     ${usesBadge}
     <div class="itemCard-sec">
       <div class="hdr" style="font-weight:600">${item.name}${cursedAmt ? ` <span class="vart" style="width:12px;height:12px;font-size:12px;color:var(--purple)">${ICON.curse}</span> cursed` : ''}</div>
@@ -2371,6 +2394,7 @@ function renderStandardItemCard(item, opts = {}) {
         ${footerHTML != null ? footerHTML : frozenState ? `<div class="note" style="margin:0">Frozen solid</div>` : `${staticKindLine}${unlockLine}`}
       </div>
     </div>
+    ${burnOverlayHTML}
   </div>`;
 }
 function heroAbilityCardHTML(heroId) {
@@ -2966,6 +2990,10 @@ function generateMap() {
 let RUN = null;
 let BATTLE = null;
 let selectedIdx = [];
+// Click-and-drag multi-select: dragging across cards in the hand (to select several at once) or
+// across cards already loaded into an item slot (to remove several at once) instead of clicking
+// each one individually. See startDragSweep/updateDragSweep/finishDragSweep.
+let dragSweep = null;
 const FUEL_COST_PER_MOVE = 1;
 const GEM_DRAW_COST = 1;
 const FUEL_HESTORE_COST = 1;
@@ -4798,6 +4826,47 @@ function cancelPendingTarget() {
   render(battleScreen());
 }
 function toggleCardSelect(i) { const pos = selectedIdx.indexOf(i); if (pos === -1) selectedIdx.push(i); else selectedIdx.splice(pos, 1); render(battleScreen()); }
+/* ========== CLICK-AND-DRAG MULTI-SELECT ==========
+   Lets a mouse drag sweep across several cards at once instead of clicking each one:
+   - origin 'hand': dragging across cards in the hand adds the whole swept run to selectedIdx.
+   - origin 'slot': dragging across cards already loaded into one item slot removes the whole swept run.
+   Only classList is touched while the drag is in progress (no render()), because render() replaces
+   the whole #app DOM and would kill the native drag the browser is tracking. The real state change
+   (selectedIdx / BATTLE.slots) and the one render() call happen once, in finishDragSweep. */
+function startDragSweep(origin, slotKey, idx) { dragSweep = { origin, slotKey, sweptIdx: [idx] }; }
+function dragSweepCandidates() {
+  if (!dragSweep) return [];
+  const selector = dragSweep.origin === 'hand' ? '#app [data-card]' : `#app [data-unassign^="${dragSweep.slotKey}|"]`;
+  return Array.from(document.querySelectorAll(selector));
+}
+function dragSweepIdxOf(el) { return dragSweep.origin === 'hand' ? +el.dataset.card : +el.dataset.unassign.split('|').pop(); }
+function updateDragSweep(idx) {
+  if (!dragSweep) return;
+  const candidates = dragSweepCandidates();
+  const idxList = candidates.map(dragSweepIdxOf);
+  const anchorPos = idxList.indexOf(dragSweep.sweptIdx[0]);
+  const curPos = idxList.indexOf(idx);
+  if (anchorPos === -1 || curPos === -1) return;
+  const lo = Math.min(anchorPos, curPos), hi = Math.max(anchorPos, curPos);
+  dragSweep.sweptIdx = idxList.slice(lo, hi + 1);
+  const previewClass = dragSweep.origin === 'hand' ? 'selected' : 'sweepRemove';
+  candidates.forEach((el, pos) => el.classList.toggle(previewClass, pos >= lo && pos <= hi));
+}
+function finishDragSweep() {
+  if (!dragSweep) return;
+  const { origin, slotKey, sweptIdx } = dragSweep;
+  dragSweep = null;
+  if (sweptIdx.length > 1) {
+    if (origin === 'hand') {
+      sweptIdx.forEach(i => { if (!selectedIdx.includes(i)) selectedIdx.push(i); });
+    } else {
+      BATTLE.slots[slotKey] = (BATTLE.slots[slotKey] || []).filter(i => !sweptIdx.includes(i));
+    }
+    render(battleScreen());
+  } else {
+    document.querySelectorAll('.sweepRemove').forEach(el => el.classList.remove('sweepRemove'));
+  }
+}
 function assignSelectedTo(slotKey) {
   if (!selectedIdx.length) return;
   const match = slotKey.match(/^(.+)_(\d+)$/);
@@ -5968,7 +6037,10 @@ function battleScreen() {
     if (item.kind === 'storage') {
       const cardHTML = idxs.map(cardHandIdx => {
         const c = BATTLE.hand[cardHandIdx];
-        return `<div class="card mini ${suitColorClass(c.color, c.suit)}" data-unassign="${slotKey}|${cardHandIdx}" data-title="Click to take this card back"><div>${rankLabel(c.rank)}</div><div>${c.suit}</div></div>`;
+        return `<div class="card mini ${suitColorClass(c.color, c.suit)}" data-unassign="${slotKey}|${cardHandIdx}" data-title="Click to take this card back" draggable="true"
+          ondragstart="event.dataTransfer.setData('text/plain','${cardHandIdx}');this.classList.add('dragging');startDragSweep('slot','${slotKey}',${cardHandIdx})"
+          ondragenter="updateDragSweep(${cardHandIdx})"
+          ondragend="this.classList.remove('dragging');finishDragSweep()"><div>${rankLabel(c.rank)}</div><div>${c.suit}</div></div>`;
       }).join('');
       return `<div class="itemCard kind-storage${item.weightless ? ' kind-weightless' : ''}" data-assign="${slotKey}" style="border-style:dashed;border-width:2px"
           ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleCardDrop(event,'${slotKey}',${effectiveMaxCards(item)})">
@@ -6015,7 +6087,10 @@ function battleScreen() {
     const isChargingUnlockItem = item.unlockThreshold != null && !(BATTLE.itemUnlocked && BATTLE.itemUnlocked[slotKey]);
     const cardHTML = idxs.map(cardHandIdx => {
       const c = BATTLE.hand[cardHandIdx];
-      return `<div class="card mini ${suitColorClass(c.color, c.suit)}" data-unassign="${slotKey}|${cardHandIdx}"><div>${rankLabel(c.rank)}</div><div>${c.suit}</div></div>`;
+      return `<div class="card mini ${suitColorClass(c.color, c.suit)}" data-unassign="${slotKey}|${cardHandIdx}" draggable="true"
+        ondragstart="event.dataTransfer.setData('text/plain','${cardHandIdx}');this.classList.add('dragging');startDragSweep('slot','${slotKey}',${cardHandIdx})"
+        ondragenter="updateDragSweep(${cardHandIdx})"
+        ondragend="this.classList.remove('dragging');finishDragSweep()"><div>${rankLabel(c.rank)}</div><div>${c.suit}</div></div>`;
     }).join('');
     const bonusLine = itemBonusLineHTML(item, level);
     const drawNPreview = item.drawUsesCardCount ? (cards.length + (item.drawBonusFlat||0) + (item.drawPerLevel||0)*level) : (item.drawAmount ? item.drawAmount + (item.drawPerLevel||0)*level : 0);
@@ -6080,7 +6155,9 @@ function battleScreen() {
   const handHTML = BATTLE.hand.map((c, i) => {
     if (assignedIdx.has(i) || BATTLE.turnDiscard.includes(i) || BATTLE.usedThisTurn.has(i)) return '';
     return `<div class="card ${suitColorClass(c.color, c.suit)} ${selectedIdx.includes(i) ? 'selected' : ''}" data-card="${i}" draggable="true"
-      ondragstart="event.dataTransfer.setData('text/plain','${i}');this.classList.add('dragging')" ondragend="this.classList.remove('dragging')" style="position:relative">
+      ondragstart="event.dataTransfer.setData('text/plain','${i}');this.classList.add('dragging');startDragSweep('hand',null,${i})"
+      ondragenter="updateDragSweep(${i})"
+      ondragend="this.classList.remove('dragging');finishDragSweep()" style="position:relative">
     ${c.bonus ? `<div style="position:absolute;bottom:1px;right:2px;font-size:8px;color:var(--green)">+${c.bonus}</div>` : ''}
     <div>${rankLabel(c.rank)}</div><div>${c.suit}</div>
   </div>`;
@@ -6191,6 +6268,10 @@ function battleScreen() {
 
       <div class="matchupSide opponentSide">
         <div class="panel">
+          ${BATTLE.pendingTarget && BATTLE.pendingTarget.type === 'burn' ? `<div class="burnTargetBanner">
+            <span>Click one of ${BATTLE.opponent.name}'s Items to ignite it for ${BATTLE.pendingTarget.amount}.</span>
+            <button class="wo-btn gray" id="cancelPendingTargetBtn" style="padding:3px 10px;font-size:11px;white-space:nowrap">Cancel</button>
+          </div>` : ''}
           <div class="itemGrid">
             ${opponentAttackBoxHTML(opp, true)}
           </div>
@@ -6204,9 +6285,8 @@ function battleScreen() {
       })()}</div>
     </div>
     ${(() => {
-      if (!BATTLE.pendingTarget) return '';
+      if (!BATTLE.pendingTarget || BATTLE.pendingTarget.type === 'burn') return '';
       const targetType = BATTLE.pendingTarget.type;
-      const isBurn = targetType === 'burn';
       const isHex = targetType === 'hex';
       const isIce = targetType === 'ice';
       const cardsHTML = (BATTLE.opponent.items || []).map((id, i) => {
@@ -6221,9 +6301,8 @@ function battleScreen() {
         if (isIce && frozenAmt) return `<div class="targetableCard" style="opacity:0.55">${card}${tag ? `<div class="note" style="margin:2px 0 0;text-align:center">${tag}</div>` : ''}</div>`;
         return `<div class="targetableCard" data-targetkey="${key}" data-title="Click to target ${it.name}">${card}${tag ? `<div class="note" style="margin:2px 0 0;text-align:center">${tag}</div>` : ''}</div>`;
       }).join('');
-      const title = isBurn ? 'Ignite an Item' : isHex ? 'Hex an Item' : isIce ? 'Freeze an Item' : 'Curse an Item';
-      const explain = isBurn ? `This item slot is trapped. If ${BATTLE.opponent.name} fires it, the burn backfires into their own health instead of yours.`
-        : isHex ? `This item slot gets marked. The next time ${BATTLE.opponent.name} fires it, you pull one of the cards they use straight into your hand. Hex the same Item again before they fire it and the steal stacks.`
+      const title = isHex ? 'Hex an Item' : isIce ? 'Freeze an Item' : 'Curse an Item';
+      const explain = isHex ? `This item slot gets marked. The next time ${BATTLE.opponent.name} fires it, you pull one of the cards they use straight into your hand. Hex the same Item again before they fire it and the steal stacks.`
         : isIce ? `This item slot freezes solid and can't fire. It thaws out as ${BATTLE.opponent.name} works through it over their next few turns.`
         : `This item slot is trapped. It stays cursed until ${BATTLE.opponent.name} fires it before their turn ends, or it detonates.`;
       return `<div class="targetPickerOverlay" style="position:fixed;inset:0;background:#12163acc;display:flex;align-items:center;justify-content:center;z-index:110;padding:20px">
@@ -6251,6 +6330,12 @@ function battleScreen() {
 function handleCardDrop(e, slotKey, maxSlot) {
   e.preventDefault();
   e.currentTarget.classList.remove('dragover');
+  // A hand card dropped onto an item slot is a single-card assign, not a multi-select sweep -
+  // cancel any hand sweep the drag may have accumulated in transit so the later dragend doesn't
+  // also select hand cards this drag merely passed over on its way here. A sweep that started on
+  // cards already loaded into a slot is left alone: releasing over that same slot's own drop zone
+  // is exactly how a sweep-to-remove gesture normally ends, and it still needs dragend to finish it.
+  if (dragSweep && dragSweep.origin === 'hand') dragSweep = null;
   const idx = +e.dataTransfer.getData('text/plain');
   if (Number.isNaN(idx)) return;
   if (BATTLE.usedThisTurn.has(idx) || BATTLE.turnDiscard.includes(idx)) return;
@@ -6678,18 +6763,16 @@ function starterSelectScreen() {
     const itemCards = (hero.starterItems || []).map(heroItemCardPreviewHTML).join('');
     const abilityCard = heroAbilityCardHTML(id);
     return `<div class="pickrow" style="padding:10px;margin-bottom:8px">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-        <div class="pname" style="flex:1">${hero.name}</div>
-        <button class="wo-btn amber" data-pick="${hero.id}" style="padding:6px 14px;font-size:12px;white-space:nowrap">Choose</button>
-      </div>
-      <div style="display:flex;gap:8px;align-items:stretch">
+      <div class="pickLeftCol">
+        <div class="pname">${hero.name}</div>
+        <div class="chooseBtnWrap"><button class="wo-btn amber" data-pick="${hero.id}" style="padding:3px 14px;font-size:12px;white-space:nowrap">Choose</button></div>
         <div class="pickPortrait">${art(hero, 140)}</div>
-        <div class="pickItemRow" style="flex:1">${abilityCard}${itemCards}</div>
       </div>
+      <div class="pickItemRow">${abilityCard}${itemCards}</div>
     </div>`;
   }).join('');
   return `
-    <div class="wo" style="max-width:720px;margin:0 auto">
+    <div class="wo" style="max-width:800px;margin:0 auto">
       <div class="wo-stripe"></div>
       <div class="wo-body">
         <h1>Pick Your <em>Vehicle</em></h1>
@@ -6988,7 +7071,12 @@ function render(html) {
   
   if (mw && !GARAGE_POPUP && !TREASURE_POPUP) { mw.scrollLeft = MAP_SCROLL_X; mw.onscroll = () => { MAP_SCROLL_X = mw.scrollLeft; }; if (RUN && mw.querySelector('.mapnode-wrap')) { requestAnimationFrame(()=>{ const row = Math.max(0,RUN.currentRow); const colW = 118; const target = Math.max(0, row*colW - mw.clientWidth*0.15); mw.scrollLeft = target; MAP_SCROLL_X = target; }); } }
 
-  app.querySelectorAll('[data-card]').forEach(el => { let ph = false; el.onclick = () => { if (ph) { ph = false; return; } toggleCardSelect(+el.dataset.card); }; el.onpointerdown = e => { if (e.pointerType !== 'mouse' || e.button === 0) { e.preventDefault(); ph = true; toggleCardSelect(+el.dataset.card); } }; });
+  // Mouse selection goes through the plain click handler below, not pointerdown - pointerdown's
+  // preventDefault suppresses the browser's native drag-and-drop gesture entirely, which used to
+  // silently break both "drag a card onto an item slot" and the new click-and-drag multi-select.
+  // Touch/pen still select instantly on pointerdown (no native drag to preserve there), with the
+  // ph flag guarding against the synthetic click a touch tap also fires.
+  app.querySelectorAll('[data-card]').forEach(el => { let ph = false; el.onclick = () => { if (ph) { ph = false; return; } toggleCardSelect(+el.dataset.card); }; el.onpointerdown = e => { if (e.pointerType !== 'mouse') { e.preventDefault(); ph = true; toggleCardSelect(+el.dataset.card); } }; });
   app.querySelectorAll('[data-assign]').forEach(el => el.onclick = (e) => {
     if (e.target.closest('[data-clear]') || e.target.closest('[data-unassign]') || e.target.closest('[data-ability]') || e.target.closest('[data-attack]')) return;
     const hadSelection = selectedIdx.length > 0;

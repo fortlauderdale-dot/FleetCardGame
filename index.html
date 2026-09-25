@@ -262,9 +262,9 @@
   .ic{width:1em;height:1em;vertical-align:-0.15em;display:inline-block}
   .vart{display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;line-height:1;flex-shrink:0}
   .vart img{width:100%;height:100%;object-fit:contain;display:block}
-  .pickPortrait{width:110px;height:150px;flex:0 0 110px}
-  .pickPortrait .vart{width:100% !important;height:100% !important;font-size:44px !important}
-  .pickPortrait .vart span{font-size:44px !important}
+  .pickPortrait{width:150px;height:150px;flex:0 0 150px;display:flex;align-items:center;justify-content:center}
+  .pickPortrait .vart{width:100% !important;height:100% !important;font-size:60px !important}
+  .pickPortrait .vart span{font-size:60px !important}
   .fleetgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
   @media (max-width:700px){ .fleetgrid{grid-template-columns:1fr} }
   .vslot[draggable]{transition:box-shadow .12s,border-color .12s}
@@ -327,9 +327,9 @@
     .itemCard-cards-sec,.itemCard-cards-sec .itemBonusLine{font-size:8.5px}
     .currencies{gap:6px}
     .cur{font-size:11px}
-    .pickPortrait{width:76px;height:104px;flex:0 0 76px}
-    .pickPortrait .vart{font-size:30px !important}
-    .pickPortrait .vart span{font-size:30px !important}
+    .pickPortrait{width:110px;height:110px;flex:0 0 110px}
+    .pickPortrait .vart{font-size:44px !important}
+    .pickPortrait .vart span{font-size:44px !important}
   }
   @media (max-width:850px) and (orientation:portrait){
     .itemGrid .itemCard{flex:0 0 calc(50% - 6px)}
@@ -6092,7 +6092,7 @@ function battleScreen() {
         <button class="wo-btn gray" id="forfeitRunBtn" style="padding:4px 9px;font-size:11px;white-space:nowrap;border-width:1px;box-shadow:none">Forfeit Run</button>
       </div>`)}</div>
     <div class="panel duelHead">
-      <div class="duelSide you">${art(PLAYER_ART, 30)}
+      <div class="duelSide you">${art(HEROES[RUN.hero?.heroId] || PLAYER_ART, 72)}
         <div class="sideInfo">
           <h3 style="justify-content:flex-end"><span style="color:var(--blue)">${fleetLabel()}</span></h3>
           <div class="bar-wrap"><div class="bar-fill bar-health" style="width:${healthPct}%"></div><div class="bar-text">${RUN.health} / ${RUN.maxHealth}</div></div>
@@ -6108,7 +6108,7 @@ function battleScreen() {
         </div>
       </div>
       <div class="vsMark">VS</div>
-      <div class="duelSide opp">${art(opp, 30)}
+      <div class="duelSide opp">${art(opp, 72)}
         <div class="sideInfo">
           <h3 style="justify-content:space-between;gap:6px;flex-wrap:nowrap"><span style="color:var(--red)">${opp.name}</span>${opp.boss ? ` <span class="hoverTip" style="color:var(--red);font-size:13px" data-title="This is a boss fight - taking too long on a turn costs extra health, so don't sit on it.">&#9201;</span>` : ''}
             <span class="rewardRow">
@@ -6683,7 +6683,7 @@ function starterSelectScreen() {
         <button class="wo-btn amber" data-pick="${hero.id}" style="padding:6px 14px;font-size:12px;white-space:nowrap">Choose</button>
       </div>
       <div style="display:flex;gap:8px;align-items:stretch">
-        <div class="pickPortrait" style="border-radius:8px;overflow:hidden;background:rgba(10,14,26,0.9);border:1px solid rgba(31,182,166,0.2);display:flex;align-items:center;justify-content:center">${art(hero, 100)}</div>
+        <div class="pickPortrait">${art(hero, 140)}</div>
         <div class="pickItemRow" style="flex:1">${abilityCard}${itemCards}</div>
       </div>
     </div>`;

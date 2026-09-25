@@ -8,7 +8,6 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
-
   :root{
     --blue:#4a5fc7; --blue-dark:#1a2038; --blue-light:#232a4d;
     --white:#2b3350; --bg:linear-gradient(135deg, #0b0f19 0%, #151b2d 100%); --ink:#ffffff; --dim:#8b93c4;
@@ -58,6 +57,9 @@
   .panel{background:rgba(21,27,45,0.85) !important;border:1px solid rgba(31,182,166,0.3);border-radius:10px;padding:14px;margin-bottom:12px;box-shadow:none}
   .hdr{display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-size:12px;
     letter-spacing:.02em;color:var(--dim);margin-bottom:8px}
+  .runStatRow{font-family:var(--mono);font-size:12px;letter-spacing:.02em;color:var(--ink);margin:0 0 6px}
+  .runStatRow:last-child{margin-bottom:0}
+  .runStatLabel{color:var(--dim)}
   .bar-wrap{height:20px;background:var(--blue-light);border-radius:7px;overflow:hidden;border:1px solid var(--blue-light);position:relative}
   .bar-fill{height:100%;transition:width .25s}
   .bar-hp{background:var(--red)} .bar-health{background:var(--blue)}
@@ -314,7 +316,7 @@
   .log div{padding:4px 0;border-bottom:1px solid #edf0f8;word-break:break-word;line-height:1.4}
   @media (max-width:600px){
     .log{height:204px;max-height:204px;font-size:11px}
-
+    
     .hand .card:not(.mini){width:40px;height:54px;font-size:14px}
     .hand .card:not(.mini) div:last-child{font-size:19px}
     .itemCard{font-size:11px}
@@ -331,7 +333,7 @@
     .itemGrid .itemCard{flex:0 0 calc(33.333% - 6px)}
   }
   @media (max-width:480px){
-
+    
     #app{padding-top:92px}
   }
   .status{font-weight:800}.poisonText{color:#3f8f4f}.burnText{color:#c53d2f}.curseText{color:#7a45b5}.poisonStatus{color:#3f8f4f}.burnStatus{color:#c53d2f}.curseStatus{color:#7a45b5}
@@ -415,6 +417,11 @@
   .fleetBjHandTotal{margin-top:6px;font-size:14px;font-weight:800;color:var(--ink)}
   .fleetBjHandTotal.bjBust{color:var(--red)}
   .fleetBjHandTotal.bjLocked{color:var(--green)}
+  .fleetBjHandOutcome{margin-top:6px;font-size:12.5px;font-weight:800;letter-spacing:.03em}
+  .fleetBjHandOutcome.win{color:var(--green)}
+  .fleetBjHandOutcome.lose{color:var(--red)}
+  .fleetBjHandOutcome.push{color:var(--dim)}
+  .fleetBjDealerWrap{background:rgba(255,255,255,0.03);border:2px dashed rgba(255,255,255,0.15);border-radius:10px;padding:10px;text-align:center;margin-top:10px}
   .fleetPokerMatchup{display:flex;justify-content:center;align-items:center;gap:16px;padding-top:10px;flex-wrap:wrap}
   .fleetPokerMatchSide{text-align:center;min-width:180px}
   .fleetPokerVs{font-family:var(--mono);font-weight:800;color:var(--dim);font-size:13px}
@@ -423,6 +430,8 @@
   .fleetPokerOutcome.win{color:var(--green)}
   .fleetPokerOutcome.lose{color:var(--red)}
   .fleetPokerOutcome.push{color:var(--dim)}
+  .fleetPokerShowdownRow{padding:10px 0;border-top:1px dashed rgba(255,255,255,0.15)}
+  .fleetPokerShowdownRow:first-child{border-top:none}
   .fleetAuctionLots{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;padding-top:10px}
   .fleetAuctionLot{background:rgba(255,255,255,0.04);border:2px solid rgba(31,182,166,0.25);border-radius:10px;padding:14px 10px;min-width:170px;text-align:center;transition:box-shadow .15s ease,border-color .15s ease,opacity .15s ease}
   .fleetAuctionLot.active{border-color:var(--amber);box-shadow:0 0 12px rgba(255,196,77,0.4)}
@@ -431,13 +440,11 @@
   .fleetAuctionLotContents{margin-top:6px;font-size:16px;font-weight:800;color:var(--ink);min-height:22px}
   .fleetAuctionLotStatus{margin-top:6px;font-size:11.5px;color:var(--dim)}
   @media (max-width:650px){ .fleetBjHand,.fleetPokerHand,.fleetAuctionLot{min-width:120px;padding:8px} .fleetPokerMatchSide{min-width:130px} }
-
 </style>
 </head>
 <body>
 <div id="app"></div>
 <script>
-
 /****************************************************************************
 * WORLD NAMING                                                             *
 ****************************************************************************/
@@ -509,8 +516,8 @@ function combinations(arr, k) {
   function helper(start, combo) { if (combo.length === k) { results.push(combo.slice()); return; } for (let i = start; i < arr.length; i++) { combo.push(arr[i]); helper(i + 1, combo); combo.pop(); } }
   helper(0, []); return results;
 }
-const OPPONENT_USES_PER_TURN_DEFAULT = 1;
-function opponentMaxCards(opp) { return opp.maxCards ?? (opp.minTier === 0 ? 1 : 5); }
+const OPPONENT_USES_PER_TURN_DEFAULT = 1; 
+function opponentMaxCards(opp) { return opp.maxCards ?? (opp.minTier === 0 ? 1 : 5); } 
 function bestHandFromPool(pool, maxCards) {
   if (!pool.length) return { cards: [], tier: -1, label: 'Nothing', mult: 0 };
   const cap = Math.min(maxCards, pool.length);
@@ -684,7 +691,7 @@ function showDamagePopup(amount, sourceName) {
   } catch (e) {}
 }
 function avgCardValue() { let total = 0; for (let r = 2; r <= 14; r++) total += cardValue(r); return total / 13; }
-const AVG_CARD_VALUE = avgCardValue();
+const AVG_CARD_VALUE = avgCardValue(); 
 
 function expectedMultForPoolSize(poolSize) {
   if (poolSize <= 1) return 1.0;
@@ -978,7 +985,7 @@ function checkCondition(cond, cards) {
     result = { met: cards.length > 0 && Math.round(sum) === cond.value, label: `${SIGMA_TIP}${sum}`, sum };
   }
   else result = { met: false, label: '' };
-
+  
   if (cond && cond.exactCount != null) result.met = result.met && cards.length === cond.exactCount;
   return result;
 }
@@ -1094,7 +1101,7 @@ function computeItemAmountBase(item, cards, level, condResult, isOpponent) {
     return { amount: 0, breakdown: item.utilityEffect };
   }
   if (item.suitPunish) {
-    const suitCount = BATTLE.discard.filter(c => c.suit === item.suitPunish.suit).length;
+    const suitCount = [...BATTLE.discard, ...(BATTLE.recentDiscard || [])].filter(c => c.suit === item.suitPunish.suit).length;
     const amount = Math.round(((item.suitPunish.base || 0) + suitCount * item.suitPunish.perCard) * worldMult);
     return { amount, breakdown: `${item.suitPunish.base || 0} + ${suitCount}×${item.suitPunish.perCard} = ${amount}` };
   }
@@ -1120,7 +1127,7 @@ function computeItemAmountBase(item, cards, level, condResult, isOpponent) {
     }
   }
   if (item.perCardBonus && cards.length > 1) mult += item.perCardBonus * (cards.length - 1);
-
+  
   if (item.id === 'fender_bender' && !isOpponent && RUN.hero?.heroId === 'admin' && META.levels.adminTune) mult += 0.1 * META.levels.adminTune;
   const rawSum = cards.reduce((a, c) => a + cardValue(c.rank) + (c.bonus || 0), 0);
   const flatBonus = (item.flatBonus || 0) + (item.flatBonusPerLevel || 0) * level;
@@ -1129,19 +1136,19 @@ function computeItemAmountBase(item, cards, level, condResult, isOpponent) {
   return { amount, breakdown };
 }
 function itemLevel(itemId) { return (RUN && RUN.itemLevels && RUN.itemLevels[itemId]) || 0; }
-function itemTuneCost(item, lvl) { return 40 * Math.pow(2, lvl); }
+function itemTuneCost(item, lvl) { return 40 * Math.pow(2, lvl); } 
 function itemLevelCap(item) { if (item.bonus) return item.bonus.maxLevel ?? 0; if (item.drawPerLevel) return item.levelCap || 0; return 0; }
 function itemUsesLevel(itemId) { return (RUN.itemUsesLevels && RUN.itemUsesLevels[itemId]) || 0; }
-function itemUsesTuneCost(lvl) { return Math.round(50 * Math.pow(2.5, lvl)); }
-const ITEM_MAX_USES_LEVEL = 2;
+function itemUsesTuneCost(lvl) { return Math.round(50 * Math.pow(2.5, lvl)); } 
+const ITEM_MAX_USES_LEVEL = 2; 
 function itemMaxCardsLevel(itemId) { return (RUN && RUN.itemMaxCardsLevels && RUN.itemMaxCardsLevels[itemId]) || 0; }
 function utilityLevel(id) { return (RUN?.itemUtilityLevels && RUN.itemUtilityLevels[id]) || 0; }
-function itemMaxCardsTuneCost(lvl) { return Math.round(60 * Math.pow(2.5, lvl)); }
-const ITEM_MAX_CARDS_BONUS_CAP = 2;
+function itemMaxCardsTuneCost(lvl) { return Math.round(60 * Math.pow(2.5, lvl)); } 
+const ITEM_MAX_CARDS_BONUS_CAP = 2; 
 const POKER_TIER_CARD_COUNT = { 0: 1, 1: 2, 2: 4, 3: 3, 5: 5, 6: 5, 7: 4 };
 function pokerTierNaturalCap(item) {
   const cond = item && item.condition;
-  if (!cond) return null;
+  if (!cond) return null; 
   if (cond.type === 'suitCountExact') return cond.count;
   if (cond.type !== 'pokerTier') return null;
   let natural = POKER_TIER_CARD_COUNT[cond.tier] ?? null;
@@ -1164,16 +1171,16 @@ function effectiveKind(item, instanceIndex = null) {
   const key = instanceIndex == null ? item.id : `${item.id}_${instanceIndex}`;
   const baseKind = normalizeItemKind(item.kind || item.itemType || 'damage');
   const override = RUN && RUN.itemKindOverride && (RUN.itemKindOverride[key] || RUN.itemKindOverride[item.id]);
-
+  
   return baseKind === 'defense' ? 'defense' : normalizeItemKind(override || baseKind);
 }
-function itemKindConvertCost() { return 100; }
+function itemKindConvertCost() { return 100; } 
 function itemUsesCap(item, usesLevel) { return item.usesPerTurn + (item.usesPerTurnPerLevel || 0) * usesLevel; }
 
 /* ========== ITEM CATALOG ========== */
 function equippedItemCount(hero) { return (hero.items || []).filter(id => !ITEMS[id]?.weightless).length; }
 const ITEMS = {
-  card_draw: { id: 'card_draw', name: 'Fast Pit Stop', cost: 0, maxCards: 2, usesPerTurn: 1, condition: { type: 'pokerTier', tier: 1 }, baseMult: 0, drawAmount: 2, drawPerLevel: 1, levelCap: 3, note: 'Needs a Pair. Draw 2 additional cards.' },
+  card_draw: { id: 'card_draw', name: 'Fast Pit Stop', cost: 0, maxCards: 2, usesPerTurn: 1, condition: { type: 'pokerTier', tier: 1 }, baseMult: 1, drawAmount: 2, drawPerLevel: 1, levelCap: 3, note: `Needs a Pair. Attack for ${SIGMA_TIP} of cards played, then draw 2 additional cards.` },
  pair_draw: { id: 'pair_draw', name: 'Hit & Run', cost: 45, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'pokerTier', tier: 1 }, baseMult: 1,
     drawAmount: 2, drawPerLevel: 0,
@@ -1237,6 +1244,42 @@ const ITEMS = {
     condition: { type: 'pokerTier', tier: 0 }, baseMult: 1,
     bonus: { condition: { type: 'pokerTier', tier: 1 }, base: 0.5, perLevel: 0.25, maxLevel: 2 },
     note: 'Up to 2 cards. A Pair adds a bonus that grows the more you tune it.' },
+  taylor_sift: { id: 'taylor_sift', name: 'Taylor Sift', cost: 20, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+    condition: { type: 'any' }, baseMult: 0.9,
+    note: `Needs any card, up to 2. Rakes the sifter through for ${SIGMA_TIP} × 0.9 damage - simple and steady, just like combing the beach.` },
+  sand_trap: { id: 'sand_trap', name: 'Sand Trap', cost: 40, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+    condition: { type: 'any' }, baseMult: 0.75, kind: 'defense',
+    note: `Needs any card, up to 3. Blocks damage equal to ${SIGMA_TIP} × 0.75 - bogs the attack down like tires stuck in loose sand.` },
+  pallet_drop: { id: 'pallet_drop', name: 'Pallet Drop', cost: 30, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+    condition: { type: 'sumThreshold', min: 8 }, flatAmount: 16, flatAmountPerLevel: 4,
+    note: `Cards played must add up to ${SIGMA_TIP}8+. Drops a loaded pallet for a flat 16 damage.` },
+  overhead_lift: { id: 'overhead_lift', name: 'Overhead Lift', cost: 35, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+    condition: { type: 'pokerTier', tier: 1 }, baseMult: 0.6,
+    drawAmount: 1, drawPerLevel: 0,
+    note: `Needs a Pair. Modest hit for ${SIGMA_TIP} × 0.6, then hoists up 1 extra card.` },
+  donut_toss: { id: 'donut_toss', name: 'Donut Toss', cost: 70, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+    condition: { type: 'pokerTier', tier: 1 }, baseMult: 1.3,
+    note: `Needs a Pair. Chucks a box of donuts for ${SIGMA_TIP} × 1.3 damage - messy, but it works.` },
+  backdraft_blast: { id: 'backdraft_blast', name: 'Backdraft Blast', cost: 70, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+    condition: { type: 'pokerTier', tier: 1 }, baseMult: 1, kind: 'burn',
+    note: `Needs a Pair. Burn damage for ${SIGMA_TIP} - it's not supposed to start fires, but here we are.` },
+  full_pressure_hose: { id: 'full_pressure_hose', name: 'Full-Pressure Hose', cost: 60, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+    condition: { type: 'sumThreshold', min: 15 }, flatAmount: 26, flatAmountPerLevel: 5,
+    note: `Cards played must add up to ${SIGMA_TIP}15+. Blasts for a flat 26 damage at full pressure.` },
+  afff_foam_cannon: { id: 'afff_foam_cannon', name: 'AFFF Foam Cannon', cost: 80, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+    condition: { type: 'any' }, baseMult: 1, kind: 'defense',
+    note: `Needs any cards, up to 4. Blankets the fight in firefighting foam, blocking damage equal to ${SIGMA_TIP} - built for jet fuel fires, so it smothers just about anything.` },
+  rapid_intervention: { id: 'rapid_intervention', name: 'Rapid Intervention', cost: 70, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+    condition: { type: 'straightLen', len: 2 }, baseMult: straightMult(2),
+    bonus: { base: 0.3, perLevel: 0.15, maxLevel: 3 },
+    note: `Needs a 2-card straight. First truck on scene hits hard and keeps improving with upgrades.` },
+  door_breach_ram: { id: 'door_breach_ram', name: 'Door Breach Ram', cost: 90, maxCards: 1, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+    condition: { type: 'any', exactCount: 1 }, flatAmount: 34, flatAmountPerLevel: 6,
+    note: `Needs exactly 1 card. Rams the front-mounted breaching tool through for a flat 34 damage - built to take doors off their hinges.` },
+  grappler_hook: { id: 'grappler_hook', name: 'Grappler Hook', cost: 85, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+    condition: { type: 'pokerTier', tier: 2 }, baseMult: 1.6,
+    drawAmount: 1, drawPerLevel: 0,
+    note: `Needs Two Pair. Hooks and hauls for ${SIGMA_TIP} × 1.6 damage, then reels in 1 extra card.` },
   opp_pair_curse: { id: 'opp_pair_curse', name: 'Repo Notice', maxCards: 2, usesPerTurn: 1,
     condition: { type: 'pokerTier', tier: 1 }, baseMult: 1,
     note: 'Needs a Pair. A plain, reliable poke.' },
@@ -2111,7 +2154,7 @@ const ITEMS = {
   ee_brett_full_throttle: { id: 'ee_brett_full_throttle', name: 'Full Throttle', maxCards: 2, usesPerTurn: 1,
     condition: { type: 'sumThreshold', min: 9 }, flatAmount: 12,
     note: `Needs cards totaling ${SIGMA_TIP}9+. Guns it like he's back on the track, hardware and all.` },
-  ee_chris_cast_line: { id: 'ee_chris_cast_line', name: 'Its Cheaperrr', maxCards: 1, usesPerTurn: 1,
+  ee_chris_cast_line: { id: 'ee_chris_cast_line', name: "It's Cheaperrr", maxCards: 1, usesPerTurn: 1,
     condition: { type: 'any', exactCount: 1 }, flatAmount: 9,
     note: 'Needs exactly 1 card. Casts out past you and somehow still snags your bumper.' },
   ee_chris_reel_in: { id: 'ee_chris_reel_in', name: 'Getcha Filled Up', maxCards: 3, usesPerTurn: 1,
@@ -2160,22 +2203,36 @@ const ITEMS = {
     note: 'Needs exactly 1 card. Falls asleep in the single worst possible spot, and somehow that\'s still a problem.' },
 };
 
-/* ========== HERO ROSTER (6 total - 4 playable, 2 reserved for future vehicles) ========== */
+/* ========== HERO ROSTER (12 total, ordered from everyday fleet vehicles up to top-tier tactical/
+   emergency rigs - both the unlock difficulty AND the combined value of each vehicle's 2 starter
+   items climb as you move down this list, so there's always a reason to unlock the next one) ========== */
 const HEROES = {
-  sidebyside: { id: 'sidebyside', name: 'Golf Cart',      icon: '🛺', image: 'vehicles/golf-cart.jpg', starterItems: ['fender_bender','pair_draw'] },
-  admin:      { id: 'admin',      name: 'Admin Vehicle',   icon: '🚗', image: 'vehicles/admin-vehicle.jpg', starterItems: ['fender_bender','escort_wall'] },
-  interstate: { id: 'interstate', name: 'Pickup Truck', icon: '🏁', image: 'vehicles/interstate-racer.jpg', starterItems: ['bike_dash','card_draw'] },
-  convoy:     { id: 'convoy',     name: 'Large SUV',  icon: '🚛', image: 'vehicles/armored-convoy.jpg', starterItems: ['fender_bender','triple_threat'] },
-  towtruck:   { id: 'towtruck',   name: 'Tow Truck',  icon: '🚨', image: 'vehicles/tow-truck.jpg', starterItems: ['escort_wall','toxic_spill'] },
-  tanker:     { id: 'tanker',     name: 'Fuel Tanker', icon: '⛽', image: 'vehicles/fuel-tanker.jpg', starterItems: ['fender_bender','drawstone'] },
+  sidebyside:   { id: 'sidebyside',   name: 'Golf Cart',       icon: '🛺', image: 'vehicles/golf-cart.jpg', starterItems: ['fender_bender','guard_rail'] },
+  admin:        { id: 'admin',        name: 'Admin Vehicle',   icon: '🚗', image: 'vehicles/admin-vehicle.jpg', starterItems: ['fender_bender','escort_wall'] },
+  beachtractor: { id: 'beachtractor', name: 'Beach Tractor',   icon: '🚜', image: 'vehicles/beach-tractor.jpg', starterItems: ['taylor_sift','sand_trap'] },
+  interstate:   { id: 'interstate',   name: 'Pickup Truck',    icon: '🏁', image: 'vehicles/interstate-racer.jpg', starterItems: ['card_draw','diamond_run'] },
+  forklift:     { id: 'forklift',     name: 'Forklift',        icon: '🏗️', image: 'vehicles/forklift.jpg', starterItems: ['pallet_drop','overhead_lift'] },
+  convoy:       { id: 'convoy',       name: 'Large SUV',       icon: '🚛', image: 'vehicles/armored-convoy.jpg', starterItems: ['fender_bender','triple_threat'] },
+  towtruck:     { id: 'towtruck',     name: 'Tow Truck',       icon: '🚨', image: 'vehicles/tow-truck.jpg', starterItems: ['drawstone','escort_wall'] },
+  tanker:       { id: 'tanker',       name: 'Fuel Tanker',     icon: '⛽', image: 'vehicles/fuel-tanker.jpg', starterItems: ['fender_bender','toxic_flood'] },
+  crownvic:     { id: 'crownvic',     name: 'Crown Vic',       icon: '🚔', image: 'vehicles/crown-vic.jpg', starterItems: ['donut_toss','pair_draw'] },
+  firetruck:    { id: 'firetruck',    name: 'Fire Truck',      icon: '🚒', image: 'vehicles/fire-truck.jpg', starterItems: ['backdraft_blast','full_pressure_hose'] },
+  arff:         { id: 'arff',         name: 'ARFF',            icon: '🧯', image: 'vehicles/arff.jpg', starterItems: ['afff_foam_cannon','rapid_intervention'] },
+  bearcat:      { id: 'bearcat',      name: 'BearCat',         icon: '🛡️', image: 'vehicles/bearcat.jpg', starterItems: ['door_breach_ram','grappler_hook'] },
 };
 const VEHICLE_SPECIALS = {
-  sidebyside: { name: 'Quick Shield', type: 'shield', energyPerUnit: 4, amountPerUnit: 20, desc: 'Spend Energy for armor - every 4 Energy grants +20 armor. Spend as much as you have at once.' },
-  admin:      { name: 'Roadside Patch', type: 'heal', energyPerUnit: 5, amountPerUnit: 15, desc: 'Spend Energy to heal - every 5 Energy restores 15 health. Spend as much as you have at once.' },
-  interstate: { name: 'Evasive Maneuver', type: 'dodge', energyCost: 6, chance: 0.5, desc: 'Spend 6 Energy for a 50% chance to dodge the opponent\'s next attack entirely.' },
-  convoy:     { name: 'Brace for Impact', type: 'shield', energyPerUnit: 3, amountPerUnit: 20, desc: 'Spend Energy for armor - every 3 Energy grants +20 armor. Spend as much as you have at once.' },
-  towtruck:   { name: 'Winch Pull', type: 'draw', energyPerUnit: 5, amountPerUnit: 1, desc: 'Spend Energy to draw cards - every 5 Energy draws 1 card. Spend as much as you have at once.' },
-  tanker:     { name: 'Siphon Reserve', type: 'refuel', energyCost: 8, amountPerUnit: 10, desc: 'Spend 8 Energy to refill 10 Fuel.' },
+  sidebyside:   { name: 'Quick Shield', type: 'shield', energyPerUnit: 4, amountPerUnit: 20, desc: 'Spend Energy for armor - every 4 Energy grants +20 armor. Spend as much as you have at once.' },
+  admin:        { name: 'Roadside Patch', type: 'heal', energyPerUnit: 5, amountPerUnit: 15, desc: 'Spend Energy to heal - every 5 Energy restores 15 health. Spend as much as you have at once.' },
+  beachtractor: { name: 'Berm Push', type: 'shield', energyPerUnit: 5, amountPerUnit: 20, desc: 'Spend Energy to push up a sand berm for armor - every 5 Energy grants +20 armor. Spend as much as you have at once.' },
+  interstate:   { name: 'Evasive Maneuver', type: 'dodge', energyCost: 6, chance: 0.5, desc: 'Spend 6 Energy for a 50% chance to dodge the opponent\'s next attack entirely.' },
+  forklift:     { name: 'Pallet Shield', type: 'shield', energyPerUnit: 4, amountPerUnit: 22, desc: 'Spend Energy to raise a loaded pallet for armor - every 4 Energy grants +22 armor. Spend as much as you have at once.' },
+  convoy:       { name: 'Brace for Impact', type: 'shield', energyPerUnit: 3, amountPerUnit: 20, desc: 'Spend Energy for armor - every 3 Energy grants +20 armor. Spend as much as you have at once.' },
+  towtruck:     { name: 'Winch Pull', type: 'draw', energyPerUnit: 5, amountPerUnit: 1, desc: 'Spend Energy to draw cards - every 5 Energy draws 1 card. Spend as much as you have at once.' },
+  tanker:       { name: 'Siphon Reserve', type: 'refuel', energyCost: 8, amountPerUnit: 10, desc: 'Spend 8 Energy to refill 10 Fuel.' },
+  crownvic:     { name: 'Code 3 Evade', type: 'dodge', energyCost: 6, chance: 0.55, desc: 'Spend 6 Energy for a 55% chance to dodge the opponent\'s next attack entirely.' },
+  firetruck:    { name: 'Emergency Response', type: 'heal', energyPerUnit: 5, amountPerUnit: 20, desc: 'Spend Energy to heal - every 5 Energy restores 20 health. Spend as much as you have at once.' },
+  arff:         { name: 'Foam Reserve', type: 'refuel', energyCost: 8, amountPerUnit: 12, desc: 'Spend 8 Energy to refill 12 Fuel.' },
+  bearcat:      { name: 'Armor Plating', type: 'shield', energyPerUnit: 3, amountPerUnit: 25, desc: 'Spend Energy for armor - every 3 Energy grants +25 armor. Spend as much as you have at once.' },
 };
 function useVehicleSpecial() {
   if (!IN_BATTLE || !BATTLE) return;
@@ -2223,13 +2280,14 @@ function applyDodgeIfActive(oppDmg) {
   const chance = BATTLE.dodgeChance;
   BATTLE.dodgeChance = 0;
   if (Math.random() < chance) {
-    battleLog(`Evasive Maneuver pays off - you dodge the hit entirely!`);
+    const specialName = (VEHICLE_SPECIALS[RUN.hero?.heroId] || {}).name || 'Evasive Maneuver';
+    battleLog(`${specialName} pays off - you dodge the hit entirely!`);
     playSfx('dodge'); flashScreen('dodge');
     return 0;
   }
   return oppDmg;
 }
-const STARTERS = ['sidebyside', 'admin', 'interstate', 'convoy', 'towtruck', 'tanker', 'comingsoon1', 'comingsoon2'];
+const STARTERS = ['sidebyside', 'admin', 'beachtractor', 'interstate', 'forklift', 'convoy', 'towtruck', 'tanker', 'crownvic', 'firetruck', 'arff', 'bearcat'];
 function heroItemCardPreviewHTML(itemId) {
   const item = ITEMS[itemId];
   if (!item) return '';
@@ -2320,17 +2378,29 @@ function heroAbilityCardHTML(heroId) {
 }
 function isStarterUnlocked(id) {
   if (id === 'sidebyside' || id === 'admin') return true;
+  if (id === 'beachtractor') return (META.bestWorld || 1) >= 2 || !!META.world2Cleared;
   if (id === 'interstate') return META.lifetimePoints >= 150;
+  if (id === 'forklift') return (META.bestWorld || 1) >= 3 || !!META.world3Cleared;
   if (id === 'convoy') return META.bestRun >= ROWS + 1;
   if (id === 'towtruck') return !!META.world2Cleared;
   if (id === 'tanker') return (META.runsPlayed || 0) >= 5;
+  if (id === 'crownvic') return !!META.world3Cleared;
+  if (id === 'firetruck') return !!META.world4Cleared;
+  if (id === 'arff') return !!META.world5Cleared;
+  if (id === 'bearcat') return !!META.world6Cleared;
   return false;
 }
 function starterLockNote(id) {
+  if (id === 'beachtractor') return `Unlocks after beating the World 1 boss`;
   if (id === 'interstate') return `Unlocks at 150 lifetime Career Points (${Math.min(META.lifetimePoints, 150)}/150)`;
+  if (id === 'forklift') return `Unlocks after beating World 2`;
   if (id === 'convoy') return `Unlocks after clearing a full route`;
   if (id === 'towtruck') return `Unlocks after beating World 2`;
   if (id === 'tanker') return `Unlocks after completing 5 runs (${Math.min(META.runsPlayed || 0, 5)}/5)`;
+  if (id === 'crownvic') return `Unlocks after beating World 3`;
+  if (id === 'firetruck') return `Unlocks after beating World 4`;
+  if (id === 'arff') return `Unlocks after beating World 5`;
+  if (id === 'bearcat') return `Unlocks after beating World 6`;
   if (id === 'comingsoon1' || id === 'comingsoon2') return `Coming soon`;
   return '';
 }
@@ -2593,16 +2663,16 @@ const UPGRADE_DEFS = [
     currentValue: lvl => `+${lvl * 10}%`,
     unlock: { desc: 'Complete 5 runs', check: () => (META.runsPlayed || 0) >= 5 } },
 ];
-const MAX_LEVEL = 10;
+const MAX_LEVEL = 10; 
 function upgradeCost(def, atLevel) {
   const t = UPGRADE_TIERS[def.tier] || UPGRADE_TIERS.medium;
   return Math.round(t.baseCost * Math.pow(t.growth, atLevel));
 }
 function upgradeUnlocked(def) { return !def.unlock || def.unlock.check(); }
-
+  
 /* ========== META (persists forever) ========== */
 const META_KEY = 'fleetduel-meta-v7';
-const META_VERSION = 2;
+const META_VERSION = 2; 
 function loadMeta() {
   try {
     const raw = localStorage.getItem(META_KEY);
@@ -2616,6 +2686,10 @@ function loadMeta() {
       if (parsed.bestWorld == null) parsed.bestWorld = 1;
       if (parsed.perfectWins == null) parsed.perfectWins = 0;
       if (parsed.world2Cleared == null) parsed.world2Cleared = false;
+      if (parsed.world3Cleared == null) parsed.world3Cleared = false;
+      if (parsed.world4Cleared == null) parsed.world4Cleared = false;
+      if (parsed.world5Cleared == null) parsed.world5Cleared = false;
+      if (parsed.world6Cleared == null) parsed.world6Cleared = false;
       if (parsed.hasSeenTutorial == null) parsed.hasSeenTutorial = false;
       if (parsed.hasSeenPoisonTutorial == null) parsed.hasSeenPoisonTutorial = false;
       if (parsed.hasSeenFuelHealTip == null) parsed.hasSeenFuelHealTip = false;
@@ -2623,7 +2697,7 @@ function loadMeta() {
     }
   } catch (e) {}
   const levels = {}; UPGRADE_DEFS.forEach(u => levels[u.id] = 0);
-  return { metaVersion: META_VERSION, points: 0, lifetimePoints: 0, highScore: 0, bestRun: 0, runsPlayed: 0, enemiesBeaten: 0, elitesBeaten: 0, bestWorld: 1, perfectWins: 0, world2Cleared: false, hasSeenTutorial: false, hasSeenPoisonTutorial: false, hasSeenFuelHealTip: false, levels };
+  return { metaVersion: META_VERSION, points: 0, lifetimePoints: 0, highScore: 0, bestRun: 0, runsPlayed: 0, enemiesBeaten: 0, elitesBeaten: 0, bestWorld: 1, perfectWins: 0, world2Cleared: false, world3Cleared: false, world4Cleared: false, world5Cleared: false, world6Cleared: false, hasSeenTutorial: false, hasSeenPoisonTutorial: false, hasSeenFuelHealTip: false, levels };
 }
 let META = loadMeta();
 function saveMeta() { try { META.metaVersion = META_VERSION; localStorage.setItem(META_KEY, JSON.stringify(META)); } catch (e) {} }
@@ -2667,7 +2741,7 @@ function loadBattleSave() {
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     if (parsed) parsed.usedThisTurn = new Set(parsed.usedThisTurn || []);
-    if (parsed) parsed.turnStartedAt = Date.now();
+    if (parsed) parsed.turnStartedAt = Date.now(); 
     return parsed;
   } catch (e) {}
   return null;
@@ -2680,19 +2754,23 @@ const WORLD_COUNT = 1;
 function pickNodeType(forcedType) {
   if (forcedType) return forcedType;
   const r = Math.random();
-  if (r < 0.62) return 'battle';
-  if (r < 0.71) return 'rest';
-  if (r < 0.79) return 'blacksmith';
-  if (r < 0.84) return 'chopshop';
-  if (r < 0.88) return 'overdrive';
-  if (r < 0.94) return 'shop';
-  if (r < 0.97) return 'match_hazard';
+  if (r < 0.58) return 'battle';
+  if (r < 0.67) return 'rest';
+  if (r < 0.75) return 'blacksmith';
+  if (r < 0.80) return 'chopshop';
+  if (r < 0.84) return 'overdrive';
+  if (r < 0.90) return 'shop';
+  if (r < 0.93) return 'match_hazard';
+  if (r < 0.94) return 'plinko_hazard';
+  if (r < 0.95) return 'blackjack_hazard';
+  if (r < 0.96) return 'poker_hazard';
+  if (r < 0.97) return 'auction_hazard';
   return 'treasure';
 }
 
 /* ========== MONSTER REPURPOSING SCALER ========== */
 function scaleMonsterForNewWorld(baseMonster, worldMultiplier, tier) {
-  const scaled = JSON.parse(JSON.stringify(baseMonster));
+  const scaled = JSON.parse(JSON.stringify(baseMonster)); 
   if (tier != null) scaled.tier = tier;
   scaled.hp = Math.round(scaled.hp * worldMultiplier);
   if (scaled.attacks) {
@@ -2744,15 +2822,17 @@ function generateMap() {
   for(let r=0;r<nodes.length;r++) for(let c=0;c<nodes[r].length;c++)
     if(nodes[r][c].type==='pending') eligible.push({r,c});
   shuffle(eligible);
-  const needBattles=29-3;
+  const needBattles=29-3; 
   eligible.slice(0,needBattles).forEach(({r,c})=> {
     nodes[r][c]={type:'battle', opponent: makeOpponentForRow(r)};
   });
   // The upgrade shops (Tuning Garage, Chop Shop, Overdrive Bay) are one-time stops per world -
   // hitting the same one twice on a route felt broken. The Dealership can show up twice since
   // node 3 always guarantees one. Everything else (rest, treasure, the card match) stays
-  // unlimited since those are meant to recur.
-  const TYPE_CAPS = { shop: 2, blacksmith: 1, chopshop: 1, overdrive: 1 };
+  // unlimited since those are meant to recur. Fleet Plinko/Blackjack/Poker/Auction are also
+  // one-time-per-world (same lock as the Fleet Compound's own copies of these games), so they're
+  // capped at 1 each too - no point spawning a second node for a game you can only play once.
+  const TYPE_CAPS = { shop: 2, blacksmith: 1, chopshop: 1, overdrive: 1, plinko_hazard: 1, blackjack_hazard: 1, poker_hazard: 1, auction_hazard: 1 };
   const typeCounts = { shop: 1 };
   function pickNodeTypeCapped() {
     for (let attempt = 0; attempt < 12; attempt++) {
@@ -2885,6 +2965,15 @@ const OPPONENT_FUEL_HEAL_MODIFIER_DEFAULT = 0;
 const ENERGY_PER_MOVE = 2;
 const BASE_GAS_PENALTY = 15;
 
+// World difficulty curve: World 1 starts gentler than before (0.75x instead of 1.0x) so a brand
+// new player can realistically survive the highway gauntlet and reach the Fleet Compound on their
+// first run - it's the game's most-loved feature and shouldn't be gated behind a rough early game.
+// To keep the game just as challenging (if not more) by the late game, the per-world step was
+// raised from +0.25 to +0.45, so World 6 ends up harder than it used to be even though World 1 is
+// now easier. Yields: W1 0.75, W2 1.20, W3 1.65, W4 2.10, W5 2.55, W6 3.00 (was 1.0/1.25/1.5/1.75/2.0/2.25).
+const WORLD_DIFFICULTY_BASE = 0.75;
+const WORLD_DIFFICULTY_STEP = 0.45;
+function worldDifficultyMultiplier(world) { return WORLD_DIFFICULTY_BASE + (Math.max(1, world) - 1) * WORLD_DIFFICULTY_STEP; }
 function initRunWithStarter(id) {
   const L = META.levels;
   const baseHero = HEROES[id];
@@ -2895,46 +2984,52 @@ function initRunWithStarter(id) {
   MATCH_OVERLAY_ACTIVE = false;
   JOKER_GLITCH_POPUP = null;
   RETURN_TO_CASTLE_MENU = false;
-
+  
   RUN = {
-    worldMultiplier: 1.0,
+    worldMultiplier: worldDifficultyMultiplier(1),
     map: null,
-    currentRow: -1,
-    currentCol: null,
+    currentRow: -1, 
+    currentCol: null, 
     path: [],
-    health: 100 + L.hp * 15,
+    health: 100 + L.hp * 15, 
     maxHealth: 100 + L.hp * 15,
-    chips: 40 + L.chips * 8,
-    fuel: Math.min(20 + (L.fuelCap||0)*5, 10 + (L.fuel||0)),
+    chips: 40 + L.chips * 8, 
+    fuel: Math.min(20 + (L.fuelCap||0)*5, 10 + (L.fuel||0)), 
     energy: 0,
     hero: { heroId: id, items: [...baseHero.starterItems] },
-    itemCap: Math.min(MAX_ITEM_CAP, 3 + L.garage),
-    handSize: 7 + (L.handCap || 0) * 2,
-    drawPerTurn: Math.max(1, 2 + (L.draw || 0)),
-    gems: 3,
-    maxGems: 10 + (L.gemCap||0)*2,
-    maxFuel: 20 + (L.fuelCap||0)*5,
+    itemCap: Math.min(MAX_ITEM_CAP, 3 + L.garage), 
+    handSize: 7 + (L.handCap || 0) * 2, 
+    drawPerTurn: Math.max(1, 2 + (L.draw || 0)), 
+    gems: 3, 
+    maxGems: 10 + (L.gemCap||0)*2, 
+    maxFuel: 20 + (L.fuelCap||0)*5, 
     maxEnergy: 20 + (L.energyCap||0)*5,
-    scoreThisRun: 0,
-    lastNotice: null,
-    cardBoosts: [],
-    adminTuneLvl: 0,
-    itemLevels: {},
-    itemUsesLevels: {},
-    itemKindOverride: {},
-    itemMaxCardsLevels: {},
-    itemUtilityLevels: {},
+    scoreThisRun: 0, 
+    lastNotice: null, 
+    cardBoosts: [], 
+    adminTuneLvl: 0, 
+    itemLevels: {}, 
+    itemUsesLevels: {}, 
+    itemKindOverride: {}, 
+    itemMaxCardsLevels: {}, 
+    itemUtilityLevels: {}, 
     handSortMode: 'value',
     innSleeps: 0,
     opponentsBeatenThisRun: 0,
     elitesBeatenThisRun: 0,
+    perfectKillsThisRun: 0,
     careerPointsFromElites: 0,
+    careerPointsFromPerfectKills: 0,
+    careerPointsFromTreasure: 0,
+    careerPointsFromMatchGame: 0,
     runUpgrades: { itemSlots: 0, drawPerTurn: 0, sightRange: 0, gemDraw: 0, health: 0 },
-    castleState: { firstDone:false, secondDone:false, thirdDone:false, dungeonLocked:false, matchPlayed:false, matchLockReason:null, matchCards:null, matchGuesses:4, matchPick:[], plinkoPlayed:false, blackjackPlayed:false, pokerPlayed:false, auctionPlayed:false },
-    // Tracked entirely separately from castleState's matching-game fields above - the map's Grid Anomaly
-    // (match_hazard) nodes and the Fleet Compound's Carnival Matching Game are two different games that
-    // happen to share the same rendering/click code, and must never lock each other out.
-    mapMatchState: { matchPlayed:false, matchLockReason:null, matchCards:null, matchGuesses:4, matchPick:[], matchLock:false, matchJackpotItemId:null },
+    castleState: { firstDone:false, secondDone:false, thirdDone:false, dungeonLocked:false, plinkoPlayed:false, blackjackPlayed:false, pokerPlayed:false, auctionPlayed:false },
+    // One shared matching-game board for the whole run, whether you open it from a map Grid Anomaly
+    // node or the Fleet Compound's Carnival Matching Game - pairs you've already found carry over
+    // between plays no matter which entry point you use. matchGuesses resets to a fresh 4 every time
+    // you open the game, but matchCards (and its matched pairs) persists until either a Joker Glitch
+    // or a new run resets it - see resetMatchState().
+    matchState: { matchCards:null, matchGuesses:4, matchPick:[], matchLock:false, matchJackpotItemId:null },
   };
   RUN.world = 1;
   RUN.worldCleared = false;
@@ -2950,9 +3045,9 @@ function availableNextNodes() {
 function payTravelCost() {
   RUN.fuel -= FUEL_COST_PER_MOVE;
   RUN.energy = Math.min(RUN.maxEnergy, RUN.energy + ENERGY_PER_MOVE);
-  RUN.innSleeps = 0;
+  RUN.innSleeps = 0; 
   if (RUN.fuel < 0) {
-    RUN.fuel = 0;
+    RUN.fuel = 0; 
     const fuelPenalty = Math.max(0, 10 - (META.levels.fuelpen || 0) * 2);
     RUN.health = Math.max(1, RUN.health - fuelPenalty);
     RUN.lastNotice = fuelPenalty > 0 ? `Out of fuel! Pushing your fleet manually to the next stop cost you ${fuelPenalty} HP.` : `Out of fuel! Your Fuel Efficiency training kept the walk from costing you any health this time.`;
@@ -2971,15 +3066,39 @@ function selectNode(row, col) {
   else if (node.type === 'blacksmith') { RETURN_TO_CASTLE_MENU = false; BLACKSMITH_OPTIONS = pickBlacksmithOptions(); BLACKSMITH_VISIT = { primary: null, secondary: null }; render(blacksmithScreen()); }
   else if (node.type === 'chopshop') { RETURN_TO_CASTLE_MENU = false; render(chopShopScreen('map')); }
   else if (node.type === 'overdrive') { RETURN_TO_CASTLE_MENU = false; render(overdriveBayScreen('map')); }
-  else if (node.type === 'treasure') {
+  else if (node.type === 'treasure') { 
     if (!node.big && Math.random() < 0.15) { TREASURE_POPUP = { choice: true }; playSfx('open'); render(mapScreen()); }
     else { const found = rollTreasure(node.big); playSfx('open'); TREASURE_POPUP = found; render(mapScreen()); }
   }
   else if (node.type === 'match_hazard') {
-    resetMapMatchState();
+    openMatchGame();
     MATCH_RETURN_TO_MAP = true;
     MATCH_OVERLAY_ACTIVE = true;
     renderMatchOverlay();
+  }
+  else if (node.type === 'plinko_hazard') {
+    if (!RUN.castleState) RUN.castleState = {};
+    if (RUN.castleState.plinkoPlayed) { RUN.lastNotice = 'The Plinko board here has already been played this world.'; render(mapScreen()); return; }
+    RETURN_TO_CASTLE_MENU = false;
+    openFleetPlinko({ onComplete: applyPlinkoHaul });
+  }
+  else if (node.type === 'blackjack_hazard') {
+    if (!RUN.castleState) RUN.castleState = {};
+    if (RUN.castleState.blackjackPlayed) { RUN.lastNotice = "You've already played Fleet Blackjack this world."; render(mapScreen()); return; }
+    RETURN_TO_CASTLE_MENU = false;
+    openFleetBlackjack({ onComplete: applyBlackjackHaul });
+  }
+  else if (node.type === 'poker_hazard') {
+    if (!RUN.castleState) RUN.castleState = {};
+    if (RUN.castleState.pokerPlayed) { RUN.lastNotice = "You've already played Fleet Poker this world."; render(mapScreen()); return; }
+    RETURN_TO_CASTLE_MENU = false;
+    openFleetPoker({ onComplete: applyPokerHaul });
+  }
+  else if (node.type === 'auction_hazard') {
+    if (!RUN.castleState) RUN.castleState = {};
+    if (RUN.castleState.auctionPlayed) { RUN.lastNotice = "You've already visited the Fleet Auction this world."; render(mapScreen()); return; }
+    RETURN_TO_CASTLE_MENU = false;
+    openFleetAuction({ onComplete: applyAuctionHaul });
   }
 }
 function reenterCurrentNode(row, col) {
@@ -2996,7 +3115,7 @@ let RETURN_TO_CASTLE_MENU = false;
 const CASTLE_FIRST = { id:'castleGuard', name:'Castle Guard', tier:2, icon:'🛡️', image: 'vehicles/castle-guard.jpg', hp:75, minTier:2, drawRate: 3, items: ['opp_castle_poke_t2'] };
 const CASTLE_SECOND = { id:'castleChampion', name:'Castle Champion', tier:3, icon:'🏰', image: 'vehicles/castle-champion.jpg', hp:105, minTier:3, drawRate: 4, items: ['opp_castle_poke_t3'] };
 const CASTLE_THIRD = { id:'castleOverlord', name:'Compound Overlord', tier:4, icon:'👑', image: 'vehicles/castle-overlord.jpg', hp:210, minTier:3, drawRate: 5, usesPerTurn:2, items: ['opp_castle_poke_t3', 'fender_bender'] };
-let DUNGEON_WIN_POPUP = null;
+let DUNGEON_WIN_POPUP = null; 
 function castleMenuScreen(message='') {
   return `${noticeHTML()}
   <div class="wo">
@@ -3007,7 +3126,7 @@ function castleMenuScreen(message='') {
       <div class="castleMenu">
         <button class="castleBtn castleBtn-exit" id="leaveCastleBtn" style="background:#ffc44d;color:#12163a;border-color:#ffc44d;font-weight:800">Back to World Map.</button>
         <button class="castleBtn" id="castleDungeonNavBtn">Visit the Fleet Compound Dungeon.</button>
-        <button class="castleBtn" id="castleWizardNavBtn" ${RUN.castleState?.matchPlayed ? 'disabled' : ''}>${RUN.castleState?.matchPlayed ? 'Matching Game Played' : 'Visit the Fleet Carnival Matching Game.'}</button>
+        <button class="castleBtn" id="castleWizardNavBtn">Visit the Fleet Carnival Matching Game.</button>
         <button class="castleBtn" id="castlePlinkoNavBtn" ${RUN.castleState?.plinkoPlayed ? 'disabled' : ''}>${RUN.castleState?.plinkoPlayed ? 'Plinko Board Played' : 'Visit the Fleet Plinko Board.'}</button>
         <button class="castleBtn" id="castleBlackjackNavBtn" ${RUN.castleState?.blackjackPlayed ? 'disabled' : ''}>${RUN.castleState?.blackjackPlayed ? 'Blackjack Played' : 'Visit Fleet Blackjack.'}</button>
         <button class="castleBtn" id="castlePokerNavBtn" ${RUN.castleState?.pokerPlayed ? 'disabled' : ''}>${RUN.castleState?.pokerPlayed ? 'Poker Played' : 'Visit Fleet Poker.'}</button>
@@ -3022,7 +3141,7 @@ function castleMenuScreen(message='') {
   </div>
   ${MATCH_OVERLAY_ACTIVE ? castleMatchScreen() : ''}`;
 }
-let DUNGEON_CONTINUE_POPUP = null;
+let DUNGEON_CONTINUE_POPUP = null; 
 function castleDungeonScreen(message='') {
   if (DUNGEON_WIN_POPUP) {
     const p = DUNGEON_WIN_POPUP;
@@ -3062,7 +3181,7 @@ function castleDungeonScreen(message='') {
         <button class="wo-btn purple" id="openRunUpgradeFromDungeonBtn" style="flex:1">Upgrades</button>
       </div>
       ${message ? `<div class="panel"><div class="note">${message}</div></div>` : ''}
-      <div class="note" style="color:var(--red);font-weight:700;margin-bottom:8px">Leaving locks the dungeon for this world only - you can try again in a later world.</div>
+      <div class="note" style="color:var(--red);font-weight:700;margin-bottom:8px;text-align:center;font-size:13px">Leaving locks the dungeon for this world only - you can try again in a later world.</div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
         <div class="shopcard" style="text-align:center${RUN.castleState?.firstDone ? ';opacity:0.55' : ''}"><h3>Battle 1</h3><div class="note" style="margin:0 0 4px;font-weight:700">Moderate</div><div class="currencies" style="justify-content:center"><div class="cur chip">${ICON.coin} 45</div><div class="cur gem">${ICON.gem} 1</div><div class="cur fuel">${ICON.fuel} 1</div><div class="cur energy">${ICON.energy} 2</div></div></div>
         <div class="shopcard" style="text-align:center${RUN.castleState?.secondDone ? ';opacity:0.55' : ''}"><h3>Battle 2</h3><div class="note" style="margin:0 0 4px;font-weight:700">Hard</div><div class="currencies" style="justify-content:center"><div class="cur chip">${ICON.coin} 100</div><div class="cur gem">${ICON.gem} 2</div><div class="cur fuel">${ICON.fuel} 2</div><div class="cur energy">${ICON.energy} 4</div></div></div>
@@ -3113,43 +3232,39 @@ const MATCH_SUIT_REWARDS = {
   'RJ': { gems: 3, label: '+3 gems' },
   'BJ': { points: 25, label: '+25 Career Points' },
 };
-let MATCH_POPUP = null;
-let MATCH_RETURN_TO_MAP = false;
-let MATCH_OVERLAY_ACTIVE = false;
+let MATCH_POPUP = null; 
+let MATCH_RETURN_TO_MAP = false; 
+let MATCH_OVERLAY_ACTIVE = false; 
 function renderMatchOverlay() { render(MATCH_RETURN_TO_MAP ? mapScreen() : castleMenuScreen()); }
-let JOKER_GLITCH_POPUP = null;
+let JOKER_GLITCH_POPUP = null; 
 function jackpotPreviewCardHTML(st) {
   const item = ITEMS[st.matchJackpotItemId];
   if (!item) return '<div class="note">No item available</div>';
   return `<div style="max-width:150px;margin:6px auto 0">${renderStandardItemCard(item, {})}</div>`;
 }
-function resetCarnivalMatchState() {
-  if (!RUN.castleState) RUN.castleState = {};
-  RUN.castleState.matchPlayed = false;
-  RUN.castleState.matchLockReason = null;
-  RUN.castleState.matchCards = null;
-  RUN.castleState.matchGuesses = 4;
-  RUN.castleState.matchPick = [];
-  RUN.castleState.matchLock = false;
+// Full reset of the shared matching-game board: wipes every matched pair and reshuffles fresh next
+// time it's opened. Only two things should ever call this - starting a new run (the fresh RUN object
+// already gives a clean matchState) and a Joker Glitch (Red Joker + Black Joker flipped together).
+// Running out of attempts on one visit, leaving and coming back, or advancing to a new world must all
+// leave existing pairs alone - see openMatchGame() below for that "fresh attempts, same board" case.
+function resetMatchState() {
+  RUN.matchState = { matchCards: null, matchGuesses: 4, matchPick: [], matchLock: false, matchJackpotItemId: null };
 }
-// Resets the map's own Grid Anomaly (match_hazard node) matching-game state. This is intentionally
-// a separate object/function from resetCarnivalMatchState() above - playing the matching game at a
-// map node must never mark the Fleet Compound's Carnival Matching Game as played, or vice versa.
-function resetMapMatchState() {
-  if (!RUN.mapMatchState) RUN.mapMatchState = {};
-  RUN.mapMatchState.matchPlayed = false;
-  RUN.mapMatchState.matchLockReason = null;
-  RUN.mapMatchState.matchCards = null;
-  RUN.mapMatchState.matchGuesses = 4;
-  RUN.mapMatchState.matchPick = [];
-  RUN.mapMatchState.matchLock = false;
+// Gives the shared matching board a fresh set of attempts for a newly-opened session without
+// touching matchCards, so pairs already found - whether from a previous visit or from a different
+// Grid Anomaly node - are still sitting there matched when the board renders.
+function openMatchGame() {
+  if (!RUN.matchState) RUN.matchState = { matchCards: null, matchGuesses: 4, matchPick: [], matchLock: false, matchJackpotItemId: null };
+  RUN.matchState.matchGuesses = 4;
+  RUN.matchState.matchPick = [];
+  RUN.matchState.matchLock = false;
 }
-// Picks whichever matching-game state object applies to the session currently open - the map's Grid
-// Anomaly instance (MATCH_RETURN_TO_MAP true) or the Fleet Compound's Carnival Matching Game.
+// One shared matching-game board for the whole run - the map's Grid Anomaly nodes and the Fleet
+// Compound's Carnival Matching Game both read/write this same object, so pairs found at either one
+// are still there the next time either one is opened.
 function getMatchState() {
-  if (MATCH_RETURN_TO_MAP) { if (!RUN.mapMatchState) RUN.mapMatchState = {}; return RUN.mapMatchState; }
-  if (!RUN.castleState) RUN.castleState = {};
-  return RUN.castleState;
+  if (!RUN.matchState) RUN.matchState = { matchCards: null, matchGuesses: 4, matchPick: [], matchLock: false, matchJackpotItemId: null };
+  return RUN.matchState;
 }
 // The Fleet Compound Dungeon locks only for the world you left it in - leaving it in World 1
 // still lets you enter (and re-clear) it fresh in World 2, 3, etc. So its progress/lock flags
@@ -3195,7 +3310,7 @@ function applyPlinkoHaul(haul) {
     if (haul.coins || haul.gems || haul.fuel) RUN.lastNotice = `Plinko haul banked: ${[haul.coins ? `${haul.coins} coins` : '', haul.gems ? `${haul.gems} gem${haul.gems > 1 ? 's' : ''}` : '', haul.fuel ? `${haul.fuel} fuel` : ''].filter(Boolean).join(', ')}.`;
   }
   saveRun();
-  render(castleMenuScreen());
+  render(RETURN_TO_CASTLE_MENU ? castleMenuScreen() : mapScreen());
 }
 /* ============================================================
    FLEET PLINKO - Fleet Compound bonus minigame.
@@ -3235,6 +3350,15 @@ const FLEET_PLINKO_CONFIG = {
   dropStartY: 24,
   riskMultiplier: 1.0,
   riskIncrease: 0.10,
+  // The side walls used to sit a fixed 8px from the board edge regardless of where the peg field
+  // actually started, leaving a soft pocket between the wall and the first peg column where a
+  // chip could get batted back and forth (wall pushes it in, the nearest peg immediately pushes
+  // it back out) without ever making real downward progress. wallInset now tracks the peg field's
+  // own edge instead of a flat number, so that pocket is closed. wallBounce/wallNudge are also
+  // stronger than the peg-to-peg bounce/nudge so a wall hit throws the chip back toward the
+  // middle of the board with real force instead of a weak, easy-to-repeat graze.
+  wallBounce: 0.85,
+  wallNudge: 1.3,
 };
 function openFleetPlinko(options) {
   options = options || {};
@@ -3445,17 +3569,34 @@ function openFleetPlinko(options) {
     updateUI();
     runPhysics();
   }
+  // The walls used to sit a flat 8px from the board edge, well inside the reach of the leftmost/
+  // rightmost peg column (those pegs sit at sidePadding, and the peg+chip radii together reach
+  // wide enough to overlap that spot). That let a chip get caught right at the edge, wall-bounced
+  // one way and immediately peg-bounced back the other way, over and over, with almost no net
+  // progress. Pushing the wall in to sidePadding - chipRadius + 2 keeps it just past that edge
+  // peg's center, so a peg correction there now shoves the chip further IN (away from the wall,
+  // toward the middle) instead of back OUT into the wall - the two corrections work together
+  // instead of fighting. It also closes most of the empty corridor next to the wall in the
+  // staggered rows (which have no peg that close to the edge at all), where a chip could
+  // otherwise drift for a while doing nothing but weak, repeated wall grazes.
+  const wallInset = sidePadding - FLEET_PLINKO_CONFIG.chipRadius + 2;
+  function clampToWalls(chip) {
+    if (chip.x - chip.r < wallInset) chip.x = wallInset + chip.r;
+    if (chip.x + chip.r > W - wallInset) chip.x = W - wallInset - chip.r;
+  }
   function runPhysics() {
     const chip = state.chip;
     chip.vy += FLEET_PLINKO_CONFIG.gravity;
     chip.vx *= FLEET_PLINKO_CONFIG.horizontalFriction;
     chip.x += chip.vx; chip.y += chip.vy;
-    // Side walls give the chip a small random nudge on contact, same as a peg bounce does -
-    // without it, a chip falling almost straight down against a wall could reflect at ~0 vx
-    // forever, hugging the wall in a long, listless drift that looks stuck even though gravity
-    // is technically still pulling it down.
-    if (chip.x - chip.r < 8) { chip.x = 8 + chip.r; chip.vx = Math.abs(chip.vx) * FLEET_PLINKO_CONFIG.bounce + Math.random() * 0.6; }
-    if (chip.x + chip.r > W - 8) { chip.x = W - 8 - chip.r; chip.vx = -Math.abs(chip.vx) * FLEET_PLINKO_CONFIG.bounce - Math.random() * 0.6; }
+    // A wall hit now kicks noticeably harder than a peg-to-peg bounce (wallBounce/wallNudge
+    // instead of the weaker peg bounce/nudge) and always adds a little extra downward push, so
+    // the chip can't stall out purely oscillating side to side against a wall - every wall touch
+    // is guaranteed some real vertical progress on top of the stronger sideways kick.
+    let hitWall = false;
+    if (chip.x - chip.r < wallInset) { chip.x = wallInset + chip.r; chip.vx = Math.abs(chip.vx) * FLEET_PLINKO_CONFIG.wallBounce + Math.random() * FLEET_PLINKO_CONFIG.wallNudge; hitWall = true; }
+    if (chip.x + chip.r > W - wallInset) { chip.x = W - wallInset - chip.r; chip.vx = -Math.abs(chip.vx) * FLEET_PLINKO_CONFIG.wallBounce - Math.random() * FLEET_PLINKO_CONFIG.wallNudge; hitWall = true; }
+    if (hitWall) chip.vy += 0.15;
     for (const peg of pegs) {
       const dx = chip.x - peg.x, dy = chip.y - peg.y;
       const minDistance = chip.r + peg.r;
@@ -3471,6 +3612,9 @@ function openFleetPlinko(options) {
         chip.vx *= FLEET_PLINKO_CONFIG.bounce; chip.vy *= FLEET_PLINKO_CONFIG.bounce;
       }
     }
+    // Re-clamp after the peg pass so a peg correction can never shove the chip back out past a
+    // wall it just bounced off in this same frame.
+    clampToWalls(chip);
     if (chip.y >= slotTop - chip.r) { settleChip(); return; }
     drawBoard();
     state.animationId = requestAnimationFrame(runPhysics);
@@ -3530,10 +3674,14 @@ function openFleetPlinko(options) {
 }
 /* ============================================================
    FLEET BLACKJACK - Fleet Compound bonus minigame.
-   Three hands, one shared Hit/Bank decision. Each hand's reward is locked in and shown
-   before a single card is dealt. Hitting draws 3 cards you freely allocate across whichever
-   hands are still live; a hand that busts forfeits its reward, a hand that hits exactly 21
-   locks (no more cards can go to it). Bank Rewards cashes out every hand still standing.
+   Three EMPTY hands and a real dealer. Each hand's reward is locked in and shown before a
+   single card is dealt, but there are no starting cards - hitting draws 3 cards you freely
+   allocate across whichever hands are still live (including onto a hand with zero cards),
+   so even the very first hit is a real placement decision. A hand that busts forfeits its
+   reward; a hand that hits exactly 21 locks (no more cards can go to it). The dealer shows
+   one card face-up and one face-down from the start for a bit of real strategy, then plays
+   a standard hit-to-17 hand once you Stand - each surviving hand only pays out if it beats
+   the dealer's final total (a push pays nothing, same convention as Fleet Poker).
    Opened with openFleetBlackjack({ onComplete(haul) }); reward weights live in
    FLEET_BLACKJACK_CONFIG below.
    ============================================================ */
@@ -3582,7 +3730,7 @@ function applyBlackjackHaul(haul) {
   }
   RUN.lastNotice = parts.length ? `Blackjack haul banked: ${parts.join(', ')}.` : 'Blackjack: nothing banked this round.';
   saveRun();
-  render(castleMenuScreen());
+  render(RETURN_TO_CASTLE_MENU ? castleMenuScreen() : mapScreen());
 }
 function openFleetBlackjack(options) {
   options = options || {};
@@ -3602,11 +3750,14 @@ function openFleetBlackjack(options) {
 
   const state = {
     hands: Array.from({ length: FLEET_BLACKJACK_CONFIG.handCount }, () => ({ cards: [], reward: weightedBlackjackReward() })),
+    dealer: { cards: [drawCard(), drawCard()], revealed: false },
     pool: [],
     finished: false,
     hasDrawnOnce: false,
   };
-  for (const hand of state.hands) hand.cards.push(drawCard(), drawCard());
+  // No starting cards for the player - every card, including the first, arrives via a Hit and
+  // has to be placed into one of the 3 (initially empty) hands, so the very first decision is a
+  // real one instead of an automatic 2-card freebie.
 
   function handStatus(hand) {
     const v = blackjackHandValue(hand.cards);
@@ -3625,7 +3776,12 @@ function openFleetBlackjack(options) {
       <div class="wo-stripe"></div>
       <div class="wo-body">
         <h1 style="margin:2px 0 0;text-align:center">Fleet <em>Blackjack</em></h1>
-        <div class="note" style="margin-top:2px;text-align:center">Every hand's reward is locked in from the start. Draw to push your luck, or bank what's still standing.</div>
+        <div class="note" style="margin-top:2px;text-align:center">Every hand's reward is locked in from the start. Hit to fill your hands, or Stand once you like your totals - each hand only pays out if it beats the dealer.</div>
+        <div id="fleetBjDealerWrap" class="fleetBjDealerWrap">
+          <div class="fleetBjHandReward" style="color:var(--dim)">Dealer</div>
+          <div id="fleetBjDealerCards" class="fleetBjHandCards"></div>
+          <div id="fleetBjDealerTotal" class="fleetBjHandTotal"></div>
+        </div>
         <div id="fleetBjMessage" style="min-height:22px;text-align:center;font-size:13px;color:var(--dim)"></div>
         <div id="fleetBjHands" class="fleetBjHands"></div>
         <div id="fleetBjPoolWrap" class="fleetMiniPoolWrap" style="display:none">
@@ -3633,8 +3789,8 @@ function openFleetBlackjack(options) {
           <div id="fleetBjPool" style="display:flex;justify-content:center;gap:8px"></div>
         </div>
         <div id="fleetBjControls" style="display:flex;justify-content:center;gap:10px;padding-top:14px;flex-wrap:wrap">
-          <button class="wo-btn green" id="fleetBjDrawBtn">Draw 3 More</button>
-          <button class="wo-btn amber" id="fleetBjBankBtn">Bank Rewards</button>
+          <button class="wo-btn green" id="fleetBjDrawBtn">Hit (Draw 3)</button>
+          <button class="wo-btn amber" id="fleetBjBankBtn">Stand</button>
           <button class="wo-btn gray" id="fleetBjExitBtn">Back to Compound</button>
         </div>
       </div>
@@ -3642,6 +3798,8 @@ function openFleetBlackjack(options) {
   `;
   document.body.appendChild(overlay);
 
+  const dealerCardsEl = document.getElementById('fleetBjDealerCards');
+  const dealerTotalEl = document.getElementById('fleetBjDealerTotal');
   const handsWrap = document.getElementById('fleetBjHands');
   const poolWrap = document.getElementById('fleetBjPoolWrap');
   const poolEl = document.getElementById('fleetBjPool');
@@ -3652,17 +3810,33 @@ function openFleetBlackjack(options) {
 
   let selectedPoolIdx = null;
   function cardHTML(c) { return `<div class="card mini ${suitColorClass(c.color, c.suit)}"><div>${rankLabel(c.rank)}</div><div>${c.suit}</div></div>`; }
+  function cardBackHTML() { return `<div class="card back mini"></div>`; }
+
+  function renderDealer() {
+    const visibleCards = state.dealer.revealed ? state.dealer.cards : [state.dealer.cards[0]];
+    dealerCardsEl.innerHTML = visibleCards.map(cardHTML).join('') + (state.dealer.revealed ? '' : cardBackHTML());
+    if (state.dealer.revealed) {
+      const v = blackjackHandValue(state.dealer.cards);
+      dealerTotalEl.textContent = v.busted ? 'BUST' : String(v.total) + (v.soft ? ' (soft)' : '');
+      dealerTotalEl.className = 'fleetBjHandTotal ' + (v.busted ? 'bjBust' : '');
+    } else {
+      dealerTotalEl.textContent = 'Showing ' + rankLabel(state.dealer.cards[0].rank);
+      dealerTotalEl.className = 'fleetBjHandTotal';
+    }
+  }
 
   function renderHands() {
     handsWrap.innerHTML = state.hands.map((hand, i) => {
       const st = handStatus(hand);
       const canTarget = state.pool.length > 0 && selectedPoolIdx != null && canReceiveCard(hand);
-      const statusLabel = st.busted ? 'BUST' : st.natural ? 'Blackjack!' : st.total === 21 ? '21 - Locked' : String(st.total) + (st.soft ? ' (soft)' : '');
+      const statusLabel = st.busted ? 'BUST' : st.natural ? 'Blackjack!' : st.total === 21 ? '21 - Locked' : hand.cards.length ? String(st.total) + (st.soft ? ' (soft)' : '') : 'Empty';
       const statusClass = st.busted ? 'bjBust' : (st.natural || st.total === 21) ? 'bjLocked' : '';
+      const resultLabel = hand.outcome ? `<div class="fleetBjHandOutcome ${hand.outcome}">${hand.outcome === 'win' ? 'WIN' : hand.outcome === 'push' ? 'PUSH' : 'LOSE'}</div>` : '';
       return `<div class="fleetBjHand ${st.busted ? 'busted' : ''} ${canTarget ? 'targetable' : ''}" data-bjhand="${i}">
         <div class="fleetBjHandReward">${hand.reward.label}</div>
         <div class="fleetBjHandCards">${hand.cards.map(cardHTML).join('')}</div>
         <div class="fleetBjHandTotal ${statusClass}">${statusLabel}</div>
+        ${resultLabel}
       </div>`;
     }).join('');
     handsWrap.querySelectorAll('[data-bjhand]').forEach(el => {
@@ -3681,11 +3855,11 @@ function openFleetBlackjack(options) {
     bankBtn.style.display = dealing ? 'none' : '';
     exitBtn.style.display = dealing ? 'none' : '';
     drawBtn.disabled = liveHands().length === 0;
-    // Bank only pays out hands that survived a real draw - the starting 2-card hands can't be
-    // busted yet, so without this a player could open Blackjack and bank all 3 rewards for free
-    // without ever taking a card.
+    // Stand only pays out hands that survived a real hit - with no starting cards, every hand
+    // is empty (and un-busted) until you hit at least once, so without this a player could open
+    // Blackjack and Stand for free with 3 empty "0" hands that can never actually beat a dealer.
     bankBtn.disabled = !state.hasDrawnOnce;
-    bankBtn.textContent = state.hasDrawnOnce ? 'Bank Rewards' : 'Bank Rewards (draw first)';
+    bankBtn.textContent = state.hasDrawnOnce ? 'Stand' : 'Stand (hit first)';
   }
 
   function placeCard(handIdx) {
@@ -3705,7 +3879,7 @@ function openFleetBlackjack(options) {
       message.textContent = 'No hands left to draw for.';
     }
     if (!anyStillStanding()) { finishRound(); return; }
-    renderPool(); renderHands(); updateControls();
+    renderPool(); renderHands(); renderDealer(); updateControls();
   }
 
   function startDraw() {
@@ -3713,8 +3887,8 @@ function openFleetBlackjack(options) {
     state.hasDrawnOnce = true;
     for (let i = 0; i < FLEET_BLACKJACK_CONFIG.drawSize; i++) state.pool.push(drawCard());
     selectedPoolIdx = null;
-    message.textContent = 'Assign all 3 cards before drawing again.';
-    renderPool(); renderHands(); updateControls();
+    message.textContent = 'Assign all 3 cards before hitting again.';
+    renderPool(); renderHands(); renderDealer(); updateControls();
   }
 
   function formatBjHaul(h) {
@@ -3727,42 +3901,71 @@ function openFleetBlackjack(options) {
   function finishRound() {
     if (state.finished) return;
     state.finished = true;
+    drawBtn.style.display = 'none'; bankBtn.style.display = 'none'; exitBtn.style.display = 'none';
+    poolWrap.style.display = 'none';
+
     const haul = { coins: 0, gems: 0, fuel: 0 };
-    // Guards against a bank/exit that happens before any draw ever occurred - the starting
-    // 2-card hands can't be busted yet, so without this check every hand would still read as
-    // "standing" and pay out for free. See the note on bankBtn.disabled above.
-    if (state.hasDrawnOnce) {
-      for (const hand of state.hands) {
-        const st = handStatus(hand);
-        if (st.busted) continue;
+    // Guards against a bank/exit that happens before any hit ever occurred - with no starting
+    // cards, every hand is empty (and un-busted) until you hit at least once, so without this
+    // check every hand would still read as "standing" and pay out for free against the dealer.
+    if (!state.hasDrawnOnce) {
+      message.textContent = 'Nothing to Stand on.';
+      haul.lost = true;
+      setTimeout(() => { overlay.remove(); onComplete(haul); }, 900);
+      return;
+    }
+
+    // Reveal the dealer's hidden card, then play a standard hit-to-17 dealer hand - but only if
+    // at least one player hand is still alive to beat it (no point risking a dealer bust reveal
+    // when every hand already busted itself out).
+    state.dealer.revealed = true;
+    if (anyStillStanding()) {
+      let dv = blackjackHandValue(state.dealer.cards);
+      while (dv.total < 17) { state.dealer.cards.push(drawCard()); dv = blackjackHandValue(state.dealer.cards); }
+    }
+    renderDealer();
+    const dealerFinal = blackjackHandValue(state.dealer.cards);
+
+    for (const hand of state.hands) {
+      const st = handStatus(hand);
+      if (st.busted || !hand.cards.length) { hand.outcome = 'lose'; continue; }
+      if (dealerFinal.busted || st.total > dealerFinal.total) hand.outcome = 'win';
+      else if (st.total < dealerFinal.total) hand.outcome = 'lose';
+      else hand.outcome = 'push';
+      if (hand.outcome === 'win') {
         if (hand.reward.type === 'coins') haul.coins += hand.reward.amount;
         else if (hand.reward.type === 'gems') haul.gems += hand.reward.amount;
         else if (hand.reward.type === 'fuel') haul.fuel += hand.reward.amount;
       }
     }
+    renderHands();
     haul.lost = haul.coins === 0 && haul.gems === 0 && haul.fuel === 0;
-    message.textContent = haul.lost ? 'Nothing to bank.' : `Banked: ${formatBjHaul(haul)}`;
-    drawBtn.style.display = 'none'; bankBtn.style.display = 'none'; exitBtn.style.display = 'none';
-    setTimeout(() => { overlay.remove(); onComplete(haul); }, 900);
+    const dealerLabel = dealerFinal.busted ? 'Dealer busts!' : `Dealer stands on ${dealerFinal.total}.`;
+    message.textContent = `${dealerLabel} ${haul.lost ? 'Nothing banked.' : `Banked: ${formatBjHaul(haul)}`}`;
+    playSfx(haul.lost ? 'lose' : 'open');
+    setTimeout(() => { overlay.remove(); onComplete(haul); }, 1600);
   }
 
   drawBtn.onclick = startDraw;
   bankBtn.onclick = finishRound;
   exitBtn.onclick = finishRound;
 
-  renderHands(); renderPool(); updateControls();
+  renderHands(); renderPool(); renderDealer(); updateControls();
 }
 
 /* ============================================================
    FLEET POKER - Fleet Compound bonus minigame.
-   Build three 5-card hands from fifteen dealt cards (5 cards x 3 rounds), assigning each card
-   to one of your three hands as it's dealt - once placed, a card can never be moved. Three
-   hidden computer hands (with their own cards) are generated up front; each of your hands has
-   its own visible reward, revealed before a single card is dealt. Once all fifteen cards are
-   placed, the three matchups reveal one at a time using the game's existing evaluateHand tiers.
+   Texas Hold'em, but you get 3 hole cards instead of 2. Build three 3-hole-card hands from
+   nine dealt cards (3 cards x 3 deals), assigning each card to one of your three hands as
+   it's dealt - once placed, a card can never be moved. Three hidden computer hands (3 hole
+   cards each) are generated up front; each of your hands has its own visible reward, revealed
+   before a single card is dealt. Once all nine of your cards are placed, a single shared
+   community board deals out - flop, then turn, then river - right on this same screen. Once
+   the river lands, all three computer hands and all three outcomes (best 5-of-8 using the
+   game's existing evaluateHand tiers via bestHandFromPool) reveal together, not one at a time.
    Opened with openFleetPoker({ onComplete(haul) }).
    ============================================================ */
-const FLEET_POKER_CONFIG = { handCount: 3, cardsPerHand: 5, deals: 3, cardsPerDeal: 5 };
+const FLEET_POKER_CONFIG = { handCount: 3, cardsPerHand: 3, deals: 3, cardsPerDeal: 3, communityCount: 5 };
 function pokerHandRewards() {
   const ownedIds = new Set(RUN.hero?.items || []);
   const itemPool = Object.values(ITEMS).filter(it => it.cost > 0 && !ownedIds.has(it.id));
@@ -3791,7 +3994,7 @@ function applyPokerHaul(haul) {
   }
   RUN.lastNotice = parts.length ? `Poker haul banked: ${parts.join(', ')}.` : 'Poker: no matches won this round.';
   saveRun();
-  render(castleMenuScreen());
+  render(RETURN_TO_CASTLE_MENU ? castleMenuScreen() : mapScreen());
 }
 function openFleetPoker(options) {
   options = options || {};
@@ -3810,8 +4013,9 @@ function openFleetPoker(options) {
 
   const rewards = pokerHandRewards();
   const state = {
-    playerHands: Array.from({ length: FLEET_POKER_CONFIG.handCount }, (_, i) => ({ cards: [], reward: rewards[i] })),
+    playerHands: Array.from({ length: FLEET_POKER_CONFIG.handCount }, (_, i) => ({ cards: [], reward: rewards[i], outcome: null })),
     computerHands: Array.from({ length: FLEET_POKER_CONFIG.handCount }, () => ({ cards: Array.from({ length: FLEET_POKER_CONFIG.cardsPerHand }, () => drawCard()) })),
+    community: [],
     pool: [],
     dealsUsed: 0,
     finished: false,
@@ -3827,16 +4031,16 @@ function openFleetPoker(options) {
       <div class="wo-stripe"></div>
       <div class="wo-body">
         <h1 style="margin:2px 0 0;text-align:center">Fleet <em>Poker</em></h1>
-        <div class="note" style="margin-top:2px;text-align:center">Build three hands from fifteen cards. Once a card is placed, it's locked in for good.</div>
+        <div class="note" style="margin-top:2px;text-align:center">Hold'em, with 3 hole cards instead of 2. Build three hands from nine cards - once a card is placed, it's locked in for good.</div>
         <div id="fleetPokerMessage" style="min-height:22px;text-align:center;font-size:13px;color:var(--dim)"></div>
+        <div id="fleetPokerCommunity" style="display:none"></div>
         <div id="fleetPokerHands" class="fleetPokerHands"></div>
         <div id="fleetPokerPoolWrap" class="fleetMiniPoolWrap" style="display:none">
           <div class="note" style="text-align:center;margin:8px 0 4px">Click a card, then click a hand to place it.</div>
           <div id="fleetPokerPool" style="display:flex;justify-content:center;gap:8px"></div>
         </div>
-        <div id="fleetPokerReveal" style="display:none"></div>
         <div id="fleetPokerControls" style="display:flex;justify-content:center;gap:10px;padding-top:14px;flex-wrap:wrap">
-          <button class="wo-btn green" id="fleetPokerDealBtn">Deal 5</button>
+          <button class="wo-btn green" id="fleetPokerDealBtn">Deal 3</button>
           <button class="wo-btn gray" id="fleetPokerExitBtn">Back to Compound</button>
         </div>
       </div>
@@ -3847,7 +4051,7 @@ function openFleetPoker(options) {
   const handsWrap = document.getElementById('fleetPokerHands');
   const poolWrap = document.getElementById('fleetPokerPoolWrap');
   const poolEl = document.getElementById('fleetPokerPool');
-  const revealWrap = document.getElementById('fleetPokerReveal');
+  const communityWrap = document.getElementById('fleetPokerCommunity');
   const message = document.getElementById('fleetPokerMessage');
   const controlsWrap = document.getElementById('fleetPokerControls');
   const dealBtn = document.getElementById('fleetPokerDealBtn');
@@ -3892,7 +4096,7 @@ function openFleetPoker(options) {
     renderPool(); renderHands(); updateControls();
     if (!state.pool.length) {
       if (state.dealsUsed >= FLEET_POKER_CONFIG.deals) startReveal();
-      else message.textContent = 'Deal the next 5 cards when ready.';
+      else message.textContent = 'Deal the next 3 cards when ready.';
     }
   }
   function startDeal() {
@@ -3900,60 +4104,90 @@ function openFleetPoker(options) {
     for (let i = 0; i < FLEET_POKER_CONFIG.cardsPerDeal; i++) state.pool.push(drawCard());
     state.dealsUsed++;
     selectedPoolIdx = null;
-    message.textContent = `Round ${state.dealsUsed} of ${FLEET_POKER_CONFIG.deals} - place all 5 cards.`;
+    message.textContent = `Round ${state.dealsUsed} of ${FLEET_POKER_CONFIG.deals} - place all 3 cards.`;
     renderPool(); renderHands(); updateControls();
   }
 
+  // Community board reveals in stages (flop, turn, river) right on this same screen, then every
+  // hand's outcome shows at once - no clicking through matches one at a time.
+  function communityCardsHTML() {
+    const slots = [];
+    for (let i = 0; i < FLEET_POKER_CONFIG.communityCount; i++) slots.push(state.community[i] ? cardHTML(state.community[i]) : '<div class="card back mini"></div>');
+    return slots.join('');
+  }
+  function renderCommunityStrip(label) {
+    communityWrap.style.display = '';
+    communityWrap.innerHTML = `
+      <div class="note" style="text-align:center;margin:6px 0 4px">${label}</div>
+      <div class="fleetPokerHandCards" style="justify-content:center">${communityCardsHTML()}</div>
+    `;
+  }
   function startReveal() {
-    handsWrap.style.display = 'none';
     poolWrap.style.display = 'none';
     controlsWrap.style.display = 'none';
-    message.textContent = '';
-    revealWrap.style.display = '';
-    showMatch(0);
+    message.textContent = 'Dealing the board...';
+    renderCommunityStrip('Dealing the flop...');
+    setTimeout(() => {
+      state.community.push(drawCard(), drawCard(), drawCard());
+      renderCommunityStrip('Flop'); playSfx('open');
+      setTimeout(() => {
+        state.community.push(drawCard());
+        renderCommunityStrip('Turn'); playSfx('open');
+        setTimeout(() => {
+          state.community.push(drawCard());
+          renderCommunityStrip('River'); playSfx('open');
+          setTimeout(resolveShowdown, 700);
+        }, 700);
+      }, 700);
+    }, 500);
   }
-  function showMatch(i) {
-    const pHand = state.playerHands[i];
-    const cHand = state.computerHands[i];
-    const pEval = evaluateHand(pHand.cards);
-    const cEval = evaluateHand(cHand.cards);
-    const pSum = pHand.cards.reduce((a, c) => a + c.rank, 0);
-    const cSum = cHand.cards.reduce((a, c) => a + c.rank, 0);
-    let outcome;
-    if (pEval.tier > cEval.tier) outcome = 'win';
-    else if (pEval.tier < cEval.tier) outcome = 'lose';
-    else if (pSum > cSum) outcome = 'win';
-    else if (pSum < cSum) outcome = 'lose';
-    else outcome = 'push';
-    if (outcome === 'win') {
-      if (pHand.reward.type === 'item') haul.itemIds.push(pHand.reward.itemId);
-      else if (pHand.reward.type === 'coins') haul.coins += pHand.reward.amount;
-      else if (pHand.reward.type === 'gems') haul.gems += pHand.reward.amount;
-      else if (pHand.reward.type === 'fuel') haul.fuel += pHand.reward.amount;
-    }
-    revealWrap.innerHTML = `
-      <div class="wo-eyebrow" style="text-align:center">Match ${i + 1} of ${FLEET_POKER_CONFIG.handCount}</div>
-      <div class="fleetPokerMatchup">
-        <div class="fleetPokerMatchSide">
-          <div class="note">Your Hand</div>
-          <div class="fleetPokerHandCards">${pHand.cards.map(cardHTML).join('')}</div>
-          <div class="fleetPokerTierLabel">${pEval.label}</div>
+  function resolveShowdown() {
+    state.playerHands.forEach((hand, i) => {
+      const cHand = state.computerHands[i];
+      const pBest = bestHandFromPool([...hand.cards, ...state.community], 5);
+      const cBest = bestHandFromPool([...cHand.cards, ...state.community], 5);
+      const pSum = pBest.cards.reduce((a, c) => a + c.rank, 0);
+      const cSum = cBest.cards.reduce((a, c) => a + c.rank, 0);
+      let outcome;
+      if (pBest.tier > cBest.tier) outcome = 'win';
+      else if (pBest.tier < cBest.tier) outcome = 'lose';
+      else if (pSum > cSum) outcome = 'win';
+      else if (pSum < cSum) outcome = 'lose';
+      else outcome = 'push';
+      hand.outcome = outcome; hand.pBest = pBest; hand.cBest = cBest;
+      if (outcome === 'win') {
+        if (hand.reward.type === 'item') haul.itemIds.push(hand.reward.itemId);
+        else if (hand.reward.type === 'coins') haul.coins += hand.reward.amount;
+        else if (hand.reward.type === 'gems') haul.gems += hand.reward.amount;
+        else if (hand.reward.type === 'fuel') haul.fuel += hand.reward.amount;
+      }
+    });
+    message.textContent = '';
+    renderCommunityStrip('Community Cards');
+    handsWrap.innerHTML = state.playerHands.map((hand, i) => {
+      const cHand = state.computerHands[i];
+      return `<div class="fleetPokerShowdownRow">
+        <div class="wo-eyebrow" style="text-align:center">Hand ${i + 1} - ${rewardLabelFor(hand.reward)}</div>
+        <div class="fleetPokerMatchup">
+          <div class="fleetPokerMatchSide">
+            <div class="note">Your Hole Cards</div>
+            <div class="fleetPokerHandCards">${hand.cards.map(cardHTML).join('')}</div>
+            <div class="fleetPokerTierLabel">${hand.pBest.label}</div>
+          </div>
+          <div class="fleetPokerVs">vs</div>
+          <div class="fleetPokerMatchSide">
+            <div class="note">Computer</div>
+            <div class="fleetPokerHandCards">${cHand.cards.map(cardHTML).join('')}</div>
+            <div class="fleetPokerTierLabel">${hand.cBest.label}</div>
+          </div>
         </div>
-        <div class="fleetPokerVs">vs</div>
-        <div class="fleetPokerMatchSide">
-          <div class="note">Computer</div>
-          <div class="fleetPokerHandCards">${cHand.cards.map(cardHTML).join('')}</div>
-          <div class="fleetPokerTierLabel">${cEval.label}</div>
-        </div>
-      </div>
-      <div class="fleetPokerOutcome ${outcome}">${outcome === 'win' ? `YOU WIN - ${rewardLabelFor(pHand.reward)}` : outcome === 'lose' ? 'YOU LOSE' : 'PUSH'}</div>
-      <button class="wo-btn amber" id="fleetPokerNextBtn" style="width:100%;margin-top:10px">${i < FLEET_POKER_CONFIG.handCount - 1 ? 'Next Match' : 'Finish'}</button>
-    `;
-    playSfx(outcome === 'win' ? 'open' : outcome === 'lose' ? 'lose' : 'buy');
-    document.getElementById('fleetPokerNextBtn').onclick = () => {
-      if (i < FLEET_POKER_CONFIG.handCount - 1) showMatch(i + 1);
-      else finishPoker();
-    };
+        <div class="fleetPokerOutcome ${hand.outcome}">${hand.outcome === 'win' ? `YOU WIN - ${rewardLabelFor(hand.reward)}` : hand.outcome === 'lose' ? 'YOU LOSE' : 'PUSH'}</div>
+      </div>`;
+    }).join('');
+    playSfx(state.playerHands.some(h => h.outcome === 'win') ? 'open' : 'lose');
+    controlsWrap.style.display = '';
+    controlsWrap.innerHTML = `<button class="wo-btn amber" id="fleetPokerFinishBtn" style="width:100%">Collect Winnings</button>`;
+    document.getElementById('fleetPokerFinishBtn').onclick = finishPoker;
   }
   function finishPoker() {
     if (state.finished) return;
@@ -4012,7 +4246,7 @@ function applyAuctionHaul(haul) {
   }
   RUN.lastNotice = parts.length ? `Auction lots won: ${parts.join(', ')}.` : 'Auction: no lots won this round.';
   saveRun();
-  render(castleMenuScreen());
+  render(RETURN_TO_CASTLE_MENU ? castleMenuScreen() : mapScreen());
 }
 function openFleetAuction(options) {
   options = options || {};
@@ -4178,20 +4412,10 @@ function castleMatchScreen() {
       <div class="wo-stripe" style="background:#7a0000"></div>
       <div class="wo-body" style="text-align:center;background:#1a0000;color:#ffbdbd;border-radius:0 0 8px 8px">
         <div class="wo-eyebrow" style="color:#ff5c5c">⚠️ Critical System Glitch Detected!</div>
-        <div class="note" style="color:#ffbdbd;margin-top:8px">You flipped a Red Joker and a Black Joker together. The Carnival Board has overloaded, scrambled its data core, and safely locked down for this stop.</div>
+        <div class="note" style="color:#ffbdbd;margin-top:8px">You flipped a Red Joker and a Black Joker together. The Carnival Board's data core scrambled and every card reset - any pairs you'd found are gone, but the board's ready for a fresh run at it.</div>
         <button class="wo-btn red" id="jokerGlitchReRouteBtn" style="width:100%;margin-top:14px">[ Re-Route Systems ]</button>
       </div>
     </div></div>`;
-  }
-  if (st.matchPlayed) {
-    const closedMsg = st.matchLockReason === 'glitch' ? 'CRITICAL GLITCH! A Red Joker and a Black Joker were flipped together. Grid Anomaly Closed.'
-      : st.matchLockReason === 'outofattempts' ? 'Out of attempts! The matching session is over for this run.'
-      : "You've already played this round. Come back on your next run.";
-    return `<div class="map-popup-overlay"><div class="wo wide"><div class="wo-stripe"></div><div class="wo-body">
-      <h1>Fleet Carnival <em>Matching Game</em></h1>
-      <div class="note">${closedMsg}</div>
-      <button class="wo-btn gray" id="leaveMatchBtn" style="width:100%">Back to Compound Menu</button>
-    </div></div></div>`;
   }
   if (!st.matchCards) {
     const groups = ['♦', '♣', '♥', '♠', 'RJ', 'BJ'];
@@ -4259,7 +4483,7 @@ function castleMatchScreen() {
 }
 let BLACKSMITH_OPTIONS = null;
 let GARAGE_SELECTED_ITEM = null;
-let BLACKSMITH_VISIT = null;
+let BLACKSMITH_VISIT = null; 
 const SCOPE_TUNE_COST = { card: 30, rank: 60, suit: 90 };
 const SCOPE_TUNE_DAMAGE = { card: 10, rank: 5, suit: 3 };
 const SCOPE_TUNE_MAX_STACKS = 3;
@@ -4299,7 +4523,7 @@ function rollTreasure(big=false) {
   if (prize.kind === 'fuel') { const before=RUN.fuel; RUN.fuel=Math.min(RUN.maxFuel, RUN.fuel+prize.amount); actual=RUN.fuel-before; }
   if (prize.kind === 'gems') { const before=RUN.gems; RUN.gems=Math.min(RUN.maxGems, RUN.gems+prize.amount); actual=RUN.gems-before; }
   if (prize.kind === 'energy') { const before=RUN.energy; RUN.energy=Math.min(RUN.maxEnergy, RUN.energy+prize.amount); actual=RUN.energy-before; }
-  if (prize.kind === 'points') { earnPoints(prize.amount); }
+  if (prize.kind === 'points') { earnPoints(prize.amount); RUN.careerPointsFromTreasure = (RUN.careerPointsFromTreasure || 0) + prize.amount; }
   saveRun();
   return { ...prize, amount: actual };
 }
@@ -4338,7 +4562,7 @@ function startBattle(opponentDef, row, col, castleStage=0) {
     opponent: { ...oppDef, hpNow: oppDef.hp, poisonStacks: [], armor: oppDef.startArmor || 0, countdown: oppDef.special?.type === 'countdownStrike' ? oppDef.special.threshold : undefined }, row, col, castleStage,
     deck: shuffle(freshDeck()), discard: [],
     hand: [], oppPool: [], usedThisTurn: new Set(), scoutedThisTurn: false, abilityUsedThisTurn: false, opponentStunned: false, itemCooldowns: {},
-    playerArmor: 0, turn: 1, slots: {}, turnDiscard: [], turnSpentDiscard: [], logLines: [], turnStartedAt: Date.now(),
+    playerArmor: 0, turn: 1, slots: {}, turnDiscard: [], turnSpentDiscard: [], recentDiscard: [], logLines: [], turnStartedAt: Date.now(),
     playerHandPurgeActive: !!(nodeDef && nodeDef.gridStorm), stagedFireCards: [],
   };
   if (BATTLE.playerHandPurgeActive) battleLog('Grid Storm detected: your hand will be purged to discard at the end of every turn.');
@@ -4642,10 +4866,11 @@ function scoutOpponent() {
 }
 function drawWithGem() {
   if (RUN.gems < 1) return;
+  if (BATTLE.hand.length >= RUN.handSize) { battleLog('Hand is full - no room to draw with a gem right now.'); render(battleScreen()); return; }
   RUN.gems -= 1;
   const n = 1 + META.levels.gem + Number(RUN.runUpgrades?.gemDraw || 0);
   const before = BATTLE.hand.length;
-  drawCards(n, true);
+  drawCards(n, false); // unlike an item's own draw power, a gem draw should never push the hand over max size
   const drawn = BATTLE.hand.slice(before).map(c => `${rankLabel(c.rank)}${c.suit}`).join(' ');
   battleLog(`Spent a gem: Drew ${drawn || 'no cards'}.`);
   resortHandAndRelink(RUN.handSortMode);
@@ -4904,7 +5129,7 @@ function resolveOpponentAttackEffect(attack, oppDmg) {
     for (let i = 0; i < n; i++) {
       const idx = Math.floor(Math.random() * BATTLE.hand.length);
       const [card] = BATTLE.hand.splice(idx, 1);
-      BATTLE.discard.push(card);
+      BATTLE.recentDiscard.push(card);
     }
     resortHandAndRelink(RUN.handSortMode);
     return n ? ` Knocked ${n} card${n>1?'s':''} out of your hand.` : ' Tried to knock a card loose, but your hand was empty.';
@@ -4969,6 +5194,16 @@ function opponentAttackIsValid(attack, best, pool, cap) {
 }
 function endTurn() {
   BATTLE.stagedFireCards = [];
+  // Cards discarded THIS turn go into recentDiscard, not straight into the reshuffle-eligible
+  // discard pile - they only become eligible for reshuffleSharedDeck() once a full extra turn has
+  // passed (promoted into BATTLE.discard right here, at the top of the NEXT endTurn call). With a
+  // 52-card shared deck and draw-heavy items, the old one-turn gap could still reshuffle a card
+  // back into the deck almost immediately after it was played; this second buffer turn makes that
+  // "I just played this card" redraw far less likely without changing normal, older-card cycling.
+  if (BATTLE.recentDiscard && BATTLE.recentDiscard.length) {
+    BATTLE.discard.push(...BATTLE.recentDiscard);
+    BATTLE.recentDiscard = [];
+  }
   if (BATTLE.opponent.boss && BATTLE.turnStartedAt) {
     const elapsedSec = (Date.now() - BATTLE.turnStartedAt) / 1000;
     const graceSec = 25;
@@ -5010,7 +5245,7 @@ function endTurn() {
       removedCard.revealed = false;
       BATTLE.oppPool.push(removedCard);
     } else {
-      BATTLE.discard.push(removedCard);
+      BATTLE.recentDiscard.push(removedCard);
     }
     BATTLE.hand.splice(i, 1);
   }
@@ -5021,7 +5256,7 @@ function endTurn() {
   });
   BATTLE.turnDiscard = [];
   if (BATTLE.turnSpentDiscard && BATTLE.turnSpentDiscard.length) {
-    BATTLE.discard.push(...BATTLE.turnSpentDiscard);
+    BATTLE.recentDiscard.push(...BATTLE.turnSpentDiscard);
     BATTLE.turnSpentDiscard = [];
   }
   BATTLE.usedThisTurn = new Set();
@@ -5168,7 +5403,7 @@ function endTurn() {
             } else {
               battleLog(`${BATTLE.opponent.name}'s ${item.name} is charging - ${remaining} more needed.`);
             }
-            BATTLE.discard.push(...best.cards);
+            BATTLE.recentDiscard.push(...best.cards);
             BATTLE.oppPool = BATTLE.oppPool.filter(c => !best.cards.includes(c));
             if (RUN.health <= 0) break;
             continue;
@@ -5219,7 +5454,7 @@ function endTurn() {
           hexLog = ` The hex trap kicks in - you pull the ${stolenText} straight into your hand.`;
         }
         battleLog(`${BATTLE.opponent.name} used ${item.name}${cond.label ? ` with ${cond.label}` : ''} (${usedText}) - ${dmgPhrase}.${specialLog}${hexLog} Your health: ${RUN.health}/${RUN.maxHealth}.`);
-        BATTLE.discard.push(...best.cards.filter(c => !hexStolenCards.includes(c)));
+        BATTLE.recentDiscard.push(...best.cards.filter(c => !hexStolenCards.includes(c)));
         BATTLE.oppPool = BATTLE.oppPool.filter(c => !best.cards.includes(c));
         if (RUN.health <= 0) break;
         continue;
@@ -5286,13 +5521,13 @@ function endTurn() {
       battleLog(attackDef.autoFire
         ? `${BATTLE.opponent.name}'s ${attackDef.name || 'attack'} kicks in - ${dmgPhrase}.${specialLog} Your health: ${RUN.health}/${RUN.maxHealth}.`
         : `${BATTLE.opponent.name} used ${attackDef.name || best.label} with ${best.label} (${usedText}) - ${dmgPhrase}.${specialLog} Your health: ${RUN.health}/${RUN.maxHealth}.`);
-      BATTLE.discard.push(...best.cards);
+      BATTLE.recentDiscard.push(...best.cards);
       BATTLE.oppPool = BATTLE.oppPool.filter(c => !best.cards.includes(c));
       if (RUN.health <= 0) break;
     }
     if (!anyAttack) {
       battleLog(`${BATTLE.opponent.name} didn't have enough to attack this turn.`);
-
+      
       const stillHidden = BATTLE.oppPool.filter(c => !c.revealed);
       shuffle(stillHidden).slice(0, 2).forEach(c => c.revealed = true);
     }
@@ -5303,7 +5538,7 @@ function endTurn() {
     Object.keys(BATTLE.opponentItemCurses).forEach(k => detonateOpponentItemCurse(k, 'it never fired this turn'));
     if (BATTLE.opponent.hpNow <= 0) { winBattle(); return; }
   }
-
+  
   if (BATTLE.opponentItemBurns && Object.keys(BATTLE.opponentItemBurns).length) {
     Object.keys(BATTLE.opponentItemBurns).forEach(k => {
       BATTLE.opponentItemBurns[k] = Math.floor(BATTLE.opponentItemBurns[k] * 0.5);
@@ -5322,7 +5557,7 @@ function endTurn() {
     });
     const purgeIdxs = BATTLE.hand.map((_, i) => i).filter(i => !stashedIdxs.has(i)).sort((a, b) => b - a);
     if (purgeIdxs.length) {
-      purgeIdxs.forEach(i => { BATTLE.discard.push(BATTLE.hand[i]); BATTLE.hand.splice(i, 1); });
+      purgeIdxs.forEach(i => { BATTLE.recentDiscard.push(BATTLE.hand[i]); BATTLE.hand.splice(i, 1); });
       battleLog(`Grid Storm purges your hand - ${purgeIdxs.length} card${purgeIdxs.length > 1 ? 's' : ''} sent to discard.`);
     }
   }
@@ -5332,11 +5567,11 @@ function endTurn() {
   resortHandAndRelink(RUN.handSortMode);
 
   if ((BATTLE.opponent.discardPoolEachTurn || BATTLE.opponent.reckless) && BATTLE.oppPool.length) {
-    BATTLE.discard.push(...BATTLE.oppPool);
+    BATTLE.recentDiscard.push(...BATTLE.oppPool);
     BATTLE.oppPool = [];
   }
   drawOpponentCards();
-
+  
   if (BATTLE.opponent.armorRegen) {
     BATTLE.opponent.armor = (BATTLE.opponent.armor || 0) + BATTLE.opponent.armorRegen;
   }
@@ -5375,7 +5610,7 @@ function winBattle(outlast) {
     if (stage === 2) RUN.castleState.secondDone = true;
     if (stage === 3) {
       RUN.castleState.thirdDone = true;
-
+      
       {
         let wonItem;
         if (RUN.world === 1) {
@@ -5398,7 +5633,7 @@ function winBattle(outlast) {
       render(castleDungeonScreen());
       return;
     }
-
+    
     DUNGEON_CONTINUE_POPUP = { stage, reward };
     saveRun();
     render(castleDungeonScreen());
@@ -5416,7 +5651,11 @@ function winBattle(outlast) {
   // skill-gated moment worth a small nod on its own, same as the fuel it grants.
   const pointsReward = exactKillBonus ? PERFECT_KILL_CP : 0;
   RUN.chips += chipReward; RUN.gems = Math.min(RUN.maxGems, RUN.gems + gemReward); RUN.fuel = Math.min(RUN.maxFuel, RUN.fuel + fuelReward);
-  if (pointsReward) earnPoints(pointsReward);
+  if (pointsReward) {
+    earnPoints(pointsReward);
+    RUN.careerPointsFromPerfectKills = (RUN.careerPointsFromPerfectKills || 0) + pointsReward;
+    RUN.perfectKillsThisRun = (RUN.perfectKillsThisRun || 0) + 1;
+  }
   battleLog(outlast ? `You outlasted the ${BATTLE.opponent.name}!` : `${BATTLE.opponent.name} is done for!`);
   if (exactKillBonus) battleLog(`Perfect Win Bonus: +15 coins, +1 gem, +${PERFECT_KILL_CP} Career Points!`);
   battleLog(formatRewardParts({ coins: chipReward, gems: gemReward, fuel: fuelReward }) + '.');
@@ -5457,10 +5696,10 @@ function currencyBar(extraHTML = '') {
   </div>`;
 }
 
-let MAP_POPUP = null;
-let TREASURE_POPUP = null;
-let GARAGE_POPUP = false;
-let GARAGE_MESSAGE = '';
+let MAP_POPUP = null; 
+let TREASURE_POPUP = null; 
+let GARAGE_POPUP = false; 
+let GARAGE_MESSAGE = ''; 
 function tierNeedText(minTier) { return minTier > 0 ? `At least a ${TIERS[minTier]}` : 'Any card'; }
 
 function tierNeedTextForOpponent(o) {
@@ -5530,6 +5769,10 @@ function nodePopupContent(r, c) {
   if (node.type === 'overdrive') return { title: 'Overdrive Bay', art: glyph(ICON.energy), rows: [], extra: '<div class="note">Spend coins to add uses per turn to your equipped Items.</div>', actionLabel: 'Go Here' };
   if (node.type === 'treasure') return { title: node.big ? 'Big Supply Cache' : 'Supply Cache', art: glyph(ICON.gift), rows: [], extra: `<div class="note">${node.big ? 'A bigger haul for taking the risky route: double-value reward of coins, fuel, gems, energy, or Career Points.' : 'One random reward: coins, fuel, gems, energy, or Career Points.'}</div>`, actionLabel: 'Go Here' };
   if (node.type === 'match_hazard') return { title: 'Grid Anomaly', art: glyph('🃏'), rows: [], extra: `<div class="note">Grid Anomaly Detected: Tap to hack the Carnival Board for extra fleet gear.</div>`, actionLabel: 'Go Here' };
+  if (node.type === 'plinko_hazard') return { title: 'Fleet Plinko', art: glyph('🎯'), rows: [], extra: `<div class="note">A Plinko board found out on the road: drop chips for coins, fuel, or gems.</div>`, actionLabel: 'Go Here' };
+  if (node.type === 'blackjack_hazard') return { title: 'Fleet Blackjack', art: glyph('♠️'), rows: [], extra: `<div class="note">A roadside Blackjack table: draw and Stand against the dealer for a haul.</div>`, actionLabel: 'Go Here' };
+  if (node.type === 'poker_hazard') return { title: 'Fleet Poker', art: glyph('♣️'), rows: [], extra: `<div class="note">A roadside Hold'em table: build your best hands against the dealer for a haul.</div>`, actionLabel: 'Go Here' };
+  if (node.type === 'auction_hazard') return { title: 'Fleet Auction', art: glyph('🔨'), rows: [], extra: `<div class="note">A pop-up Fleet Auction: bid for coins, fuel, gems, or Items.</div>`, actionLabel: 'Go Here' };
   return { title: 'Fleet Compound', art: glyph(ICON.castle), rows: [], extra: '<div class="note">Battles, the Dealership, refueling, a card match game, and more.</div>', actionLabel: 'Go Here' };
 }
 function nodePopupScreen(r, c) {
@@ -5597,9 +5840,9 @@ function mapScreen() {
   }
 
   let nodesHTML='';
-  const NODE_ICON={shop:ICON.cart,rest:ICON.wrench,blacksmith:ICON.hammer,chopshop:ICON.curse,overdrive:ICON.energy,treasure:ICON.gift,castle:ICON.castle,match_hazard:'🃏'};
-  const NODE_TITLE={shop:'Dealership',rest:'Service Station',blacksmith:'Tuning Garage',chopshop:'Chop Shop',overdrive:'Overdrive Bay',treasure:'Supply Cache',castle:'Fleet Compound',match_hazard:'Grid Anomaly'};
-
+  const NODE_ICON={shop:ICON.cart,rest:ICON.wrench,blacksmith:ICON.hammer,chopshop:ICON.curse,overdrive:ICON.energy,treasure:ICON.gift,castle:ICON.castle,match_hazard:'🃏',plinko_hazard:'🎯',blackjack_hazard:'♠️',poker_hazard:'♣️',auction_hazard:'🔨'};
+  const NODE_TITLE={shop:'Dealership',rest:'Service Station',blacksmith:'Tuning Garage',chopshop:'Chop Shop',overdrive:'Overdrive Bay',treasure:'Supply Cache',castle:'Fleet Compound',match_hazard:'Grid Anomaly',plinko_hazard:'Fleet Plinko',blackjack_hazard:'Fleet Blackjack',poker_hazard:'Fleet Poker',auction_hazard:'Fleet Auction'};
+  
   for(let r=0;r<rows.length;r++) {
     for(let c=0;c<rows[r].length;c++) {
       const node=rows[r][c], x=colX(r), y=rowY[Math.min(c,rowY.length-1)];
@@ -5629,6 +5872,10 @@ function mapScreen() {
       else if(node.type==='overdrive') tip='Spend coins to add uses per turn to your equipped Items.';
       else if(node.type==='castle') tip='Choose battles, shopping, refueling, a matching game, or other rewards.';
       else if(node.type==='match_hazard') tip='Grid Anomaly Detected: Tap to hack the Carnival Board for extra fleet gear.';
+      else if(node.type==='plinko_hazard') tip='A Plinko board found out on the road: drop chips for coins, fuel, or gems.';
+      else if(node.type==='blackjack_hazard') tip='A roadside Blackjack table: draw and Stand against the dealer for a haul.';
+      else if(node.type==='poker_hazard') tip="A roadside Hold'em table: build your best hands against the dealer for a haul.";
+      else if(node.type==='auction_hazard') tip='A pop-up Fleet Auction: bid for coins, fuel, gems, or Items.';
       else tip='Find coins, fuel, and gems.';
 
       nodesHTML+=`<div class="mapnode-wrap ${isBoss?'bossnode ':''}${isCastle?'castlenode ':''}${c===0?'toprow':c===1?'midrow':'bottomrow'}" style="left:${(x/totalW*100)}%;top:${y}px">
@@ -5641,7 +5888,7 @@ function mapScreen() {
   return `<div id="map-viewport">${noticeHTML()}<div class="panel">${currencyBar(`<div style="margin-left:auto;display:flex;gap:6px"><button class="wo-btn purple" id="openRunUpgradeFromMapBtn" style="padding:4px 9px;font-size:11px;white-space:nowrap;border-width:1px">Run Upgrade</button><button class="wo-btn gray" id="forfeitRunBtn" style="padding:4px 9px;font-size:11px;white-space:nowrap;border-width:1px;box-shadow:none">Forfeit Run</button></div>`)}</div><div class="panel"><div class="mapwrap" style="width:100%;height:${totalH}px;overflow-x:auto;overflow-y:hidden;position:relative"><div style="position:relative;width:${totalW}px;height:${totalH}px"><svg width="${totalW}" height="${totalH}" viewBox="0 0 ${totalW} ${totalH}" style="position:absolute;left:0;top:0;pointer-events:none">${svgLines}</svg>${nodesHTML}${(() => { const parsedName = String(META.playerName || 'Commander').trim().replace(/\w\S*/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()); return (RUN.world === 1 && RUN.currentRow === -1 && !RUN.onboardingDismissed) ? `<div class="floating-tutorial-card"><div class="wo-eyebrow">Fleet Onboarding</div><h3>Welcome, ${parsedName}!</h3><p>Click the node to the left to start your journey.</p></div>` : ''; })()}</div>${MAP_POPUP ? nodePopupScreen(MAP_POPUP.row, MAP_POPUP.col) : ''}${TREASURE_POPUP ? treasureScreen(TREASURE_POPUP) : ''}${GARAGE_POPUP ? garageScreen(GARAGE_MESSAGE) : ''}${MATCH_OVERLAY_ACTIVE ? castleMatchScreen() : ''}</div><div class="regionCaption">World ${RUN.world}: ${WORLD_NAMES[RUN.world] || WORLD_NAMES[1]}</div></div></div>`;
 }
 /* ========== RUN-SCOPED UPGRADES (paid with coins, last only for this run) ========== */
-const MAX_ITEM_CAP = 9;
+const MAX_ITEM_CAP = 9; 
 const RUN_UPGRADE_DEFS = {
   itemSlots:   { label: 'Item Slot',        desc: '+1 Item slot.', baseCost: 100, mult: 2, cap: 6, base: () => Math.min(MAX_ITEM_CAP, 3 + (META.levels.garage || 0)) },
   drawPerTurn: { label: 'Cards Drawn/Turn', desc: '+1 card drawn at the start of each turn.', baseCost: 60, mult: 2, cap: 5, base: () => 2 + (META.levels.draw || 0) },
@@ -5738,7 +5985,7 @@ function battleScreen() {
       lightningRollForPreview = BATTLE.lightningRolls[slotKey];
     }
     const previewCalc = (ready && !frozenState) ? computeItemAmount(item, cards, level, condResult, false, lightningRollForPreview) : null;
-
+    
     let hypPreviewHTML = '';
     if (!frozenState && !idxs.length && typeof selectedIdx !== 'undefined' && selectedIdx.length) {
       const hypCards = selectedIdx.filter(i => !BATTLE.usedThisTurn.has(i)).slice(0, effectiveMaxCards(item)).map(i => BATTLE.hand[i]);
@@ -5754,7 +6001,7 @@ function battleScreen() {
     const effectWord = eKind === 'defense' ? 'armor' : eKind === 'poison' ? 'poison' : eKind === 'burn' ? 'burn' : eKind === 'curse' ? 'curse' : 'dmg';
     const cap = itemUsesCap(item, itemUsesLevel(itemId));
     const usesLeft = cap - ((BATTLE.itemUses && BATTLE.itemUses[slotKey]) || 0);
-
+    
     const isChargingUnlockItem = item.unlockThreshold != null && !(BATTLE.itemUnlocked && BATTLE.itemUnlocked[slotKey]);
     const cardHTML = idxs.map(cardHandIdx => {
       const c = BATTLE.hand[cardHandIdx];
@@ -5895,10 +6142,10 @@ function battleScreen() {
         <div class="playerActionGrid">
           <button class="wo-btn gray" id="sortToggleBtn" style="padding:6px 3px;font-size:10px;flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Sort: ${(RUN.handSortMode || 'value') === 'value' ? 'Value' : 'Suit'}</button>
           ${(() => { const sp = VEHICLE_SPECIALS[RUN.hero.heroId]; if (!sp) return ''; const minNeed = sp.energyCost ?? sp.energyPerUnit; return `<button class="wo-btn amber hoverTip" id="vehicleSpecialBtn" style="padding:6px 3px;font-size:10px;flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" data-title="${sp.desc}" ${RUN.energy < minNeed ? 'disabled' : ''}>${sp.name} = ${minNeed} ${ICON.energy}</button>`; })()}
-          <button class="wo-btn purple" id="gemDrawBtn" style="padding:6px 3px;font-size:10px;flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" ${RUN.gems < 1 ? 'disabled' : ''}>Draw = ${GEM_DRAW_COST} ${ICON.gem}</button>
+          <button class="wo-btn purple" id="gemDrawBtn" style="padding:6px 3px;font-size:10px;flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" ${(RUN.gems < 1 || BATTLE.hand.length >= RUN.handSize) ? 'disabled' : ''}>Draw = ${GEM_DRAW_COST} ${ICON.gem}</button>
           <button class="wo-btn gray" id="discardSelectedBtn" style="padding:6px 3px;font-size:10px;flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" data-title="Fold selected cards face-down instead of playing them." ${!selectedIdx.length ? 'disabled' : ''}>Discard</button>
     </div>
-
+        
       </div>
       <div class="deckStack" style="flex-direction:column;align-items:center;gap:10px">
         <div style="display:flex;align-items:center;gap:4px;justify-content:center;flex-wrap:wrap">
@@ -6093,7 +6340,7 @@ function dealerItemCardHTML(item, opts) {
   const footer = opts.mode === 'buy'
     ? `<button class="wo-btn amber" data-buy="${item.id}" data-cost="${item.cost}" ${opts.disabled ? 'disabled' : ''} style="padding:5px 8px;font-size:11px;white-space:nowrap;width:100%">${opts.disabledLabel || 'Purchase'}</button>`
     : `<button class="wo-btn gray" data-sell="${opts.index}" style="padding:5px 8px;font-size:11px;white-space:nowrap;width:100%">Sell</button>`;
-
+  
   return `<div class="dealerCardPanel panel">
     ${renderStandardItemCard(item, {})}
     <div class="dealerMetaDivider"></div>
@@ -6359,7 +6606,11 @@ function runEndScreen(won, bonus, bonusWorld, cleared) {
   const itemListHTML = items.length
     ? `<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:8px">${items.map(it => renderStandardItemCard(it, {})).join('')}</div>`
     : `<div class="note" style="text-align:center">No Items equipped.</div>`;
-  const statRow = (label, value) => `<div class="hdr" style="margin:0 0 6px"><span>${label}</span><span><b>${value}</b></span></div>`;
+  const statRow = (label, value) => `<div class="runStatRow"><span class="runStatLabel">${label}:</span> <b>${value}</b></div>`;
+  const perfectCP = RUN.careerPointsFromPerfectKills || 0;
+  const eliteCP = RUN.careerPointsFromElites || 0;
+  const treasureCP = RUN.careerPointsFromTreasure || 0;
+  const matchCP = RUN.careerPointsFromMatchGame || 0;
   return `
     <div class="wo">
       <div class="wo-stripe"></div>
@@ -6368,13 +6619,19 @@ function runEndScreen(won, bonus, bonusWorld, cleared) {
         <div class="wo-sub">This run's score: ${RUN.scoreThisRun} &middot; High score: ${META.highScore}</div>
         <div class="panel" style="text-align:left">
           ${statRow('World Reached', worldName)}
-          ${statRow('Career Points Earned This World', `+${bonus}`)}
           ${statRow('Best World Reached (all-time)', bestWorldName)}
           ${statRow('Nodes Cleared', RUN.path.length)}
           ${statRow('Opponents Beaten (this run / lifetime)', `${RUN.opponentsBeatenThisRun || 0} / ${META.enemiesBeaten || 0}`)}
           ${statRow('Elites Beaten (this run / lifetime)', `${RUN.elitesBeatenThisRun || 0} / ${META.elitesBeaten || 0}`)}
-          ${statRow('Career Points From Elites', `+${RUN.careerPointsFromElites || 0}`)}
-          <div class="hdr" style="margin:0"><span>Upgrades Obtained</span><span><b>${runUpgradeCount()}</b></span></div>
+          ${statRow('Upgrades Obtained', runUpgradeCount())}
+        </div>
+        <div class="hdr" style="margin:0 0 6px"><span>Career Points Breakdown</span><span><b>${RUN.scoreThisRun}</b></span></div>
+        <div class="panel" style="text-align:left">
+          ${statRow(cleared ? `Reaching &amp; Clearing ${worldName}` : `Reaching ${worldName}`, `+${bonus}`)}
+          ${statRow(`Perfect Kills (${RUN.perfectKillsThisRun || 0})`, `+${perfectCP}`)}
+          ${statRow(`Elite Kills (${RUN.elitesBeatenThisRun || 0})`, `+${eliteCP}`)}
+          ${statRow('Treasure &amp; Chests', `+${treasureCP}`)}
+          ${statRow('Carnival Matching Game', `+${matchCP}`)}
         </div>
         <div style="font-weight:800;font-size:15px;margin:16px 0 4px;text-align:center">Items Used This Run</div>
         ${itemListHTML}
@@ -6716,7 +6973,7 @@ function render(html) {
   app.innerHTML = `<div class="game-stage">${html}</div>`;
   if (IN_BATTLE) saveBattleState();
   const mw = app.querySelector('.mapwrap');
-
+  
   if (mw && !GARAGE_POPUP && !TREASURE_POPUP) { mw.scrollLeft = MAP_SCROLL_X; mw.onscroll = () => { MAP_SCROLL_X = mw.scrollLeft; }; if (RUN && mw.querySelector('.mapnode-wrap')) { requestAnimationFrame(()=>{ const row = Math.max(0,RUN.currentRow); const colW = 118; const target = Math.max(0, row*colW - mw.clientWidth*0.15); mw.scrollLeft = target; MAP_SCROLL_X = target; }); } }
 
   app.querySelectorAll('[data-card]').forEach(el => { let ph = false; el.onclick = () => { if (ph) { ph = false; return; } toggleCardSelect(+el.dataset.card); }; el.onpointerdown = e => { if (e.pointerType !== 'mouse' || e.button === 0) { e.preventDefault(); ph = true; toggleCardSelect(+el.dataset.card); } }; });
@@ -6804,15 +7061,13 @@ function render(html) {
   if (advanceWorldBtn) advanceWorldBtn.onclick = () => {
     RUN.world = RUN.pendingNextWorld || 2;
     RUN.worldCleared = false;
-    RUN.worldMultiplier = RUN.world === 3 ? 1.50 : RUN.world === 4 ? 1.75 : RUN.world === 5 ? 2.00 : RUN.world === 6 ? 2.25 : 1.25;
+    RUN.worldMultiplier = worldDifficultyMultiplier(RUN.world);
     RUN.map = generateMap();
     RUN.bossRow = RUN.map.nodes.length - 1;
     RUN.currentRow = -1;
     RUN.currentCol = null;
     RUN.path = [];
     RUN.pendingNextWorld = null;
-    resetCarnivalMatchState();
-    resetMapMatchState();
     resetDungeonState();
     resetPlinkoState();
     resetBlackjackState();
@@ -6835,7 +7090,7 @@ function render(html) {
   const viewUpgradesBtn = document.getElementById('viewUpgradesBtn'); if (viewUpgradesBtn) viewUpgradesBtn.onclick = () => render(upgradeScreen());
   const leaveChopShopBtn = document.getElementById('leaveChopShopBtn'); if (leaveChopShopBtn) leaveChopShopBtn.onclick = () => render(RETURN_TO_CASTLE_MENU ? castleMenuScreen() : mapScreen());
   const leaveOverdriveBtn = document.getElementById('leaveOverdriveBtn'); if (leaveOverdriveBtn) leaveOverdriveBtn.onclick = () => render(RETURN_TO_CASTLE_MENU ? castleMenuScreen() : mapScreen());
-
+    
   const stationFuelBtn = document.getElementById('stationFuelBtn');
   if (stationFuelBtn) {
     stationFuelBtn.onclick = () => {
@@ -6849,15 +7104,15 @@ function render(html) {
     };
   }
 
-  const restBtn = document.getElementById('restBtn');
+  const restBtn = document.getElementById('restBtn'); 
   if (restBtn) {
-    restBtn.onclick = () => {
-      RUN.health = Math.min(RUN.maxHealth, RUN.health + 30);
+    restBtn.onclick = () => { 
+      RUN.health = Math.min(RUN.maxHealth, RUN.health + 30); 
       RUN.restStopUsed = { row: RUN.currentRow, col: RUN.currentCol };
       playSfx('heal');
-      saveRun();
+      saveRun(); 
       GARAGE_MESSAGE = 'Rested up: +30 Health.';
-      render(mapScreen());
+      render(mapScreen()); 
     };
   }
 
@@ -6882,16 +7137,16 @@ function render(html) {
     };
   }
 
-  const castleRestBtn = document.getElementById('castleRestBtn');
+  const castleRestBtn = document.getElementById('castleRestBtn'); 
   if (castleRestBtn) {
-    castleRestBtn.onclick = () => {
-      const cost = RUN.innSleeps === 0 ? 0 : 20 * RUN.innSleeps;
-      if (RUN.chips < cost || RUN.health >= RUN.maxHealth) return;
-      RUN.chips -= cost;
-      RUN.innSleeps = (RUN.innSleeps || 0) + 1;
-      RUN.health = Math.min(RUN.maxHealth, RUN.health + 30);
-      saveRun();
-      render(castleInnScreen(`You slept and recovered 30 health${cost ? ` for ${cost} coins` : ''}.`));
+    castleRestBtn.onclick = () => { 
+      const cost = RUN.innSleeps === 0 ? 0 : 20 * RUN.innSleeps; 
+      if (RUN.chips < cost || RUN.health >= RUN.maxHealth) return; 
+      RUN.chips -= cost; 
+      RUN.innSleeps = (RUN.innSleeps || 0) + 1; 
+      RUN.health = Math.min(RUN.maxHealth, RUN.health + 30); 
+      saveRun(); 
+      render(castleInnScreen(`You slept and recovered 30 health${cost ? ` for ${cost} coins` : ''}.`)); 
     };
   }
 
@@ -7045,11 +7300,11 @@ function render(html) {
   });
 
   const castleDungeonNavBtn = document.getElementById('castleDungeonNavBtn'); if (castleDungeonNavBtn) castleDungeonNavBtn.onclick = () => render(castleDungeonScreen());
-  const castleWizardNavBtn = document.getElementById('castleWizardNavBtn'); if (castleWizardNavBtn) castleWizardNavBtn.onclick = () => { if (!RUN.castleState) RUN.castleState = {}; if (RUN.castleState.matchPlayed) return; MATCH_RETURN_TO_MAP = false; MATCH_OVERLAY_ACTIVE = true; renderMatchOverlay(); };
-  const castlePlinkoNavBtn = document.getElementById('castlePlinkoNavBtn'); if (castlePlinkoNavBtn) castlePlinkoNavBtn.onclick = () => { if (!RUN.castleState) RUN.castleState = {}; if (RUN.castleState.plinkoPlayed) return; openFleetPlinko({ onComplete: applyPlinkoHaul }); };
-  const castleBlackjackNavBtn = document.getElementById('castleBlackjackNavBtn'); if (castleBlackjackNavBtn) castleBlackjackNavBtn.onclick = () => { if (!RUN.castleState) RUN.castleState = {}; if (RUN.castleState.blackjackPlayed) return; openFleetBlackjack({ onComplete: applyBlackjackHaul }); };
-  const castlePokerNavBtn = document.getElementById('castlePokerNavBtn'); if (castlePokerNavBtn) castlePokerNavBtn.onclick = () => { if (!RUN.castleState) RUN.castleState = {}; if (RUN.castleState.pokerPlayed) return; openFleetPoker({ onComplete: applyPokerHaul }); };
-  const castleAuctionNavBtn = document.getElementById('castleAuctionNavBtn'); if (castleAuctionNavBtn) castleAuctionNavBtn.onclick = () => { if (!RUN.castleState) RUN.castleState = {}; if (RUN.castleState.auctionPlayed) return; openFleetAuction({ onComplete: applyAuctionHaul }); };
+  const castleWizardNavBtn = document.getElementById('castleWizardNavBtn'); if (castleWizardNavBtn) castleWizardNavBtn.onclick = () => { openMatchGame(); MATCH_RETURN_TO_MAP = false; MATCH_OVERLAY_ACTIVE = true; renderMatchOverlay(); };
+  const castlePlinkoNavBtn = document.getElementById('castlePlinkoNavBtn'); if (castlePlinkoNavBtn) castlePlinkoNavBtn.onclick = () => { if (!RUN.castleState) RUN.castleState = {}; if (RUN.castleState.plinkoPlayed) return; RETURN_TO_CASTLE_MENU = true; openFleetPlinko({ onComplete: applyPlinkoHaul }); };
+  const castleBlackjackNavBtn = document.getElementById('castleBlackjackNavBtn'); if (castleBlackjackNavBtn) castleBlackjackNavBtn.onclick = () => { if (!RUN.castleState) RUN.castleState = {}; if (RUN.castleState.blackjackPlayed) return; RETURN_TO_CASTLE_MENU = true; openFleetBlackjack({ onComplete: applyBlackjackHaul }); };
+  const castlePokerNavBtn = document.getElementById('castlePokerNavBtn'); if (castlePokerNavBtn) castlePokerNavBtn.onclick = () => { if (!RUN.castleState) RUN.castleState = {}; if (RUN.castleState.pokerPlayed) return; RETURN_TO_CASTLE_MENU = true; openFleetPoker({ onComplete: applyPokerHaul }); };
+  const castleAuctionNavBtn = document.getElementById('castleAuctionNavBtn'); if (castleAuctionNavBtn) castleAuctionNavBtn.onclick = () => { if (!RUN.castleState) RUN.castleState = {}; if (RUN.castleState.auctionPlayed) return; RETURN_TO_CASTLE_MENU = true; openFleetAuction({ onComplete: applyAuctionHaul }); };
   const castleBlacksmithNavBtn = document.getElementById('castleBlacksmithNavBtn'); if (castleBlacksmithNavBtn) castleBlacksmithNavBtn.onclick = () => { RETURN_TO_CASTLE_MENU = true; BLACKSMITH_OPTIONS = pickBlacksmithOptions(); BLACKSMITH_VISIT = { primary: null, secondary: null }; render(blacksmithScreen()); };
   const castleChopShopNavBtn = document.getElementById('castleChopShopNavBtn'); if (castleChopShopNavBtn) castleChopShopNavBtn.onclick = () => { RETURN_TO_CASTLE_MENU = true; render(chopShopScreen()); };
   const castleOverdriveNavBtn = document.getElementById('castleOverdriveNavBtn'); if (castleOverdriveNavBtn) castleOverdriveNavBtn.onclick = () => { RETURN_TO_CASTLE_MENU = true; render(overdriveBayScreen()); };
@@ -7070,8 +7325,8 @@ function render(html) {
   const jokerGlitchReRouteBtn = document.getElementById('jokerGlitchReRouteBtn'); if (jokerGlitchReRouteBtn) jokerGlitchReRouteBtn.onclick = () => {
     const returnToMap = JOKER_GLITCH_POPUP?.returnToMap; JOKER_GLITCH_POPUP = null;
     MATCH_OVERLAY_ACTIVE = false;
-    if (returnToMap) { RUN.lastNotice = 'CRITICAL GLITCH! A Red Joker and a Black Joker were flipped together. Grid Anomaly Closed.'; render(mapScreen()); }
-    else render(castleMenuScreen('CRITICAL GLITCH! A Red Joker and a Black Joker were flipped together. Grid Anomaly Closed.'));
+    if (returnToMap) { RUN.lastNotice = 'CRITICAL GLITCH! A Red Joker and a Black Joker were flipped together. The board has reset.'; render(mapScreen()); }
+    else render(castleMenuScreen('CRITICAL GLITCH! A Red Joker and a Black Joker were flipped together. The board has reset.'));
   };
   const matchPopupContinueBtn = document.getElementById('matchPopupContinueBtn');
   if (matchPopupContinueBtn) matchPopupContinueBtn.onclick = () => {
@@ -7079,7 +7334,7 @@ function render(html) {
     MATCH_POPUP = null;
     const st = getMatchState();
     if (wasCleared) {
-
+      
       st.matchCards = null;
       st.matchGuesses = 4;
       st.matchPick = [];
@@ -7109,11 +7364,7 @@ function render(html) {
         const isJokerGlitch = (ga === 'RJ' && gb === 'BJ') || (ga === 'BJ' && gb === 'RJ');
 
         if (isJokerGlitch) {
-          st.matchCards = null;
-          st.matchPick = [];
-          st.matchLock = false;
-          st.matchPlayed = true;
-          st.matchLockReason = 'glitch';
+          resetMatchState();
           playSfx('hurt');
           JOKER_GLITCH_POPUP = { returnToMap: MATCH_RETURN_TO_MAP };
           renderMatchOverlay();
@@ -7121,7 +7372,7 @@ function render(html) {
         }
 
         if (ga === gb) {
-
+          
           st.matchCards[a].matched = true;
           st.matchCards[b].matched = true;
           st.matchPick = [];
@@ -7132,7 +7383,7 @@ function render(html) {
           RUN.fuel = Math.min(RUN.maxFuel, RUN.fuel + (reward.fuel || 0));
           RUN.health = Math.min(RUN.maxHealth, RUN.health + (reward.health || 0));
           RUN.energy = Math.min(RUN.maxEnergy, RUN.energy + (reward.energy || 0));
-          if (reward.points) earnPoints(reward.points);
+          if (reward.points) { earnPoints(reward.points); RUN.careerPointsFromMatchGame = (RUN.careerPointsFromMatchGame || 0) + reward.points; }
           saveRun();
 
           const boardCleared = st.matchCards.every(c => c.matched);
@@ -7150,7 +7401,7 @@ function render(html) {
           renderMatchOverlay();
 
         } else {
-
+          
           st.matchGuesses--;
           renderMatchOverlay();
 
@@ -7161,11 +7412,10 @@ function render(html) {
             st.matchLock = false;
 
             if (st.matchGuesses <= 0) {
-              st.matchCards = null;
-              st.matchPlayed = true;
-              st.matchLockReason = 'outofattempts';
-              if (MATCH_RETURN_TO_MAP) { RUN.lastNotice = 'Out of attempts! The matching session is over for this run.'; render(mapScreen()); }
-              else render(castleMenuScreen('Out of attempts! The matching session is over for this run.'));
+              // Out of attempts for THIS visit only - matchCards (and every pair already found) stays
+              // put, so coming back later picks up right where this session left off.
+              if (MATCH_RETURN_TO_MAP) { RUN.lastNotice = 'Out of attempts for this stop. Any pairs you found are saved - come back another time to keep going.'; render(mapScreen()); }
+              else render(castleMenuScreen('Out of attempts for this stop. Any pairs you found are saved - come back another time to keep going.'));
             } else {
               renderMatchOverlay();
             }
@@ -7256,23 +7506,23 @@ function render(html) {
 
   const backToMetaBtn = document.getElementById('backToMetaBtn'); if (backToMetaBtn) backToMetaBtn.onclick = () => render(metaScreen());
   const startRunBtn = document.getElementById('startRunBtn'); if (startRunBtn) startRunBtn.onclick = () => { clearRunSave(); render(starterSelectScreen()); };
-  const continueRunBtn = document.getElementById('continueRunBtn'); if (continueRunBtn) continueRunBtn.onclick = () => { RUN = loadRunSave();
-  RUN.maxGems=10+(META.levels.gemCap||0)*2;
-  RUN.maxFuel=20+(META.levels.fuelCap||0)*5; RUN.maxEnergy=20+(META.levels.energyCap||0)*5;
-  RUN.handSize=7+(META.levels.handCap||0)*2;
-  RUN.itemCap=Math.max(RUN.itemCap||0, Math.min(MAX_ITEM_CAP, 3+(META.levels.garage||0)));
-  RUN.runUpgrades=RUN.runUpgrades||{itemSlots:0,drawPerTurn:0,sightRange:0,gemDraw:0,health:0};
-  RUN.drawPerTurn=2+(META.levels.draw||0)+RUN.runUpgrades.drawPerTurn;
-  RUN.gems=Math.min(RUN.maxGems,RUN.gems||0);
-  RUN.fuel=Math.min(RUN.maxFuel,RUN.fuel||0);
-  RUN.energy=Math.min(RUN.maxEnergy,RUN.energy||0);
-  RUN.itemLevels=RUN.itemLevels||{};
-  RUN.itemUsesLevels=RUN.itemUsesLevels||{};
-  RUN.itemKindOverride=RUN.itemKindOverride||{};
-  Object.keys(RUN.itemKindOverride).filter(k=>!k.includes('_')).forEach(k=>{ if(RUN.hero?.items?.includes(k) && !RUN.itemKindOverride[`${k}_0`]) RUN.itemKindOverride[`${k}_0`]=RUN.itemKindOverride[k]; });
-  RUN.itemMaxCardsLevels=RUN.itemMaxCardsLevels||{};
-  RUN.itemUnlockProgress=RUN.itemUnlockProgress||{};
- RUN.itemUnlocked=RUN.itemUnlocked||{}; RUN.itemUnlockPending=RUN.itemUnlockPending||{};
+  const continueRunBtn = document.getElementById('continueRunBtn'); if (continueRunBtn) continueRunBtn.onclick = () => { RUN = loadRunSave(); 
+  RUN.maxGems=10+(META.levels.gemCap||0)*2; 
+  RUN.maxFuel=20+(META.levels.fuelCap||0)*5; RUN.maxEnergy=20+(META.levels.energyCap||0)*5; 
+  RUN.handSize=7+(META.levels.handCap||0)*2; 
+  RUN.itemCap=Math.max(RUN.itemCap||0, Math.min(MAX_ITEM_CAP, 3+(META.levels.garage||0))); 
+  RUN.runUpgrades=RUN.runUpgrades||{itemSlots:0,drawPerTurn:0,sightRange:0,gemDraw:0,health:0}; 
+  RUN.drawPerTurn=2+(META.levels.draw||0)+RUN.runUpgrades.drawPerTurn; 
+  RUN.gems=Math.min(RUN.maxGems,RUN.gems||0); 
+  RUN.fuel=Math.min(RUN.maxFuel,RUN.fuel||0); 
+  RUN.energy=Math.min(RUN.maxEnergy,RUN.energy||0); 
+  RUN.itemLevels=RUN.itemLevels||{}; 
+  RUN.itemUsesLevels=RUN.itemUsesLevels||{}; 
+  RUN.itemKindOverride=RUN.itemKindOverride||{}; 
+  Object.keys(RUN.itemKindOverride).filter(k=>!k.includes('_')).forEach(k=>{ if(RUN.hero?.items?.includes(k) && !RUN.itemKindOverride[`${k}_0`]) RUN.itemKindOverride[`${k}_0`]=RUN.itemKindOverride[k]; }); 
+  RUN.itemMaxCardsLevels=RUN.itemMaxCardsLevels||{}; 
+  RUN.itemUnlockProgress=RUN.itemUnlockProgress||{}; 
+ RUN.itemUnlocked=RUN.itemUnlocked||{}; RUN.itemUnlockPending=RUN.itemUnlockPending||{}; 
  RUN.castleState=RUN.castleState||{}; RUN.world=RUN.world||1; RUN.bossRow=(RUN.bossRow!=null)?RUN.bossRow:(RUN.map.nodes.length-1); saveRun(); const savedBattle = loadBattleSave(); if (savedBattle) { BATTLE = savedBattle; IN_BATTLE = true; render(battleScreen()); } else { render(mapScreen()); } };
   app.querySelectorAll('[data-pick]').forEach(el => el.onclick = () => initRunWithStarter(el.dataset.pick));
   document.body.classList.toggle('world-1', !!(RUN && RUN.world === 1)); document.body.classList.toggle('world-2', !!(RUN && RUN.world === 2)); document.body.classList.toggle('world-3', !!(RUN && RUN.world >= 3 && RUN.world <= 4)); document.body.classList.toggle('world-5', !!(RUN && RUN.world === 5)); document.body.classList.toggle('world-6', !!(RUN && RUN.world === 6));
@@ -7347,7 +7597,7 @@ document.addEventListener('mouseover', (e) => {
   if (!el) return;
   el.classList.remove('tipLeft', 'tipRight');
   const r = el.getBoundingClientRect();
-  const halfTip = 120;
+  const halfTip = 120; 
   if (r.left - halfTip < 8) el.classList.add('tipLeft');
   else if (r.right + halfTip > window.innerWidth - 8) el.classList.add('tipRight');
 });
@@ -7470,7 +7720,6 @@ window.finishCombatTraining = function() {
   }
   render(metaScreen());
 })();
-
 </script>
 </body>
 </html>

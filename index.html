@@ -262,6 +262,9 @@
   .ic{width:1em;height:1em;vertical-align:-0.15em;display:inline-block}
   .vart{display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;line-height:1;flex-shrink:0}
   .vart img{width:100%;height:100%;object-fit:contain;display:block}
+  .pickPortrait{width:110px;height:150px;flex:0 0 110px}
+  .pickPortrait .vart{width:100% !important;height:100% !important;font-size:44px !important}
+  .pickPortrait .vart span{font-size:44px !important}
   .fleetgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
   @media (max-width:700px){ .fleetgrid{grid-template-columns:1fr} }
   .vslot[draggable]{transition:box-shadow .12s,border-color .12s}
@@ -324,6 +327,9 @@
     .itemCard-cards-sec,.itemCard-cards-sec .itemBonusLine{font-size:8.5px}
     .currencies{gap:6px}
     .cur{font-size:11px}
+    .pickPortrait{width:76px;height:104px;flex:0 0 76px}
+    .pickPortrait .vart{font-size:30px !important}
+    .pickPortrait .vart span{font-size:30px !important}
   }
   @media (max-width:850px) and (orientation:portrait){
     .itemGrid .itemCard{flex:0 0 calc(50% - 6px)}
@@ -837,9 +843,13 @@ const ICON = {
 };
 function art(entity, px) {
   const fb = (entity && entity.icon) || ICON.truck;
+  const img = entity && entity.image;
+  if (img) {
+    return `<span class="vart" style="width:${px}px;height:${px}px;font-size:${px}px"><img src="${img}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex';"><span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;line-height:1;font-size:${px}px">${fb}</span></span>`;
+  }
   return `<span class="vart" style="width:${px}px;height:${px}px;font-size:${px}px">${fb}</span>`;
 }
-const PLAYER_ART = { name: 'Your Fleet', icon: '🚚', image: 'vehicles/work-truck.png' };
+const PLAYER_ART = { name: 'Your Fleet', icon: '🚚', image: 'Vehicles/work-truck.png' };
 function fleetLabel() { return META.playerName ? `${META.playerName}'s Fleet` : 'Your Fleet'; }
 function roadExitLabel() { return `Back to ${WORLD_NAMES[RUN && RUN.world] || WORLD_NAMES[1]}`; }
 function opponentAttackBoxHTML(opp, showStatus) {
@@ -2207,18 +2217,18 @@ const ITEMS = {
    emergency rigs - both the unlock difficulty AND the combined value of each vehicle's 2 starter
    items climb as you move down this list, so there's always a reason to unlock the next one) ========== */
 const HEROES = {
-  sidebyside:   { id: 'sidebyside',   name: 'Golf Cart',       icon: '🛺', image: 'vehicles/golf-cart.png', starterItems: ['fender_bender','guard_rail'] },
-  admin:        { id: 'admin',        name: 'Admin Vehicle',   icon: '🚗', image: 'vehicles/admin-vehicle.png', starterItems: ['fender_bender','escort_wall'] },
-  beachtractor: { id: 'beachtractor', name: 'Beach Tractor',   icon: '🚜', image: 'vehicles/beach-tractor.png', starterItems: ['taylor_sift','sand_trap'] },
-  interstate:   { id: 'interstate',   name: 'Pickup Truck',    icon: '🏁', image: 'vehicles/interstate-racer.png', starterItems: ['card_draw','diamond_run'] },
-  forklift:     { id: 'forklift',     name: 'Forklift',        icon: '🏗️', image: 'vehicles/forklift.png', starterItems: ['pallet_drop','overhead_lift'] },
-  convoy:       { id: 'convoy',       name: 'Large SUV',       icon: '🚛', image: 'vehicles/armored-convoy.png', starterItems: ['fender_bender','triple_threat'] },
-  towtruck:     { id: 'towtruck',     name: 'Tow Truck',       icon: '🚨', image: 'vehicles/tow-truck.png', starterItems: ['drawstone','escort_wall'] },
-  tanker:       { id: 'tanker',       name: 'Fuel Tanker',     icon: '⛽', image: 'vehicles/fuel-tanker.png', starterItems: ['fender_bender','toxic_flood'] },
-  crownvic:     { id: 'crownvic',     name: 'Crown Vic',       icon: '🚔', image: 'vehicles/crown-vic.png', starterItems: ['donut_toss','pair_draw'] },
-  firetruck:    { id: 'firetruck',    name: 'Fire Truck',      icon: '🚒', image: 'vehicles/fire-truck.png', starterItems: ['backdraft_blast','full_pressure_hose'] },
-  arff:         { id: 'arff',         name: 'ARFF',            icon: '🧯', image: 'vehicles/arff.png', starterItems: ['afff_foam_cannon','rapid_intervention'] },
-  bearcat:      { id: 'bearcat',      name: 'BearCat',         icon: '🛡️', image: 'vehicles/bearcat.png', starterItems: ['door_breach_ram','grappler_hook'] },
+  sidebyside:   { id: 'sidebyside',   name: 'Golf Cart',       icon: '🛺', image: 'Vehicles/golf-cart.png', starterItems: ['fender_bender','guard_rail'] },
+  admin:        { id: 'admin',        name: 'Admin Vehicle',   icon: '🚗', image: 'Vehicles/admin-vehicle.png', starterItems: ['fender_bender','escort_wall'] },
+  beachtractor: { id: 'beachtractor', name: 'Beach Tractor',   icon: '🚜', image: 'Vehicles/beach-tractor.png', starterItems: ['taylor_sift','sand_trap'] },
+  interstate:   { id: 'interstate',   name: 'Pickup Truck',    icon: '🏁', image: 'Vehicles/interstate-racer.png', starterItems: ['card_draw','diamond_run'] },
+  forklift:     { id: 'forklift',     name: 'Forklift',        icon: '🏗️', image: 'Vehicles/forklift.png', starterItems: ['pallet_drop','overhead_lift'] },
+  convoy:       { id: 'convoy',       name: 'Large SUV',       icon: '🚛', image: 'Vehicles/armored-convoy.png', starterItems: ['fender_bender','triple_threat'] },
+  towtruck:     { id: 'towtruck',     name: 'Tow Truck',       icon: '🚨', image: 'Vehicles/tow-truck.png', starterItems: ['drawstone','escort_wall'] },
+  tanker:       { id: 'tanker',       name: 'Fuel Tanker',     icon: '⛽', image: 'Vehicles/fuel-tanker.png', starterItems: ['fender_bender','toxic_flood'] },
+  crownvic:     { id: 'crownvic',     name: 'Crown Vic',       icon: '🚔', image: 'Vehicles/crown-vic.png', starterItems: ['donut_toss','pair_draw'] },
+  firetruck:    { id: 'firetruck',    name: 'Fire Truck',      icon: '🚒', image: 'Vehicles/fire-truck.png', starterItems: ['backdraft_blast','full_pressure_hose'] },
+  arff:         { id: 'arff',         name: 'ARFF',            icon: '🧯', image: 'Vehicles/arff.png', starterItems: ['afff_foam_cannon','rapid_intervention'] },
+  bearcat:      { id: 'bearcat',      name: 'BearCat',         icon: '🛡️', image: 'Vehicles/bearcat.png', starterItems: ['door_breach_ram','grappler_hook'] },
 };
 const VEHICLE_SPECIALS = {
   sidebyside:   { name: 'Quick Shield', type: 'shield', energyPerUnit: 4, amountPerUnit: 20, desc: 'Spend Energy for armor - every 4 Energy grants +20 armor. Spend as much as you have at once.' },
@@ -3112,9 +3122,9 @@ function reenterCurrentNode(row, col) {
   render(mapScreen());
 }
 let RETURN_TO_CASTLE_MENU = false;
-const CASTLE_FIRST = { id:'castleGuard', name:'Castle Guard', tier:2, icon:'🛡️', image: 'vehicles/castle-guard.png', hp:75, minTier:2, drawRate: 3, items: ['opp_castle_poke_t2'] };
-const CASTLE_SECOND = { id:'castleChampion', name:'Castle Champion', tier:3, icon:'🏰', image: 'vehicles/castle-champion.png', hp:105, minTier:3, drawRate: 4, items: ['opp_castle_poke_t3'] };
-const CASTLE_THIRD = { id:'castleOverlord', name:'Compound Overlord', tier:4, icon:'👑', image: 'vehicles/castle-overlord.png', hp:210, minTier:3, drawRate: 5, usesPerTurn:2, items: ['opp_castle_poke_t3', 'fender_bender'] };
+const CASTLE_FIRST = { id:'castleGuard', name:'Castle Guard', tier:2, icon:'🛡️', image: 'Vehicles/castle-guard.png', hp:75, minTier:2, drawRate: 3, items: ['opp_castle_poke_t2'] };
+const CASTLE_SECOND = { id:'castleChampion', name:'Castle Champion', tier:3, icon:'🏰', image: 'Vehicles/castle-champion.png', hp:105, minTier:3, drawRate: 4, items: ['opp_castle_poke_t3'] };
+const CASTLE_THIRD = { id:'castleOverlord', name:'Compound Overlord', tier:4, icon:'👑', image: 'Vehicles/castle-overlord.png', hp:210, minTier:3, drawRate: 5, usesPerTurn:2, items: ['opp_castle_poke_t3', 'fender_bender'] };
 let DUNGEON_WIN_POPUP = null; 
 function castleMenuScreen(message='') {
   return `${noticeHTML()}
@@ -6669,15 +6679,17 @@ function starterSelectScreen() {
     const abilityCard = heroAbilityCardHTML(id);
     return `<div class="pickrow" style="padding:10px;margin-bottom:8px">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-        <div style="width:30px;text-align:left;flex-shrink:0">${art(hero, 28)}</div>
         <div class="pname" style="flex:1">${hero.name}</div>
         <button class="wo-btn amber" data-pick="${hero.id}" style="padding:6px 14px;font-size:12px;white-space:nowrap">Choose</button>
       </div>
-      <div class="pickItemRow">${abilityCard}${itemCards}</div>
+      <div style="display:flex;gap:8px;align-items:stretch">
+        <div class="pickPortrait" style="border-radius:8px;overflow:hidden;background:rgba(10,14,26,0.9);border:1px solid rgba(31,182,166,0.2);display:flex;align-items:center;justify-content:center">${art(hero, 100)}</div>
+        <div class="pickItemRow" style="flex:1">${abilityCard}${itemCards}</div>
+      </div>
     </div>`;
   }).join('');
   return `
-    <div class="wo" style="max-width:600px;margin:0 auto">
+    <div class="wo" style="max-width:720px;margin:0 auto">
       <div class="wo-stripe"></div>
       <div class="wo-body">
         <h1>Pick Your <em>Vehicle</em></h1>

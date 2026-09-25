@@ -279,11 +279,14 @@
   .pickPortrait{width:150px;height:150px;flex:0 0 150px;display:flex;align-items:center;justify-content:center;margin-top:-4px}
   .pickPortrait .vart{width:100% !important;height:100% !important;font-size:60px !important}
   .pickPortrait .vart span{font-size:60px !important}
-  .stopArtRow{display:flex;gap:16px;align-items:center;flex-wrap:wrap;justify-content:center;margin:8px 0 10px}
-  .stopArtBig{width:300px;height:300px;flex:0 0 300px;display:flex;align-items:center;justify-content:center}
+  .stopTitleRow{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+  .stopRewardInline{margin:0}
+  /* --- Stop Details art block: adjust these to reposition/resize --- */
+  .stopArtRow{display:flex;gap:16px;align-items:center;flex-wrap:wrap;justify-content:center;margin:2px 0 4px} /* margin = vertical space above/below the picture row */
+  .stopArtBig{width:300px;height:300px;flex:0 0 300px;display:flex;align-items:center;justify-content:center} /* width/height = picture size itself, leave as-is */
   .stopArtBig .vart{width:100% !important;height:100% !important;font-size:120px !important}
   .stopArtBig .vart span{font-size:120px !important}
-  .stopArtStats{flex:1;min-width:170px;display:flex;flex-direction:column;gap:6px}
+  .stopArtStats{flex:0 1 150px;min-width:120px;display:flex;flex-direction:column;gap:6px} /* flex-basis/min-width = how much side space the stats column claims next to the picture */
   .stopStatLine{display:flex;justify-content:space-between;gap:10px;font-weight:700;font-size:13px;color:var(--ink);padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.08)}
   .stopStatLabel{color:var(--dim)}
   .fleetgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -5857,8 +5860,13 @@ function nodePopupContent(r, c) {
     const armorNote = o.startArmor ? `<div class="note" style="margin-top:4px">Starts with ${o.startArmor} armor${o.armorRegen ? `, regenerating ${o.armorRegen} more each turn` : ' that only comes back if it reinforces itself'}. Armor blocks your direct hits before HP, but poison/burn/curse skip it.</div>`
       : '';
     const diff = opponentDifficultyInfo(o);
+    const rewardsInline = `<div class="currencies stopRewardInline">
+      ${chipReward ? `<span class="cur chip" data-title="Coins earned for winning.">${ICON.coin} ${chipReward}</span>` : ''}
+      ${gemReward ? `<span class="cur gem" data-title="Gems earned for winning.">${ICON.gem} ${gemReward}</span>` : ''}
+      ${fuelReward ? `<span class="cur fuel" data-title="Fuel earned for winning.">${ICON.fuel} ${fuelReward}</span>` : ''}
+    </div>`;
     return {
-      title: o.name, art: art(o, 140), bigArt: true,
+      title: o.name, art: art(o, 140), bigArt: true, rewardsInline,
       rows: [
         ['HP', o.hp],
         ['Draws', `${o.drawRate}/turn`],
@@ -5891,13 +5899,7 @@ function nodePopupScreen(r, c) {
   const isCurrent = r === RUN.currentRow && c === RUN.currentCol && isReenterable;
   const info = nodePopupContent(r, c);
   const rewardsHTML = info.rewards ? `
-    <div class="hdr" style="margin-top:10px"><span>Rewards for winning</span><span></span></div>
-    <div class="currencies">
-      ${info.rewards.chipReward ? `<div class="cur chip">${ICON.coin} ${info.rewards.chipReward} coins</div>` : ''}
-      ${info.rewards.gemReward ? `<div class="cur gem">${ICON.gem} ${info.rewards.gemReward} gems</div>` : ''}
-      ${info.rewards.fuelReward ? `<div class="cur fuel">${ICON.fuel} ${info.rewards.fuelReward} fuel</div>` : ''}
-    </div>
-    <div class="hdr" style="margin-top:8px"><span class="hoverTip" data-title="Awarded when your final hit exactly matches their remaining HP.">Perfect Win Bonus:</span><span></span></div>
+    <div class="hdr" style="margin-top:10px"><span class="hoverTip" data-title="Awarded when your final hit exactly matches their remaining HP.">Perfect Win Bonus:</span><span></span></div>
     <div class="currencies">
       <div class="cur chip">${ICON.coin} +15 coins</div>
       <div class="cur gem">${ICON.gem} +1 gem</div>
@@ -5909,10 +5911,13 @@ function nodePopupScreen(r, c) {
       <div class="wo-body">
         ${info.bigArt ? `
         <div class="wo-eyebrow"${info.accent ? ` style="color:${info.accent}"` : ''}>${info.eyebrow || 'Stop Details'}</div>
-        <h1 style="margin:2px 0 0">${info.title}</h1>
+        <div class="stopTitleRow">
+          <h1 style="margin:2px 0 0">${info.title}</h1>
+          ${info.rewardsInline || ''}
+        </div>
         <div class="stopArtRow">
-          <div class="stopArtBig">${info.art}</div>
           <div class="stopArtStats">${info.rows.map(([k,v]) => `<div class="stopStatLine"><span class="stopStatLabel">${k}</span><span class="stopStatValue">${v}</span></div>`).join('')}</div>
+          <div class="stopArtBig">${info.art}</div>
         </div>` : `
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
           <div style="flex:1;min-width:0">

@@ -32,6 +32,16 @@
   .map-popup-overlay{position:fixed;inset:0;background:rgba(11,15,25,0.75);backdrop-filter:blur(4px);display:flex;align-items:flex-start;justify-content:center;z-index:10000;padding:14px;padding-top:90px;overflow-y:auto}
   .map-popup-overlay .wo{max-width:400px;width:100%;margin:0}
   .map-popup-overlay .wo.wide{max-width:640px}
+  .artZoomModal{cursor:zoom-out;z-index:20000}
+  .artZoomBox{position:relative;display:flex;flex-direction:column;align-items:center;gap:12px;cursor:default}
+  .artZoomImgWrap{width:min(70vw,420px);height:min(70vw,420px);display:flex;align-items:center;justify-content:center}
+  .artZoomImgWrap .vart{width:100% !important;height:100% !important;font-size:min(70vw,420px) !important}
+  .artZoomImgWrap .vart span{font-size:min(70vw,420px) !important}
+  .artZoomLabel{color:var(--ink);font-weight:800;font-size:18px;text-align:center}
+  .artZoomClose{position:absolute;top:-16px;right:-16px;width:34px;height:34px;border-radius:50%;border:2px solid var(--dim);background:#1a2038;color:var(--ink);font-size:18px;line-height:1;cursor:pointer}
+  .artZoomTrigger{position:relative;cursor:zoom-in;display:inline-flex}
+  .artZoomTrigger::after{content:'🔍';position:absolute;bottom:-2px;right:-2px;font-size:10px;background:rgba(11,15,25,0.8);border-radius:50%;width:16px;height:16px;display:flex;align-items:center;justify-content:center;opacity:0.85;pointer-events:none}
+  .artZoomTrigger:hover::after{opacity:1}
   .match-modal{position:fixed !important;inset:0 !important;background:rgba(11,15,25,0.82) !important;backdrop-filter:blur(4px);display:flex !important;align-items:center !important;justify-content:center !important;z-index:3000000 !important;padding:20px;pointer-events:auto !important}
   .match-modal .wo{max-width:360px;width:100%;margin:0;pointer-events:auto}
   .treasure-prize{font-size:28px;font-weight:800;color:var(--blue);text-align:center;margin:16px 0}
@@ -143,7 +153,7 @@
   .vslot .vreq{font-family:var(--mono);font-size:10.5px;color:var(--dim);margin:3px 0}
   .vslot .vcards{display:flex;gap:3px;flex-wrap:wrap;min-height:30px;margin-top:6px}
   #battle-viewport .itemGrid{display:flex;flex-wrap:wrap;justify-content:flex-start;width:100%;gap:10px;} #battle-viewport .itemGrid .itemCard{flex:0 0 calc(25% - 7.5px);box-sizing:border-box;margin:0;}
-  .popupItemRow{display:grid;grid-template-columns:repeat(auto-fill,125px);justify-content:center;gap:8px}
+  .popupItemRow{display:grid;grid-template-columns:repeat(auto-fill,125px);justify-content:start;gap:8px}
   .pickItemRow{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-start;margin-left:178px}
   .pickItemRow .itemCard{flex:0 0 125px;width:125px}
   #dealer-viewport .dealerRow{
@@ -269,6 +279,13 @@
   .pickPortrait{width:150px;height:150px;flex:0 0 150px;display:flex;align-items:center;justify-content:center;margin-top:-4px}
   .pickPortrait .vart{width:100% !important;height:100% !important;font-size:60px !important}
   .pickPortrait .vart span{font-size:60px !important}
+  .stopArtRow{display:flex;gap:16px;align-items:center;flex-wrap:wrap;justify-content:center;margin:8px 0 10px}
+  .stopArtBig{width:300px;height:300px;flex:0 0 300px;display:flex;align-items:center;justify-content:center}
+  .stopArtBig .vart{width:100% !important;height:100% !important;font-size:120px !important}
+  .stopArtBig .vart span{font-size:120px !important}
+  .stopArtStats{flex:1;min-width:170px;display:flex;flex-direction:column;gap:6px}
+  .stopStatLine{display:flex;justify-content:space-between;gap:10px;font-weight:700;font-size:13px;color:var(--ink);padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.08)}
+  .stopStatLabel{color:var(--dim)}
   .fleetgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
   @media (max-width:700px){ .fleetgrid{grid-template-columns:1fr} }
   .vslot[draggable]{transition:box-shadow .12s,border-color .12s}
@@ -342,6 +359,9 @@
     .pickPortrait .vart span{font-size:44px !important}
     .pickLeftCol{width:110px}
     .pickItemRow{margin-left:118px}
+    .stopArtBig{width:220px;height:220px;flex:0 0 220px}
+    .stopArtBig .vart{font-size:90px !important}
+    .stopArtBig .vart span{font-size:90px !important}
   }
   @media (max-width:850px) and (orientation:portrait){
     .itemGrid .itemCard{flex:0 0 calc(50% - 6px)}
@@ -5775,10 +5795,20 @@ function currencyBar(extraHTML = '') {
   </div>`;
 }
 
-let MAP_POPUP = null; 
-let TREASURE_POPUP = null; 
-let GARAGE_POPUP = false; 
-let GARAGE_MESSAGE = ''; 
+let MAP_POPUP = null;
+let TREASURE_POPUP = null;
+let GARAGE_POPUP = false;
+let GARAGE_MESSAGE = '';
+let ART_ZOOM = null;
+function artZoomModalHTML() {
+  return `<div class="treasure-modal artZoomModal" id="artZoomOverlay">
+    <div class="artZoomBox">
+      <button class="artZoomClose" id="artZoomCloseBtn" aria-label="Close">&times;</button>
+      <div class="artZoomImgWrap">${art(ART_ZOOM, 140)}</div>
+      <div class="artZoomLabel">${ART_ZOOM.name || ''}</div>
+    </div>
+  </div>`;
+}
 function tierNeedText(minTier) { return minTier > 0 ? `At least a ${TIERS[minTier]}` : 'Any card'; }
 
 function tierNeedTextForOpponent(o) {
@@ -5828,7 +5858,7 @@ function nodePopupContent(r, c) {
       : '';
     const diff = opponentDifficultyInfo(o);
     return {
-      title: o.name, art: art(o, 64),
+      title: o.name, art: art(o, 140), bigArt: true,
       rows: [
         ['HP', o.hp],
         ['Draws', `${o.drawRate}/turn`],
@@ -5874,9 +5904,16 @@ function nodePopupScreen(r, c) {
       <div class="cur pts">${ICON.star} +${PERFECT_KILL_CP} Career Points</div>
     </div>` : '';
   return `<div class="map-popup-overlay">
-    <div class="wo" style="width:100%${info.accent ? `;border-color:${info.accent}` : ''}">
+    <div class="wo${info.bigArt ? ' wide' : ''}" style="width:100%${info.accent ? `;border-color:${info.accent}` : ''}">
       <div class="wo-stripe" ${info.accent ? `style="background:${info.accent}"` : ''}></div>
       <div class="wo-body">
+        ${info.bigArt ? `
+        <div class="wo-eyebrow"${info.accent ? ` style="color:${info.accent}"` : ''}>${info.eyebrow || 'Stop Details'}</div>
+        <h1 style="margin:2px 0 0">${info.title}</h1>
+        <div class="stopArtRow">
+          <div class="stopArtBig">${info.art}</div>
+          <div class="stopArtStats">${info.rows.map(([k,v]) => `<div class="stopStatLine"><span class="stopStatLabel">${k}</span><span class="stopStatValue">${v}</span></div>`).join('')}</div>
+        </div>` : `
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
           <div style="flex:1;min-width:0">
             <div class="wo-eyebrow"${info.accent ? ` style="color:${info.accent}"` : ''}>${info.eyebrow || 'Stop Details'}</div>
@@ -5884,7 +5921,7 @@ function nodePopupScreen(r, c) {
           </div>
           <div style="flex-shrink:0">${info.art}</div>
         </div>
-        ${info.rows.length ? `<div class="note" style="margin:8px 0;font-weight:700;color:var(--ink);font-size:13px">${info.rows.map(([k,v])=>`${k}: ${v}`).join(' &nbsp;&middot;&nbsp; ')}</div>` : ''}
+        ${info.rows.length ? `<div class="note" style="margin:8px 0;font-weight:700;color:var(--ink);font-size:13px">${info.rows.map(([k,v])=>`${k}: ${v}`).join(' &nbsp;&middot;&nbsp; ')}</div>` : ''}`}
         ${info.extra || ''}
         ${rewardsHTML}
         <div style="display:flex;gap:8px;margin-top:14px">
@@ -6169,7 +6206,7 @@ function battleScreen() {
         <button class="wo-btn gray" id="forfeitRunBtn" style="padding:4px 9px;font-size:11px;white-space:nowrap;border-width:1px;box-shadow:none">Forfeit Run</button>
       </div>`)}</div>
     <div class="panel duelHead">
-      <div class="duelSide you">${art(HEROES[RUN.hero?.heroId] || PLAYER_ART, 72)}
+      <div class="duelSide you"><div class="artZoomTrigger" data-artzoom="you">${art(HEROES[RUN.hero?.heroId] || PLAYER_ART, 72)}</div>
         <div class="sideInfo">
           <h3 style="justify-content:flex-end"><span style="color:var(--blue)">${fleetLabel()}</span></h3>
           <div class="bar-wrap"><div class="bar-fill bar-health" style="width:${healthPct}%"></div><div class="bar-text">${RUN.health} / ${RUN.maxHealth}</div></div>
@@ -6185,7 +6222,7 @@ function battleScreen() {
         </div>
       </div>
       <div class="vsMark">VS</div>
-      <div class="duelSide opp">${art(opp, 72)}
+      <div class="duelSide opp"><div class="artZoomTrigger" data-artzoom="opp">${art(opp, 72)}</div>
         <div class="sideInfo">
           <h3 style="justify-content:space-between;gap:6px;flex-wrap:nowrap"><span style="color:var(--red)">${opp.name}</span>${opp.boss ? ` <span class="hoverTip" style="color:var(--red);font-size:13px" data-title="This is a boss fight - taking too long on a turn costs extra health, so don't sit on it.">&#9201;</span>` : ''}
             <span class="rewardRow">
@@ -6325,6 +6362,7 @@ function battleScreen() {
         </div>
       </div>
     </div>` : ''}
+    ${ART_ZOOM ? artZoomModalHTML() : ''}
   </div>`;
 }
 function handleCardDrop(e, slotKey, maxSlot) {
@@ -7129,6 +7167,14 @@ function render(html) {
     saveMeta();
     performFuelHeal();
   };
+  app.querySelectorAll('[data-artzoom]').forEach(el => el.onclick = () => {
+    const side = el.dataset.artzoom;
+    const entity = side === 'you' ? (HEROES[RUN.hero?.heroId] || PLAYER_ART) : BATTLE.opponent;
+    ART_ZOOM = { image: entity.image, icon: entity.icon, name: entity.name || fleetLabel() };
+    render(battleScreen());
+  });
+  const artZoomCloseBtn = document.getElementById('artZoomCloseBtn'); if (artZoomCloseBtn) artZoomCloseBtn.onclick = () => { ART_ZOOM = null; render(battleScreen()); };
+  const artZoomOverlay = document.getElementById('artZoomOverlay'); if (artZoomOverlay) artZoomOverlay.onclick = (e) => { if (e.target === artZoomOverlay) { ART_ZOOM = null; render(battleScreen()); } };
   const discardSelectedBtn = document.getElementById('discardSelectedBtn'); if (discardSelectedBtn) discardSelectedBtn.onclick = markSelectedForDiscard;
   app.querySelectorAll('[data-unstage]').forEach(el => el.onclick = (e) => { e.stopPropagation(); unmarkDiscard(+el.dataset.unstage); });
 

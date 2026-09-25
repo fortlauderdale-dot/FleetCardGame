@@ -1,5 +1,0 @@
-Asset: Work Truck
-Style: Clean 2D illustrated cartoonish fleet-game style
-Angle: 3/4 front angle
-Background: Transparent
-Details: A heavy-duty municipal utility truck with tool racks and a bright orange paint job.

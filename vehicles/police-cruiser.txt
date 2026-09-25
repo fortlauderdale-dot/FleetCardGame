@@ -1,5 +1,0 @@
-Asset: Police Cruiser
-Style: Clean 2D illustrated cartoonish fleet-game style
-Angle: 3/4 front angle
-Background: Transparent
-Details: A traditional black-and-white police sedan with a sleek aerodynamic emergency light bar.

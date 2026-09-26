@@ -107,12 +107,9 @@
   .vsMark{align-self:center}
   .duelSide{display:flex;align-items:center;gap:8px}
   .duelSide .sideInfo{flex:1;min-width:0}
-  .duelSide h3{margin:0 0 4px;font-size:18px;color:var(--blue);height:22px;display:flex;align-items:center;overflow:visible;position:relative}
-  .duelSide .rewardRow{position:absolute;right:0;top:0;transform:translateY(-1px)}
+  .duelSide h3{margin:0 0 6px;font-size:18px;color:var(--blue);min-height:22px;line-height:1.25;display:flex;align-items:flex-start;overflow:visible}
   .duelSide.opp{flex-direction:row-reverse;text-align:right}
   .duelSide .bar-wrap{height:18px}
-  .rewardRow{display:inline-flex;gap:4px;flex-wrap:wrap;vertical-align:middle}
-  .rewardRow .cur{font-size:9px;padding:2px 5px;white-space:nowrap}
   .vsMark{font-family:var(--mono);font-weight:800;color:var(--dim);font-size:13px}
   .bigicon{font-size:30px;line-height:1}
   .duelBoard{display:grid;grid-template-columns:1fr 90px 1fr;gap:8px;align-items:start}
@@ -430,7 +427,7 @@
     .duelBoard{grid-template-columns:1fr}
     .deckStack{order:2;padding-top:6px}
   }
-   #app h1:has(+ .currencyHeader){text-align:center !important;width:100% !important;margin-bottom:4px !important;} #leaveShopBtn{background:linear-gradient(180deg,#ffc44d 0%,#e09f1a 100%) !important;color:#0b0f19 !important;border:3px solid #1a2038 !important;border-radius:8px !important;font-weight:800 !important;letter-spacing:0.03em !important;box-shadow:3px 3px 0 #0b0f19,0 0 10px rgba(255,196,77,0.4) !important;text-transform:none !important;font-size:13px !important;transition:transform 0.1s ease,box-shadow 0.1s ease !important;} #leaveShopBtn:active{transform:translate(2px,2px) !important;box-shadow:1px 1px 0 #0b0f19 !important;} .combat-training-box{position:fixed !important;z-index:2000000 !important;width:280px !important;background:#12163a !important;border:2px dashed var(--amber) !important;box-shadow:0 0 20px rgba(31,182,166,0.45),4px 4px 0 #0b0f19 !important;padding:16px !important;border-radius:10px !important;text-align:left !important;white-space:normal !important;font-family:var(--disp) !important;}.combat-training-box .wo-eyebrow{color:var(--energy) !important;font-size:10px !important;font-weight:600;letter-spacing:0.05em !important;margin-bottom:4px !important;}.combat-training-box h3{font-size:16px !important;margin:0 0 6px 0 !important;color:#ffffff !important;}.combat-training-box p{font-size:12.5px !important;line-height:1.45 !important;color:var(--dim) !important;margin:0 0 12px 0 !important;}.combat-spotlight-focus{outline:9999px solid rgba(11,15,25,0.65) !important;z-index:1999999 !important;position:relative !important;box-shadow:0 0 15px 5px var(--energy) !important;pointer-events:auto !important;}
+   #app h1:has(+ .currencyHeader){text-align:center !important;width:100% !important;margin-bottom:4px !important;} .combat-training-box{position:fixed !important;z-index:2000000 !important;width:280px !important;background:#12163a !important;border:2px dashed var(--amber) !important;box-shadow:0 0 20px rgba(31,182,166,0.45),4px 4px 0 #0b0f19 !important;padding:16px !important;border-radius:10px !important;text-align:left !important;white-space:normal !important;font-family:var(--disp) !important;}.combat-training-box .wo-eyebrow{color:var(--energy) !important;font-size:10px !important;font-weight:600;letter-spacing:0.05em !important;margin-bottom:4px !important;}.combat-training-box h3{font-size:16px !important;margin:0 0 6px 0 !important;color:#ffffff !important;}.combat-training-box p{font-size:12.5px !important;line-height:1.45 !important;color:var(--dim) !important;margin:0 0 12px 0 !important;}.combat-spotlight-focus{outline:9999px solid rgba(11,15,25,0.65) !important;z-index:1999999 !important;position:relative !important;box-shadow:0 0 15px 5px var(--energy) !important;pointer-events:auto !important;}
   /* ===== Fleet Plinko (Fleet Compound minigame) ===== */
   #fleetPlinkoStats{display:flex;justify-content:center;gap:22px;padding:10px 0;margin-top:8px;border-top:1px solid rgba(255,255,255,0.1);border-bottom:1px solid rgba(255,255,255,0.1);flex-wrap:wrap}
   .fleet-plinko-stat{text-align:center;min-width:86px}
@@ -800,12 +797,21 @@ function conditionProbabilityFactor(cond) {
   }
 }
 function itemPowerScore(item) {
-  if (item.kind === 'defense' || item.kind === 'storage' || item.kind === 'poison' || item.kind === 'burn') return 0;
+  // Defense and poison items are scored the same way damage items are - they use the exact same
+  // amount formula (computeItemAmountBase doesn't branch on kind at all), so a shield that fills
+  // easily (an 'any' condition, up to 3 cards) legitimately scores higher than one that needs a
+  // rarer hand, same as it would for damage. Only storage (holds cards, deals nothing itself) and
+  // burn (its output ramps over several turns rather than landing at once, so a single-hit power
+  // number would be misleading) stay excluded.
+  if (item.kind === 'storage' || item.kind === 'burn') return 0;
   const maxCards = item.maxCards || 1;
   const usesPerTurn = item.usesPerTurn || 1;
   const bonusMult = 1 + (item.bonus ? (item.bonus.base || 0) : 0);
   const lightningDiscount = item.kind === 'lightning' ? LIGHTNING_AVG_MULT : 1;
   const oddsFactor = conditionProbabilityFactor(item.condition);
+  if (item.flatAmount != null) {
+    return Math.round((item.flatAmount + (item.flatAmountPerLevel || 0) * 0) * usesPerTurn * oddsFactor);
+  }
   return Math.round(usesPerTurn * maxCards * AVG_CARD_VALUE * (item.baseMult ?? 1) * bonusMult * lightningDiscount * oddsFactor);
 }
 function opponentTraitTags(opp) {
@@ -1231,7 +1237,7 @@ function itemUsesCap(item, usesLevel) { return item.usesPerTurn + (item.usesPerT
 /* ========== ITEM CATALOG ========== */
 function equippedItemCount(hero) { return (hero.items || []).filter(id => !ITEMS[id]?.weightless).length; }
 const ITEMS = {
-  card_draw: { id: 'card_draw', name: 'Fast Pit Stop', cost: 0, maxCards: 2, usesPerTurn: 1, condition: { type: 'pokerTier', tier: 1 }, baseMult: 1, drawAmount: 2, drawPerLevel: 1, levelCap: 3, note: `Needs a Pair. Attack for ${SIGMA_TIP} of cards played, then draw 2 additional cards.` },
+  card_draw: { id: 'card_draw', name: 'Fast Pit Stop', cost: 45, maxCards: 2, usesPerTurn: 1, condition: { type: 'pokerTier', tier: 1 }, baseMult: 1, drawAmount: 2, drawPerLevel: 1, levelCap: 3, note: `Needs a Pair. Attack for ${SIGMA_TIP} of cards played, then draw 2 additional cards.` },
  pair_draw: { id: 'pair_draw', name: 'Hit & Run', cost: 45, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'pokerTier', tier: 1 }, baseMult: 1,
     drawAmount: 2, drawPerLevel: 0,
@@ -1291,7 +1297,7 @@ const ITEMS = {
   impound_release: { id: 'impound_release', name: 'Impound Release', cost: 155, maxCards: 5, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'any' }, baseMult: 0, kind: 'unlock', unlockThreshold: 45,
     note: `Deals no damage. Playing cards through it counts down from 45 to 0 (based on the cards' value). Once fully charged, playing cards through it instead draws you 4 fresh cards, once per turn, for the rest of this battle - it never re-locks. Charge resets at the start of your next battle.` },
-  fender_bender: { id: 'fender_bender', name: 'Fender Bender', cost: 0, sellValue: 25, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+  fender_bender: { id: 'fender_bender', name: 'Fender Bender', cost: 50, sellValue: 25, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'pokerTier', tier: 0 }, baseMult: 1,
     bonus: { condition: { type: 'pokerTier', tier: 1 }, base: 0.5, perLevel: 0.25, maxLevel: 2 },
     note: 'Up to 2 cards. A Pair adds a bonus that grows the more you tune it.' },
@@ -1542,6 +1548,10 @@ const ITEMS = {
   escort_wall: { id: 'escort_wall', name: 'Roadblock', cost: 55, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'pokerTier', tier: 1 }, baseMult: 1, kind: 'defense',
     note: `Needs a Pair. Blocks damage equal to ${SIGMA_TIP} of the cards played, instead of dealing damage.` },
+  diamond_draw: { id: 'diamond_draw', name: 'Diamond Draw', cost: 55, maxCards: 1, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+    condition: { type: 'suitCount', suit: '♦', count: 1 }, flatAmount: 10,
+    drawAmount: 1, drawPerLevel: 1, levelCap: 3,
+    note: `Needs a Diamond. Flat 10 damage, then draws 1 card immediately (draws 1 more per upgrade).` },
   guard_rail: { id: 'guard_rail', name: 'Guard Rail', cost: 45, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'any' }, baseMult: 0.8, kind: 'defense',
     note: `Needs any card. Blocks damage equal to ${SIGMA_TIP} of the cards played × 0.8.` },
@@ -2259,9 +2269,9 @@ const ITEMS = {
    items climb as you move down this list, so there's always a reason to unlock the next one) ========== */
 const HEROES = {
   sidebyside:   { id: 'sidebyside',   name: 'Golf Cart',       icon: '🛺', image: 'Vehicles/golf-cart.png', starterItems: ['fender_bender','guard_rail'] },
-  admin:        { id: 'admin',        name: 'Admin Vehicle',   icon: '🚗', image: 'Vehicles/admin-vehicle.png', starterItems: ['fender_bender','escort_wall'] },
+  admin:        { id: 'admin',        name: 'Admin Vehicle',   icon: '🚗', image: 'Vehicles/admin-vehicle.png', starterItems: ['fender_bender','diamond_draw'] },
   beachtractor: { id: 'beachtractor', name: 'Beach Tractor',   icon: '🚜', image: 'Vehicles/beach-tractor.png', starterItems: ['taylor_sift','sand_trap'] },
-  interstate:   { id: 'interstate',   name: 'Pickup Truck',    icon: '🏁', image: 'Vehicles/interstate-racer.png', starterItems: ['card_draw','diamond_run'] },
+  interstate:   { id: 'interstate',   name: 'Work Truck',    icon: '🏁', image: 'Vehicles/work-truck.png', starterItems: ['card_draw','diamond_run'] },
   forklift:     { id: 'forklift',     name: 'Forklift',        icon: '🏗️', image: 'Vehicles/forklift.png', starterItems: ['pallet_drop','overhead_lift'] },
   convoy:       { id: 'convoy',       name: 'Large SUV',       icon: '🚛', image: 'Vehicles/armored-convoy.png', starterItems: ['fender_bender','triple_threat'] },
   towtruck:     { id: 'towtruck',     name: 'Tow Truck',       icon: '🚨', image: 'Vehicles/tow-truck.png', starterItems: ['drawstone','escort_wall'] },
@@ -2356,7 +2366,7 @@ function renderStandardItemCard(item, opts = {}) {
   const dragAttrs = burnTargetKey
     ? ` data-targetkey="${burnTargetKey}" data-title="Click to ignite ${item.name}" style="cursor:pointer"`
     : interactive
-    ? ` data-assign="${slotKey}" style="border-style:dashed;border-width:2px" ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleCardDrop(event,'${slotKey}',${effectiveMaxCards(item)})"`
+    ? ` data-assign="${slotKey}" style="border-style:dashed;border-width:2px"`
     : ` style="cursor:default"`;
   const usesBadge = usesBadgeText != null ? `<div class="usesBadge ${usesDepleted ? 'depleted' : ''} hoverTip" data-title="Uses left this turn">${usesBadgeText}</div>` : '';
   if (item.kind === 'storage') {
@@ -3058,6 +3068,11 @@ function initRunWithStarter(id) {
     fuel: Math.min(20 + (L.fuelCap||0)*5, 10 + (L.fuel||0)), 
     energy: 0,
     hero: { heroId: id, items: [...baseHero.starterItems] },
+    // Every item card has real shop value now, starter items included - a starter item should be
+    // able to show back up in the Dealership for a second copy, even while the run's first copy is
+    // still equipped. Anything else stays excluded once owned, so the only "duplicate" possible is
+    // of an item the hero actually started with. See pickShopStock().
+    starterItemIds: [...baseHero.starterItems],
     itemCap: Math.min(MAX_ITEM_CAP, 3 + L.garage), 
     handSize: 7 + (L.handCap || 0) * 2, 
     drawPerTurn: Math.max(1, 2 + (L.draw || 0)), 
@@ -3298,6 +3313,19 @@ let MATCH_RETURN_TO_MAP = false;
 let MATCH_OVERLAY_ACTIVE = false; 
 function renderMatchOverlay() { render(MATCH_RETURN_TO_MAP ? mapScreen() : castleMenuScreen()); }
 let JOKER_GLITCH_POPUP = null; 
+// Builds the "here's what you won" line for the end-of-attempts popup out of this visit's
+// visitTally, skipping anything that stayed at zero. Returns a fallback line if nothing was won.
+function matchVisitTallyLabel(st) {
+  const t = (st && st.visitTally) || {};
+  const parts = [];
+  if (t.coins) parts.push(`+${t.coins} coins`);
+  if (t.gems) parts.push(`+${t.gems} gems`);
+  if (t.fuel) parts.push(`+${t.fuel} fuel`);
+  if (t.health) parts.push(`+${t.health} health`);
+  if (t.energy) parts.push(`+${t.energy} energy`);
+  if (t.points) parts.push(`+${t.points} Career Points`);
+  return parts.length ? parts.join(', ') : 'No pairs matched this visit.';
+}
 function jackpotPreviewCardHTML(st) {
   const item = ITEMS[st.matchJackpotItemId];
   if (!item) return '<div class="note">No item available</div>';
@@ -3309,22 +3337,26 @@ function jackpotPreviewCardHTML(st) {
 // Running out of attempts on one visit, leaving and coming back, or advancing to a new world must all
 // leave existing pairs alone - see openMatchGame() below for that "fresh attempts, same board" case.
 function resetMatchState() {
-  RUN.matchState = { matchCards: null, matchGuesses: 4, matchPick: [], matchLock: false, matchJackpotItemId: null };
+  RUN.matchState = { matchCards: null, matchGuesses: 4, matchPick: [], matchLock: false, matchJackpotItemId: null, visitTally: {} };
 }
 // Gives the shared matching board a fresh set of attempts for a newly-opened session without
 // touching matchCards, so pairs already found - whether from a previous visit or from a different
-// Grid Anomaly node - are still sitting there matched when the board renders.
+// Grid Anomaly node - are still sitting there matched when the board renders. visitTally resets
+// every time the board is opened, so the end-of-attempts summary only ever shows what was won
+// during THIS visit, not the run's running total.
 function openMatchGame() {
-  if (!RUN.matchState) RUN.matchState = { matchCards: null, matchGuesses: 4, matchPick: [], matchLock: false, matchJackpotItemId: null };
+  if (!RUN.matchState) RUN.matchState = { matchCards: null, matchGuesses: 4, matchPick: [], matchLock: false, matchJackpotItemId: null, visitTally: {} };
   RUN.matchState.matchGuesses = 4;
   RUN.matchState.matchPick = [];
   RUN.matchState.matchLock = false;
+  RUN.matchState.visitTally = {};
 }
 // One shared matching-game board for the whole run - the map's Grid Anomaly nodes and the Fleet
 // Compound's Carnival Matching Game both read/write this same object, so pairs found at either one
 // are still there the next time either one is opened.
 function getMatchState() {
-  if (!RUN.matchState) RUN.matchState = { matchCards: null, matchGuesses: 4, matchPick: [], matchLock: false, matchJackpotItemId: null };
+  if (!RUN.matchState) RUN.matchState = { matchCards: null, matchGuesses: 4, matchPick: [], matchLock: false, matchJackpotItemId: null, visitTally: {} };
+  if (!RUN.matchState.visitTally) RUN.matchState.visitTally = {};
   return RUN.matchState;
 }
 // The Fleet Compound Dungeon locks only for the world you left it in - leaving it in World 1
@@ -4493,7 +4525,14 @@ function castleMatchScreen() {
     const jackpotPool = Object.values(ITEMS).filter(it => it.cost > 0 && !ownedIds.has(it.id));
     st.matchJackpotItemId = jackpotPool.length ? shuffle([...jackpotPool])[0].id : 'supply_bag';
   }
-  const groupSymbol = { '♦': '♦', '♣': '♣', '♥': '♥', '♠': '♠', 'RJ': '🃏', 'BJ': '🃏' };
+  // Joker tiles render Hazards/joker.png (same red/black outline as before) with an onerror
+  // fallback to the 🃏 emoji, matching the art() pattern used for hero/opponent art, so a real
+  // joker image can be dropped in without any other code changes once it's uploaded.
+  const groupSymbol = {
+    '♦': '♦', '♣': '♣', '♥': '♥', '♠': '♠',
+    'RJ': `<span class="vart" style="width:38px;height:38px;font-size:38px"><img src="Hazards/joker.png" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex';"><span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;line-height:1;font-size:38px">🃏</span></span>`,
+    'BJ': `<span class="vart" style="width:38px;height:38px;font-size:38px"><img src="Hazards/joker.png" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex';"><span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;line-height:1;font-size:38px">🃏</span></span>`,
+  };
   const cards = st.matchCards.map((c, i) => {
     const isRed = c.color === 'red' ? 'red' : '';
     const isClub = (c.group === '♣' && (c.flipped || c.matched)) ? 'club-card' : '';
@@ -4510,8 +4549,8 @@ function castleMatchScreen() {
     <div class="wo wide matchBoardWrap"${MATCH_POPUP ? ' style="pointer-events:none"' : ''}>
       <div class="wo-stripe"></div>
       <div class="wo-body">
-        <h1>Fleet Carnival <em>Matching Game</em></h1>
-        <div class="wo-sub">Attempts Left: ${st.matchGuesses}</div>
+        <h1>Matching Game</h1>
+        <div class="wo-sub" style="color:#f5c451">Attempts Left: ${st.matchGuesses}</div>
         <div class="matchGrid" style="display:grid; grid-template-columns:repeat(6, 75px); gap:8px; max-width:490px; margin:0 auto">
           ${cards}
         </div>
@@ -4537,6 +4576,9 @@ function castleMatchScreen() {
       </div>
     </div>
     </div>`;
+  if (MATCH_POPUP && MATCH_POPUP.outOfAttempts) {
+    return `${board}<div class="match-modal"><div class="wo" style="max-width:360px"><div class="wo-stripe"></div><div class="wo-body" style="text-align:center"><div class="wo-eyebrow">Out of Attempts</div><h1>Thanks for <em>Playing!</em></h1><div class="note" style="margin-top:4px">Here's what you won this visit.</div><div class="treasure-prize">${matchVisitTallyLabel(st)}</div><div class="note" style="margin-top:8px">Any pairs you found are saved - come back another time to keep going.</div><button class="wo-btn amber" id="matchPopupContinueBtn" style="width:100%;margin-top:10px;pointer-events:auto">OK</button></div></div></div>`;
+  }
   if (MATCH_POPUP) {
     return `${board}<div class="match-modal"><div class="wo" style="max-width:360px"><div class="wo-stripe"></div><div class="wo-body" style="text-align:center"><div class="wo-eyebrow">${MATCH_POPUP.jackpot ? 'Board Cleared' : 'Pair Matched'}</div><h1>${MATCH_POPUP.suitLabel} <em>${MATCH_POPUP.jackpot ? 'Jackpot!' : 'Pair!'}</em></h1>${MATCH_POPUP.cardHTML ? `<div style="display:flex;justify-content:center;margin:8px 0">${MATCH_POPUP.cardHTML}</div>` : ''}<div class="treasure-prize">${MATCH_POPUP.rewardLabel}</div>${MATCH_POPUP.boardCleared ? '<div class="note">Board cleared! The matching game is done for this run.</div>' : ''}<button class="wo-btn amber" id="matchPopupContinueBtn" style="width:100%;margin-top:10px;pointer-events:auto">Nice!</button></div></div></div>`;
   }
@@ -4609,16 +4651,24 @@ window.forfeitRun = function() {
   endRun(false);
 };
 /* ========== BATTLE LOGIC ========== */
+// World 1 is a soft-difficulty world: any non-castle fight there gets its HP capped and its
+// curse items stripped before the fight actually starts. This has to be the SAME function used
+// to preview a fight (Stop Details) and to actually start one (startBattle) - they used to apply
+// this rule in only one place, so the HP, difficulty rating, and coin reward shown before a World 1
+// fight didn't match what the fight (and its payout) actually used once it capped the opponent.
+function effectiveOpponentDef(opponentDef, castleStage=0) {
+  if (RUN.world === 1 && castleStage === 0) {
+    const cappedHp = Math.min(opponentDef.hp, 60);
+    const cleanItems = (opponentDef.items || []).filter(id => (ITEMS[id] && ITEMS[id].kind) !== 'curse');
+    return { ...opponentDef, hp: cappedHp, items: cleanItems, curse: undefined };
+  }
+  return opponentDef;
+}
 function startBattle(opponentDef, row, col, castleStage=0) {
   primeAudioChannel();
   IN_BATTLE = true;
   const nodeDef = RUN.map?.nodes?.[row]?.[col];
-  let oppDef = opponentDef;
-  if (RUN.world === 1 && castleStage === 0) {
-    const cappedHp = Math.min(oppDef.hp, 60);
-    const cleanItems = (oppDef.items || []).filter(id => (ITEMS[id] && ITEMS[id].kind) !== 'curse');
-    oppDef = { ...oppDef, hp: cappedHp, items: cleanItems, curse: undefined };
-  }
+  let oppDef = effectiveOpponentDef(opponentDef, castleStage);
   BATTLE = {
     opponent: { ...oppDef, hpNow: oppDef.hp, poisonStacks: [], armor: oppDef.startArmor || 0, countdown: oppDef.special?.type === 'countdownStrike' ? oppDef.special.threshold : undefined }, row, col, castleStage,
     deck: shuffle(freshDeck()), discard: [],
@@ -4808,6 +4858,11 @@ function chooseCurseTarget(key) {
   const name = ITEMS[key.replace(/_\d+$/, '')]?.name || 'Item';
   battleLog(`${itemName} locks a ${amount}-damage curse onto ${BATTLE.opponent.name}'s ${name}. If it doesn't fire before their turn ends, it triggers.`);
   saveRun();
+  // Re-cursing an item that already had a curse on it detonates the old one immediately
+  // (see applyOpponentItemCurse) - if that finishes the opponent off, the battle needs to
+  // end here the same way the end-of-turn curse detonation does, instead of rendering a
+  // battle screen against an opponent already at 0 HP.
+  if (BATTLE.opponent.hpNow <= 0) { winBattle(); return; }
   render(battleScreen());
 }
 function chooseBurnTarget(key) {
@@ -4853,10 +4908,15 @@ function toggleCardSelect(i) { const pos = selectedIdx.indexOf(i); if (pos === -
    Lets a mouse drag sweep across several cards at once instead of clicking each one:
    - origin 'hand': dragging across cards in the hand adds the whole swept run to selectedIdx.
    - origin 'slot': dragging across cards already loaded into one item slot removes the whole swept run.
-   Only classList is touched while the drag is in progress (no render()), because render() replaces
-   the whole #app DOM and would kill the native drag the browser is tracking. The real state change
-   (selectedIdx / BATTLE.slots) and the one render() call happen once, in finishDragSweep. */
+   This runs on plain mousedown/mouseenter/mouseup, not the browser's native HTML5 drag-and-drop -
+   cards are never actually "picked up" or droppable onto a slot, only clicked or swept over. That
+   keeps this gesture from fighting with (or being mistaken for) an actual drag, since there is no
+   real drag happening. Only classList is touched while the sweep is in progress (no render()),
+   because render() replaces the whole #app DOM and would drop the in-progress mouseenter listeners.
+   The real state change (selectedIdx / BATTLE.slots) and the one render() call happen once, in
+   finishDragSweep, fired by a single document-level mouseup listener set up once at load. */
 function startDragSweep(origin, slotKey, idx) { dragSweep = { origin, slotKey, sweptIdx: [idx] }; }
+document.addEventListener('mouseup', () => { if (dragSweep) finishDragSweep(); });
 function dragSweepCandidates() {
   if (!dragSweep) return [];
   const selector = dragSweep.origin === 'hand' ? '#app [data-card]' : `#app [data-unassign^="${dragSweep.slotKey}|"]`;
@@ -5743,9 +5803,9 @@ function winBattle(outlast) {
   }
   const scale = outlast ? 0.7 : 1;
   const base = battleRewardsFor(BATTLE.opponent, BATTLE.row);
-  let chipReward = Math.round(base.chipReward * scale);
+  const baseChipReward = Math.round(base.chipReward * scale);
   const exactKillBonus = BATTLE.exactKill && !outlast;
-  if (exactKillBonus) { chipReward += 15; }
+  let chipReward = baseChipReward + (exactKillBonus ? 15 : 0);
   const gemReward = base.gemReward + (exactKillBonus ? 1 : 0);
   // Fuel is scarce on purpose now - only a Perfect Kill refuels you at all.
   const fuelReward = exactKillBonus ? 1 : 0;
@@ -5776,7 +5836,7 @@ function winBattle(outlast) {
     saveMeta();
   }
   playSfx(exactKillBonus ? 'perfect' : 'win');
-  render(nodeResultScreen(true, { chipReward, gemReward, fuelReward, pointsReward, exactKillBonus }));
+  render(nodeResultScreen(true, { chipReward: baseChipReward, gemReward: base.gemReward, fuelReward: 0, pointsReward, exactKillBonus }));
 }
 
 /* ========== SCREENS ========== */
@@ -5850,7 +5910,9 @@ function nodePopupContent(r, c) {
   const node = RUN.map.nodes[r][c];
   const glyph = (svg) => `<span class="vart" style="width:64px;height:64px;font-size:64px">${svg}</span>`;
   if (node.type === 'battle') {
-    const o = node.opponent;
+    // Preview the fight using the SAME stat adjustments startBattle actually applies (the World 1
+    // HP cap and curse-item strip), so what's shown here always matches what you actually fight and win.
+    const o = effectiveOpponentDef(node.opponent);
     const isElite = /\[Elite\]/.test(o.name || '');
     const { chipReward, gemReward, fuelReward } = battleRewardsFor(o, r);
     const specialNote = o.special?.type === 'drawOnHit' ? `<div class="note" style="margin-top:4px">Draws +${o.special.amount || 1} card${(o.special.amount||1)>1?'s':''} into its hand every time you land a direct hit on it.</div>`
@@ -5984,7 +6046,7 @@ function mapScreen() {
       let tip;
       if(!showReal) tip='Move closer to scout this stop.';
       else if(node.type==='battle'){
-        const o=node.opponent;
+        const o=effectiveOpponentDef(node.opponent);
         tip=`HP: ${o.hp}<br>Draws ${o.drawRate}/turn${o.boss?'<br><b>World Boss</b>':''}${node.gridStorm?'<br><b style="color:var(--red)">Grid Storm: purges your hand at end of turn</b>':''}`;
       } else if(node.type==='shop') tip='Dealership - buy and sell Items.';
       else if(node.type==='rest') tip='Restore 30 health.';
@@ -6079,13 +6141,11 @@ function battleScreen() {
     if (item.kind === 'storage') {
       const cardHTML = idxs.map(cardHandIdx => {
         const c = BATTLE.hand[cardHandIdx];
-        return `<div class="card mini ${suitColorClass(c.color, c.suit)}" data-unassign="${slotKey}|${cardHandIdx}" data-title="Click to take this card back" draggable="true"
-          ondragstart="event.dataTransfer.setData('text/plain','${cardHandIdx}');this.classList.add('dragging');startDragSweep('slot','${slotKey}',${cardHandIdx})"
-          ondragenter="updateDragSweep(${cardHandIdx})"
-          ondragend="this.classList.remove('dragging');finishDragSweep()"><div>${rankLabel(c.rank)}</div><div>${c.suit}</div></div>`;
+        return `<div class="card mini ${suitColorClass(c.color, c.suit)}" data-unassign="${slotKey}|${cardHandIdx}" data-title="Click to take this card back"
+          onmousedown="startDragSweep('slot','${slotKey}',${cardHandIdx})"
+          onmouseenter="if(event.buttons===1)updateDragSweep(${cardHandIdx})"><div>${rankLabel(c.rank)}</div><div>${c.suit}</div></div>`;
       }).join('');
-      return `<div class="itemCard kind-storage${item.weightless ? ' kind-weightless' : ''}" data-assign="${slotKey}" style="border-style:dashed;border-width:2px"
-          ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleCardDrop(event,'${slotKey}',${effectiveMaxCards(item)})">
+      return `<div class="itemCard kind-storage${item.weightless ? ' kind-weightless' : ''}" data-assign="${slotKey}" style="border-style:dashed;border-width:2px">
         <div class="usesBadge hoverTip" data-title="Cards currently held">${idxs.length}/${effectiveMaxCards(item)}</div>
         <div class="itemCard-sec">
           <div class="hdr" style="font-weight:600">${item.name}</div>
@@ -6129,10 +6189,9 @@ function battleScreen() {
     const isChargingUnlockItem = item.unlockThreshold != null && !(BATTLE.itemUnlocked && BATTLE.itemUnlocked[slotKey]);
     const cardHTML = idxs.map(cardHandIdx => {
       const c = BATTLE.hand[cardHandIdx];
-      return `<div class="card mini ${suitColorClass(c.color, c.suit)}" data-unassign="${slotKey}|${cardHandIdx}" draggable="true"
-        ondragstart="event.dataTransfer.setData('text/plain','${cardHandIdx}');this.classList.add('dragging');startDragSweep('slot','${slotKey}',${cardHandIdx})"
-        ondragenter="updateDragSweep(${cardHandIdx})"
-        ondragend="this.classList.remove('dragging');finishDragSweep()"><div>${rankLabel(c.rank)}</div><div>${c.suit}</div></div>`;
+      return `<div class="card mini ${suitColorClass(c.color, c.suit)}" data-unassign="${slotKey}|${cardHandIdx}"
+        onmousedown="startDragSweep('slot','${slotKey}',${cardHandIdx})"
+        onmouseenter="if(event.buttons===1)updateDragSweep(${cardHandIdx})"><div>${rankLabel(c.rank)}</div><div>${c.suit}</div></div>`;
     }).join('');
     const bonusLine = itemBonusLineHTML(item, level);
     const drawNPreview = item.drawUsesCardCount ? (cards.length + (item.drawBonusFlat||0) + (item.drawPerLevel||0)*level) : (item.drawAmount ? item.drawAmount + (item.drawPerLevel||0)*level : 0);
@@ -6141,8 +6200,7 @@ function battleScreen() {
     const usesBadgeText = isChargingUnlockItem ? '∞' : cap === Infinity ? '∞' : `${Math.max(0, usesLeft)}`;
     const cooldownLeft = item.cooldown != null ? (BATTLE.itemCooldowns?.[slotKey] || 0) : 0;
     const isDepletedThisTurn = !isChargingUnlockItem && cap !== Infinity && usesLeft <= 0;
-    return `<div class="itemCard kind-${eKind} ${ready ? 'ready' : ''} ${cursedAmt ? 'cursed' : ''} ${frozenState ? 'frozenLock' : ''} ${isDepletedThisTurn ? 'depleted-lockout' : ''}" data-assign="${slotKey}" style="border-style:dashed;border-width:2px"
-        ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleCardDrop(event,'${slotKey}',${effectiveMaxCards(item)})">
+    return `<div class="itemCard kind-${eKind} ${ready ? 'ready' : ''} ${cursedAmt ? 'cursed' : ''} ${frozenState ? 'frozenLock' : ''} ${isDepletedThisTurn ? 'depleted-lockout' : ''}" data-assign="${slotKey}" style="border-style:dashed;border-width:2px">
       ${isDepletedThisTurn ? '' : `<div class="usesBadge hoverTip" data-title="Uses left this turn">${usesBadgeText}</div>`}
       <div class="itemCard-sec">
         <div class="hdr" style="font-weight:600">${item.name}${cursedAmt ? ` <span class="vart" style="width:12px;height:12px;font-size:12px;color:var(--purple)">${ICON.curse}</span> cursed` : ''}${hexedFlag ? ` <span class="vart" style="width:12px;height:12px;font-size:12px;color:var(--hex)">${ICON.hex}</span> hexed${hexedFlag > 1 ? ` x${hexedFlag}` : ''}` : ''}${frozenState ? ` <span class="vart" style="width:12px;height:12px;font-size:12px;color:var(--ice)">${ICON.ice}</span> frozen` : ''}</div>
@@ -6196,10 +6254,9 @@ function battleScreen() {
   const assignedIdx = new Set(Object.values(BATTLE.slots).flat());
   const handHTML = BATTLE.hand.map((c, i) => {
     if (assignedIdx.has(i) || BATTLE.turnDiscard.includes(i) || BATTLE.usedThisTurn.has(i)) return '';
-    return `<div class="card ${suitColorClass(c.color, c.suit)} ${selectedIdx.includes(i) ? 'selected' : ''}" data-card="${i}" draggable="true"
-      ondragstart="event.dataTransfer.setData('text/plain','${i}');this.classList.add('dragging');startDragSweep('hand',null,${i})"
-      ondragenter="updateDragSweep(${i})"
-      ondragend="this.classList.remove('dragging');finishDragSweep()" style="position:relative">
+    return `<div class="card ${suitColorClass(c.color, c.suit)} ${selectedIdx.includes(i) ? 'selected' : ''}" data-card="${i}"
+      onmousedown="startDragSweep('hand',null,${i})"
+      onmouseenter="if(event.buttons===1)updateDragSweep(${i})" style="position:relative">
     ${c.bonus ? `<div style="position:absolute;bottom:1px;right:2px;font-size:8px;color:var(--green)">+${c.bonus}</div>` : ''}
     <div>${rankLabel(c.rank)}</div><div>${c.suit}</div>
   </div>`;
@@ -6229,12 +6286,7 @@ function battleScreen() {
       <div class="vsMark">VS</div>
       <div class="duelSide opp"><div class="artZoomTrigger" data-artzoom="opp">${art(opp, 72)}</div>
         <div class="sideInfo">
-          <h3 style="justify-content:space-between;gap:6px;flex-wrap:nowrap"><span style="color:var(--red)">${opp.name}</span>${opp.boss ? ` <span class="hoverTip" style="color:var(--red);font-size:13px" data-title="This is a boss fight - taking too long on a turn costs extra health, so don't sit on it.">&#9201;</span>` : ''}
-            <span class="rewardRow">
-              <span class="cur chip" data-title="Coins earned for winning.">${ICON.coin} ${battleRewardsFor(opp, BATTLE.row).chipReward}</span>
-              ${battleRewardsFor(opp, BATTLE.row).gemReward ? `<span class="cur gem" data-title="Gems earned for winning.">${ICON.gem} ${battleRewardsFor(opp, BATTLE.row).gemReward}</span>` : ''}
-              ${battleRewardsFor(opp, BATTLE.row).fuelReward ? `<span class="cur fuel" data-title="Fuel earned for winning.">${ICON.fuel} ${battleRewardsFor(opp, BATTLE.row).fuelReward}</span>` : ''}
-            </span>
+          <h3 style="justify-content:flex-start;gap:6px;flex-wrap:nowrap"><span style="color:var(--red)">${opp.name}</span>${opp.boss ? ` <span class="hoverTip" style="color:var(--red);font-size:13px" data-title="This is a boss fight - taking too long on a turn costs extra health, so don't sit on it.">&#9201;</span>` : ''}
           </h3>
           <div style="display:flex;align-items:center;gap:6px">
             ${opp.armorRegen ? `<span class="hoverTip" style="color:#5a9fe0;font-weight:800;font-size:11px;flex-shrink:0;white-space:nowrap" data-title="Regenerates ${opp.armorRegen} armor at the start of each of its turns, with no limit.">+${opp.armorRegen} armor</span>` : ''}
@@ -6370,43 +6422,6 @@ function battleScreen() {
     ${ART_ZOOM ? artZoomModalHTML() : ''}
   </div>`;
 }
-function handleCardDrop(e, slotKey, maxSlot) {
-  e.preventDefault();
-  e.currentTarget.classList.remove('dragover');
-  // A hand card dropped onto an item slot is a single-card assign, not a multi-select sweep -
-  // cancel any hand sweep the drag may have accumulated in transit so the later dragend doesn't
-  // also select hand cards this drag merely passed over on its way here. A sweep that started on
-  // cards already loaded into a slot is left alone: releasing over that same slot's own drop zone
-  // is exactly how a sweep-to-remove gesture normally ends, and it still needs dragend to finish it.
-  if (dragSweep && dragSweep.origin === 'hand') dragSweep = null;
-  const idx = +e.dataTransfer.getData('text/plain');
-  if (Number.isNaN(idx)) return;
-  if (BATTLE.usedThisTurn.has(idx) || BATTLE.turnDiscard.includes(idx)) return;
-  const itemId = slotKey.replace(/_\d+$/, '');
-  const item = ITEMS[itemId];
-  if (!item) return;
-  // Same guard as assignSelectedTo below - an item with no uses left this turn can't consume a
-  // dropped card either, so it shouldn't accept one via drag-and-drop any more than by clicking.
-  {
-    const usesCap = itemUsesCap(item, itemUsesLevel(itemId));
-    const isChargingUnlockItem = item.unlockThreshold != null && !(BATTLE.itemUnlocked && BATTLE.itemUnlocked[slotKey]);
-    const usesLeft = usesCap - ((BATTLE.itemUses && BATTLE.itemUses[slotKey]) || 0);
-    if (!isChargingUnlockItem && usesCap !== Infinity && usesLeft <= 0) return;
-  }
-  if (item.kind === 'storage' && item.acceptFilter) {
-    const c = BATTLE.hand[idx];
-    if (item.acceptFilter.suit && c.suit !== item.acceptFilter.suit) return;
-    if (item.acceptFilter.color && c.color !== item.acceptFilter.color) return;
-    if (item.acceptFilter.parity) { const isEven = c.rank % 2 === 0; if ((item.acceptFilter.parity === 'even') !== isEven) return; }
-  }
-  if (!BATTLE.slots[slotKey]) BATTLE.slots[slotKey] = [];
-  if (BATTLE.slots[slotKey].includes(idx)) return;
-  if (BATTLE.slots[slotKey].length >= maxSlot) return;
-  Object.keys(BATTLE.slots).forEach(k => { BATTLE.slots[k] = BATTLE.slots[k].filter(i => i !== idx); });
-  BATTLE.slots[slotKey].push(idx);
-  selectedIdx = selectedIdx.filter(i => i !== idx);
-  render(battleScreen());
-}
 function tryDispatch() {
   endTurn();
 }
@@ -6446,8 +6461,9 @@ function pickShopStock() {
   const SUIT_STASH_IDS = ['spade_bag', 'heart_bag', 'club_bag', 'diamond_bag'];
   const SUIT_INFERNO_IDS = ['spade_inferno', 'heart_inferno', 'club_inferno', 'diamond_inferno'];
   const ownedIds = new Set(RUN.hero?.items || []);
+  const starterIds = new Set(RUN.starterItemIds || []);
   const pool = Object.values(ITEMS).filter(it => it.cost > 0 && (it.minRow == null || it.minRow <= row)
-    && !ownedIds.has(it.id)
+    && (!ownedIds.has(it.id) || starterIds.has(it.id))
     && (it.kind !== 'storage' || it.id === 'supply_bag' || SUIT_STASH_IDS.includes(it.id)));
   const defensePool = pool.filter(it => it.kind === 'defense');
   const nonDefensePool = pool.filter(it => it.kind !== 'defense');
@@ -7108,7 +7124,17 @@ let MAP_SCROLL_X = 0;
 /* ========== RENDER + EVENTS ========== */
 function render(html) {
   const app = document.getElementById('app');
+  // Every click that calls render() (a card, a match tile, an item slot...) replaces the whole
+  // #app subtree, which destroys whatever element currently has focus - the button just clicked,
+  // almost always. Losing a focused element mid-interaction makes some browsers (especially on
+  // phones) snap the page's scroll position back toward the top as focus resets to <body>, which
+  // reads as the page randomly jumping every time something is tapped. Capturing and restoring the
+  // scroll position around the DOM swap keeps the page exactly where it was. Both an immediate and
+  // a next-frame restore are needed since that browser-driven scroll can land a frame late.
+  const scrollX = window.scrollX, scrollY = window.scrollY;
   app.innerHTML = `<div class="game-stage">${html}</div>`;
+  window.scrollTo(scrollX, scrollY);
+  requestAnimationFrame(() => window.scrollTo(scrollX, scrollY));
   if (IN_BATTLE) saveBattleState();
   const mw = app.querySelector('.mapwrap');
   
@@ -7482,10 +7508,17 @@ function render(html) {
   const matchPopupContinueBtn = document.getElementById('matchPopupContinueBtn');
   if (matchPopupContinueBtn) matchPopupContinueBtn.onclick = () => {
     const wasCleared = MATCH_POPUP && MATCH_POPUP.boardCleared;
+    const wasOutOfAttempts = MATCH_POPUP && MATCH_POPUP.outOfAttempts;
     MATCH_POPUP = null;
     const st = getMatchState();
-    if (wasCleared) {
-      
+    if (wasOutOfAttempts) {
+      // Attempts are spent for this visit - OK takes the player straight back to wherever they
+      // came from (the map for a Grid Anomaly node, the Fleet Compound menu otherwise) instead of
+      // leaving them sitting on the now-unplayable board.
+      MATCH_OVERLAY_ACTIVE = false;
+      render(MATCH_RETURN_TO_MAP ? mapScreen() : castleMenuScreen());
+    } else if (wasCleared) {
+
       st.matchCards = null;
       st.matchGuesses = 4;
       st.matchPick = [];
@@ -7535,6 +7568,13 @@ function render(html) {
           RUN.health = Math.min(RUN.maxHealth, RUN.health + (reward.health || 0));
           RUN.energy = Math.min(RUN.maxEnergy, RUN.energy + (reward.energy || 0));
           if (reward.points) { earnPoints(reward.points); RUN.careerPointsFromMatchGame = (RUN.careerPointsFromMatchGame || 0) + reward.points; }
+          st.visitTally = st.visitTally || {};
+          st.visitTally.coins = (st.visitTally.coins || 0) + (reward.coins || 0);
+          st.visitTally.gems = (st.visitTally.gems || 0) + (reward.gems || 0);
+          st.visitTally.fuel = (st.visitTally.fuel || 0) + (reward.fuel || 0);
+          st.visitTally.health = (st.visitTally.health || 0) + (reward.health || 0);
+          st.visitTally.energy = (st.visitTally.energy || 0) + (reward.energy || 0);
+          st.visitTally.points = (st.visitTally.points || 0) + (reward.points || 0);
           saveRun();
 
           const boardCleared = st.matchCards.every(c => c.matched);
@@ -7564,9 +7604,11 @@ function render(html) {
 
             if (st.matchGuesses <= 0) {
               // Out of attempts for THIS visit only - matchCards (and every pair already found) stays
-              // put, so coming back later picks up right where this session left off.
-              if (MATCH_RETURN_TO_MAP) { RUN.lastNotice = 'Out of attempts for this stop. Any pairs you found are saved - come back another time to keep going.'; render(mapScreen()); }
-              else render(castleMenuScreen('Out of attempts for this stop. Any pairs you found are saved - come back another time to keep going.'));
+              // put, so coming back later picks up right where this session left off. Shown as a
+              // popup (with what was won this visit) instead of leaving straight to the map/Compound,
+              // so the player sees a clear stopping point instead of the screen just changing under them.
+              MATCH_POPUP = { outOfAttempts: true };
+              renderMatchOverlay();
             } else {
               renderMatchOverlay();
             }

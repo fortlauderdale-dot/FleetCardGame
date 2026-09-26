@@ -856,12 +856,26 @@ function straightMult(len) { return 1 + (len - 2) * 0.45; }
 * ICON SYSTEM                                                              *
 ****************************************************************************/
 
+// Resource icons (coins/gems/fuel/energy/career points/health) render real art from Icons/ with
+// an onerror fallback to the original emoji, same pattern as art() for heroes/opponents. Sized in
+// em units (not a fixed px) so the icon scales with whatever font-size context it's dropped into,
+// same as the emoji it replaces did automatically - these are used inline in dozens of different
+// text sizes across the game (currency bar, item cards, reward lines, hover tips), so a fixed
+// pixel size would look right in one place and wrong in most others.
+function resIcon(file, emoji, folder = 'Icons/') {
+  return `<span class="vart" style="width:1em;height:1em;font-size:1em"><img src="${folder}${file}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex';"><span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;line-height:1;font-size:1em">${emoji}</span></span>`;
+}
+// The Grid Anomaly map-node icon gets its own dedicated joker image (distinct from the two
+// matching-game tile jokers), since it sits on the map's light pastel node badges rather than the
+// dark panels the tile jokers render on.
+const JOKER_MAP_ICON = resIcon('joker-map.png', '🃏', 'Hazards/');
 const ICON = {
-  coin:   `💰`,
-  gem:    `💎`,
-  fuel:   `⛽`,
-  energy: `⚡`,
-  star:   `⭐`,
+  coin:   resIcon('coin.png', '💰'),
+  gem:    resIcon('gem.png', '💎'),
+  fuel:   resIcon('fuel.png', '⛽'),
+  energy: resIcon('energy.png', '⚡'),
+  star:   resIcon('career-points.png', '⭐'),
+  heart:  resIcon('heart.png', '❤️'),
   shield: `🛡️`,
   poison: `☠️`,
   lock:   `🔒`,
@@ -874,7 +888,6 @@ const ICON = {
   truck:  `🚚`,
   fire:   `🔥`,
   curse:  `💀`,
-  heart:  `❤️`,
   stash:  `📦`,
   palm:   `🌴`,
   sun:    `☀️`,
@@ -4525,13 +4538,12 @@ function castleMatchScreen() {
     const jackpotPool = Object.values(ITEMS).filter(it => it.cost > 0 && !ownedIds.has(it.id));
     st.matchJackpotItemId = jackpotPool.length ? shuffle([...jackpotPool])[0].id : 'supply_bag';
   }
-  // Joker tiles render Hazards/joker.png (same red/black outline as before) with an onerror
-  // fallback to the 🃏 emoji, matching the art() pattern used for hero/opponent art, so a real
-  // joker image can be dropped in without any other code changes once it's uploaded.
+  // Joker tiles each render their own dedicated image (Hazards/joker-red.png, Hazards/joker-black.png)
+  // with an onerror fallback to the 🃏 emoji, matching the art() pattern used for hero/opponent art.
   const groupSymbol = {
     '♦': '♦', '♣': '♣', '♥': '♥', '♠': '♠',
-    'RJ': `<span class="vart" style="width:38px;height:38px;font-size:38px"><img src="Hazards/joker.png" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex';"><span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;line-height:1;font-size:38px">🃏</span></span>`,
-    'BJ': `<span class="vart" style="width:38px;height:38px;font-size:38px"><img src="Hazards/joker.png" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex';"><span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;line-height:1;font-size:38px">🃏</span></span>`,
+    'RJ': `<span class="vart" style="width:38px;height:38px;font-size:38px"><img src="Hazards/joker-red.png" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex';"><span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;line-height:1;font-size:38px">🃏</span></span>`,
+    'BJ': `<span class="vart" style="width:38px;height:38px;font-size:38px"><img src="Hazards/joker-black.png" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex';"><span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;line-height:1;font-size:38px">🃏</span></span>`,
   };
   const cards = st.matchCards.map((c, i) => {
     const isRed = c.color === 'red' ? 'red' : '';
@@ -5847,7 +5859,7 @@ function noticeHTML() {
 }
 function currencyBar(extraHTML = '') {
   return `<div class="currencies currencyHeader">
-    <div class="cur health" data-title="Your health. Runs out and the run ends.">${ICON.heart} ${RUN.health}/${RUN.maxHealth} Health</div>
+    <div class="cur health" data-title="Your health. Runs out and the run ends.">${ICON.heart} ${RUN.health}/${RUN.maxHealth}</div>
     <div class="cur chip" data-title="Coins are used to buy vehicles and pay for certain services.">${ICON.coin} ${RUN.chips} Coins</div>
     <div class="cur gem" data-title="Gems let you draw extra cards during a battle.">${ICON.gem} ${RUN.gems}/${RUN.maxGems} Gems</div>
     <div class="cur fuel" data-title="Fuel is spent when you travel to another stop.">${ICON.fuel} ${RUN.fuel}/${RUN.maxFuel} Fuel</div>
@@ -5947,7 +5959,7 @@ function nodePopupContent(r, c) {
   if (node.type === 'chopshop') return { title: 'Chop Shop', art: glyph(ICON.curse), rows: [], extra: '<div class="note">Spend coins to convert an Item to poison, burn, or curse, or add card slots.</div>', actionLabel: 'Go Here' };
   if (node.type === 'overdrive') return { title: 'Overdrive Bay', art: glyph(ICON.energy), rows: [], extra: '<div class="note">Spend coins to add uses per turn to your equipped Items.</div>', actionLabel: 'Go Here' };
   if (node.type === 'treasure') return { title: node.big ? 'Big Supply Cache' : 'Supply Cache', art: glyph(ICON.gift), rows: [], extra: `<div class="note">${node.big ? 'A bigger haul for taking the risky route: double-value reward of coins, fuel, gems, energy, or Career Points.' : 'One random reward: coins, fuel, gems, energy, or Career Points.'}</div>`, actionLabel: 'Go Here' };
-  if (node.type === 'match_hazard') return { title: 'Grid Anomaly', art: glyph('🃏'), rows: [], extra: `<div class="note">Grid Anomaly Detected: Tap to hack the Carnival Board for extra fleet gear.</div>`, actionLabel: 'Go Here' };
+  if (node.type === 'match_hazard') return { title: 'Grid Anomaly', art: glyph(JOKER_MAP_ICON), rows: [], extra: `<div class="note">Grid Anomaly Detected: Tap to hack the Carnival Board for extra fleet gear.</div>`, actionLabel: 'Go Here' };
   if (node.type === 'plinko_hazard') return { title: 'Fleet Plinko', art: glyph('🎯'), rows: [], extra: `<div class="note">A Plinko board found out on the road: drop chips for coins, fuel, or gems.</div>`, actionLabel: 'Go Here' };
   if (node.type === 'blackjack_hazard') return { title: 'Fleet Blackjack', art: glyph('♠️'), rows: [], extra: `<div class="note">A roadside Blackjack table: draw and Stand against the dealer for a haul.</div>`, actionLabel: 'Go Here' };
   if (node.type === 'poker_hazard') return { title: 'Fleet Poker', art: glyph('♣️'), rows: [], extra: `<div class="note">A roadside Hold'em table: build your best hands against the dealer for a haul.</div>`, actionLabel: 'Go Here' };
@@ -6023,7 +6035,7 @@ function mapScreen() {
   }
 
   let nodesHTML='';
-  const NODE_ICON={shop:ICON.cart,rest:ICON.wrench,blacksmith:ICON.hammer,chopshop:ICON.curse,overdrive:ICON.energy,treasure:ICON.gift,castle:ICON.castle,match_hazard:'🃏',plinko_hazard:'🎯',blackjack_hazard:'♠️',poker_hazard:'♣️',auction_hazard:'🔨'};
+  const NODE_ICON={shop:ICON.cart,rest:ICON.wrench,blacksmith:ICON.hammer,chopshop:ICON.curse,overdrive:ICON.energy,treasure:ICON.gift,castle:ICON.castle,match_hazard:JOKER_MAP_ICON,plinko_hazard:'🎯',blackjack_hazard:'♠️',poker_hazard:'♣️',auction_hazard:'🔨'};
   const NODE_TITLE={shop:'Dealership',rest:'Service Station',blacksmith:'Tuning Garage',chopshop:'Chop Shop',overdrive:'Overdrive Bay',treasure:'Supply Cache',castle:'Fleet Compound',match_hazard:'Grid Anomaly',plinko_hazard:'Fleet Plinko',blackjack_hazard:'Fleet Blackjack',poker_hazard:'Fleet Poker',auction_hazard:'Fleet Auction'};
   
   for(let r=0;r<rows.length;r++) {

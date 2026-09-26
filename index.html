@@ -5978,7 +5978,7 @@ function mapScreen() {
       const isWorldBossNode = isBoss;
       const cls=(isCurrent?'current':isDone?'done':isAvail?'avail':withinSight||isCastle?'future':'farfuture')+(isWorldBossNode?' worldboss':'')+(isElite?' elitenode':'');
       const iconSize=isCastle&&showReal?44:isWorldBossNode&&showReal?32:19;
-      const battleIconSize=isWorldBossNode?32:19;
+      const battleIconSize=isWorldBossNode?64:38;
       const icon=!showReal?`<span class="vart" style="width:19px;height:19px;font-size:19px">${ICON.fog}</span>`:(node.type==='battle'?art(node.opponent,battleIconSize):`<span class="vart" style="width:${iconSize}px;height:${iconSize}px;font-size:${iconSize}px">${NODE_ICON[node.type]}</span>`);
       const title=!showReal?'Unscouted':(node.type==='battle'?node.opponent.name:NODE_TITLE[node.type]);
       let tip;

@@ -79,9 +79,17 @@
   .currencies{display:flex;gap:10px;flex-wrap:wrap;align-items:center;font-family:var(--mono);font-size:11.5px}
   .currencyHeader{position:fixed;top:0;left:0;right:0;z-index:9999;max-width:1180px;margin:0 auto;box-sizing:border-box;
     padding:9px 18px;background:#12163a;border-bottom:1px solid rgba(31,182,166,0.3);box-shadow:0 2px 10px rgba(0,0,0,0.35)}
-  .cur{border:1px solid var(--blue-light);border-radius:6px;padding:4px 8px}
+  .cur{border:1px solid var(--blue-light);border-radius:6px;padding:4px 8px;display:inline-flex;align-items:center;overflow:visible}
   .panel:has(> .currencyHeader){padding:0;border:none;background:transparent !important;box-shadow:none;min-height:0;margin:0}
   .cur.gem{color:var(--purple);border-color:var(--purple);background:#f5effd} .cur.fuel{color:var(--green);border-color:var(--green);background:#eef9ee} .cur.energy{color:var(--energy);border-color:var(--energy);background:rgba(0,245,212,0.08)} .cur.chip{color:#a35f00;border-color:var(--amber);background:#fff4e0} .cur.pts{color:#ffd54a;border:1px solid #ffd54a;background:#1a2038} .cur.health{color:var(--red);border-color:var(--red);background:#fdecec}
+  /* Resource icon zoom, approved 2026-09-28: icons grow from their right edge (icons stay put next
+     to the number) so pill box sizes never change - only the picture inside gets bigger. */
+  .cur.chip .vart{transform:translateX(3px) scale(2.2,2.7);transform-origin:right center}
+  .cur.gem .vart{transform:translateX(3px) scale(2.2);transform-origin:right center}
+  .cur.fuel .vart{transform:scale(2.4);transform-origin:right center;margin-left:8px}
+  .cur.energy .vart{transform:translateX(4px) scale(2.1);transform-origin:right center}
+  .cur.health .vart{transform:scale(1.3);transform-origin:right center}
+  .cur.pts .vart{transform:scale(1.3);transform-origin:center;margin-inline:1.7px}
   .cur{position:relative;cursor:help}[data-title]:hover::after{content:attr(data-title);position:absolute;z-index:50;left:50%;transform:translateX(-50%);top:calc(100% + 6px);width:max-content;max-width:220px;background:#000000;color:#ffffff;padding:7px 9px;border-radius:6px;font:12px var(--disp);white-space:normal;box-shadow:0 0 8px rgba(31,182,166,0.4);border:1px solid #1fb6a6;text-align:left;pointer-events:none}[data-title]{position:relative;cursor:help}.bossPreview{border:2px solid var(--red);background:#1a0e0e}.mapboss{font-size:12px;font-family:var(--mono);color:var(--dim);margin-top:8px}
   .hoverTip{position:relative;cursor:help;text-decoration:underline dotted;text-underline-offset:2px}
   .tipLeft[data-title]:hover::after,.tipLeft.effectTip:hover::after{left:0;transform:none}
@@ -216,6 +224,16 @@
   .suitMicroCard{display:inline-flex;align-items:center;justify-content:center;width:16px;height:20px;border-radius:3px;background:#ffffff;color:#12163a;font-size:12px;font-weight:800;line-height:1;vertical-align:-3px;margin:0 1px;box-shadow:0 0 0 1px rgba(0,0,0,0.2)}
   .suitMicroCard.red{color:#e5484d}
   .suitMicroCard.suit-club{color:var(--green)}
+  /* Full rank+suit mini card, for requirement text that names one specific card (e.g. Cursed
+     Carpool's "3 of Clubs or 4 of Clubs") - bigger and clearer than the plain suitMicroCard glyph,
+     which just showed the rank as text next to a tiny colored square. Conditions that reference a
+     count of a suit rather than a specific card (suitCount, e.g. Diamond Convoy) still use
+     suitMicroCard above and are untouched. */
+  .reqMiniCard{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;width:34px;height:48px;border-radius:4px;background:#ffffff;color:#12163a;font-weight:800;line-height:1.1;vertical-align:middle;margin:2px 3px;box-shadow:0 0 0 1px rgba(0,0,0,0.2)}
+  .reqMiniCard div:first-child{font-size:14px}
+  .reqMiniCard div:last-child{font-size:18px}
+  .reqMiniCard.red{color:#e5484d}
+  .reqMiniCard.suit-club{color:var(--green)}
   .card.back{background:var(--blue);color:transparent;position:relative}
   .card.back::after{content:'?';color:var(--ink);position:absolute;font-size:16px}
   .card.back.mini::after{font-size:12px}
@@ -276,16 +294,22 @@
   .pickPortrait{width:150px;height:150px;flex:0 0 150px;display:flex;align-items:center;justify-content:center;margin-top:-4px}
   .pickPortrait .vart{width:100% !important;height:100% !important;font-size:60px !important}
   .pickPortrait .vart span{font-size:60px !important}
-  .stopTitleRow{display:flex;justify-content:flex-start;align-items:center;gap:10px;flex-wrap:wrap}
+  .stopTitleRow{display:flex;justify-content:flex-start;align-items:center;gap:10px;flex-wrap:wrap;margin-top:2px}
   .stopRewardInline{margin:0}
-  /* --- Stop Details art block: adjust these to reposition/resize --- */
-  .stopArtRow{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;justify-content:center;margin:2px 0 4px} /* margin = vertical space above/below the picture row */
-  .stopArtBig{width:300px;height:300px;flex:0 0 300px;display:flex;align-items:center;justify-content:center} /* width/height = picture size itself, leave as-is */
-  .stopArtBig .vart{width:100% !important;height:100% !important;font-size:120px !important}
-  .stopArtBig .vart span{font-size:120px !important}
-  .stopArtStats{flex:0 1 150px;min-width:120px;display:flex;flex-direction:column;gap:6px} /* flex-basis/min-width = how much side space the stats column claims next to the picture */
-  .stopStatLine{display:flex;justify-content:space-between;gap:10px;font-weight:700;font-size:13px;color:var(--ink);padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.08)}
-  .stopStatLabel{color:var(--dim)}
+  /* --- Stop Details art block: stats + item cards stack in a fixed-width left column (sdLeftCol,
+     wide enough for 2 item cards per row); the picture fills the remaining width on the right and is
+     height-matched to that column by syncStopArtHeights(), called after every render() ---*/
+  .stopArtRow{display:flex;align-items:flex-start;flex-wrap:nowrap;gap:14px;margin:2px 0 4px}
+  .sdLeftCol{display:flex;flex-direction:column;flex:0 0 270px;min-width:0;gap:6px}
+  .stopArtBig{flex:1 1 auto;width:auto;max-width:none;display:flex;align-items:center;justify-content:center}
+  .stopArtBig .vart{width:100% !important;height:100% !important;font-size:70px !important}
+  .stopArtBig .vart span{font-size:70px !important}
+  .stopArtBig .vart img{width:100%;height:100%;object-fit:cover;border-radius:8px}
+  .stopArtStats{width:100%;min-width:0;display:flex;flex-direction:column;gap:3px}
+  .stopStatLine{display:flex;justify-content:flex-start;gap:8px;font-weight:700;font-size:12px;color:var(--ink);padding:2px 0;border-bottom:1px solid rgba(255,255,255,0.08)}
+  .stopStatLabel{color:var(--dim);min-width:64px}
+  .map-popup-overlay .wo-stripe{display:none}
+  .map-popup-overlay .wo-eyebrow{display:none}
   .fleetgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
   @media (max-width:700px){ .fleetgrid{grid-template-columns:1fr} }
   .vslot[draggable]{transition:box-shadow .12s,border-color .12s}
@@ -359,9 +383,11 @@
     .pickPortrait .vart span{font-size:44px !important}
     .pickLeftCol{width:110px}
     .pickItemRow{margin-left:118px}
-    .stopArtBig{width:220px;height:220px;flex:0 0 220px}
-    .stopArtBig .vart{font-size:90px !important}
-    .stopArtBig .vart span{font-size:90px !important}
+    .stopArtRow{flex-direction:column !important}
+    .sdLeftCol{flex:none !important;width:100% !important}
+    .stopArtBig{width:100% !important;height:200px !important;flex:none !important}
+    .stopArtBig .vart{font-size:70px !important}
+    .stopArtBig .vart span{font-size:70px !important}
   }
   @media (max-width:850px) and (orientation:portrait){
     .itemGrid .itemCard{flex:0 0 calc(50% - 6px)}
@@ -508,6 +534,10 @@ const SIGMA_TIP = `<span class="hoverTip" data-title="Summation: The total face 
 function suitMicroCardHTML(suit) {
   const cls = suitColorClass(suit === '♥' || suit === '♦' ? 'red' : 'black', suit);
   return `<span class="suitMicroCard ${cls}">${suit}</span>`;
+}
+function rankSuitMiniCardHTML(rank, suit) {
+  const cls = suitColorClass(suit === '♥' || suit === '♦' ? 'red' : 'black', suit);
+  return `<span class="reqMiniCard ${cls}"><div>${rankLabel(rank)}</div><div>${suit}</div></span>`;
 }
 function stashHoldsLineHTML(item) {
   const holdsWord = `<span class="hoverTip" data-title="Click a stored card to take it back.">Holds</span>`;
@@ -872,6 +902,13 @@ function straightMult(len) { return 1 + (len - 2) * 0.45; }
 function resIcon(file, emoji, folder = 'Icons/') {
   return `<span class="vart" style="width:1em;height:1em;font-size:1em"><img src="${folder}${file}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex';"><span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;line-height:1;font-size:1em">${emoji}</span></span>`;
 }
+// Same image-with-emoji-fallback pattern as resIcon/art(), but at a fixed pixel size instead of 1em -
+// used for map-node art (Dealership, Fleet Compound, Fleet Blackjack, etc.) where the icon renders at
+// several different fixed sizes (small on the map, larger in the Stop Details popup) rather than
+// scaling with surrounding text.
+function iconImg(file, fallback, px, folder = 'Icons/') {
+  return `<span class="vart" style="width:${px}px;height:${px}px;font-size:${px}px"><img src="${folder}${file}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex';"><span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;line-height:1;font-size:${px}px">${fallback}</span></span>`;
+}
 // The Grid Anomaly map-node icon gets its own dedicated joker image (distinct from the two
 // matching-game tile jokers), since it sits on the map's light pastel node badges rather than the
 // dark panels the tile jokers render on.
@@ -1080,9 +1117,15 @@ function itemBonusLineHTML(item, level) {
   // it were a special extra bonus (e.g. "Bonus +100% if Three of a Kind" on an item that
   // already needs Three of a Kind to fire in the first place) - that's not a real condition,
   // just a flat power increase from tuning, so it reads as a plain tune bonus instead.
+  // A conditionless bonus isn't necessarily from tuning - several items (Rapid Intervention, etc.)
+  // ship with a real base bonus baked into their own definition, present from level 0 on a shop copy
+  // that's never been tuned. Only call it "from tuning" once an actual tuning level (> 0) is
+  // contributing to the number; otherwise it's just the item's own built-in bonus.
   const text = item.bonus.condition
     ? `Bonus <b>+${bonusPct}%</b> if ${bonusConditionText(item.bonus.condition)}`
-    : `Bonus <b>+${bonusPct}%</b> from tuning`;
+    : level > 0
+      ? `Bonus <b>+${bonusPct}%</b> from tuning`
+      : `Bonus <b>+${bonusPct}%</b>`;
   return `<div class="itemBonusLine">${text}</div>`;
 }
 function describeCondition(cond) {
@@ -1093,7 +1136,7 @@ function describeCondition(cond) {
   if (cond.type === 'suitCount') return `${cond.count}+ ${cond.suit}`;
   if (cond.type === 'colorCount') return `${cond.count}+ ${cond.color === 'red' ? 'Red' : 'Black'} cards`;
   if (cond.type === 'allSuits') return 'one of each suit';
-  if (cond.type === 'cardIn') return cond.cards.map(c => `${rankLabel(c.rank)}${suitMicroCardHTML(c.suit)}`).join(' or ');
+  if (cond.type === 'cardIn') return cond.cards.map(c => rankSuitMiniCardHTML(c.rank, c.suit)).join(' or ');
   if (cond.type === 'parity') return cond.mode === 'all' ? `all ${cond.parity}` : `${cond.count}+ ${cond.parity} cards`;
   if (cond.type === 'exactRank') return cond.requireAll ? `all ${rankLabel(cond.rank)}s` : `a ${rankLabel(cond.rank)}`;
   if (cond.type === 'sumThreshold') return `${SIGMA_TIP}${cond.min}+`;
@@ -2263,6 +2306,13 @@ const ITEMS = {
     condition: { type: 'sumThreshold', min: 7 }, baseMult: 0,
     drawAmount: 1, drawPerLevel: 0,
     note: `Needs cards totaling ${SIGMA_TIP}7+. Somehow finds an open slot on a calendar that had no open slots. Draws 1 card immediately.` },
+  ee_anthony_torque_check: { id: 'ee_anthony_torque_check', name: 'Torque Check', maxCards: 2, usesPerTurn: 1,
+    condition: { type: 'pokerTier', tier: 1 }, baseMult: 1,
+    note: 'Needs a Pair. Catches a bolt that was never actually torqued to spec.' },
+  ee_anthony_diagnostic_deep_dive: { id: 'ee_anthony_diagnostic_deep_dive', name: 'Diagnostic Deep-Dive', maxCards: 3, usesPerTurn: 1,
+    condition: { type: 'sumThreshold', min: 7 }, baseMult: 0,
+    drawAmount: 1, drawPerLevel: 0,
+    note: `Needs cards totaling ${SIGMA_TIP}7+. Finds the real problem three other technicians missed. Draws 1 card immediately.` },
   ee_haley_honeydo: { id: 'ee_haley_honeydo', name: 'Honey-Do List', maxCards: 2, usesPerTurn: 1,
     condition: { type: 'pokerTier', tier: 1 }, baseMult: 1,
     note: 'Needs a Pair. Adds a new item to the list before you\'ve finished the last one.' },
@@ -2695,6 +2745,7 @@ const EASTER_EGG_OPPONENTS = [
   { id: 'ee_haley', name: 'Haley', icon: '💐', image: 'Hazards/haley.png', hp: 50, minTier: 1, drawRate: 2, items: ['ee_haley_honeydo', 'ee_haley_surprise_coffee'] },
   { id: 'ee_nala', name: 'Nala', icon: '🐕', image: 'Hazards/nala.png', hp: 46, minTier: 1, drawRate: 2, items: ['ee_nala_zoomies', 'ee_nala_tail_wag'] },
   { id: 'ee_eevee', name: 'Eevee', icon: '🐾', image: 'Hazards/eevee.png', hp: 40, minTier: 1, drawRate: 2, items: ['ee_eevee_puppy_chaos', 'ee_eevee_nap_attack'] },
+  { id: 'ee_anthony', name: 'Anthony', icon: '🛠️', image: 'Hazards/anthony.png', hp: 58, minTier: 1, drawRate: 2, items: ['ee_anthony_torque_check', 'ee_anthony_diagnostic_deep_dive'] },
 ];
 // Easter eggs are NOT pushed into the regular pools - that would put all 10 of them in the same
 // shuffle bag as the handful of normal regulars per world, so they'd show up on a huge share of
@@ -3126,7 +3177,7 @@ function initRunWithStarter(id) {
     careerPointsFromTreasure: 0,
     careerPointsFromMatchGame: 0,
     runUpgrades: { itemSlots: 0, drawPerTurn: 0, sightRange: 0, gemDraw: 0, health: 0 },
-    castleState: { firstDone:false, secondDone:false, thirdDone:false, dungeonLocked:false, plinkoPlayed:false, blackjackPlayed:false, pokerPlayed:false, auctionPlayed:false },
+    castleState: { firstDone:false, secondDone:false, thirdDone:false, dungeonLocked:false, plinkoPlayed:false, blackjackPlayed:false, pokerPlayed:false, auctionPlayed:false, matchPlayed:false },
     // One shared matching-game board for the whole run, whether you open it from a map Grid Anomaly
     // node or the Fleet Compound's Carnival Matching Game - pairs you've already found carry over
     // between plays no matter which entry point you use. matchGuesses resets to a fresh 4 every time
@@ -3229,7 +3280,7 @@ function castleMenuScreen(message='') {
       <div class="castleMenu">
         <button class="castleBtn castleBtn-exit" id="leaveCastleBtn" style="background:#ffc44d;color:#12163a;border-color:#ffc44d;font-weight:800">Back to World Map.</button>
         <button class="castleBtn" id="castleDungeonNavBtn">Visit the Fleet Compound Dungeon.</button>
-        <button class="castleBtn" id="castleWizardNavBtn">Visit the Fleet Carnival Matching Game.</button>
+        <button class="castleBtn" id="castleWizardNavBtn" ${RUN.castleState?.matchPlayed ? 'disabled' : ''}>${RUN.castleState?.matchPlayed ? 'Matching Game Played' : 'Visit the Fleet Carnival Matching Game.'}</button>
         <button class="castleBtn" id="castlePlinkoNavBtn" ${RUN.castleState?.plinkoPlayed ? 'disabled' : ''}>${RUN.castleState?.plinkoPlayed ? 'Plinko Board Played' : 'Visit the Fleet Plinko Board.'}</button>
         <button class="castleBtn" id="castleBlackjackNavBtn" ${RUN.castleState?.blackjackPlayed ? 'disabled' : ''}>${RUN.castleState?.blackjackPlayed ? 'Blackjack Played' : 'Visit Fleet Blackjack.'}</button>
         <button class="castleBtn" id="castlePokerNavBtn" ${RUN.castleState?.pokerPlayed ? 'disabled' : ''}>${RUN.castleState?.pokerPlayed ? 'Poker Played' : 'Visit Fleet Poker.'}</button>
@@ -3415,6 +3466,15 @@ function resetPokerState() {
 function resetAuctionState() {
   if (!RUN.castleState) RUN.castleState = {};
   RUN.castleState.auctionPlayed = false;
+}
+// The Fleet Compound's Carnival Matching Game used to have no lock at all - reopening it (the
+// castleWizardNavBtn path, not a map Grid Anomaly node) called openMatchGame(), which always hands
+// out a fresh 4 guesses without ever consuming a play, so it could be revisited over and over in the
+// same world to keep grinding the shared board for more currency. It's now locked to one play per
+// world, same as Plinko/Blackjack/Poker/Auction, and reset alongside them here.
+function resetMatchPlayedState() {
+  if (!RUN.castleState) RUN.castleState = {};
+  RUN.castleState.matchPlayed = false;
 }
 // Applies a finished Plinko run's haul into the actual run economy (coins/gems/fuel are capped
 // the same way every other reward source in the game caps them), marks the board played for
@@ -5945,8 +6005,10 @@ function nodePopupContent(r, c) {
       : o.startPoolBonus ? `<div class="note" style="margin-top:4px">Starts the fight with ${o.startPoolBonus} extra card${o.startPoolBonus>1?'s':''} already in hand.</div>`
       : o.special?.type === 'lifesteal' ? `<div class="note" style="margin-top:4px">Heals ${Math.round((o.special.pct||0.5)*100)}% of the damage its attacks deal.</div>`
       : '';
-    const armorNote = o.startArmor ? `<div class="note" style="margin-top:4px">Starts with ${o.startArmor} armor${o.armorRegen ? `, regenerating ${o.armorRegen} more each turn` : ' that only comes back if it reinforces itself'}. Armor blocks your direct hits before HP, but poison/burn/curse skip it.</div>`
-      : '';
+    // Armor used to get its own explanatory paragraph below the item cards; it's now folded straight
+    // into the HP line instead ("HP 47 + 15 Armor"), with the regen/no-regen detail kept as a hover tip
+    // so nothing is lost, just no longer taking up its own line.
+    const armorTag = o.startArmor ? ` <span class="hoverTip" style="color:#cd7f32;font-weight:800" data-title="Armor blocks your direct hits before HP, but poison/burn/curse skip it.${o.armorRegen ? ` Regenerates ${o.armorRegen} more each turn.` : ' Only comes back if it reinforces itself.'}">+ ${o.startArmor} Armor</span>` : '';
     const diff = opponentDifficultyInfo(o);
     const rewardsInline = `<div class="currencies stopRewardInline">
       ${chipReward ? `<span class="cur chip" data-title="Coins earned for winning.">${ICON.coin} ${chipReward}</span>` : ''}
@@ -5956,29 +6018,30 @@ function nodePopupContent(r, c) {
     return {
       title: o.name, art: art(o, 140), bigArt: true, rewardsInline,
       rows: [
-        ['HP', o.hp],
+        ['HP', `${o.hp}${armorTag}`],
         ['Draws', `${o.drawRate}/turn`],
         ['Difficulty', `<span class="hoverTip" style="color:${diff.color};font-weight:800" data-title="A gauge of how tough this fight is, based on its HP, armor, and item power - higher difficulty pays out better rewards.">${diff.label}</span>`],
       ],
-      extra: `<div class="popupItemRow">${opponentAttackBoxHTML(o)}</div>${specialNote}${armorNote}${o.boss ? `<div class="note" style="color:var(--red);font-weight:700;margin-top:4px">World Boss</div>` : isElite ? `<div class="note" style="color:#d9861f;font-weight:700;margin-top:4px">Elite Battle</div>` : ''}`,
+      itemsHTML: `<div class="popupItemRow">${opponentAttackBoxHTML(o)}</div>`,
+      extra: `${specialNote}${o.boss ? `<div class="note" style="color:var(--red);font-weight:700;margin-top:4px">World Boss</div>` : isElite ? `<div class="note" style="color:#d9861f;font-weight:700;margin-top:4px">Elite Battle</div>` : ''}`,
       rewards: { chipReward, gemReward, fuelReward },
       actionLabel: o.boss ? 'Battle Boss' : isElite ? 'Battle Elite' : 'Battle',
       eyebrow: o.boss ? 'Boss Battle' : isElite ? 'Elite Battle' : 'Stop Details',
       accent: o.boss ? '#7a0000' : isElite ? '#d9861f' : null,
     };
   }
-  if (node.type === 'shop') return { title: 'Dealership', art: glyph(ICON.cart), rows: [], extra: '<div class="note">Buy a vehicle with coins.</div>', actionLabel: 'Go Here' };
-  if (node.type === 'rest') return { title: 'Pit Stop', art: glyph(ICON.wrench), rows: [], extra: '<div class="note">Restore 30 health.</div>', actionLabel: 'Go Here' };
-  if (node.type === 'blacksmith') return { title: 'Tuning Garage', art: glyph(ICON.hammer), rows: [], extra: '<div class="note">Spend coins to permanently boost a card (or a whole rank/suit), for this run only.</div>', actionLabel: 'Go Here' };
-  if (node.type === 'chopshop') return { title: 'Chop Shop', art: glyph(ICON.curse), rows: [], extra: '<div class="note">Spend coins to convert an Item to poison, burn, or curse, or add card slots.</div>', actionLabel: 'Go Here' };
-  if (node.type === 'overdrive') return { title: 'Overdrive Bay', art: glyph(ICON.energy), rows: [], extra: '<div class="note">Spend coins to add uses per turn to your equipped Items.</div>', actionLabel: 'Go Here' };
-  if (node.type === 'treasure') return { title: node.big ? 'Big Supply Cache' : 'Supply Cache', art: glyph(ICON.gift), rows: [], extra: `<div class="note">${node.big ? 'A bigger haul for taking the risky route: double-value reward of coins, fuel, gems, energy, or Career Points.' : 'One random reward: coins, fuel, gems, energy, or Career Points.'}</div>`, actionLabel: 'Go Here' };
+  if (node.type === 'shop') return { title: 'Dealership', art: iconImg('node-dealership.png', ICON.cart, 64), rows: [], extra: '<div class="note">Buy a vehicle with coins.</div>', actionLabel: 'Go Here' };
+  if (node.type === 'rest') return { title: 'Pit Stop', art: iconImg('node-service-station.png', ICON.wrench, 64), rows: [], extra: '<div class="note">Restore 30 health.</div>', actionLabel: 'Go Here' };
+  if (node.type === 'blacksmith') return { title: 'Tuning Garage', art: iconImg('node-tuning-garage.png', ICON.hammer, 64), rows: [], extra: '<div class="note">Spend coins to permanently boost a card (or a whole rank/suit), for this run only.</div>', actionLabel: 'Go Here' };
+  if (node.type === 'chopshop') return { title: 'Chop Shop', art: iconImg('node-chop-shop.png', ICON.curse, 64), rows: [], extra: '<div class="note">Spend coins to convert an Item to poison, burn, or curse, or add card slots.</div>', actionLabel: 'Go Here' };
+  if (node.type === 'overdrive') return { title: 'Overdrive Bay', art: iconImg('node-overdrive-bay.png', ICON.energy, 64), rows: [], extra: '<div class="note">Spend coins to add uses per turn to your equipped Items.</div>', actionLabel: 'Go Here' };
+  if (node.type === 'treasure') return { title: node.big ? 'Big Supply Cache' : 'Supply Cache', art: iconImg('node-supply-cache.png', ICON.gift, 64), rows: [], extra: `<div class="note">${node.big ? 'A bigger haul for taking the risky route: double-value reward of coins, fuel, gems, energy, or Career Points.' : 'One random reward: coins, fuel, gems, energy, or Career Points.'}</div>`, actionLabel: 'Go Here' };
   if (node.type === 'match_hazard') return { title: 'Grid Anomaly', art: glyph(JOKER_MAP_ICON), rows: [], extra: `<div class="note">Grid Anomaly Detected: Tap to hack the Carnival Board for extra fleet gear.</div>`, actionLabel: 'Go Here' };
-  if (node.type === 'plinko_hazard') return { title: 'Fleet Plinko', art: glyph('🎯'), rows: [], extra: `<div class="note">A Plinko board found out on the road: drop chips for coins, fuel, or gems.</div>`, actionLabel: 'Go Here' };
-  if (node.type === 'blackjack_hazard') return { title: 'Fleet Blackjack', art: glyph('♠️'), rows: [], extra: `<div class="note">A roadside Blackjack table: draw and Stand against the dealer for a haul.</div>`, actionLabel: 'Go Here' };
-  if (node.type === 'poker_hazard') return { title: 'Fleet Poker', art: glyph('♣️'), rows: [], extra: `<div class="note">A roadside Hold'em table: build your best hands against the dealer for a haul.</div>`, actionLabel: 'Go Here' };
-  if (node.type === 'auction_hazard') return { title: 'Fleet Auction', art: glyph('🔨'), rows: [], extra: `<div class="note">A pop-up Fleet Auction: bid for coins, fuel, gems, or Items.</div>`, actionLabel: 'Go Here' };
-  return { title: 'Fleet Compound', art: glyph(ICON.castle), rows: [], extra: '<div class="note">Battles, the Dealership, refueling, a card match game, and more.</div>', actionLabel: 'Go Here' };
+  if (node.type === 'plinko_hazard') return { title: 'Fleet Plinko', art: iconImg('node-fleet-plinko.png', '🎯', 64), rows: [], extra: `<div class="note">A Plinko board found out on the road: drop chips for coins, fuel, or gems.</div>`, actionLabel: 'Go Here' };
+  if (node.type === 'blackjack_hazard') return { title: 'Fleet Blackjack', art: iconImg('node-fleet-blackjack.png', '♠️', 64), rows: [], extra: `<div class="note">A roadside Blackjack table: draw and Stand against the dealer for a haul.</div>`, actionLabel: 'Go Here' };
+  if (node.type === 'poker_hazard') return { title: 'Fleet Poker', art: iconImg('node-fleet-poker.png', '♣️', 64), rows: [], extra: `<div class="note">A roadside Hold'em table: build your best hands against the dealer for a haul.</div>`, actionLabel: 'Go Here' };
+  if (node.type === 'auction_hazard') return { title: 'Fleet Auction', art: iconImg('node-fleet-auction.png', '🔨', 64), rows: [], extra: `<div class="note">A pop-up Fleet Auction: bid for coins, fuel, gems, or Items.</div>`, actionLabel: 'Go Here' };
+  return { title: 'Fleet Compound', art: iconImg('node-fleet-compound.png', ICON.castle, 64), rows: [], extra: '<div class="note">Battles, the Dealership, refueling, a card match game, and more.</div>', actionLabel: 'Go Here' };
 }
 function nodePopupScreen(r, c) {
   const isAvail = availableNextNodes().some(n => n.row === r && n.col === c);
@@ -6004,7 +6067,10 @@ function nodePopupScreen(r, c) {
           ${info.rewardsInline || ''}
         </div>
         <div class="stopArtRow">
-          <div class="stopArtStats">${info.rows.map(([k,v]) => `<div class="stopStatLine"><span class="stopStatLabel">${k}</span><span class="stopStatValue">${v}</span></div>`).join('')}</div>
+          <div class="sdLeftCol">
+            <div class="stopArtStats">${info.rows.map(([k,v]) => `<div class="stopStatLine"><span class="stopStatLabel">${k}</span><span class="stopStatValue">${v}</span></div>`).join('')}</div>
+            ${info.itemsHTML || ''}
+          </div>
           <div class="stopArtBig">${info.art}</div>
         </div>` : `
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
@@ -6050,6 +6116,11 @@ function mapScreen() {
 
   let nodesHTML='';
   const NODE_ICON={shop:ICON.cart,rest:ICON.wrench,blacksmith:ICON.hammer,chopshop:ICON.curse,overdrive:ICON.energy,treasure:ICON.gift,castle:ICON.castle,match_hazard:JOKER_MAP_ICON,plinko_hazard:'🎯',blackjack_hazard:'♠️',poker_hazard:'♣️',auction_hazard:'🔨'};
+  // File each map-node type's own icon is expected at, matched to the checklist Drew is working
+  // through - match_hazard is left out since it already has its own dedicated Hazards/joker-map.png
+  // wired in above (NODE_ICON.match_hazard). Anything without an uploaded file yet falls back to its
+  // NODE_ICON emoji automatically via iconImg()'s onerror handler.
+  const NODE_ICON_FILE={shop:'node-dealership.png',rest:'node-service-station.png',blacksmith:'node-tuning-garage.png',chopshop:'node-chop-shop.png',overdrive:'node-overdrive-bay.png',treasure:'node-supply-cache.png',castle:'node-fleet-compound.png',plinko_hazard:'node-fleet-plinko.png',blackjack_hazard:'node-fleet-blackjack.png',poker_hazard:'node-fleet-poker.png',auction_hazard:'node-fleet-auction.png'};
   const NODE_TITLE={shop:'Dealership',rest:'Service Station',blacksmith:'Tuning Garage',chopshop:'Chop Shop',overdrive:'Overdrive Bay',treasure:'Supply Cache',castle:'Fleet Compound',match_hazard:'Grid Anomaly',plinko_hazard:'Fleet Plinko',blackjack_hazard:'Fleet Blackjack',poker_hazard:'Fleet Poker',auction_hazard:'Fleet Auction'};
   
   for(let r=0;r<rows.length;r++) {
@@ -7148,6 +7219,22 @@ function metaScreen() {
 
 let MAP_SCROLL_X = 0;
 /* ========== RENDER + EVENTS ========== */
+// Stop Details' picture sits to the right of the stats+item-card column (sdLeftCol) and is meant to
+// fill exactly that column's height, not the picture's own natural aspect ratio - CSS alone can't
+// express "match this sibling's rendered height" reliably here, so this measures sdLeftCol directly
+// after every render() and sets the picture's height inline to match. Called on every render since
+// only a small fraction of screens have a .stopArtRow at all, so the querySelectorAll is cheap when
+// there's nothing to do.
+function syncStopArtHeights(root) {
+  root.querySelectorAll('.stopArtRow').forEach(row => {
+    const leftCol = row.querySelector(':scope > .sdLeftCol');
+    const art = row.querySelector(':scope > .stopArtBig');
+    if (!leftCol || !art) return;
+    const set = () => { const h = leftCol.getBoundingClientRect().height; if (h > 0) art.style.height = h + 'px'; };
+    set();
+    requestAnimationFrame(set); // catch layout that settles a frame late (e.g. web-font swap)
+  });
+}
 function render(html) {
   const app = document.getElementById('app');
   // Every click that calls render() (a card, a match tile, an item slot...) replaces the whole
@@ -7165,6 +7252,7 @@ function render(html) {
   const mw = app.querySelector('.mapwrap');
   
   if (mw && !GARAGE_POPUP && !TREASURE_POPUP) { mw.scrollLeft = MAP_SCROLL_X; mw.onscroll = () => { MAP_SCROLL_X = mw.scrollLeft; }; if (RUN && mw.querySelector('.mapnode-wrap')) { requestAnimationFrame(()=>{ const row = Math.max(0,RUN.currentRow); const colW = 118; const target = Math.max(0, row*colW - mw.clientWidth*0.15); mw.scrollLeft = target; MAP_SCROLL_X = target; }); } }
+  syncStopArtHeights(app);
 
   // Mouse selection goes through the plain click handler below, not pointerdown - pointerdown's
   // preventDefault suppresses the browser's native drag-and-drop gesture entirely, which used to
@@ -7276,6 +7364,7 @@ function render(html) {
     resetBlackjackState();
     resetPokerState();
     resetAuctionState();
+    resetMatchPlayedState();
     META.bestWorld = Math.max(META.bestWorld || 1, RUN.world);
     saveMeta();
     saveRun();
@@ -7503,7 +7592,7 @@ function render(html) {
   });
 
   const castleDungeonNavBtn = document.getElementById('castleDungeonNavBtn'); if (castleDungeonNavBtn) castleDungeonNavBtn.onclick = () => render(castleDungeonScreen());
-  const castleWizardNavBtn = document.getElementById('castleWizardNavBtn'); if (castleWizardNavBtn) castleWizardNavBtn.onclick = () => { openMatchGame(); MATCH_RETURN_TO_MAP = false; MATCH_OVERLAY_ACTIVE = true; renderMatchOverlay(); };
+  const castleWizardNavBtn = document.getElementById('castleWizardNavBtn'); if (castleWizardNavBtn) castleWizardNavBtn.onclick = () => { if (!RUN.castleState) RUN.castleState = {}; if (RUN.castleState.matchPlayed) return; openMatchGame(); MATCH_RETURN_TO_MAP = false; MATCH_OVERLAY_ACTIVE = true; renderMatchOverlay(); };
   const castlePlinkoNavBtn = document.getElementById('castlePlinkoNavBtn'); if (castlePlinkoNavBtn) castlePlinkoNavBtn.onclick = () => { if (!RUN.castleState) RUN.castleState = {}; if (RUN.castleState.plinkoPlayed) return; RETURN_TO_CASTLE_MENU = true; openFleetPlinko({ onComplete: applyPlinkoHaul }); };
   const castleBlackjackNavBtn = document.getElementById('castleBlackjackNavBtn'); if (castleBlackjackNavBtn) castleBlackjackNavBtn.onclick = () => { if (!RUN.castleState) RUN.castleState = {}; if (RUN.castleState.blackjackPlayed) return; RETURN_TO_CASTLE_MENU = true; openFleetBlackjack({ onComplete: applyBlackjackHaul }); };
   const castlePokerNavBtn = document.getElementById('castlePokerNavBtn'); if (castlePokerNavBtn) castlePokerNavBtn.onclick = () => { if (!RUN.castleState) RUN.castleState = {}; if (RUN.castleState.pokerPlayed) return; RETURN_TO_CASTLE_MENU = true; openFleetPoker({ onComplete: applyPokerHaul }); };
@@ -7524,10 +7613,11 @@ function render(html) {
   };
   const dungeonWinContinueBtn = document.getElementById('dungeonWinContinueBtn'); if (dungeonWinContinueBtn) dungeonWinContinueBtn.onclick = () => { DUNGEON_WIN_POPUP = null; render(castleDungeonScreen()); };
   const leaveCastleBtn = document.getElementById('leaveCastleBtn'); if (leaveCastleBtn) leaveCastleBtn.onclick = () => render(mapScreen());
-  const leaveMatchBtn = document.getElementById('leaveMatchBtn'); if (leaveMatchBtn) leaveMatchBtn.onclick = () => { MATCH_OVERLAY_ACTIVE = false; render(MATCH_RETURN_TO_MAP ? mapScreen() : castleMenuScreen()); };
+  const leaveMatchBtn = document.getElementById('leaveMatchBtn'); if (leaveMatchBtn) leaveMatchBtn.onclick = () => { MATCH_OVERLAY_ACTIVE = false; if (!MATCH_RETURN_TO_MAP) { if (!RUN.castleState) RUN.castleState = {}; RUN.castleState.matchPlayed = true; } render(MATCH_RETURN_TO_MAP ? mapScreen() : castleMenuScreen()); };
   const jokerGlitchReRouteBtn = document.getElementById('jokerGlitchReRouteBtn'); if (jokerGlitchReRouteBtn) jokerGlitchReRouteBtn.onclick = () => {
     const returnToMap = JOKER_GLITCH_POPUP?.returnToMap; JOKER_GLITCH_POPUP = null;
     MATCH_OVERLAY_ACTIVE = false;
+    if (!returnToMap) { if (!RUN.castleState) RUN.castleState = {}; RUN.castleState.matchPlayed = true; }
     if (returnToMap) { RUN.lastNotice = 'CRITICAL GLITCH! A Red Joker and a Black Joker were flipped together. The board has reset.'; render(mapScreen()); }
     else render(castleMenuScreen('CRITICAL GLITCH! A Red Joker and a Black Joker were flipped together. The board has reset.'));
   };
@@ -7542,13 +7632,26 @@ function render(html) {
       // came from (the map for a Grid Anomaly node, the Fleet Compound menu otherwise) instead of
       // leaving them sitting on the now-unplayable board.
       MATCH_OVERLAY_ACTIVE = false;
+      if (!MATCH_RETURN_TO_MAP) { if (!RUN.castleState) RUN.castleState = {}; RUN.castleState.matchPlayed = true; }
       render(MATCH_RETURN_TO_MAP ? mapScreen() : castleMenuScreen());
     } else if (wasCleared) {
-
-      st.matchCards = null;
-      st.matchGuesses = 4;
-      st.matchPick = [];
-      renderMatchOverlay();
+      // A cleared board used to deal itself a fresh one and keep the player right here with a
+      // refilled 4 guesses - from the Compound that meant clearing board after board in one sitting
+      // with no exit and no lock ever kicking in, each clear banking real currency. Ending the visit
+      // here instead (same as running out of attempts) closes that off; a map Grid Anomaly node still
+      // deals a fresh board and continues, since each of those nodes is already a one-time stop on
+      // the map itself.
+      if (!MATCH_RETURN_TO_MAP) {
+        MATCH_OVERLAY_ACTIVE = false;
+        if (!RUN.castleState) RUN.castleState = {};
+        RUN.castleState.matchPlayed = true;
+        render(castleMenuScreen());
+      } else {
+        st.matchCards = null;
+        st.matchGuesses = 4;
+        st.matchPick = [];
+        renderMatchOverlay();
+      }
     } else {
       renderMatchOverlay();
     }

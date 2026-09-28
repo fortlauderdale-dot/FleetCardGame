@@ -518,9 +518,16 @@ function stashHoldsLineHTML(item) {
 function cardValue(r) { if (r === 14) return 11; if (r >= 11) return 10; return r; }
 function freshDeck() {
   const d = [];
-  for (const su of SUITS) for (let r = 2; r <= 14; r++) d.push({ rank: r, suit: su.s, color: su.color, revealed: false });
+  for (const su of SUITS) for (let r = 2; r <= 14; r++) d.push({ rank: r, suit: su.s, color: su.color, revealed: false, cid: r + su.s });
   return d;
 }
+// Stable-identity helpers: card objects lose their JS object identity across a
+// localStorage save/reload (JSON round-trip creates new object references), so
+// any code that compared cards with === (indexOf/includes/Set.has on the object
+// itself) could silently mismatch after a reload. cid (rank+suit) is unique
+// within a single 52-card deck and survives serialization, so use it instead.
+function cardIndexOf(arr, card) { return card ? arr.findIndex(x => x && x.cid === card.cid) : -1; }
+function cardIncludes(arr, card) { return card ? arr.some(x => x && x.cid === card.cid) : false; }
 function shuffle(arr) { for (let i = arr.length - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0; [arr[i], arr[j]] = [arr[j], arr[i]]; } return arr; }
 
 /****************************************************************************
@@ -2689,9 +2696,11 @@ const EASTER_EGG_OPPONENTS = [
   { id: 'ee_nala', name: 'Nala', icon: '🐕', image: 'Hazards/nala.png', hp: 46, minTier: 1, drawRate: 2, items: ['ee_nala_zoomies', 'ee_nala_tail_wag'] },
   { id: 'ee_eevee', name: 'Eevee', icon: '🐾', image: 'Hazards/eevee.png', hp: 40, minTier: 1, drawRate: 2, items: ['ee_eevee_puppy_chaos', 'ee_eevee_nap_attack'] },
 ];
-[WORLD_1_POOLS, WORLD_2_POOLS, WORLD_3_POOLS, WORLD_4_POOLS, WORLD_5_POOLS, WORLD_6_POOLS].forEach(pool => {
-  pool.regulars.push(...EASTER_EGG_OPPONENTS);
-});
+// Easter eggs are NOT pushed into the regular pools - that would put all 10 of them in the same
+// shuffle bag as the handful of normal regulars per world, so they'd show up on a huge share of
+// fights. Instead generateMap() below rolls a small independent chance per fight to swap in an
+// egg from its own queue, so they stay a rare, special sighting instead of a regular encounter.
+const EASTER_EGG_SPAWN_CHANCE = 0.05;
 const OPPONENT_SWING_CAP = [22, 28, 34, 40, 46, 52, 60];
 function revealFraction(row) { return [1.0, 0.8, 0.6, 0.4, 0.25, 0.1, 0][Math.min(row, 6)]; }
 
@@ -2875,7 +2884,12 @@ function generateMap() {
   const worldMultiplier = RUN.worldMultiplier || 1.0;
   const highwayPools = WORLD_POOLS_BY_WORLD[RUN.world] || WORLD_1_POOLS;
   const highwayRegularQueue = shuffle([...highwayPools.regulars]);
+  const eggQueue = shuffle([...EASTER_EGG_OPPONENTS]);
   function nextHighwayRegular() {
+    if (Math.random() < EASTER_EGG_SPAWN_CHANCE) {
+      if (!eggQueue.length) eggQueue.push(...shuffle([...EASTER_EGG_OPPONENTS]));
+      return eggQueue.pop();
+    }
     if (!highwayRegularQueue.length) highwayRegularQueue.push(...shuffle([...highwayPools.regulars]));
     return highwayRegularQueue.pop();
   }
@@ -4727,8 +4741,8 @@ function startBattle(opponentDef, row, col, castleStage=0) {
 }
 function reshuffleSharedDeck() {
   if (!BATTLE.discard.length) return;
-  const live = new Set([...BATTLE.hand, ...BATTLE.oppPool, ...(BATTLE.stagedFireCards || [])]);
-  BATTLE.deck = shuffle([...BATTLE.deck, ...BATTLE.discard].filter(c => !live.has(c)));
+  const live = new Set([...BATTLE.hand, ...BATTLE.oppPool, ...(BATTLE.stagedFireCards || [])].filter(Boolean).map(c => c.cid));
+  BATTLE.deck = shuffle([...BATTLE.deck, ...BATTLE.discard].filter(c => !live.has(c.cid)));
   BATTLE.discard = [];
 }
 function drawCards(n, allowOverflow = false) {
@@ -5017,8 +5031,8 @@ function resortHandAndRelink(mode) {
   const preservedSelection = (typeof selectedIdx !== 'undefined' ? selectedIdx : []).map(i => BATTLE.hand[i]);
   const suitOrder = {'♠':0,'♥':1,'♦':2,'♣':3};
   BATTLE.hand.sort((a,b)=> mode==='suit' ? ((suitOrder[a.suit]-suitOrder[b.suit]) || (a.rank-b.rank)) : ((a.rank-b.rank) || (suitOrder[a.suit]-suitOrder[b.suit])));
-  Object.entries(preserved).forEach(([key, cards]) => { BATTLE.slots[key] = cards.map(c => BATTLE.hand.indexOf(c)).filter(i => i !== -1); });
-  if (typeof selectedIdx !== 'undefined') selectedIdx = preservedSelection.map(c => BATTLE.hand.indexOf(c)).filter(i => i !== -1);
+  Object.entries(preserved).forEach(([key, cards]) => { BATTLE.slots[key] = cards.map(c => cardIndexOf(BATTLE.hand, c)).filter(i => i !== -1); });
+  if (typeof selectedIdx !== 'undefined') selectedIdx = preservedSelection.map(c => cardIndexOf(BATTLE.hand, c)).filter(i => i !== -1);
 }
 function sortHand(mode) {
   RUN.handSortMode = mode; saveRun();
@@ -5142,7 +5156,7 @@ if (idxs.some(i => BATTLE.usedThisTurn.has(i))) {
     return;
   }
   BATTLE.stagedFireCards = BATTLE.stagedFireCards || [];
-  cards.forEach(c => { if (c && !BATTLE.stagedFireCards.includes(c)) BATTLE.stagedFireCards.push(c); });
+  cards.forEach(c => { if (c && !cardIncludes(BATTLE.stagedFireCards, c)) BATTLE.stagedFireCards.push(c); });
   const lightningRoll = item.kind === 'lightning' ? ((BATTLE.lightningRolls && BATTLE.lightningRolls[slotKey] != null) ? BATTLE.lightningRolls[slotKey] : rollLightningMultiplier()) : null;
   if (item.kind === 'lightning' && BATTLE.lightningRolls) delete BATTLE.lightningRolls[slotKey];
   const { amount, breakdown } = computeItemAmount(item, cards, level, condResult, false, lightningRoll);
@@ -5271,14 +5285,14 @@ if (idxs.some(i => BATTLE.usedThisTurn.has(i))) {
   BATTLE.slots[slotKey] = [];
   if (item.drawAmount || item.drawUsesCardCount) {
     const slotCardMap = {}; Object.entries(BATTLE.slots).forEach(([key, ix]) => { slotCardMap[key] = ix.map(i => BATTLE.hand[i]); });
-    const stillUsedCards = [...BATTLE.usedThisTurn].map(i => BATTLE.hand[i]).filter(c => !cards.includes(c));
+    const stillUsedCards = [...BATTLE.usedThisTurn].map(i => BATTLE.hand[i]).filter(c => !cardIncludes(cards, c));
     const drawN = item.drawUsesCardCount
       ? cards.length + (item.drawBonusFlat || 0) + (item.drawPerLevel || 0) * level
       : item.drawAmount + (item.drawPerLevel || 0) * level;
     const sortedOut = [...idxs].sort((a, b) => b - a);
     for (const i of sortedOut) { BATTLE.turnSpentDiscard.push(BATTLE.hand[i]); BATTLE.hand.splice(i, 1); }
-    Object.entries(slotCardMap).forEach(([key, cs]) => { BATTLE.slots[key] = cs.map(c => BATTLE.hand.indexOf(c)).filter(i => i !== -1); });
-    BATTLE.usedThisTurn = new Set(stillUsedCards.map(c => BATTLE.hand.indexOf(c)).filter(i => i !== -1));
+    Object.entries(slotCardMap).forEach(([key, cs]) => { BATTLE.slots[key] = cs.map(c => cardIndexOf(BATTLE.hand, c)).filter(i => i !== -1); });
+    BATTLE.usedThisTurn = new Set(stillUsedCards.map(c => cardIndexOf(BATTLE.hand, c)).filter(i => i !== -1));
     const beforeDraw = BATTLE.hand.length;
     drawCards(drawN, true);
     const drawn = BATTLE.hand.slice(beforeDraw);
@@ -5426,7 +5440,7 @@ function endTurn() {
   BATTLE.pendingHexSteal = [];
   BATTLE.slots = {};
   Object.entries(preservedStorage).forEach(([key, cards]) => {
-    BATTLE.slots[key] = cards.map(c => BATTLE.hand.indexOf(c)).filter(i => i !== -1);
+    BATTLE.slots[key] = cards.map(c => cardIndexOf(BATTLE.hand, c)).filter(i => i !== -1);
   });
   BATTLE.turnDiscard = [];
   if (BATTLE.turnSpentDiscard && BATTLE.turnSpentDiscard.length) {
@@ -5578,7 +5592,7 @@ function endTurn() {
               battleLog(`${BATTLE.opponent.name}'s ${item.name} is charging - ${remaining} more needed.`);
             }
             BATTLE.recentDiscard.push(...best.cards);
-            BATTLE.oppPool = BATTLE.oppPool.filter(c => !best.cards.includes(c));
+            BATTLE.oppPool = BATTLE.oppPool.filter(c => !cardIncludes(best.cards, c));
             if (RUN.health <= 0) break;
             continue;
           }
@@ -5628,8 +5642,8 @@ function endTurn() {
           hexLog = ` The hex trap kicks in - you pull the ${stolenText} straight into your hand.`;
         }
         battleLog(`${BATTLE.opponent.name} used ${item.name}${cond.label ? ` with ${cond.label}` : ''} (${usedText}) - ${dmgPhrase}.${specialLog}${hexLog} Your health: ${RUN.health}/${RUN.maxHealth}.`);
-        BATTLE.recentDiscard.push(...best.cards.filter(c => !hexStolenCards.includes(c)));
-        BATTLE.oppPool = BATTLE.oppPool.filter(c => !best.cards.includes(c));
+        BATTLE.recentDiscard.push(...best.cards.filter(c => !cardIncludes(hexStolenCards, c)));
+        BATTLE.oppPool = BATTLE.oppPool.filter(c => !cardIncludes(best.cards, c));
         if (RUN.health <= 0) break;
         continue;
       }
@@ -5696,7 +5710,7 @@ function endTurn() {
         ? `${BATTLE.opponent.name}'s ${attackDef.name || 'attack'} kicks in - ${dmgPhrase}.${specialLog} Your health: ${RUN.health}/${RUN.maxHealth}.`
         : `${BATTLE.opponent.name} used ${attackDef.name || best.label} with ${best.label} (${usedText}) - ${dmgPhrase}.${specialLog} Your health: ${RUN.health}/${RUN.maxHealth}.`);
       BATTLE.recentDiscard.push(...best.cards);
-      BATTLE.oppPool = BATTLE.oppPool.filter(c => !best.cards.includes(c));
+      BATTLE.oppPool = BATTLE.oppPool.filter(c => !cardIncludes(best.cards, c));
       if (RUN.health <= 0) break;
     }
     if (!anyAttack) {

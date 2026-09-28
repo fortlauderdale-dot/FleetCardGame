@@ -5563,6 +5563,7 @@ function endTurn() {
         BATTLE.playerArmor -= armorBlocked; oppDmg -= armorBlocked;
       }
       RUN.health = Math.max(0, RUN.health - oppDmg);
+      if (armorBlocked > 0) playSfx('shield');
       if (oppDmg > 0) { playSfx('hurt'); flashScreen('hurt'); BATTLE.lastHit = { amount: oppDmg, source: BATTLE.opponent.name }; showDamagePopup(oppDmg, BATTLE.opponent.name); }
       const dmgPhrase = armorBlocked > 0
         ? `${spec.damage} damage, but your armor absorbed ${armorBlocked}${oppDmg > 0 ? ` (${oppDmg} got through)` : ''}${BATTLE.playerArmor > 0 ? ` and you have ${BATTLE.playerArmor} armor remaining` : ', and your armor is gone'}`
@@ -5670,6 +5671,7 @@ function endTurn() {
           BATTLE.playerArmor -= armorBlocked; oppDmg -= armorBlocked;
         }
         RUN.health = Math.max(0, RUN.health - oppDmg);
+        if (armorBlocked > 0) playSfx('shield');
         if (oppDmg > 0) { playSfx('hurt'); flashScreen('hurt'); BATTLE.lastHit = { amount: oppDmg, source: BATTLE.opponent.name }; showDamagePopup(oppDmg, BATTLE.opponent.name); }
         const usedText = best.cards.map(c => `${rankLabel(c.rank)}${c.suit}`).join(' ');
         attackDef = {

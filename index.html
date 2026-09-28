@@ -249,7 +249,7 @@
   .tooltip{display:none;position:absolute;bottom:120%;left:50%;transform:translateX(-50%);z-index:90;
     background:#000000 !important;color:#ffffff !important;font-family:var(--mono);font-size:10.5px;line-height:1.5;
     padding:7px 10px;border-radius:6px;white-space:nowrap;z-index:5;box-shadow:0 0 8px rgba(31,182,166,0.4);border:1px solid #1fb6a6;text-align:left}
-  .mapnode{position:relative;width:40px;height:40px;border-radius:50%;
+  .mapnode{position:relative;width:48px;height:48px;border-radius:50%;
     font-size:19px;display:flex;align-items:center;justify-content:center;border:2px solid;background:var(--white)}
   .mapnode.future{background:#8a8f9e;border-color:#8a8f9e;color:#d4d7e0;cursor:default;opacity:.6}
   .mapnode.farfuture{background:#8a8f9e;border-color:#8a8f9e;color:#d4d7e0;cursor:default;opacity:.4}
@@ -258,7 +258,7 @@
   .mapnode.current{background:var(--blue);border-color:var(--blue-dark);color:#fff;cursor:default;box-shadow:0 0 0 5px #4a5fc755;animation:herePulse 1.4s ease-in-out infinite}
   .mapnode.future .vart,.mapnode.farfuture .vart,.mapnode.done .vart{filter:grayscale(1)}
   @keyframes herePulse{0%,100%{box-shadow:0 0 0 4px #4a5fc755}50%{box-shadow:0 0 0 9px #4a5fc722}}
-  .mapnode.worldboss{width:72px;height:72px;font-size:32px;animation:world3BossGlow 1.3s ease-in-out infinite;border-color:#c81e1e}
+  .mapnode.worldboss{width:80px;height:80px;font-size:32px;animation:world3BossGlow 1.3s ease-in-out infinite;border-color:#c81e1e}
   @keyframes world3BossGlow{0%,100%{box-shadow:0 0 10px 4px rgba(220,20,20,0.55)}50%{box-shadow:0 0 26px 10px rgba(255,40,40,0.95)}}
   .mapnode.elitenode{border-color:#d9861f;box-shadow:0 0 0 5px rgba(217,134,31,0.28),0 0 14px rgba(217,134,31,0.55);animation:eliteNodeGlow 1.8s ease-in-out infinite}
   @keyframes eliteNodeGlow{0%,100%{box-shadow:0 0 0 5px rgba(217,134,31,0.28),0 0 12px rgba(217,134,31,0.5)}50%{box-shadow:0 0 0 8px rgba(217,134,31,0.4),0 0 20px rgba(217,134,31,0.8)}}
@@ -414,7 +414,7 @@
   .mapnode.type-treasure{background:#effbf1;border-color:#4cae68}
   .mapnode.type-rest{background:#fff9df;border-color:#d5b24a}
   .mapnode.type-blacksmith,.mapnode.type-chopshop{background:#fff8e9;border-color:#d99a30}
-  .mapnode.type-castle{background:#f2edff;border-color:#8a4fe0;width:84px;height:84px;font-size:44px;opacity:1;box-shadow:0 0 0 7px rgba(138,79,224,0.28),0 0 24px rgba(138,79,224,0.55);animation:castleGlow 2.4s ease-in-out infinite}
+  .mapnode.type-castle{background:#f2edff;border-color:#8a4fe0;width:92px;height:92px;font-size:44px;opacity:1;box-shadow:0 0 0 7px rgba(138,79,224,0.28),0 0 24px rgba(138,79,224,0.55);animation:castleGlow 2.4s ease-in-out infinite}
   @keyframes castleGlow{0%,100%{box-shadow:0 0 0 7px rgba(138,79,224,0.28),0 0 18px rgba(138,79,224,0.5)}50%{box-shadow:0 0 0 11px rgba(138,79,224,0.4),0 0 30px rgba(138,79,224,0.8)}}
   .mapnode-wrap.castlenode{z-index:20}
   .regionCaption{text-align:center;font-family:var(--disp);font-weight:700;font-size:14px;color:#1fb6a6;letter-spacing:0.02em;margin-top:8px}
@@ -755,14 +755,22 @@ function flashScreen(kind) {
     setTimeout(() => { el.style.opacity = '0'; }, 90);
   } catch (e) {}
 }
+const ACTIVE_DMG_POPUPS = [];
 function showDamagePopup(amount, sourceName) {
   try {
     const el = document.createElement('div');
     el.className = 'dmgPopup';
     el.innerHTML = `<div class="dmgPopupAmt">-${amount}</div>${sourceName ? `<div class="dmgPopupSrc">${sourceName}</div>` : ''}`;
+    const stackIndex = ACTIVE_DMG_POPUPS.length;
+    el.style.marginTop = (stackIndex * 48) + 'px';
     document.body.appendChild(el);
-    setTimeout(() => { el.classList.add('fadeout'); }, 900);
-    setTimeout(() => { el.remove(); }, 1400);
+    ACTIVE_DMG_POPUPS.push(el);
+    setTimeout(() => { el.classList.add('fadeout'); }, 1900);
+    setTimeout(() => {
+      el.remove();
+      const idx = ACTIVE_DMG_POPUPS.indexOf(el);
+      if (idx !== -1) ACTIVE_DMG_POPUPS.splice(idx, 1);
+    }, 2400);
   } catch (e) {}
 }
 function avgCardValue() { let total = 0; for (let r = 2; r <= 14; r++) total += cardValue(r); return total / 13; }
@@ -5298,6 +5306,7 @@ if (idxs.some(i => BATTLE.usedThisTurn.has(i))) {
       } else {
         battleLog(`${item.name} [${cardsStr}] - ${condResult.label}! ${amount} damage${armorNote} (${breakdown}).`);
       }
+      if (armorAbsorbed > 0) playSfx('shield');
       playSfx('hex'); flashScreen('hit-opponent');
     } else {
       const atkBefore = BATTLE.opponent.hpNow;
@@ -5312,6 +5321,7 @@ if (idxs.some(i => BATTLE.usedThisTurn.has(i))) {
       if (dmgToApply === atkBefore && atkBefore > 0) BATTLE.exactKill = true;
       const armorNote = armorAbsorbed > 0 ? ` (${armorAbsorbed} blocked by their armor${BATTLE.opponent.armor > 0 ? `, ${BATTLE.opponent.armor} left` : ''})` : '';
       battleLog(`${item.name} [${cardsStr}] - ${condResult.label}! ${amount} damage${armorNote} (${breakdown}).`);
+      if (armorAbsorbed > 0) playSfx('shield');
       playSfx('hit');
       flashScreen('hit-opponent');
       if (BATTLE.opponent.special?.type === 'drawOnHit' && BATTLE.opponent.hpNow > 0) {
@@ -5746,6 +5756,7 @@ function endTurn() {
         BATTLE.playerArmor -= armorBlocked; oppDmg -= armorBlocked;
       }
       RUN.health = Math.max(0, RUN.health - oppDmg);
+      if (armorBlocked > 0) playSfx('shield');
       if (oppDmg > 0) { playSfx('hurt'); flashScreen('hurt'); BATTLE.lastHit = { amount: oppDmg, source: BATTLE.opponent.name }; showDamagePopup(oppDmg, BATTLE.opponent.name); }
       const usedText = best.cards.map(c => `${rankLabel(c.rank)}${c.suit}`).join(' ');
       let specialLog = resolveOpponentAttackEffect(attackDef, oppDmg);
@@ -6095,12 +6106,12 @@ function nodePopupScreen(r, c) {
 }
 function mapScreen() {
   const rows = RUN.map.nodes;
-  const colW = 118, rowY = [110, 210, 310];
+  const colW = 118, rowY = [65, 165, 265];
   const CASTLE_GAP = 65;
   const castleR = rows.findIndex(row => row.some(n => n && n.type === 'castle'));
   const colX = r => 25 + r*colW + colW/2 + (castleR < 0 ? 0 : r > castleR ? CASTLE_GAP*2 : r === castleR ? CASTLE_GAP : 0);
   const totalW = rows.length * colW + 50 + (castleR >= 0 ? CASTLE_GAP*2 : 0);
-  const totalH = 420;
+  const totalH = 345;
   const avail = availableNextNodes();
   const visibleRange = 3 + META.levels.range + (RUN.runUpgrades?.sightRange || 0);
   let svgLines = '';
@@ -6138,9 +6149,9 @@ function mapScreen() {
       const showReal=isBoss||isDone||isAvail||withinSight||isCastle;
       const isWorldBossNode = isBoss;
       const cls=(isCurrent?'current':isDone?'done':isAvail?'avail':withinSight||isCastle?'future':'farfuture')+(isWorldBossNode?' worldboss':'')+(isElite?' elitenode':'');
-      const iconSize=isCastle&&showReal?44:isWorldBossNode&&showReal?32:19;
-      const battleIconSize=isWorldBossNode?64:38;
-      const icon=!showReal?`<span class="vart" style="width:19px;height:19px;font-size:19px">${ICON.fog}</span>`:(node.type==='battle'?art(node.opponent,battleIconSize):`<span class="vart" style="width:${iconSize}px;height:${iconSize}px;font-size:${iconSize}px">${NODE_ICON[node.type]}</span>`);
+      const iconSize=isCastle&&showReal?60:isWorldBossNode&&showReal?46:30;
+      const battleIconSize=isWorldBossNode?78:52;
+      const icon=!showReal?`<span class="vart" style="width:30px;height:30px;font-size:30px">${ICON.fog}</span>`:(node.type==='battle'?art(node.opponent,battleIconSize):(NODE_ICON_FILE[node.type]?iconImg(NODE_ICON_FILE[node.type],NODE_ICON[node.type],iconSize):`<span class="vart" style="width:${iconSize}px;height:${iconSize}px;font-size:${iconSize}px">${NODE_ICON[node.type]}</span>`));
       const title=!showReal?'Unscouted':(node.type==='battle'?node.opponent.name:NODE_TITLE[node.type]);
       let tip;
       if(!showReal) tip='Move closer to scout this stop.';
@@ -7164,26 +7175,51 @@ const UPDATE_LOG = [
       'Fleet Plinko rebuilt: pegs now fill the entire board edge-to-edge instead of a narrow pyramid, so a chip can no longer drift down an empty side margin to a near-guaranteed safe landing (or get stuck there). Game Over columns now start at the center and spread outward the more you keep dropping, so you can no longer win indefinitely - by round 13 the whole board is Game Over. The three drop lanes are now clearly flagged above the board.',
     ],
   } },
+  { date: '2026-09-28', categories: {
+    Opponents: [
+      'Added Anthony as a new Easter egg opponent, with two new Items: Torque Check (needs a Pair) and Diagnostic Deep-Dive (needs cards totaling 7+, draws a card immediately).',
+    ],
+    'Item cards': [
+      'Fixed Rapid Intervention (and any other item with a flat built-in bonus) showing "Bonus +30% from tuning" before it had ever actually been tuned - that wording now only shows once you have actually put a tuning level into it.',
+      'Cursed Carpool and a handful of other single-card requirement items (the ones that need one specific card, like 3 of Clubs) now show a full-size mini playing card instead of the rank plus a tiny suit square, so the exact card is easier to make out at a glance. Convoy-style items that just need a count of a suit (Club Convoy, Diamond Convoy, etc.) are unchanged, since those aren\'t asking for one specific card.',
+    ],
+    'Match game': [
+      'Fixed a glitch at the Fleet Compound where clearing the Carnival Matching Game board would just deal you a fresh board and let you keep playing (and earning) indefinitely. It now ends your visit once you clear it, same as Plinko, Blackjack, Poker, and the Auction. The map\'s own Grid Anomaly matching game stops are unaffected.',
+    ],
+    Visual: [
+      'Stop Details popup cleaned up: dropped the redundant "Stop Details" header text, packed HP/Draws/Difficulty into a tight column on the left with the item cards stacked underneath (2 wide, wrapping to a new row), and moved the picture into the empty space on the right at full height. Armor is now shown as a small "+X Armor" note right next to HP instead of its own paragraph.',
+      'Map-node and resource-icon artwork wired up and permanently baked in: Dealership, Service Station, Tuning Garage, Chop Shop, Overdrive Bay, Supply Cache, Fleet Compound, Fleet Plinko, Fleet Blackjack, Fleet Poker, and Fleet Auction all use their real pictures now (with an emoji fallback if an image is ever missing), and the coin/gem/fuel/energy/heart icons in the top bar and everywhere else are sized to match.',
+      'Fixed a bug where the Fleet Compound (and every other non-battle map node) never actually used its uploaded picture on the map itself, even though the same picture worked fine on the Stop Details popup - the map was only ever drawing the emoji fallback. All map nodes are also a bit larger now so they\'re easier to tell apart at a glance.',
+      'Tightened up the empty space above and below the world map so you\'re not scrolling past a couple of blank rows at the top and bottom of the screen.',
+      'The Update Log is now collapsible - click a week to expand or collapse it, and click the "Update Log" header to collapse the whole section.',
+    ],
+    Audio: [
+      'Added a sound for armor blocking a hit - plays whether you\'re hitting an opponent with armor or they\'re hitting you while you have armor.',
+      'Damage numbers now stay on screen about a second longer, and if you take more than one hit at once, the numbers stack in a vertical list instead of piling up on top of each other.',
+    ],
+  } },
 ];
 function updateLogHTML() {
   return `
     <div class="wo" style="margin-top:14px">
       <div class="wo-stripe"></div>
       <div class="wo-body">
-        <div class="hdr"><span>Update Log</span><span></span></div>
-        ${UPDATE_LOG.map(entry => `
-          <div style="margin-top:10px">
-            <div class="note" style="font-weight:800;color:var(--ink)">${entry.date}</div>
-            ${UPDATE_LOG_CATEGORY_ORDER.filter(cat => entry.categories[cat] && entry.categories[cat].length).map(cat => `
-              <div style="margin-top:8px">
-                <div class="note" style="font-weight:700;color:var(--amber);font-size:12px;letter-spacing:0.03em">${cat}</div>
-                <ul style="margin:3px 0 0 18px;padding:0">
-                  ${entry.categories[cat].map(n => `<li class="note" style="margin:2px 0">${n}</li>`).join('')}
-                </ul>
-              </div>
-            `).join('')}
-          </div>
-        `).join('')}
+        <details open>
+          <summary class="hdr" style="cursor:pointer;list-style:none"><span>Update Log</span><span></span></summary>
+          ${UPDATE_LOG.slice().reverse().map((entry, i) => `
+            <details ${i === 0 ? 'open' : ''} style="margin-top:10px">
+              <summary class="note" style="font-weight:800;color:var(--ink);cursor:pointer">${entry.date}</summary>
+              ${UPDATE_LOG_CATEGORY_ORDER.filter(cat => entry.categories[cat] && entry.categories[cat].length).map(cat => `
+                <div style="margin-top:8px">
+                  <div class="note" style="font-weight:700;color:var(--amber);font-size:12px;letter-spacing:0.03em">${cat}</div>
+                  <ul style="margin:3px 0 0 18px;padding:0">
+                    ${entry.categories[cat].map(n => `<li class="note" style="margin:2px 0">${n}</li>`).join('')}
+                  </ul>
+                </div>
+              `).join('')}
+            </details>
+          `).join('')}
+        </details>
       </div>
     </div>
   `;

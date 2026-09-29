@@ -45,6 +45,14 @@
   .match-modal{position:fixed !important;inset:0 !important;background:rgba(11,15,25,0.82) !important;backdrop-filter:blur(4px);display:flex !important;align-items:center !important;justify-content:center !important;z-index:3000000 !important;padding:20px;pointer-events:auto !important}
   .match-modal .wo{max-width:360px;width:100%;margin:0;pointer-events:auto}
   .treasure-prize{font-size:28px;font-weight:800;color:var(--blue);text-align:center;margin:16px 0}
+  .matchTallyList{list-style:none;padding:0;margin:14px auto;max-width:220px;text-align:left}
+  .matchTallyList li{font-size:18px;font-weight:700;color:var(--blue);padding:4px 0 4px 20px;position:relative}
+  .matchTallyList li::before{content:"•";position:absolute;left:2px;color:var(--amber)}
+  .worldCompleteWo{border-color:#f5c451 !important;box-shadow:0 0 34px rgba(245,196,81,0.45),6px 6px 0 #1a2038 !important}
+  .worldCompleteWo .wo-stripe{background:linear-gradient(90deg,#f5c451 0%,#f2a93f 50%,#f5c451 100%)}
+  .worldCompleteTitle{font-size:34px;margin:6px 0 0;line-height:1.05}
+  .worldCompleteBanner{display:inline-block;margin-top:6px;font-size:22px;font-weight:900;letter-spacing:.08em;color:#7a5200;background:linear-gradient(180deg,#ffe9a8,#f5c451);padding:4px 22px;border-radius:6px;box-shadow:0 2px 0 rgba(0,0,0,0.15)}
+  .worldCompleteImg{display:block;width:100%;max-height:220px;object-fit:cover;border-radius:8px;margin-top:14px;box-shadow:0 0 0 2px rgba(0,0,0,0.08)}
   .wo{background:var(--white);color:var(--ink);border:3px solid var(--blue-dark);border-radius:12px;box-shadow:0 0 20px rgba(31,182,166,0.25),6px 6px 0 #1a2038;padding:0;margin:16px 0;overflow:hidden}
   .wo-stripe{height:10px;background:linear-gradient(90deg,#2b3350 0%,#3d4a72 50%,#1fb6a6 100%)}
   .wo-body{padding:20px 22px 24px}
@@ -221,6 +229,11 @@
   .card.cursed{outline:2px solid var(--purple)}
   .card.mini{width:30px;height:42px;font-size:11px;cursor:pointer;gap:0}
   .card.mini div:last-child{font-size:14px !important;line-height:1}
+  /* Bigger card size used in Fleet Poker/Blackjack - those minigame panels have plenty of room
+     and the plain .card.mini size (30x42, built for a tight in-hand strip) read as too tiny there. */
+  .card.big{width:58px;height:80px;font-size:19px;cursor:default;gap:2px}
+  .card.big div:last-child{font-size:27px !important;line-height:1}
+  .card.back.big::after{font-size:22px}
   .suitMicroCard{display:inline-flex;align-items:center;justify-content:center;width:16px;height:20px;border-radius:3px;background:#ffffff;color:#12163a;font-size:12px;font-weight:800;line-height:1;vertical-align:-3px;margin:0 1px;box-shadow:0 0 0 1px rgba(0,0,0,0.2)}
   .suitMicroCard.red{color:#e5484d}
   .suitMicroCard.suit-club{color:var(--green)}
@@ -480,12 +493,12 @@
   /* ===== Fleet Blackjack / Fleet Poker / Fleet Auction (Fleet Compound minigames) ===== */
   .fleetMiniPoolWrap{border-top:1px dashed rgba(255,255,255,0.15);margin-top:10px;padding-top:6px}
   .fleetBjHands,.fleetPokerHands{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;padding-top:10px}
-  .fleetBjHand,.fleetPokerHand{background:rgba(255,255,255,0.04);border:2px solid rgba(31,182,166,0.25);border-radius:10px;padding:10px;min-width:150px;text-align:center;transition:box-shadow .15s ease,border-color .15s ease}
+  .fleetBjHand,.fleetPokerHand{background:rgba(255,255,255,0.04);border:2px solid rgba(31,182,166,0.25);border-radius:10px;padding:10px;min-width:210px;text-align:center;transition:box-shadow .15s ease,border-color .15s ease}
   .fleetBjHand.busted{opacity:.5;border-color:rgba(229,72,77,0.4)}
   .fleetPokerHand.full{border-color:rgba(255,196,77,0.45)}
   .fleetBjHand.targetable,.fleetPokerHand.targetable{cursor:pointer;border-color:var(--amber);box-shadow:0 0 12px rgba(255,196,77,0.4)}
   .fleetBjHandReward,.fleetPokerHandReward{font-size:11.5px;font-weight:800;color:#f5c451;margin-bottom:6px;min-height:16px}
-  .fleetBjHandCards,.fleetPokerHandCards{display:flex;justify-content:center;gap:3px;flex-wrap:wrap;min-height:46px;align-items:center}
+  .fleetBjHandCards,.fleetPokerHandCards{display:flex;justify-content:center;gap:4px;flex-wrap:wrap;min-height:80px;align-items:center}
   .fleetBjHandTotal{margin-top:6px;font-size:14px;font-weight:800;color:var(--ink)}
   .fleetBjHandTotal.bjBust{color:var(--red)}
   .fleetBjHandTotal.bjLocked{color:var(--green)}
@@ -495,7 +508,7 @@
   .fleetBjHandOutcome.push{color:var(--dim)}
   .fleetBjDealerWrap{background:rgba(255,255,255,0.03);border:2px dashed rgba(255,255,255,0.15);border-radius:10px;padding:10px;text-align:center;margin-top:10px}
   .fleetPokerMatchup{display:flex;justify-content:center;align-items:center;gap:16px;padding-top:10px;flex-wrap:wrap}
-  .fleetPokerMatchSide{text-align:center;min-width:180px}
+  .fleetPokerMatchSide{text-align:center;min-width:220px}
   .fleetPokerVs{font-family:var(--mono);font-weight:800;color:var(--dim);font-size:13px}
   .fleetPokerTierLabel{margin-top:6px;font-weight:800;font-size:13px;color:var(--ink)}
   .fleetPokerOutcome{text-align:center;margin-top:12px;font-weight:800;font-size:16px;letter-spacing:.02em}
@@ -518,7 +531,7 @@
   .fleetAuctionLotTitle{font-size:11px;color:var(--dim);letter-spacing:.05em}
   .fleetAuctionLotContents{margin-top:6px;font-size:16px;font-weight:800;color:var(--ink);min-height:22px}
   .fleetAuctionLotStatus{margin-top:6px;font-size:11.5px;color:var(--dim)}
-  @media (max-width:650px){ .fleetBjHand,.fleetPokerHand,.fleetAuctionLot{min-width:120px;padding:8px} .fleetPokerMatchSide{min-width:130px} }
+  @media (max-width:650px){ .fleetBjHand,.fleetPokerHand,.fleetAuctionLot{min-width:170px;padding:8px} .fleetPokerMatchSide{min-width:170px} }
 </style>
 </head>
 <body>
@@ -2967,9 +2980,16 @@ function generateMap() {
     if (!highwayRegularQueue.length) highwayRegularQueue.push(...shuffle([...highwayPools.regulars]));
     return highwayRegularQueue.pop();
   }
+  // Highway opponents ramp up smoothly across the world instead of sitting flat and then hitting
+  // a sudden wall at the boss: row 0 is the world's base strength, and the last highway row before
+  // the boss caps out at a flat +20% total. The boss's own multiplier below picks up right where
+  // this ramp leaves off, so the boss reads as the natural next step, not a separate jump.
+  const WORLD_RAMP_TOTAL = 0.20;
+  const lastHighwayRow = rowCounts.length - 1;
   function scaleHighwayOpponent(base, row) {
     const scaled = JSON.parse(JSON.stringify(base));
-    scaled.hp = Math.round(base.hp * worldMultiplier * (1 + row * 0.05));
+    const rampFrac = lastHighwayRow > 0 ? Math.min(1, row / lastHighwayRow) : 0;
+    scaled.hp = Math.round(base.hp * worldMultiplier * (1 + WORLD_RAMP_TOTAL * rampFrac));
     return scaled;
   }
   function makeOpponentForRow(row) {
@@ -3043,7 +3063,9 @@ function generateMap() {
     }
   });
   const bossTemplate = highwayPools.boss;
-  nodes.push([{type:'battle', opponent: scaleMonsterForNewWorld(bossTemplate, worldMultiplier * 1.3, 6), lane:1}]);
+  // Continue the same ramp the highway just finished (ending at +20%) rather than restarting from
+  // a disconnected flat multiplier, so the boss feels like the next step up, not a jarring spike.
+  nodes.push([{type:'battle', opponent: scaleMonsterForNewWorld(bossTemplate, worldMultiplier * (1 + WORLD_RAMP_TOTAL) * 1.15, 6), lane:1}]);
   // Edges are now built off each node's lane (top/middle/bottom) rather than its raw array index,
   // so a path genuinely follows the map's visual geometry: adjacent-lane connections are common,
   // and a real (less frequent) lane-2 jump lets a route run straight from the top lane to the
@@ -3329,7 +3351,7 @@ function castleMenuScreen(message='') {
       ${message ? `<div class="panel"><div class="note">${message}</div></div>` : ''}
       <div class="castleMenu">
         <button class="castleBtn castleBtn-exit" id="leaveCastleBtn" style="background:#ffc44d;color:#12163a;border-color:#ffc44d;font-weight:800">Back to World Map</button>
-        <button class="castleBtn" id="castleDungeonNavBtn">Visit the Fleet Compound Dungeon</button>
+        <button class="castleBtn" id="castleDungeonNavBtn" ${RUN.castleState?.dungeonLocked ? 'disabled' : ''}>${RUN.castleState?.dungeonLocked ? 'Dungeon Cleared' : 'Visit the Fleet Compound Dungeon'}</button>
         <button class="castleBtn" id="castleWizardNavBtn" ${RUN.castleState?.matchPlayed ? 'disabled' : ''}>${RUN.castleState?.matchPlayed ? 'Matching Game Played' : 'Visit the Fleet Carnival Matching Game'}</button>
         <button class="castleBtn" id="castlePlinkoNavBtn" ${RUN.castleState?.plinkoPlayed ? 'disabled' : ''}>${RUN.castleState?.plinkoPlayed ? 'Plinko Board Played' : 'Visit the Fleet Plinko Board'}</button>
         <button class="castleBtn" id="castleBlackjackNavBtn" ${RUN.castleState?.blackjackPlayed ? 'disabled' : ''}>${RUN.castleState?.blackjackPlayed ? 'Blackjack Played' : 'Visit Fleet Blackjack'}</button>
@@ -3349,13 +3371,14 @@ let DUNGEON_CONTINUE_POPUP = null;
 function castleDungeonScreen(message='') {
   if (DUNGEON_WIN_POPUP) {
     const p = DUNGEON_WIN_POPUP;
+    const wonItem = ITEMS[p.itemId];
     return `<div class="treasure-modal"><div class="wo" style="max-width:440px">
       <div class="wo-stripe"></div>
       <div class="wo-body" style="text-align:center">
         <div class="wo-eyebrow">Dungeon Cleared</div>
         <h1>You <em>Won</em>!</h1>
-        <div class="treasure-prize">${p.itemName}</div>
-        <div class="note">New Item Card added to your Fleet, plus ${formatRewardParts({ coins: p.reward.coins, gems: p.reward.gems, fuel: p.reward.fuel, energy: p.reward.energy }, { coins: 'coins', gems: 'gems', fuel: 'fuel', energy: 'energy' })}.</div>
+        ${wonItem ? `<div style="max-width:180px;margin:8px auto 0">${renderStandardItemCard(wonItem, {})}</div>` : `<div class="treasure-prize">${p.itemName}</div>`}
+        <div class="note" style="margin-top:8px">New Item Card added to your Fleet, plus ${formatRewardParts({ coins: p.reward.coins, gems: p.reward.gems, fuel: p.reward.fuel, energy: p.reward.energy }, { coins: 'coins', gems: 'gems', fuel: 'fuel', energy: 'energy' })}.</div>
         <button class="wo-btn amber" id="dungeonWinContinueBtn" style="width:100%;margin-top:10px">Nice!</button>
       </div>
     </div></div>`;
@@ -3368,7 +3391,8 @@ function castleDungeonScreen(message='') {
       <div class="wo-body" style="text-align:center">
         <div class="wo-eyebrow">Battle ${p.stage} Won</div>
         <h1>Good <em>Job!</em></h1>
-        <div class="note">You earned ${formatRewardParts({ coins: p.reward.coins, gems: p.reward.gems, fuel: p.reward.fuel, energy: p.reward.energy }, { coins: 'coins', gems: 'gems', fuel: 'fuel', energy: 'energy' })}. Are you willing to risk your earnings and continue on?</div>
+        <div class="note">You earned ${formatRewardParts({ coins: p.reward.coins, gems: p.reward.gems, fuel: p.reward.fuel, energy: p.reward.energy }, { coins: 'coins', gems: 'gems', fuel: 'fuel', energy: 'energy' })}.</div>
+        <div class="note" style="margin-top:6px">Are you willing to risk your earnings and continue on?</div>
         <button class="wo-btn amber" id="dungeonContinueBtn" style="width:100%;margin-top:10px">Continue to ${nextLabel}</button>
         <button class="wo-btn gray" id="dungeonCashOutBtn" style="width:100%;margin-top:8px">Cash Out and Leave</button>
       </div>
@@ -3452,7 +3476,9 @@ function matchVisitTallyLabel(st) {
   if (t.health) parts.push(`+${t.health} health`);
   if (t.energy) parts.push(`+${t.energy} energy`);
   if (t.points) parts.push(`+${t.points} Career Points`);
-  return parts.length ? parts.join(', ') : 'No pairs matched this visit.';
+  // Each reward on its own bulleted line instead of one long comma-separated run - a visit with
+  // several pair types matched used to read as a wall of text at 28px.
+  return parts.length ? `<ul class="matchTallyList">${parts.map(p => `<li>${p}</li>`).join('')}</ul>` : 'No pairs matched this visit.';
 }
 function jackpotPreviewCardHTML(st) {
   const item = ITEMS[st.matchJackpotItemId];
@@ -4079,8 +4105,8 @@ function openFleetBlackjack(options) {
   const exitBtn = document.getElementById('fleetBjExitBtn');
 
   let selectedPoolIdx = null;
-  function cardHTML(c) { return `<div class="card mini ${suitColorClass(c.color, c.suit)}"><div>${rankLabel(c.rank)}</div><div>${c.suit}</div></div>`; }
-  function cardBackHTML() { return `<div class="card back mini"></div>`; }
+  function cardHTML(c) { return `<div class="card big ${suitColorClass(c.color, c.suit)}"><div>${rankLabel(c.rank)}</div><div>${c.suit}</div></div>`; }
+  function cardBackHTML() { return `<div class="card back big"></div>`; }
 
   function renderDealer() {
     const visibleCards = state.dealer.revealed ? state.dealer.cards : [state.dealer.cards[0]];
@@ -4116,7 +4142,7 @@ function openFleetBlackjack(options) {
   function renderPool() {
     if (!state.pool.length) { poolWrap.style.display = 'none'; poolEl.innerHTML = ''; return; }
     poolWrap.style.display = '';
-    poolEl.innerHTML = state.pool.map((c, i) => `<div class="card ${suitColorClass(c.color, c.suit)} ${selectedPoolIdx === i ? 'selected' : ''}" data-poolcard="${i}"><div>${rankLabel(c.rank)}</div><div>${c.suit}</div></div>`).join('');
+    poolEl.innerHTML = state.pool.map((c, i) => `<div class="card big ${suitColorClass(c.color, c.suit)} ${selectedPoolIdx === i ? 'selected' : ''}" data-poolcard="${i}" style="cursor:pointer"><div>${rankLabel(c.rank)}</div><div>${c.suit}</div></div>`).join('');
     poolEl.querySelectorAll('[data-poolcard]').forEach(el => { el.onclick = () => { selectedPoolIdx = +el.dataset.poolcard; renderPool(); renderHands(); }; });
   }
   function updateControls() {
@@ -4311,6 +4337,7 @@ function openFleetPoker(options) {
         </div>
         <div id="fleetPokerControls" style="display:flex;justify-content:center;gap:10px;padding-top:14px;flex-wrap:wrap">
           <button class="wo-btn green" id="fleetPokerDealBtn">Deal 3</button>
+          <button class="wo-btn amber" id="fleetPokerRevealBtn" style="display:none">Reveal the Flop</button>
           <button class="wo-btn gray" id="fleetPokerExitBtn">Back to Compound</button>
         </div>
       </div>
@@ -4325,10 +4352,12 @@ function openFleetPoker(options) {
   const message = document.getElementById('fleetPokerMessage');
   const controlsWrap = document.getElementById('fleetPokerControls');
   const dealBtn = document.getElementById('fleetPokerDealBtn');
+  const revealBtn = document.getElementById('fleetPokerRevealBtn');
   const exitBtn = document.getElementById('fleetPokerExitBtn');
 
   let selectedPoolIdx = null;
-  function cardHTML(c) { return `<div class="card mini ${suitColorClass(c.color, c.suit)}"><div>${rankLabel(c.rank)}</div><div>${c.suit}</div></div>`; }
+  function cardHTML(c) { return `<div class="card big ${suitColorClass(c.color, c.suit)}"><div>${rankLabel(c.rank)}</div><div>${c.suit}</div></div>`; }
+  function cardBackHTML() { return `<div class="card back big"></div>`; }
   function rewardLabelFor(reward) { return reward.type === 'item' ? `🚚 ${reward.label}` : reward.label; }
 
   function renderHands() {
@@ -4348,7 +4377,7 @@ function openFleetPoker(options) {
   function renderPool() {
     if (!state.pool.length) { poolWrap.style.display = 'none'; poolEl.innerHTML = ''; return; }
     poolWrap.style.display = '';
-    poolEl.innerHTML = state.pool.map((c, i) => `<div class="card ${suitColorClass(c.color, c.suit)} ${selectedPoolIdx === i ? 'selected' : ''}" data-poolcard="${i}"><div>${rankLabel(c.rank)}</div><div>${c.suit}</div></div>`).join('');
+    poolEl.innerHTML = state.pool.map((c, i) => `<div class="card big ${suitColorClass(c.color, c.suit)} ${selectedPoolIdx === i ? 'selected' : ''}" data-poolcard="${i}" style="cursor:pointer"><div>${rankLabel(c.rank)}</div><div>${c.suit}</div></div>`).join('');
     poolEl.querySelectorAll('[data-poolcard]').forEach(el => { el.onclick = () => { selectedPoolIdx = +el.dataset.poolcard; renderPool(); renderHands(); }; });
   }
   function updateControls() {
@@ -4382,7 +4411,7 @@ function openFleetPoker(options) {
   // hand's outcome shows at once - no clicking through matches one at a time.
   function communityCardsHTML() {
     const slots = [];
-    for (let i = 0; i < FLEET_POKER_CONFIG.communityCount; i++) slots.push(state.community[i] ? cardHTML(state.community[i]) : '<div class="card back mini"></div>');
+    for (let i = 0; i < FLEET_POKER_CONFIG.communityCount; i++) slots.push(state.community[i] ? cardHTML(state.community[i]) : cardBackHTML());
     return slots.join('');
   }
   function renderCommunityStrip(label) {
@@ -4392,25 +4421,47 @@ function openFleetPoker(options) {
       <div class="fleetPokerHandCards" style="justify-content:center">${communityCardsHTML()}</div>
     `;
   }
+  // Community board reveal is now player-paced: the deal/placement controls hide once all hole
+  // cards are placed, and a single "Reveal" button steps through flop -> turn -> river -> showdown.
+  // No player action is possible while waiting (there's nothing left to place), but pacing it out
+  // one click at a time gives them a beat to read the board and think about what they need before
+  // the next card lands, instead of everything flashing up at once.
+  let revealStage = 0;
   function startReveal() {
     poolWrap.style.display = 'none';
-    controlsWrap.style.display = 'none';
-    message.textContent = 'Dealing the board...';
-    renderCommunityStrip('Dealing the flop...');
-    setTimeout(() => {
+    dealBtn.style.display = 'none';
+    exitBtn.style.display = 'none';
+    revealStage = 0;
+    renderCommunityStrip('Hole cards locked in.');
+    message.textContent = 'Ready when you are.';
+    revealBtn.textContent = 'Reveal the Flop';
+    revealBtn.style.display = '';
+    revealBtn.disabled = false;
+  }
+  function revealNextStage() {
+    revealBtn.disabled = true;
+    if (revealStage === 0) {
       state.community.push(drawCard(), drawCard(), drawCard());
       renderCommunityStrip('Flop'); playSfx('open');
-      setTimeout(() => {
-        state.community.push(drawCard());
-        renderCommunityStrip('Turn'); playSfx('open');
-        setTimeout(() => {
-          state.community.push(drawCard());
-          renderCommunityStrip('River'); playSfx('open');
-          setTimeout(resolveShowdown, 700);
-        }, 700);
-      }, 700);
-    }, 500);
+      message.textContent = 'The flop is down.';
+      revealStage = 1; revealBtn.textContent = 'Reveal the Turn'; revealBtn.disabled = false;
+    } else if (revealStage === 1) {
+      state.community.push(drawCard());
+      renderCommunityStrip('Turn'); playSfx('open');
+      message.textContent = 'The turn is down.';
+      revealStage = 2; revealBtn.textContent = 'Reveal the River'; revealBtn.disabled = false;
+    } else if (revealStage === 2) {
+      state.community.push(drawCard());
+      renderCommunityStrip('River'); playSfx('open');
+      message.textContent = 'The river is down.';
+      revealStage = 3; revealBtn.textContent = 'Show Hands';
+      revealBtn.disabled = false;
+    } else {
+      revealBtn.style.display = 'none';
+      resolveShowdown();
+    }
   }
+  revealBtn.onclick = revealNextStage;
   function resolveShowdown() {
     state.playerHands.forEach((hand, i) => {
       const cHand = state.computerHands[i];
@@ -4784,8 +4835,11 @@ function castleMatchScreen() {
   // with an onerror fallback to the 🃏 emoji, matching the art() pattern used for hero/opponent art.
   const groupSymbol = {
     '♦': '♦', '♣': '♣', '♥': '♥', '♠': '♠',
-    'RJ': `<span class="vart" style="width:38px;height:38px;font-size:38px"><img src="Hazards/joker-red.png" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex';"><span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;line-height:1;font-size:38px">🃏</span></span>`,
-    'BJ': `<span class="vart" style="width:38px;height:38px;font-size:38px"><img src="Hazards/joker-black.png" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex';"><span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;line-height:1;font-size:38px">🃏</span></span>`,
+    // Bumped from 38px to 68px (was smaller than a plain suit symbol's 46px font, so the "special"
+    // joker tile actually read as less prominent than a regular card) - now fills most of the
+    // 75px-wide tile instead of leaving a lot of empty card around a small icon.
+    'RJ': `<span class="vart" style="width:68px;height:68px;font-size:68px"><img src="Hazards/joker-red.png" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex';"><span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;line-height:1;font-size:68px">🃏</span></span>`,
+    'BJ': `<span class="vart" style="width:68px;height:68px;font-size:68px"><img src="Hazards/joker-black.png" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex';"><span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;line-height:1;font-size:68px">🃏</span></span>`,
   };
   const cards = st.matchCards.map((c, i) => {
     const isRed = c.color === 'red' ? 'red' : '';
@@ -4831,7 +4885,7 @@ function castleMatchScreen() {
     </div>
     </div>`;
   if (MATCH_POPUP && MATCH_POPUP.outOfAttempts) {
-    return `${board}<div class="match-modal"><div class="wo" style="max-width:360px"><div class="wo-stripe"></div><div class="wo-body" style="text-align:center"><div class="wo-eyebrow">Out of Attempts</div><h1>Thanks for <em>Playing!</em></h1><div class="note" style="margin-top:4px">Here's what you won this visit.</div><div class="treasure-prize">${matchVisitTallyLabel(st)}</div><div class="note" style="margin-top:8px">Any pairs you found are saved - come back another time to keep going.</div><button class="wo-btn amber" id="matchPopupContinueBtn" style="width:100%;margin-top:10px;pointer-events:auto">OK</button></div></div></div>`;
+    return `${board}<div class="match-modal"><div class="wo" style="max-width:360px"><div class="wo-stripe"></div><div class="wo-body" style="text-align:center"><div class="wo-eyebrow">Out of Attempts</div><h1>Thanks for <em>Playing!</em></h1><div class="note" style="margin-top:4px">Here's what you won this visit.</div><div>${matchVisitTallyLabel(st)}</div><div class="note" style="margin-top:8px">Any pairs you found are saved - come back another time to keep going.</div><button class="wo-btn amber" id="matchPopupContinueBtn" style="width:100%;margin-top:10px;pointer-events:auto">OK</button></div></div></div>`;
   }
   if (MATCH_POPUP) {
     return `${board}<div class="match-modal"><div class="wo" style="max-width:360px"><div class="wo-stripe"></div><div class="wo-body" style="text-align:center"><div class="wo-eyebrow">${MATCH_POPUP.jackpot ? 'Board Cleared' : 'Pair Matched'}</div><h1>${MATCH_POPUP.suitLabel} <em>${MATCH_POPUP.jackpot ? 'Jackpot!' : 'Pair!'}</em></h1>${MATCH_POPUP.cardHTML ? `<div style="display:flex;justify-content:center;margin:8px 0">${MATCH_POPUP.cardHTML}</div>` : ''}<div class="treasure-prize">${MATCH_POPUP.rewardLabel}</div>${MATCH_POPUP.boardCleared ? '<div class="note">Board cleared! The matching game is done for this run.</div>' : ''}<button class="wo-btn amber" id="matchPopupContinueBtn" style="width:100%;margin-top:10px;pointer-events:auto">Nice!</button></div></div></div>`;
@@ -5983,6 +6037,13 @@ function endTurn() {
     }
   }
 
+  // Reveal the opponent's whole current pool at the end of every turn - previously only a
+  // partial, difficulty-scaled fraction of their hand was ever shown (revealFraction), so it was
+  // possible to be staring at an opponent with most or all of their cards face-down indefinitely.
+  // Only cards they draw AFTER this point (below, via drawOpponentCards) go back to being hidden,
+  // so what's genuinely unknown is just this turn's fresh draw, not their whole hand.
+  BATTLE.oppPool.forEach(c => { c.revealed = true; });
+
   BATTLE.turn++;
   drawCards(RUN.drawPerTurn);
   resortHandAndRelink(RUN.handSortMode);
@@ -6048,7 +6109,7 @@ function winBattle(outlast) {
         // Weightless rewards bypass the item-cap check entirely.
         // No item reward is converted into coins; the awarded item is preserved.
         RUN.hero.items.push(wonItem.id);
-        DUNGEON_WIN_POPUP = { reward, itemName: wonItem.name };
+        DUNGEON_WIN_POPUP = { reward, itemName: wonItem.name, itemId: wonItem.id };
       }
       saveRun();
       render(castleDungeonScreen());
@@ -6466,6 +6527,16 @@ function battleScreen() {
         onmouseenter="if(event.buttons===1)updateDragSweep(${cardHandIdx})"><div>${rankLabel(c.rank)}</div><div>${c.suit}</div></div>`;
     }).join('');
     const bonusLine = itemBonusLineHTML(item, level);
+    // Lightning items roll a random power multiplier (25%-100%) each time they're loaded up to
+    // fire. Roll it as soon as the slot is active - not only once it's actually ready - and show
+    // it in the bonus section so the player knows what they're working with before committing cards.
+    let lightningRollLine = '';
+    if (item.kind === 'lightning' && !frozenState) {
+      BATTLE.lightningRolls = BATTLE.lightningRolls || {};
+      if (BATTLE.lightningRolls[slotKey] == null) BATTLE.lightningRolls[slotKey] = rollLightningMultiplier();
+      const rollPct = Math.round(BATTLE.lightningRolls[slotKey] * 100);
+      lightningRollLine = `<div class="itemBonusLine hoverTip" style="color:var(--lightning)" data-title="This roll is locked in for this Item until it fires - then a new one is rolled next time.">⚡ Rolled ${rollPct}% power</div>`;
+    }
     const drawNPreview = item.drawUsesCardCount ? (cards.length + (item.drawBonusFlat||0) + (item.drawPerLevel||0)*level) : (item.drawAmount ? item.drawAmount + (item.drawPerLevel||0)*level : 0);
     const drawBonusLine = (item.drawAmount || item.drawUsesCardCount) ? `<div class="itemBonusLine hoverTip" data-title="Draws ${drawNPreview} card${drawNPreview===1?'':'s'} immediately after this item is used.">Draw ${drawNPreview} card${drawNPreview===1?'':'s'}</div>` : '';
 
@@ -6481,6 +6552,7 @@ function battleScreen() {
       <div class="itemDivider"></div>
       <div class="itemCard-cards-sec">
         ${bonusLine}
+        ${lightningRollLine}
         ${drawBonusLine}
         ${item.unlockThreshold != null ? `<div class="itemBonusLine" style="color:#f5c451;font-weight:700;text-align:center">Draw 4 cards each turn once unlocked</div>` : ''}
         ${hypPreviewHTML}
@@ -6872,9 +6944,14 @@ function blacksmithScreen() {
     } else {
       btnHTML = `<button class="wo-btn gray" disabled style="padding:8px 12px;font-size:13px">Visit's extra upgrade used</button>`;
     }
+    // All three upgrade options - single card, whole rank, whole suit - use the exact same card
+    // shape and background so "every 7" or "every heart" reads as a card upgrade too, not a
+    // smaller, differently-styled afterthought next to the one that upgrades a single card.
     const leftVisual = opt.scope === 'card'
       ? `<div class="card ${suitColorClass(SUITS.find(s=>s.s===opt.suit)?.color, opt.suit)}"><div>${rankLabel(opt.rank)}</div><div style="font-size:16px">${opt.suit}</div></div>`
-      : `<span class="vart" style="width:38px;height:52px;font-size:22px;border:2px solid var(--blue);border-radius:5px;background:var(--white)">${opt.scope === 'rank' ? rankLabel(opt.rank) : opt.suit}</span>`;
+      : opt.scope === 'rank'
+        ? `<div class="card"><div>${rankLabel(opt.rank)}</div><div style="font-size:11px;letter-spacing:.02em">ALL</div></div>`
+        : `<div class="card ${suitColorClass(SUITS.find(s=>s.s===opt.suit)?.color, opt.suit)}"><div style="font-size:11px;letter-spacing:.02em">ALL</div><div style="font-size:16px">${opt.suit}</div></div>`;
     const badge = (amt) => amt > 0 ? `<span style="position:absolute;top:-6px;right:-6px;background:#2fae66;color:#fff;font-size:10px;font-weight:800;border-radius:10px;padding:1px 5px;box-shadow:0 0 0 2px #12163a">+${amt}</span>` : '';
     const leftMini = `<div style="position:relative;display:inline-block">${leftVisual}${badge(bonus)}</div>`;
     const rightMini = `<div style="position:relative;display:inline-block">${leftVisual}${badge(maxed ? bonus : bonus + SCOPE_TUNE_DAMAGE[opt.scope])}</div>`;
@@ -6926,7 +7003,7 @@ function blacksmithScreen() {
         <div style="font-weight:800;font-size:15px;text-align:center;margin:14px 0 8px">Card Upgrades</div>
         <div class="panel" style="max-width:420px;margin:0 auto">${rows}</div>
         <div style="font-weight:800;font-size:15px;text-align:center;margin:18px 0 8px">Item Tuning</div>
-        <div class="panel" style="max-width:420px;margin:0 auto">${equippedChecklist || '<div class="note">No items with a Bonus Level track equipped.</div>'}</div>
+        <div class="panel" style="max-width:500px;margin:0 auto">${equippedChecklist || '<div class="note">No items with a Bonus Level track equipped.</div>'}</div>
       </div>
     </div>
   `;
@@ -6977,18 +7054,24 @@ function treasureScreen(found) {
     </div>
   `;
 }
+// The image goes at /Transitions/world-<fromWorld>-complete.png (e.g. Transitions/world-1-complete.png
+// for the A1A Coastline screen, Transitions/world-2-complete.png for Alligator Alley, and so on -
+// one PNG per world, named after the world you're LEAVING). It renders at a wide, banner-like
+// aspect ratio; if the file isn't there yet, the slot just collapses so nothing breaks.
 function worldCompleteScreen(fromWorld, toWorld) {
   const fromName = WORLD_NAMES[fromWorld] || `World ${fromWorld}`;
   const toName = WORLD_NAMES[toWorld] || `World ${toWorld}`;
   return `
     <div class="treasure-modal">
-      <div class="wo">
+      <div class="wo worldCompleteWo" style="max-width:560px">
         <div class="wo-stripe"></div>
         <div class="wo-body" style="text-align:center">
-          <div class="wo-eyebrow">${fromName} Complete</div>
-          <h1>Route <em>Secured</em></h1>
-          <div class="wo-sub" style="margin:10px 0">The boss is out and the route's clear. Fort Lauderdale owes your fleet one. Fuel up, because ${toName} is rolling in hotter.</div>
-          <button class="wo-btn amber" id="advanceWorldBtn" style="width:100%;margin-top:8px">Head Into ${toName}</button>
+          <div class="wo-eyebrow">World Complete</div>
+          <h1 class="worldCompleteTitle">${fromName}</h1>
+          <div class="worldCompleteBanner">COMPLETE</div>
+          <div class="wo-sub" style="margin:14px 0">That boss didn't stand a chance. The route's clear and Fort Lauderdale owes your fleet one. Fuel up, because ${toName} is coming in hot.</div>
+          <img class="worldCompleteImg" src="Transitions/world-${fromWorld}-complete.png" alt="" onerror="this.style.display='none'">
+          <button class="wo-btn amber" id="advanceWorldBtn" style="width:100%;margin-top:14px;font-size:16px;padding:14px">Head Into ${toName}</button>
         </div>
       </div>
     </div>
@@ -8093,10 +8176,46 @@ function runUpgradeCount() {
     + sumLevels(RUN.itemLevels) + sumLevels(RUN.itemUsesLevels) + sumLevels(RUN.itemMaxCardsLevels) + sumLevels(RUN.itemUtilityLevels)
     + Object.values(RUN.itemKindOverride || {}).filter(Boolean).length;
 }
+// Read-only item card for the Run Dashboard - reuses the same standard item card visual as
+// everywhere else in the game, with a small tag line underneath for any tuning/uses/capacity
+// levels or a Chop Shop kind conversion, instead of a separate text-only summary row per item.
+function runDashboardItemCardHTML(id, index) {
+  const item = ITEMS[id];
+  if (!item) return '';
+  const tags = [];
+  const tuneLv = itemLevel(id); if (tuneLv) tags.push(`Tune Lv ${tuneLv}`);
+  const usesLv = itemUsesLevel(id); if (usesLv) tags.push(`Uses Lv ${usesLv}`);
+  const capLv = itemMaxCardsLevel(id); if (capLv) tags.push(`Capacity Lv ${capLv}`);
+  const utilLv = utilityLevel(id); if (utilLv) tags.push(`Utility Lv ${utilLv}`);
+  const kindOverride = RUN.itemKindOverride && (RUN.itemKindOverride[`${id}_${index}`] || RUN.itemKindOverride[id]);
+  if (kindOverride) tags.push(`Converted: ${kindOverride}`);
+  return `<div class="dealerCardPanel panel" style="width:141px;min-width:141px;max-width:141px;display:flex;flex-direction:column;align-items:center;padding:8px;box-sizing:border-box">
+    ${renderStandardItemCard(item, {})}
+    ${tags.length ? `<div class="note" style="margin-top:6px;font-size:10px;text-align:center">${tags.join(' · ')}</div>` : ''}
+  </div>`;
+}
 function runSummaryScreen() {
   if (!RUN) return metaScreen();
-  const rows = runUpgradeRows();
-  return `<div class="wo"><div class="wo-stripe"></div><div class="wo-body"><h1>Run <em>Dashboard</em></h1>${currencyBar()}<div class="runSummary">${rows.join('')}</div><button class="wo-btn teal" id="leaveRunSummaryBtn" style="width:100%;margin-top:10px">Back</button></div></div>`;
+  const statRows = [
+    ['Vehicle', HEROES[RUN.hero?.heroId]?.name || ''],
+    ['Item Capacity', `${equippedItemCount(RUN.hero)}/${RUN.itemCap}`],
+    ['Cards Drawn Per Turn', RUN.drawPerTurn],
+    ['Maximum Hand Size', RUN.handSize],
+    ['Gem Draw', `${1 + (META.levels.gem || 0) + (RUN.runUpgrades?.gemDraw || 0)} cards/gem`],
+  ];
+  // Compact stat bar (was 5 separate boxed rows) plus a real item card grid below showing every
+  // equipped item's actual visual, per Drew's ask - the old layout never showed the item cards
+  // themselves at all, just their tuning levels as plain text.
+  const statBarHTML = `<div class="panel" style="display:flex;flex-wrap:wrap;gap:14px;justify-content:center;padding:10px">${statRows.map(([label, value]) => `<div style="text-align:center"><div class="note" style="margin:0;font-size:10.5px">${label}</div><div style="font-weight:800;font-size:14px">${value}</div></div>`).join('')}</div>`;
+  const itemCardsHTML = RUN.hero.items.length
+    ? `<div class="popupItemRow" style="justify-content:center;margin-top:10px">${RUN.hero.items.map((id, i) => runDashboardItemCardHTML(id, i)).join('')}</div>`
+    : `<div class="note" style="margin-top:10px">No Items equipped.</div>`;
+  return `<div class="wo"><div class="wo-stripe"></div><div class="wo-body"><h1>Run <em>Dashboard</em></h1>${currencyBar()}
+    ${statBarHTML}
+    <div class="hdr" style="margin-top:14px;font-weight:800;font-size:14px"><span>Your Items</span><span>${equippedItemCount(RUN.hero)}/${RUN.itemCap}</span></div>
+    ${itemCardsHTML}
+    <button class="wo-btn teal" id="leaveRunSummaryBtn" style="width:100%;margin-top:14px">Back</button>
+  </div></div>`;
 }
 function devPanel() { return `<div class="devModal"><div class="wo"><div class="wo-stripe"></div><div class="wo-body"><div class="wo-eyebrow">Diagnostic Tools</div><h1><em>Developer Mode</em></h1><div style="display:flex;gap:8px;margin:10px 0"><button class="wo-btn amber" id="devCoinsBtn">+500 Coins</button><button class="wo-btn purple" id="devMaxBtn">Max Resources</button></div><div class="devGrid">${Object.keys(ITEMS).map(id => `<button class="devItem" data-devitem="${id}"><b>${ITEMS[id].name}</b><br><span class="note">${id}</span></button>`).join('')}</div><button class="wo-btn gray" id="devCloseBtn" style="width:100%;margin-top:12px">Close</button></div></div></div>`; }
 function bindDev() {

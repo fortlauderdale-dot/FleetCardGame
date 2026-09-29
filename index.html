@@ -249,8 +249,16 @@
   .tooltip{display:none;position:absolute;bottom:120%;left:50%;transform:translateX(-50%);z-index:90;
     background:#000000 !important;color:#ffffff !important;font-family:var(--mono);font-size:10.5px;line-height:1.5;
     padding:7px 10px;border-radius:6px;white-space:nowrap;z-index:5;box-shadow:0 0 8px rgba(31,182,166,0.4);border:1px solid #1fb6a6;text-align:left}
-  .mapnode{position:relative;width:48px;height:48px;border-radius:50%;
+  .mapnode{position:relative;width:48px;height:48px;border-radius:50%;overflow:hidden;
     font-size:19px;display:flex;align-items:center;justify-content:center;border:2px solid;background:var(--white)}
+  /* Per-image map-node zoom: several AI-generated icons/opponent art have a lot of empty
+     transparent margin baked into the square canvas, so the subject reads small inside the round
+     node badge even though the art box itself fills the circle. Scaling the <img> (not the .vart
+     wrapper) zooms in on the subject while the node badge's overflow:hidden above keeps it clipped
+     to the circle instead of spilling outside it. Tune these per image as needed. */
+  .mapnode img[src*="runaway-kite"]{transform:scale(1.35)}
+  .mapnode img[src*="node-fleet-compound"]{transform:scale(2.1)}
+  .mapnode img[src*="node-dealership"]{transform:scale(2.1)}
   .mapnode.future{background:#8a8f9e;border-color:#8a8f9e;color:#d4d7e0;cursor:default;opacity:.6}
   .mapnode.farfuture{background:#8a8f9e;border-color:#8a8f9e;color:#d4d7e0;cursor:default;opacity:.4}
   .mapnode.avail{background:var(--white);border-color:var(--amber);box-shadow:0 0 0 5px #1fb6a633;cursor:pointer}
@@ -496,6 +504,13 @@
   .fleetPokerOutcome.push{color:var(--dim)}
   .fleetPokerShowdownRow{padding:10px 0;border-top:1px dashed rgba(255,255,255,0.15)}
   .fleetPokerShowdownRow:first-child{border-top:none}
+  .fleetAuctionBidders{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;padding-top:10px}
+  .fleetAuctionBidder{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:6px 12px;text-align:center;cursor:help}
+  .fleetAuctionBidderName{font-size:12px;font-weight:700;color:var(--ink)}
+  .fleetAuctionBidderChips{font-size:11.5px;color:var(--dim);margin-top:2px}
+  .fleetAuctionResultRow{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-top:1px dashed rgba(255,255,255,0.15);font-size:13px}
+  .fleetAuctionResultRow:first-child{border-top:none}
+  .fleetAuctionResultTotals{margin-top:10px;padding-top:10px;border-top:2px solid rgba(31,182,166,0.3);font-size:13.5px;font-weight:700}
   .fleetAuctionLots{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;padding-top:10px}
   .fleetAuctionLot{background:rgba(255,255,255,0.04);border:2px solid rgba(31,182,166,0.25);border-radius:10px;padding:14px 10px;min-width:170px;text-align:center;transition:box-shadow .15s ease,border-color .15s ease,opacity .15s ease}
   .fleetAuctionLot.active{border-color:var(--amber);box-shadow:0 0 12px rgba(255,196,77,0.4)}
@@ -2960,24 +2975,45 @@ function generateMap() {
   function makeOpponentForRow(row) {
     return scaleHighwayOpponent(nextHighwayRegular(), row);
   }
+  // Each highway row renders across up to 3 vertical lanes (0=top, 1=middle, 2=bottom). A row's
+  // node count no longer pins it to a fixed lane (previously a 1-node row was ALWAYS lane 0/top
+  // and a 2-node row was ALWAYS lanes 0+1, which made every generated map trace nearly the same
+  // top-heavy silhouette run after run). Lanes are now picked per row per generation: a 1-node row
+  // leans middle but can land top or bottom; a 2-node row usually keeps the middle lane (so the
+  // middle lane reads as the map's main through-line) plus one random side, and occasionally skips
+  // the middle entirely to let a path run straight from the top lane to the bottom lane.
+  function pickLanesForRow(k) {
+    if (k >= 3) return [0, 1, 2];
+    if (k === 1) {
+      const roll = Math.random();
+      return [roll < 0.6 ? 1 : roll < 0.8 ? 0 : 2];
+    }
+    if (Math.random() < 0.15) return [0, 2];
+    return Math.random() < 0.5 ? [0, 1] : [1, 2];
+  }
+  const rowLanes = rowCounts.map(k => pickLanesForRow(k));
+  // The Fleet Compound is the run's central hub - keep it anchored on the middle lane (except
+  // World 3, whose castle row is forced to all 3 lanes above) so the "main line" reliably runs
+  // through it rather than it randomly landing on a top/bottom detour.
+  if (!isWorld3) rowLanes[castleRow] = [1];
   for (let r=0;r<rowCounts.length;r++) {
     const row=[];
     for(let c=0;c<rowCounts[r];c++) {
-      row.push({type:'pending', opponent: makeOpponentForRow(r)});
+      row.push({type:'pending', opponent: makeOpponentForRow(r), lane: rowLanes[r][c]});
     }
     nodes.push(row);
   }
   nodes[0][0].type='battle';
   nodes[1].forEach(n=>n.type='battle');
-  nodes[2][0]={type:'shop'};
-  nodes[castleRow][castleCol]={type:'castle'};
+  nodes[2][0]={type:'shop', lane:nodes[2][0].lane};
+  nodes[castleRow][castleCol]={type:'castle', lane:nodes[castleRow][castleCol].lane};
   const eligible=[];
   for(let r=0;r<nodes.length;r++) for(let c=0;c<nodes[r].length;c++)
     if(nodes[r][c].type==='pending') eligible.push({r,c});
   shuffle(eligible);
-  const needBattles=29-3; 
+  const needBattles=29-3;
   eligible.slice(0,needBattles).forEach(({r,c})=> {
-    nodes[r][c]={type:'battle', opponent: makeOpponentForRow(r)};
+    nodes[r][c]={type:'battle', opponent: makeOpponentForRow(r), lane:nodes[r][c].lane};
   });
   // The upgrade shops (Tuning Garage, Chop Shop, Overdrive Bay) are one-time stops per world -
   // hitting the same one twice on a route felt broken. The Dealership can show up twice since
@@ -3001,31 +3037,37 @@ function generateMap() {
   eligible.slice(needBattles).forEach(({r,c})=>{
     const t=pickNodeTypeCapped();
     if (t==='battle') {
-      nodes[r][c]={type:'battle', opponent: makeOpponentForRow(r)};
+      nodes[r][c]={type:'battle', opponent: makeOpponentForRow(r), lane:nodes[r][c].lane};
     } else {
-      nodes[r][c]={type:t};
+      nodes[r][c]={type:t, lane:nodes[r][c].lane};
     }
   });
   const bossTemplate = highwayPools.boss;
-  nodes.push([{type:'battle', opponent: scaleMonsterForNewWorld(bossTemplate, worldMultiplier * 1.3, 6)}]);
+  nodes.push([{type:'battle', opponent: scaleMonsterForNewWorld(bossTemplate, worldMultiplier * 1.3, 6), lane:1}]);
+  // Edges are now built off each node's lane (top/middle/bottom) rather than its raw array index,
+  // so a path genuinely follows the map's visual geometry: adjacent-lane connections are common,
+  // and a real (less frequent) lane-2 jump lets a route run straight from the top lane to the
+  // bottom lane, skipping the middle - previously only a small +-2 *index* jump was possible, which
+  // rarely lined up with an actual top-to-bottom lane gap.
   for(let r=0;r<nodes.length-1;r++){
     const cur=nodes[r], next=nodes[r+1];
     const add=(a,b)=>{if(!edges.some(e=>e.fromRow===r&&e.fromCol===a&&e.toRow===r+1&&e.toCol===b))edges.push({fromRow:r,fromCol:a,toRow:r+1,toCol:b});};
-    if(r===0){ for(let b=0;b<next.length;b++) add(0,b); }
-    else if(cur.length===1){ for(let b=0;b<next.length;b++) add(0,b); }
+    if(cur.length===1){ for(let b=0;b<next.length;b++) add(0,b); }
     else if(next.length===1){ cur.forEach((_,a)=>add(a,0)); }
     else {
-      const forwardRatio = (next.length-1)/(cur.length-1);
-      cur.forEach((_,a)=>{
-        const target = Math.round(a*forwardRatio);
-        const choices=new Set([target]);
-        if(Math.random()<0.5 && target>0) choices.add(target-1);
-        if(Math.random()<0.5 && target<next.length-1) choices.add(target+1);
-        if(Math.random()<0.15) choices.add(Math.max(0,Math.min(next.length-1, target+(Math.random()<0.5?-2:2))));
-        choices.forEach(b=>add(a,b));
+      cur.forEach((n1,a)=>{
+        const byDist = next.map((n2,b)=>({b,dist:Math.abs(n2.lane-n1.lane)})).sort((x,y)=>x.dist-y.dist);
+        add(a, byDist[0].b);
+        if(byDist[1] && byDist[1].dist<=1 && Math.random()<0.55) add(a, byDist[1].b);
+        const jump = byDist.find(cd=>cd.dist>=2);
+        if(jump && Math.random()<0.22) add(a, jump.b);
       });
-      const backwardRatio = (cur.length-1)/(next.length-1);
-      for(let b=0;b<next.length;b++) if(!edges.some(e=>e.fromRow===r&&e.toCol===b)) add(Math.round(b*backwardRatio),b);
+      next.forEach((n2,b)=>{
+        if(!edges.some(e=>e.fromRow===r&&e.toCol===b)){
+          const byDist=cur.map((n1,a)=>({a,dist:Math.abs(n1.lane-n2.lane)})).sort((x,y)=>x.dist-y.dist);
+          add(byDist[0].a, b);
+        }
+      });
     }
   }
   // Draw two elites without repeats from the world's elite pool, so a world with more than
@@ -3038,7 +3080,7 @@ function generateMap() {
       const eliteBase = shuffledElites[idx % shuffledElites.length];
       const eliteOpp = scaleHighwayOpponent(eliteBase, eliteRow);
       eliteOpp.name = `${eliteBase.name} [Elite]`;
-      nodes[eliteRow][col] = { type: 'battle', opponent: eliteOpp };
+      nodes[eliteRow][col] = { type: 'battle', opponent: eliteOpp, lane:nodes[eliteRow][col].lane };
     }
   });
   // Repair pass: a player should never fight the same opponent twice in a row they can
@@ -3099,7 +3141,7 @@ function generateMap() {
       }
       if (forceEligible.length) {
         const { r, c } = forceEligible[Math.floor(Math.random() * forceEligible.length)];
-        nodes[r][c] = { type: 'match_hazard' };
+        nodes[r][c] = { type: 'match_hazard', lane:nodes[r][c].lane };
       }
     }
   }
@@ -3280,24 +3322,24 @@ const CASTLE_THIRD = { id:'castleOverlord', name:'Compound Overlord', tier:4, ic
 let DUNGEON_WIN_POPUP = null; 
 function castleMenuScreen(message='') {
   return `${noticeHTML()}
-  <div class="wo">
+  <div class="wo" style="max-width:480px;margin-left:auto;margin-right:auto">
     <div class="wo-stripe"></div><div class="wo-body">
       <h1 style="text-align:center">Fleet <em>Compound</em></h1>
       ${currencyBar()}
       ${message ? `<div class="panel"><div class="note">${message}</div></div>` : ''}
       <div class="castleMenu">
-        <button class="castleBtn castleBtn-exit" id="leaveCastleBtn" style="background:#ffc44d;color:#12163a;border-color:#ffc44d;font-weight:800">Back to World Map.</button>
-        <button class="castleBtn" id="castleDungeonNavBtn">Visit the Fleet Compound Dungeon.</button>
-        <button class="castleBtn" id="castleWizardNavBtn" ${RUN.castleState?.matchPlayed ? 'disabled' : ''}>${RUN.castleState?.matchPlayed ? 'Matching Game Played' : 'Visit the Fleet Carnival Matching Game.'}</button>
-        <button class="castleBtn" id="castlePlinkoNavBtn" ${RUN.castleState?.plinkoPlayed ? 'disabled' : ''}>${RUN.castleState?.plinkoPlayed ? 'Plinko Board Played' : 'Visit the Fleet Plinko Board.'}</button>
-        <button class="castleBtn" id="castleBlackjackNavBtn" ${RUN.castleState?.blackjackPlayed ? 'disabled' : ''}>${RUN.castleState?.blackjackPlayed ? 'Blackjack Played' : 'Visit Fleet Blackjack.'}</button>
-        <button class="castleBtn" id="castlePokerNavBtn" ${RUN.castleState?.pokerPlayed ? 'disabled' : ''}>${RUN.castleState?.pokerPlayed ? 'Poker Played' : 'Visit Fleet Poker.'}</button>
-        <button class="castleBtn" id="castleAuctionNavBtn" ${RUN.castleState?.auctionPlayed ? 'disabled' : ''}>${RUN.castleState?.auctionPlayed ? 'Auction Played' : 'Visit the Fleet Auction.'}</button>
-        <button class="castleBtn" id="castleBlacksmithNavBtn">Visit the Tuning Garage.</button>
-        <button class="castleBtn" id="castleChopShopNavBtn">Visit the Chop Shop.</button>
-        <button class="castleBtn" id="castleOverdriveNavBtn">Visit the Overdrive Bay.</button>
-        <button class="castleBtn" id="castleShopNavBtn">Visit the Dealership.</button>
-        <button class="castleBtn" id="castleInnNavBtn">Visit the Body Shop.</button>
+        <button class="castleBtn castleBtn-exit" id="leaveCastleBtn" style="background:#ffc44d;color:#12163a;border-color:#ffc44d;font-weight:800">Back to World Map</button>
+        <button class="castleBtn" id="castleDungeonNavBtn">Visit the Fleet Compound Dungeon</button>
+        <button class="castleBtn" id="castleWizardNavBtn" ${RUN.castleState?.matchPlayed ? 'disabled' : ''}>${RUN.castleState?.matchPlayed ? 'Matching Game Played' : 'Visit the Fleet Carnival Matching Game'}</button>
+        <button class="castleBtn" id="castlePlinkoNavBtn" ${RUN.castleState?.plinkoPlayed ? 'disabled' : ''}>${RUN.castleState?.plinkoPlayed ? 'Plinko Board Played' : 'Visit the Fleet Plinko Board'}</button>
+        <button class="castleBtn" id="castleBlackjackNavBtn" ${RUN.castleState?.blackjackPlayed ? 'disabled' : ''}>${RUN.castleState?.blackjackPlayed ? 'Blackjack Played' : 'Visit Fleet Blackjack'}</button>
+        <button class="castleBtn" id="castlePokerNavBtn" ${RUN.castleState?.pokerPlayed ? 'disabled' : ''}>${RUN.castleState?.pokerPlayed ? 'Poker Played' : 'Visit Fleet Poker'}</button>
+        <button class="castleBtn" id="castleAuctionNavBtn" ${RUN.castleState?.auctionPlayed ? 'disabled' : ''}>${RUN.castleState?.auctionPlayed ? 'Auction Played' : 'Visit the Fleet Auction'}</button>
+        <button class="castleBtn" id="castleBlacksmithNavBtn">Visit the Tuning Garage</button>
+        <button class="castleBtn" id="castleChopShopNavBtn">Visit the Chop Shop</button>
+        <button class="castleBtn" id="castleOverdriveNavBtn">Visit the Overdrive Bay</button>
+        <button class="castleBtn" id="castleShopNavBtn">Visit the Dealership</button>
+        <button class="castleBtn" id="castleInnNavBtn">Visit the Body Shop</button>
       </div>
     </div>
   </div>
@@ -3531,13 +3573,13 @@ const FLEET_PLINKO_CONFIG = {
   pegRows: 10,
   pegsPerRow: 12,
   dropSlotFractions: [0.2, 0.5, 0.8],
-  gravity: 0.20,
+  // Dropped 25% (was 0.20) per Drew's request - a slower fall gives each drop more visible hang
+  // time over the pegs, which reads as more suspenseful than the chip just blipping straight down.
+  gravity: 0.15,
   bounce: 0.62,
   horizontalFriction: 0.995,
   chipRadius: 7,
   dropStartY: 24,
-  riskMultiplier: 1.0,
-  riskIncrease: 0.10,
   // The side walls used to sit a fixed 8px from the board edge regardless of where the peg field
   // actually started, leaving a soft pocket between the wall and the first peg column where a
   // chip could get batted back and forth (wall pushes it in, the nearest peg immediately pushes
@@ -3569,7 +3611,6 @@ function openFleetPlinko(options) {
         <div id="fleetPlinkoStats">
           <div class="fleet-plinko-stat"><div class="fleet-plinko-stat-label">Current Haul</div><div class="fleet-plinko-stat-value" id="fleetPlinkoHaul">0</div></div>
           <div class="fleet-plinko-stat"><div class="fleet-plinko-stat-label">Drops</div><div class="fleet-plinko-stat-value" id="fleetPlinkoDrops">0</div></div>
-          <div class="fleet-plinko-stat"><div class="fleet-plinko-stat-label">Risk</div><div class="fleet-plinko-stat-value" id="fleetPlinkoRisk">1.0x</div></div>
         </div>
         <div id="fleetPlinkoCanvasWrap"><canvas id="fleetPlinkoCanvas" width="${FLEET_PLINKO_CONFIG.boardWidth}" height="${FLEET_PLINKO_CONFIG.boardHeight}"></canvas></div>
         <div id="fleetPlinkoMessage">Pick a drop slot to send a chip down the board.</div>
@@ -3600,7 +3641,6 @@ function openFleetPlinko(options) {
   const message = document.getElementById('fleetPlinkoMessage');
   const haulDisplay = document.getElementById('fleetPlinkoHaul');
   const dropsDisplay = document.getElementById('fleetPlinkoDrops');
-  const riskDisplay = document.getElementById('fleetPlinkoRisk');
   const rewardList = document.getElementById('fleetPlinkoRewardList');
 
   const W = FLEET_PLINKO_CONFIG.boardWidth;
@@ -3610,6 +3650,16 @@ function openFleetPlinko(options) {
   const slotTop = H - slotHeight;
   const sidePadding = 22;
   const slotWidth = (W - sidePadding * 2) / slotCount;
+  // Real physical walls between the prize buckets, per Drew's ask - previously a chip's landing
+  // bucket was decided purely by an x-position check the instant it reached slotTop, with nothing
+  // drawn to show why it counted as one bucket rather than the next. These posts stick up above
+  // the bucket tops and actually collide with the chip (see collideDividers in runPhysics), so the
+  // chip visibly can't drift across a bucket boundary once it's down here, and it settles resting
+  // on the bucket floor instead of vanishing the moment it reaches the top of the bucket row.
+  const dividerThickness = 4;
+  const dividerHeight = 36;
+  const dividerXs = [];
+  for (let i = 1; i < slotCount; i++) dividerXs.push(sidePadding + i * slotWidth);
 
   // Full-width peg field: every row spans the entire board edge-to-edge (alternating rows are
   // offset by half a gap to stagger, same idea as a real Plinko board), instead of the old
@@ -3672,7 +3722,6 @@ function openFleetPlinko(options) {
   function updateUI() {
     haulDisplay.textContent = formatHaul();
     dropsDisplay.textContent = state.drops;
-    riskDisplay.textContent = state.round === 0 ? '1.0x' : (FLEET_PLINKO_CONFIG.riskMultiplier + state.round * FLEET_PLINKO_CONFIG.riskIncrease).toFixed(1) + 'x';
     rewardList.innerHTML = state.rewardHistory.map(entry => `<div class="fleet-plinko-reward-pill">${entry}</div>`).join('');
   }
   function setMessage(text, type) { message.textContent = text; message.className = ''; if (type) message.classList.add(type); }
@@ -3718,6 +3767,16 @@ function openFleetPlinko(options) {
         ctx.fillText(words.slice(1).join(' '), x + slotWidth / 2, slotTop + 47);
       } else ctx.fillText(slot.label, x + slotWidth / 2, slotTop + 40);
     }
+    // Divider posts between buckets - drawn as small walls (matching the peg palette) that stick
+    // up above the bucket tops so it's visually obvious the chip can't cross between buckets once
+    // it's down in this zone. They double as real collision walls in runPhysics.
+    for (const dx of dividerXs) {
+      const postTop = slotTop - dividerHeight;
+      ctx.fillStyle = 'rgba(191,238,232,0.9)';
+      ctx.fillRect(dx - dividerThickness / 2, postTop, dividerThickness, dividerHeight + slotHeight - 4);
+      ctx.beginPath(); ctx.arc(dx, postTop, dividerThickness, 0, Math.PI * 2);
+      ctx.fillStyle = '#e7fbf8'; ctx.fill();
+    }
     // Clearly flag the 3 drop lanes at the top of the board so it's obvious which button drops
     // from where, instead of leaving the player to guess at an unmarked gap above the pegs.
     const dropLabels = ['L', 'C', 'R'];
@@ -3750,6 +3809,7 @@ function openFleetPlinko(options) {
   function startDrop(slotIndex) {
     if (state.animating || state.finished) return;
     state.animating = true; state.drops++; state.round++; state.displayRound = state.round; state.currentSlot = null;
+    state.physicsFrames = 0;
     const dropX = dropSlotX(slotIndex);
     state.chip = { x: dropX + (Math.random() - 0.5) * 14, y: FLEET_PLINKO_CONFIG.dropStartY, vx: (Math.random() - 0.5) * 1.4, vy: 0, r: FLEET_PLINKO_CONFIG.chipRadius };
     hideButtons();
@@ -3771,6 +3831,22 @@ function openFleetPlinko(options) {
   function clampToWalls(chip) {
     if (chip.x - chip.r < wallInset) chip.x = wallInset + chip.r;
     if (chip.x + chip.r > W - wallInset) chip.x = W - wallInset - chip.r;
+  }
+  // Bucket-divider collision - only matters once the chip has dropped low enough to reach the
+  // divider posts. Pushes the chip back to whichever side of the post it was already on and
+  // kills its sideways speed, so once a chip has committed to a bucket it settles there instead
+  // of bouncing back and forth across the boundary.
+  const dividerZoneTop = slotTop - dividerHeight;
+  function collideDividers(chip) {
+    if (chip.y + chip.r < dividerZoneTop) return;
+    const halfW = dividerThickness / 2 + chip.r;
+    for (const dx0 of dividerXs) {
+      const dx = chip.x - dx0;
+      if (Math.abs(dx) < halfW) {
+        chip.x = dx0 + (dx < 0 ? -halfW : halfW);
+        chip.vx *= -0.3;
+      }
+    }
   }
   function runPhysics() {
     const chip = state.chip;
@@ -3803,7 +3879,15 @@ function openFleetPlinko(options) {
     // Re-clamp after the peg pass so a peg correction can never shove the chip back out past a
     // wall it just bounced off in this same frame.
     clampToWalls(chip);
-    if (chip.y >= slotTop - chip.r) { settleChip(); return; }
+    collideDividers(chip);
+    // The chip now actually falls into its bucket and rests on the floor there, instead of being
+    // credited and vanishing the instant it reaches the top of the bucket row - the divider posts
+    // (collideDividers above) keep it boxed inside whichever bucket it entered on the way down.
+    // A frame-count safety valve forces a settle if a chip ever gets stuck oscillating between a
+    // peg and a divider post right at the edge of the bucket zone for an unreasonably long time,
+    // so a rare unlucky bounce pattern can never leave the board stuck forever.
+    state.physicsFrames = (state.physicsFrames || 0) + 1;
+    if (chip.y >= H - chip.r - 4 || state.physicsFrames > 900) { chip.y = H - chip.r - 4; drawBoard(); settleChip(); return; }
     drawBoard();
     state.animationId = requestAnimationFrame(runPhysics);
   }
@@ -3820,9 +3904,7 @@ function openFleetPlinko(options) {
     handleReward(slot);
   }
   function handleReward(slot) {
-    const multiplier = FLEET_PLINKO_CONFIG.riskMultiplier + (state.round - 1) * FLEET_PLINKO_CONFIG.riskIncrease;
-    let amount = slot.amount || 0;
-    if (slot.type === 'coins') amount = Math.max(1, Math.round(amount * multiplier));
+    const amount = slot.amount || 0;
     if (slot.type === 'coins') { state.haul.coins += amount; state.rewardHistory.push(`+${amount} Coins`); }
     else if (slot.type === 'gems') { state.haul.gems += amount; state.rewardHistory.push(`+${amount} Gem${amount === 1 ? '' : 's'}`); }
     else if (slot.type === 'fuel') { state.haul.fuel += amount; state.rewardHistory.push(`+${amount} Fuel`); }
@@ -4402,8 +4484,10 @@ const FLEET_AUCTION_CONFIG = {
   inspectCost: 5,
   bidIncrement: 5,
   bidders: [
-    { id: 'steady', name: 'Steady Eddie', baseCapMultiplier: 2.0, revealedCapMultiplier: 2.0 },
-    { id: 'bigspender', name: 'Big Spender', baseCapMultiplier: 2.5, revealedCapMultiplier: 4.0 },
+    { id: 'steady', name: 'Steady Eddie', baseCapMultiplier: 2.0, revealedCapMultiplier: 2.0, chipsRange: [70, 110],
+      style: "Bids cautiously - won't chase a lot past about double its starting value, revealed or not." },
+    { id: 'bigspender', name: 'Big Spender', baseCapMultiplier: 2.5, revealedCapMultiplier: 4.0, chipsRange: [120, 180],
+      style: 'Plays it safer on a mystery lot, but pushes hard once a lot is revealed - up to 4x its starting value.' },
   ],
 };
 function auctionLotPool() {
@@ -4432,6 +4516,9 @@ function applyAuctionHaul(haul) {
   if (haul.itemIds && haul.itemIds.length) {
     for (const id of haul.itemIds) { if (ITEMS[id]) { RUN.hero.items.push(id); parts.push(`${ITEMS[id].name} added to your Fleet`); } }
   }
+  // The Fleet Auction now shows its own full results screen (contents/outcome per lot, coins spent
+  // vs. coins won) before returning here, so this top-bar notice only needs to be a short recap -
+  // it no longer has to carry the whole explanation on its own the way it used to.
   RUN.lastNotice = parts.length ? `Auction lots won: ${parts.join(', ')}.` : 'Auction: no lots won this round.';
   saveRun();
   render(RETURN_TO_CASTLE_MENU ? castleMenuScreen() : mapScreen());
@@ -4447,6 +4534,13 @@ function openFleetAuction(options) {
   RUN.castleState.auctionPlayed = true;
   saveRun();
 
+  // Each computer bidder gets its own real coin pool for this auction (randomized within its
+  // configured range) that actually depletes when it wins a lot - previously "how much can the
+  // computer afford" was an invisible multiplier with no pool behind it at all, which is why there
+  // was no way to know what you were bidding against.
+  const bidderChips = {};
+  for (const b of FLEET_AUCTION_CONFIG.bidders) bidderChips[b.id] = Math.round(b.chipsRange[0] + Math.random() * (b.chipsRange[1] - b.chipsRange[0]));
+
   const state = {
     lots: auctionLotPool().map(reward => {
       const startBid = startingBidFor(reward);
@@ -4454,6 +4548,8 @@ function openFleetAuction(options) {
     }),
     lotIndex: 0,
     haul: { coins: 0, gems: 0, fuel: 0, itemIds: [] },
+    bidderChips,
+    totalSpent: 0,
     finished: false,
   };
 
@@ -4467,6 +4563,7 @@ function openFleetAuction(options) {
       <div class="wo-body">
         <h1 style="margin:2px 0 0;text-align:center">Fleet <em>Auction</em></h1>
         <div class="note" style="margin-top:2px;text-align:center">Three mystery lots. Inspect before you bid, or take the gamble blind.</div>
+        <div id="fleetAuctionBidders" class="fleetAuctionBidders"></div>
         <div id="fleetAuctionLots" class="fleetAuctionLots"></div>
         <div id="fleetAuctionMessage" style="min-height:22px;text-align:center;font-size:13px;color:var(--dim)"></div>
         <div id="fleetAuctionControls" style="display:flex;justify-content:center;gap:10px;padding-top:10px;flex-wrap:wrap"></div>
@@ -4479,20 +4576,36 @@ function openFleetAuction(options) {
   document.body.appendChild(overlay);
 
   const lotsWrap = document.getElementById('fleetAuctionLots');
+  const biddersWrap = document.getElementById('fleetAuctionBidders');
   const message = document.getElementById('fleetAuctionMessage');
   const controls = document.getElementById('fleetAuctionControls');
   const exitBtn = document.getElementById('fleetAuctionExitBtn');
 
-  function bidderName(id) { const b = FLEET_AUCTION_CONFIG.bidders.find(x => x.id === id); return b ? b.name : id; }
+  function bidderDef(id) { return FLEET_AUCTION_CONFIG.bidders.find(x => x.id === id); }
+  function bidderName(id) { const b = bidderDef(id); return b ? b.name : id; }
   function rewardLabelFor(reward) { return reward.type === 'item' ? `🚚 ${reward.label}` : reward.label; }
   function currentLot() { return state.lots[state.lotIndex]; }
+
+  // Shows each computer bidder's name, live remaining coin pool, and a one-line description of
+  // how it decides whether to raise - so it's clear who you're bidding against and why, instead
+  // of an invisible cap with no explanation.
+  function renderBidders() {
+    biddersWrap.innerHTML = FLEET_AUCTION_CONFIG.bidders.map(b => `
+      <div class="fleetAuctionBidder hoverTip" data-title="${b.style}">
+        <div class="fleetAuctionBidderName">${b.name}</div>
+        <div class="fleetAuctionBidderChips">${ICON.coin} ${state.bidderChips[b.id]} coins left</div>
+      </div>`).join('');
+  }
 
   function renderLots() {
     lotsWrap.innerHTML = state.lots.map((lot, i) => {
       const isActive = i === state.lotIndex && !lot.resolved;
-      const contents = lot.revealed ? rewardLabelFor(lot.reward) : '???';
+      // A lot's contents now show once it's resolved even if it was never inspected - passing on
+      // a lot or losing it to a computer bidder used to leave it a permanent "???", so there was
+      // no way to ever learn what you walked away from or lost out on.
+      const contents = (lot.revealed || lot.resolved) ? rewardLabelFor(lot.reward) : '???';
       const status = lot.resolved
-        ? (lot.won ? 'Won!' : (lot.highBidder ? `Went to ${bidderName(lot.highBidder)}` : 'Passed'))
+        ? (lot.won ? `Won for ${lot.currentBid} coins!` : (lot.highBidder ? `Went to ${bidderName(lot.highBidder)} for ${lot.currentBid} coins` : 'Passed'))
         : (lot.highBidder ? `High bid: ${lot.currentBid} (${lot.highBidder === 'player' ? 'You' : bidderName(lot.highBidder)})` : `Starting bid: ${lot.startBid}`);
       return `<div class="fleetAuctionLot ${isActive ? 'active' : ''} ${lot.resolved ? 'resolved' : ''}">
         <div class="fleetAuctionLotTitle">Lot ${i + 1}</div>
@@ -4500,6 +4613,7 @@ function openFleetAuction(options) {
         <div class="fleetAuctionLotStatus">${status}</div>
       </div>`;
     }).join('');
+    renderBidders();
   }
   function renderControls() {
     const lot = currentLot();
@@ -4533,7 +4647,10 @@ function openFleetAuction(options) {
       if (lot.highBidder === bidder.id) continue;
       const cap = lot.startBid * (lot.revealed ? bidder.revealedCapMultiplier : bidder.baseCapMultiplier);
       const nextBid = lot.currentBid + FLEET_AUCTION_CONFIG.bidIncrement;
-      if (nextBid <= cap) { if (!best || nextBid > best.nextBid) best = { bidder, nextBid }; }
+      // A bidder now also needs the coins in its own remaining pool to raise, not just to stay
+      // under its willingness-to-pay cap - previously the cap was the only limit, so a bidder
+      // could in theory keep outbidding forever with no real budget behind it.
+      if (nextBid <= cap && nextBid <= state.bidderChips[bidder.id]) { if (!best || nextBid > best.nextBid) best = { bidder, nextBid }; }
     }
     if (best) { lot.currentBid = best.nextBid; lot.highBidder = best.bidder.id; return best.bidder; }
     return null;
@@ -4553,14 +4670,22 @@ function openFleetAuction(options) {
   function doPass() {
     const lot = currentLot();
     if (!lot) return;
-    lot.resolved = true; lot.won = false;
-    message.textContent = lot.highBidder ? `Lot ${state.lotIndex + 1} went to ${bidderName(lot.highBidder)}.` : `Lot ${state.lotIndex + 1} passed.`;
+    lot.resolved = true; lot.won = false; lot.revealed = true;
+    if (lot.highBidder) {
+      // The winning bidder actually pays for the lot out of its own pool now, so its remaining
+      // coins shown for the rest of the auction reflect what it really has left to spend.
+      state.bidderChips[lot.highBidder] = Math.max(0, state.bidderChips[lot.highBidder] - lot.currentBid);
+      message.textContent = `Lot ${state.lotIndex + 1} went to ${bidderName(lot.highBidder)} for ${lot.currentBid} coins - it was ${rewardLabelFor(lot.reward)}.`;
+    } else {
+      message.textContent = `Lot ${state.lotIndex + 1} passed - it was ${rewardLabelFor(lot.reward)}.`;
+    }
     playSfx('lose');
     renderLots();
-    setTimeout(advanceLot, 700);
+    setTimeout(advanceLot, 900);
   }
   function winLot(lot) {
     RUN.chips -= lot.currentBid;
+    state.totalSpent += lot.currentBid;
     lot.resolved = true; lot.won = true; lot.revealed = true;
     if (lot.reward.type === 'item') state.haul.itemIds.push(lot.reward.itemId);
     else if (lot.reward.type === 'coins') state.haul.coins += lot.reward.amount;
@@ -4576,17 +4701,52 @@ function openFleetAuction(options) {
     message.textContent = '';
     renderLots(); renderControls();
   }
+  // Auction Results screen - Drew's report: he won a bidding war (paying 43 coins total) but the
+  // only feedback was a passing top-bar notice reading "Auction lots won: 30 coins," which read
+  // as if he'd made money when he'd actually netted a 13-coin loss on that lot, and the auction
+  // never showed what he'd actually paid or what any of the 3 lots even were. This screen replaces
+  // the old instant-close-and-return-to-Compound behavior with a real summary: every lot's
+  // contents and outcome, what was actually paid, and a coins-in/coins-out breakdown so the math
+  // is never a mystery again.
   function finishAuction() {
     if (state.finished) return;
     state.finished = true;
     controls.innerHTML = '';
-    message.textContent = 'Auction complete.';
-    setTimeout(() => { overlay.remove(); onComplete(state.haul); }, 700);
+    message.textContent = '';
+    const rows = state.lots.map((lot, i) => {
+      const contents = rewardLabelFor(lot.reward);
+      let outcome;
+      if (lot.won) outcome = `<span style="color:var(--green)">Won for ${lot.currentBid} coins</span>`;
+      else if (lot.highBidder) outcome = `<span style="color:var(--dim)">Went to ${bidderName(lot.highBidder)} for ${lot.currentBid} coins</span>`;
+      else outcome = `<span style="color:var(--dim)">Passed</span>`;
+      return `<div class="fleetAuctionResultRow"><span>Lot ${i + 1}: ${contents}</span>${outcome}</div>`;
+    }).join('');
+    const coinsGained = state.haul.coins || 0;
+    const netCoins = coinsGained - state.totalSpent;
+    const otherWins = [];
+    if (state.haul.gems) otherWins.push(`${state.haul.gems} Gem${state.haul.gems > 1 ? 's' : ''}`);
+    if (state.haul.fuel) otherWins.push(`${state.haul.fuel} Fuel`);
+    if (state.haul.itemIds.length) otherWins.push(...state.haul.itemIds.map(id => ITEMS[id] ? ITEMS[id].name : id));
+    lotsWrap.innerHTML = '';
+    biddersWrap.innerHTML = '';
+    message.innerHTML = `
+      <div style="text-align:left;max-width:420px;margin:0 auto">
+        ${rows}
+        <div class="fleetAuctionResultTotals">
+          <div class="fleetAuctionResultRow" style="border-top:none;padding-top:0"><span>Coins spent bidding</span><span>${state.totalSpent}</span></div>
+          <div class="fleetAuctionResultRow" style="border-top:none;padding-top:0"><span>Coins won from lots</span><span>${coinsGained}</span></div>
+          <div class="fleetAuctionResultRow" style="border-top:none;padding-top:0"><span>Net coins</span><span style="color:${netCoins >= 0 ? 'var(--green)' : 'var(--red)'}">${netCoins >= 0 ? '+' : ''}${netCoins}</span></div>
+          ${otherWins.length ? `<div class="fleetAuctionResultRow" style="border-top:none;padding-top:0"><span>Also won</span><span>${otherWins.join(', ')}</span></div>` : ''}
+        </div>
+      </div>`;
+    controls.innerHTML = `<button class="wo-btn amber" id="fleetAuctionResultsDoneBtn" style="width:100%;max-width:420px">Back to Compound</button>`;
+    document.getElementById('fleetAuctionResultsDoneBtn').onclick = () => { overlay.remove(); onComplete(state.haul); };
+    exitBtn.style.display = 'none';
   }
 
   exitBtn.onclick = () => {
     const lot = currentLot();
-    if (lot && !lot.resolved) { lot.resolved = true; lot.won = false; }
+    if (lot && !lot.resolved) { lot.resolved = true; lot.won = false; lot.revealed = true; }
     finishAuction();
   };
 
@@ -6119,8 +6279,10 @@ function mapScreen() {
   for (const e of RUN.map.edges) {
     const x1 = colX(e.fromRow);
     const x2 = colX(e.toRow);
-    const y1 = rowY[Math.min(e.fromCol,rowY.length-1)];
-    const y2 = rowY[Math.min(e.toCol,rowY.length-1)];
+    const fromLane = rows[e.fromRow][e.fromCol] ? rows[e.fromRow][e.fromCol].lane : e.fromCol;
+    const toLane = rows[e.toRow][e.toCol] ? rows[e.toRow][e.toCol].lane : e.toCol;
+    const y1 = rowY[Math.min(fromLane,rowY.length-1)];
+    const y2 = rowY[Math.min(toLane,rowY.length-1)];
     const traveled = RUN.path.some(p=>p.row===e.fromRow&&p.col===e.fromCol) &&
                      RUN.path.some(p=>p.row===e.toRow&&p.col===e.toCol);
     svgLines += `<path d="M ${x1} ${y1} C ${x1+28} ${y1}, ${x2-28} ${y2}, ${x2} ${y2}"
@@ -6138,7 +6300,7 @@ function mapScreen() {
   
   for(let r=0;r<rows.length;r++) {
     for(let c=0;c<rows[r].length;c++) {
-      const node=rows[r][c], x=colX(r), y=rowY[Math.min(c,rowY.length-1)];
+      const node=rows[r][c], x=colX(r), lane=node.lane!=null?node.lane:c, y=rowY[Math.min(lane,rowY.length-1)];
       const isDone=RUN.path.some(p=>p.row===r&&p.col===c);
       const isCurrent=r===RUN.currentRow&&c===RUN.currentCol;
       const isAvail=avail.some(n=>n.row===r&&n.col===c);
@@ -6171,7 +6333,7 @@ function mapScreen() {
       else if(node.type==='auction_hazard') tip='A pop-up Fleet Auction: bid for coins, fuel, gems, or Items.';
       else tip='Find coins, fuel, and gems.';
 
-      nodesHTML+=`<div class="mapnode-wrap ${isBoss?'bossnode ':''}${isCastle?'castlenode ':''}${c===0?'toprow':c===1?'midrow':'bottomrow'}" style="left:${(x/totalW*100)}%;top:${y}px">
+      nodesHTML+=`<div class="mapnode-wrap ${isBoss?'bossnode ':''}${isCastle?'castlenode ':''}${lane===0?'toprow':lane===1?'midrow':'bottomrow'}" style="left:${(x/totalW*100)}%;top:${y}px">
         ${isCurrent?'<div class="hereTag">You Are Here</div>':''}
         <button class="mapnode ${cls} type-${node.type}" ${showReal?`data-nodeinfo="${r}:${c}"`:''} ${showReal?'':'disabled'}>${icon}</button>
         <div class="tooltip"><b>${title}</b>${isCurrent?' <span style="color:var(--amber)">(current)</span>':''}<br>${tip}</div>

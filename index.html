@@ -2382,7 +2382,7 @@ const HEROES = {
   beachtractor: { id: 'beachtractor', name: 'Beach Tractor',   icon: '🚜', image: 'Vehicles/beach-tractor.png', starterItems: ['taylor_sift','sand_trap'] },
   interstate:   { id: 'interstate',   name: 'Work Truck',    icon: '🏁', image: 'Vehicles/work-truck.png', starterItems: ['card_draw','diamond_run'] },
   forklift:     { id: 'forklift',     name: 'Forklift',        icon: '🏗️', image: 'Vehicles/forklift.png', starterItems: ['pallet_drop','overhead_lift'] },
-  convoy:       { id: 'convoy',       name: 'Large SUV',       icon: '🚛', image: 'Vehicles/armored-convoy.png', starterItems: ['fender_bender','triple_threat'] },
+  convoy:       { id: 'convoy',       name: 'Large SUV',       icon: '🚙', image: 'Vehicles/large-suv.png', starterItems: ['fender_bender','triple_threat'] },
   towtruck:     { id: 'towtruck',     name: 'Tow Truck',       icon: '🚨', image: 'Vehicles/tow-truck.png', starterItems: ['drawstone','escort_wall'] },
   tanker:       { id: 'tanker',       name: 'Fuel Tanker',     icon: '⛽', image: 'Vehicles/fuel-tanker.png', starterItems: ['fender_bender','toxic_flood'] },
   crownvic:     { id: 'crownvic',     name: 'Crown Vic',       icon: '🚔', image: 'Vehicles/crown-vic.png', starterItems: ['donut_toss','pair_draw'] },
@@ -6268,17 +6268,17 @@ function nodePopupContent(r, c) {
     };
   }
   if (node.type === 'shop') return { title: 'Dealership', art: iconImg('node-dealership.png', ICON.cart, 64), heroImg: 'Icons/node-dealership.png', heroFallback: ICON.cart, rows: [], extra: '<div class="note">Buy a vehicle with coins.</div>', actionLabel: 'Enter' };
-  if (node.type === 'rest') return { title: 'Pit Stop', art: iconImg('node-service-station.png', ICON.wrench, 64), rows: [], extra: '<div class="note">Restore 30 health.</div>', actionLabel: 'Go Here' };
-  if (node.type === 'blacksmith') return { title: 'Tuning Garage', art: iconImg('node-tuning-garage.png', ICON.hammer, 64), rows: [], extra: '<div class="note">Spend coins to permanently boost a card (or a whole rank/suit), for this run only.</div>', actionLabel: 'Go Here' };
-  if (node.type === 'chopshop') return { title: 'Chop Shop', art: iconImg('node-chop-shop.png', ICON.curse, 64), rows: [], extra: '<div class="note">Spend coins to convert an Item to poison, burn, or curse, or add card slots.</div>', actionLabel: 'Go Here' };
-  if (node.type === 'overdrive') return { title: 'Overdrive Bay', art: iconImg('node-overdrive-bay.png', ICON.energy, 64), rows: [], extra: '<div class="note">Spend coins to add uses per turn to your equipped Items.</div>', actionLabel: 'Go Here' };
-  if (node.type === 'treasure') return { title: node.big ? 'Big Supply Cache' : 'Supply Cache', art: iconImg('node-supply-cache.png', ICON.gift, 64), rows: [], extra: `<div class="note">${node.big ? 'A bigger haul for taking the risky route: double-value reward of coins, fuel, gems, energy, or Career Points.' : 'One random reward: coins, fuel, gems, energy, or Career Points.'}</div>`, actionLabel: 'Go Here' };
-  if (node.type === 'match_hazard') return { title: 'Grid Anomaly', art: glyph(JOKER_MAP_ICON), rows: [], extra: `<div class="note">Grid Anomaly Detected: Tap to hack the Carnival Board for extra fleet gear.</div>`, actionLabel: 'Go Here' };
-  if (node.type === 'plinko_hazard') return { title: 'Fleet Plinko', art: iconImg('node-fleet-plinko.png', '🎯', 64), rows: [], extra: `<div class="note">A Plinko board found out on the road: drop chips for coins, fuel, or gems.</div>`, actionLabel: 'Go Here' };
-  if (node.type === 'blackjack_hazard') return { title: 'Fleet Blackjack', art: iconImg('node-fleet-blackjack.png', '♠️', 64), rows: [], extra: `<div class="note">A roadside Blackjack table: draw and Stand against the dealer for a haul.</div>`, actionLabel: 'Go Here' };
-  if (node.type === 'poker_hazard') return { title: 'Fleet Poker', art: iconImg('node-fleet-poker.png', '♣️', 64), rows: [], extra: `<div class="note">A roadside Hold'em table: build your best hands against the dealer for a haul.</div>`, actionLabel: 'Go Here' };
-  if (node.type === 'auction_hazard') return { title: 'Fleet Auction', art: iconImg('node-fleet-auction.png', '🔨', 64), rows: [], extra: `<div class="note">A pop-up Fleet Auction: bid for coins, fuel, gems, or Items.</div>`, actionLabel: 'Go Here' };
-  return { title: 'Fleet Compound', art: iconImg('node-fleet-compound.png', ICON.castle, 64), rows: [], extra: '<div class="note">Battles, the Dealership, refueling, a card match game, and more.</div>', actionLabel: 'Go Here' };
+  if (node.type === 'rest') return { title: 'Pit Stop', art: iconImg('node-service-station.png', ICON.wrench, 64), heroImg: 'Icons/node-service-station.png', heroFallback: ICON.wrench, rows: [], extra: '<div class="note">Restore 30 health.</div>', actionLabel: 'Go Here' };
+  if (node.type === 'blacksmith') return { title: 'Tuning Garage', art: iconImg('node-tuning-garage.png', ICON.hammer, 64), heroImg: 'Icons/node-tuning-garage.png', heroFallback: ICON.hammer, rows: [], extra: '<div class="note">Spend coins to permanently boost a card (or a whole rank/suit), for this run only.</div>', actionLabel: 'Go Here' };
+  if (node.type === 'chopshop') return { title: 'Chop Shop', art: iconImg('node-chop-shop.png', ICON.curse, 64), heroImg: 'Icons/node-chop-shop.png', heroFallback: ICON.curse, rows: [], extra: '<div class="note">Spend coins to convert an Item to poison, burn, or curse, or add card slots.</div>', actionLabel: 'Go Here' };
+  if (node.type === 'overdrive') return { title: 'Overdrive Bay', art: iconImg('node-overdrive-bay.png', ICON.energy, 64), heroImg: 'Icons/node-overdrive-bay.png', heroFallback: ICON.energy, rows: [], extra: '<div class="note">Spend coins to add uses per turn to your equipped Items.</div>', actionLabel: 'Go Here' };
+  if (node.type === 'treasure') return { title: node.big ? 'Big Supply Cache' : 'Supply Cache', art: iconImg('node-supply-cache.png', ICON.gift, 64), heroImg: 'Icons/node-supply-cache.png', heroFallback: ICON.gift, rows: [], extra: `<div class="note">${node.big ? 'A bigger haul for taking the risky route: double-value reward of coins, fuel, gems, energy, or Career Points.' : 'One random reward: coins, fuel, gems, energy, or Career Points.'}</div>`, actionLabel: 'Go Here' };
+  if (node.type === 'match_hazard') return { title: 'Grid Anomaly', art: glyph(JOKER_MAP_ICON), heroImg: 'Hazards/joker-map.png', heroFallback: '🃏', rows: [], extra: `<div class="note">Grid Anomaly Detected: Tap to hack the Carnival Board for extra fleet gear.</div>`, actionLabel: 'Go Here' };
+  if (node.type === 'plinko_hazard') return { title: 'Fleet Plinko', art: iconImg('node-fleet-plinko.png', '🎯', 64), heroImg: 'Icons/node-fleet-plinko.png', heroFallback: '🎯', rows: [], extra: `<div class="note">A Plinko board found out on the road: drop chips for coins, fuel, or gems.</div>`, actionLabel: 'Go Here' };
+  if (node.type === 'blackjack_hazard') return { title: 'Fleet Blackjack', art: iconImg('node-fleet-blackjack.png', '♠️', 64), heroImg: 'Icons/node-fleet-blackjack.png', heroFallback: '♠️', rows: [], extra: `<div class="note">A roadside Blackjack table: draw and Stand against the dealer for a haul.</div>`, actionLabel: 'Go Here' };
+  if (node.type === 'poker_hazard') return { title: 'Fleet Poker', art: iconImg('node-fleet-poker.png', '♣️', 64), heroImg: 'Icons/node-fleet-poker.png', heroFallback: '♣️', rows: [], extra: `<div class="note">A roadside Hold'em table: build your best hands against the dealer for a haul.</div>`, actionLabel: 'Go Here' };
+  if (node.type === 'auction_hazard') return { title: 'Fleet Auction', art: iconImg('node-fleet-auction.png', '🔨', 64), heroImg: 'Icons/node-fleet-auction.png', heroFallback: '🔨', rows: [], extra: `<div class="note">A pop-up Fleet Auction: bid for coins, fuel, gems, or Items.</div>`, actionLabel: 'Go Here' };
+  return { title: 'Fleet Compound', art: iconImg('node-fleet-compound.png', ICON.castle, 64), heroImg: 'Icons/node-fleet-compound.png', heroFallback: ICON.castle, rows: [], extra: '<div class="note">Battles, the Dealership, refueling, a card match game, and more.</div>', actionLabel: 'Go Here' };
 }
 function nodePopupScreen(r, c) {
   const isAvail = availableNextNodes().some(n => n.row === r && n.col === c);
@@ -6344,8 +6344,11 @@ function mapScreen() {
   for (const e of RUN.map.edges) {
     const x1 = colX(e.fromRow);
     const x2 = colX(e.toRow);
-    const fromLane = rows[e.fromRow][e.fromCol] ? rows[e.fromRow][e.fromCol].lane : e.fromCol;
-    const toLane = rows[e.toRow][e.toCol] ? rows[e.toRow][e.toCol].lane : e.toCol;
+    // Nodes from a run saved before lanes existed have no .lane - fall back to the column index (same
+    // rule the node placement below uses) so the connection lines still draw for those saves.
+    const fromNode = rows[e.fromRow] && rows[e.fromRow][e.fromCol], toNode = rows[e.toRow] && rows[e.toRow][e.toCol];
+    const fromLane = fromNode && fromNode.lane != null ? fromNode.lane : e.fromCol;
+    const toLane = toNode && toNode.lane != null ? toNode.lane : e.toCol;
     const y1 = rowY[Math.min(fromLane,rowY.length-1)];
     const y2 = rowY[Math.min(toLane,rowY.length-1)];
     const traveled = RUN.path.some(p=>p.row===e.fromRow&&p.col===e.fromCol) &&
@@ -7058,9 +7061,9 @@ function treasureScreen(found) {
     </div>
   `;
 }
-// The image goes at /Transitions/world-<fromWorld>-complete.png (e.g. Transitions/world-1-complete.png
-// for the A1A Coastline screen, Transitions/world-2-complete.png for Alligator Alley, and so on -
-// one PNG per world, named after the world you're LEAVING). It renders at a wide, banner-like
+// The image goes at /Transitions/world-<fromWorld>-complete.jpg (e.g. Transitions/world-1-complete.jpg
+// for the A1A Coastline screen, Transitions/world-2-complete.jpg for Alligator Alley, and so on -
+// one JPG per world, named after the world you're LEAVING). It renders at a wide, banner-like
 // aspect ratio; if the file isn't there yet, the slot just collapses so nothing breaks.
 function worldCompleteScreen(fromWorld, toWorld) {
   const fromName = WORLD_NAMES[fromWorld] || `World ${fromWorld}`;

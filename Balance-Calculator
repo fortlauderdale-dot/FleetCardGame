@@ -1,0 +1,454 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Fleet Balance Calculator</title>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--ink:#1c2430;--mut:#6b7686;--acc:#2f6fed;--bar:#cfe0ff;--line:#e2e6ec}
+@media(prefers-color-scheme:dark){:root{--bg:#12161c;--card:#1a2029;--ink:#e6eaf0;--mut:#93a0b3;--acc:#6b9cff;--bar:#2a3e66;--line:#2a3340}}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,sans-serif}
+main{max-width:860px;margin:0 auto;padding:20px 16px 48px}
+h1{font-size:22px;margin:0 0 4px}p.s{color:var(--mut);margin:0 0 18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:16px}
+label{display:inline-block;margin:0 12px 8px 0;font-size:13px;color:var(--mut)}
+select,input{font:inherit;padding:5px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink)}
+input[type=number]{width:70px}
+table{border-collapse:collapse;width:100%}th,td{padding:5px 8px;text-align:right;border-bottom:1px solid var(--line)}
+th:first-child,td:first-child{text-align:left}
+.b{display:inline-block;height:10px;background:var(--bar);border-radius:3px;vertical-align:middle;margin-left:8px}
+.note{font-size:13px;color:var(--mut)}code{background:var(--bg);padding:1px 5px;border-radius:4px}
+</style></head><body><main>
+<h1>Fleet Balance Calculator</h1>
+<p class="s">Chance an opponent item can fire, given how many cards the opponent holds. Uses the game's own hand rules. Runs entirely in your browser.</p>
+<div class="card">
+<label>Requirement <select id="type"></select></label>
+<span id="params"></span>
+<label>Item max cards <input id="maxc" type="number" min="1" max="8" value="5"></label>
+<div class="note" id="capnote"></div>
+</div>
+<div class="card"><table id="out"></table>
+<p class="note" id="method"></p></div>
+<div class="card"><b>Every poker tier at once</b>
+<p class="note">Cap follows the game: Pair 2, Two Pair 4, Trips 3, Straight 5 (item max), Flush 5, Full House 5, Quads 4.</p>
+<table id="all"></table></div>
+<script>
+(function(){
+// ---- src/game/cards.js ----
+// Faithful, DOM-free port of Fleet Duel's card / hand / condition rules (from index.html).
+// This is the ground truth the probability engine is verified against. If the game's rules
+// change, change this file and re-run the tests.
+
+const SUITS = [
+  { s: '♦', color: 'red' }, { s: '♣', color: 'blk' },
+  { s: '♥', color: 'red' }, { s: '♠', color: 'blk' },
+];
+const TIERS = ['High Card', 'Pair', 'Two Pair', 'Three of a Kind', 'Straight', 'Flush', 'Full House', 'Four of a Kind', 'Straight Flush'];
+const TIER_MULT = [1.0, 1.5, 1.7, 3.0, 2.5, 2.8, 3.2, 4.0, 5.0];
+
+// Game values: A=11, J/Q/K=10, else face value.
+function cardValue(r) { if (r === 14) return 11; if (r >= 11) return 10; return r; }
+
+function freshDeck() {
+  const d = [];
+  for (const su of SUITS) for (let r = 2; r <= 14; r++) d.push({ rank: r, suit: su.s, color: su.color });
+  return d;
+}
+
+function combinations(arr, k) {
+  const out = [];
+  (function helper(start, combo) {
+    if (combo.length === k) { out.push(combo.slice()); return; }
+    for (let i = start; i < arr.length; i++) { combo.push(arr[i]); helper(i + 1, combo); combo.pop(); }
+  })(0, []);
+  return out;
+}
+
+function isConsecutive(cards) {
+  if (cards.length < 2) return false;
+  const ranks = [...new Set(cards.map(c => c.rank))].sort((a, b) => a - b);
+  if (ranks.length !== cards.length) return false;
+  return ranks[ranks.length - 1] - ranks[0] === cards.length - 1;
+}
+
+// NOTE (game quirk, mirrored on purpose): any 3+ same-suit cards count as a Flush (tier 5) and
+// any 3+ consecutive ranks count as a Straight (tier 4), and "tier >= N" checks use those tiers,
+// so a 3-card flush or 3-card straight satisfies a plain "Pair" requirement.
+function evaluateHand(cards) {
+  if (!cards.length) return { tier: 0, label: 'No Cards', mult: 0 };
+  const ranks = cards.map(c => c.rank);
+  const rankCounts = {}; for (const r of ranks) rankCounts[r] = (rankCounts[r] || 0) + 1;
+  const counts = Object.values(rankCounts).sort((a, b) => b - a);
+  const suitSet = new Set(cards.map(c => c.suit));
+  const isFlush = cards.length >= 3 && suitSet.size === 1;
+  const uniqueRanks = [...new Set(ranks)].sort((a, b) => a - b);
+  const isStraight = cards.length >= 3 && uniqueRanks.length === cards.length && (uniqueRanks[uniqueRanks.length - 1] - uniqueRanks[0] === cards.length - 1);
+  let tier = 0;
+  if (counts[0] === 4) tier = 7;
+  else if (cards.length === 5 && counts[0] === 3 && counts[1] === 2) tier = 6;
+  else if (isFlush && isStraight) tier = 8;
+  else if (isFlush) tier = 5;
+  else if (isStraight) tier = 4;
+  else if (counts[0] === 3) tier = 3;
+  else if (counts[0] === 2 && counts[1] === 2) tier = 2;
+  else if (counts[0] === 2) tier = 1;
+  return { tier, label: TIERS[tier], mult: TIER_MULT[tier] };
+}
+
+function checkCondition(cond, cards) {
+  let result;
+  if (!cond || cond.type === 'any') result = { met: cards.length > 0 };
+  else if (cond.type === 'exactCount') result = { met: cards.length === cond.count };
+  else if (cond.type === 'pokerTier') {
+    const ev = evaluateHand(cards);
+    result = cond.exactTier ? { met: ev.tier === cond.tier, mult: ev.mult } : { met: ev.tier >= cond.tier, mult: ev.mult };
+  }
+  else if (cond.type === 'straightLen') result = { met: cards.length === cond.len && isConsecutive(cards) };
+  else if (cond.type === 'suitCount') result = { met: cards.filter(c => c.suit === cond.suit).length >= (cond.count ?? 1) };
+  else if (cond.type === 'suitCountExact') result = { met: cards.filter(c => c.suit === cond.suit).length === cond.count };
+  else if (cond.type === 'colorCount') result = { met: cards.filter(c => c.color === cond.color).length >= cond.count };
+  else if (cond.type === 'allSuits') result = { met: new Set(cards.map(c => c.suit)).size === 4 };
+  else if (cond.type === 'cardIn') result = { met: cards.some(c => cond.cards.some(cc => cc.rank === c.rank && cc.suit === c.suit)) };
+  else if (cond.type === 'parity') {
+    const effRank = c => c.rank === 14 ? 1 : c.rank;
+    const matchFn = cond.parity === 'even' ? (c => effRank(c) % 2 === 0) : (c => effRank(c) % 2 !== 0);
+    const n = cards.filter(matchFn).length;
+    result = cond.mode === 'all' ? { met: cards.length > 0 && n === cards.length } : { met: n >= cond.count };
+  }
+  else if (cond.type === 'exactRank') {
+    const n = cards.filter(c => c.rank === cond.rank).length;
+    result = cond.requireAll ? { met: cards.length > 0 && n === cards.length } : { met: n > 0 };
+  }
+  else if (cond.type === 'sumThreshold') {
+    const sum = cards.reduce((a, c) => a + cardValue(c.rank), 0);
+    result = { met: cards.length > 0 && sum >= cond.min };
+  }
+  else if (cond.type === 'sumExact') {
+    const sum = cards.reduce((a, c) => a + cardValue(c.rank), 0);
+    result = { met: cards.length > 0 && Math.round(sum) === cond.value };
+  }
+  else result = { met: false };
+  if (cond && cond.exactCount != null) result.met = result.met && cards.length === cond.exactCount;
+  return result;
+}
+
+// Size the opponent AI forces for a condition (mirrors findOpponentCombo's fixedSize).
+function fixedSizeOf(cond) {
+  if (!cond) return null;
+  if (cond.exactCount != null) return cond.exactCount;
+  if (cond.type === 'straightLen') return cond.len;
+  if (cond.type === 'exactCount') return cond.count;
+  return null;
+}
+
+function bestComboOfSize(pool, cond, size) {
+  if (size < 1 || size > pool.length) return null;
+  let best = null, bestSum = -Infinity;
+  for (const combo of combinations(pool, size)) {
+    if (!checkCondition(cond, combo).met) continue;
+    const sum = combo.reduce((a, c) => a + cardValue(c.rank), 0);
+    if (sum > bestSum) { bestSum = sum; best = combo; }
+  }
+  return best ? { cards: best, ...evaluateHand(best) } : null;
+}
+
+// Mirrors the game: fixed-size conditions try only that size; otherwise the biggest size
+// (<= cap) that can satisfy the condition wins, since bigger sums are always more damaging.
+function findOpponentCombo(pool, cond, cap) {
+  if (!pool.length || !cap) return null;
+  const fixed = fixedSizeOf(cond);
+  if (fixed != null) return pool.length >= fixed ? bestComboOfSize(pool, cond, fixed) : null;
+  for (let size = Math.min(cap, pool.length); size >= 1; size--) {
+    const found = bestComboOfSize(pool, cond, size);
+    if (found) return found;
+  }
+  return null;
+}
+
+// ---- src/game/cap.js ----
+// Card cap for an item requirement, mirroring pokerTierNaturalCap + effectiveMaxCards in the game.
+// The cap matters: a "Pair" item with cap 2 cannot use a 3-card flush, but an uncapped one can.
+const POKER_TIER_CARD_COUNT = { 0: 1, 1: 2, 2: 4, 3: 3, 5: 5, 6: 5, 7: 4 };
+
+function naturalCap(cond) {
+  if (!cond) return null;
+  if (cond.type === 'suitCountExact') return cond.count;
+  if (cond.type !== 'pokerTier') return null;
+  return POKER_TIER_CARD_COUNT[cond.tier] ?? null;
+}
+
+// item: { condition, maxCards }  (maxCards defaults to 1 in the game; pass level bonus in `bonus`)
+function effectiveCap(item, bonus = 0) {
+  const raw = (item.maxCards ?? 1) + bonus;
+  const nat = naturalCap(item.condition);
+  return nat != null ? Math.min(raw, nat) : raw;
+}
+
+// ---- src/prob/rng.js ----
+// Seeded RNG so every estimate is reproducible and comparable between edits.
+function mulberry32(seed) {
+  let a = seed >>> 0;
+  return function () {
+    a = (a + 0x6D2B79F5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// Uniform random k-subset of an array (partial Fisher-Yates on a scratch copy).
+function sampleSubset(deck, k, rng, scratch) {
+  for (let i = 0; i < deck.length; i++) scratch[i] = deck[i];
+  for (let i = 0; i < k; i++) {
+    const j = i + Math.floor(rng() * (deck.length - i));
+    const t = scratch[i]; scratch[i] = scratch[j]; scratch[j] = t;
+  }
+  return scratch.slice(0, k);
+}
+
+// ---- src/prob/exact.js ----
+// Exact probability that an opponent pool (uniform random k-subset of a 52-card deck) contains
+// SOME subset (size <= cap, or a fixed size) that satisfies a requirement.
+// Existence is counted over whole pools (never by multiplying per-subset odds).
+// Returns { p, method } or null when the requirement has no exact solver (caller falls back to sampling).
+
+const N = 52;
+const C = (() => {
+  const t = [];
+  for (let n = 0; n <= N; n++) { t[n] = []; for (let r = 0; r <= n; r++) t[n][r] = r === 0 || r === n ? 1 : t[n - 1][r - 1] + t[n - 1][r]; }
+  return (n, r) => (r < 0 || n < 0 || r > n ? 0 : t[n][r]);
+})();
+const binom = C;
+
+const hyperPmf = (K, k, x) => C(K, x) * C(N - K, k - x) / C(N, k);
+function tailGE(K, k, c) { let s = 0; for (let x = Math.max(c, 0); x <= Math.min(K, k); x++) s += hyperPmf(K, k, x); return s; }
+const done = (p, method = 'exact') => ({ p: Math.min(1, Math.max(0, p)), method });
+
+const MASKS = [[], [], [], [], []];
+for (let m = 0; m < 16; m++) MASKS[[0, 1, 2, 3].filter(b => m & (1 << b)).length].push(m);
+
+// ---- forward DP over the 13 ranks, tracking only the features a poker tier needs ----
+function featureDP(k, { suit, run, sf }) {
+  let cur = new Map();
+  const mk = s => `${s.c},${s.n2}${s.h3}${s.h4},${s.su.join('')},${s.run}${s.hr},${s.sf.join('')}${s.hs}`;
+  const init = { c: 0, n2: 0, h3: 0, h4: 0, su: [0, 0, 0, 0], run: 0, hr: 0, sf: [0, 0, 0, 0], hs: 0 };
+  cur.set(mk(init), { s: init, w: 1 });
+  for (let rank = 0; rank < 13; rank++) {
+    const nxt = new Map();
+    for (const { s, w } of cur.values()) {
+      for (let j = 0; j <= 4 && s.c + j <= k; j++) {
+        for (const mask of MASKS[j]) {
+          const ns = {
+            c: s.c + j,
+            n2: j >= 2 ? Math.min(2, s.n2 + 1) : s.n2,
+            h3: s.h3 || (j >= 3 ? 1 : 0),
+            h4: s.h4 || (j >= 4 ? 1 : 0),
+            su: s.su, run: s.run, hr: s.hr, sf: s.sf, hs: s.hs,
+          };
+          if (suit) ns.su = s.su.map((v, b) => (mask & (1 << b) ? Math.min(3, v + 1) : v)).sort((a, b) => b - a); // suits are symmetric
+          if (run) { ns.run = j >= 1 ? Math.min(3, s.run + 1) : 0; ns.hr = s.hr || (ns.run >= 3 ? 1 : 0); }
+          if (sf) {
+            ns.sf = s.sf.map((v, b) => (mask & (1 << b) ? Math.min(3, v + 1) : 0));
+            ns.hs = s.hs || (ns.sf.some(v => v >= 3) ? 1 : 0);
+          }
+          const key = mk(ns);
+          const e = nxt.get(key);
+          if (e) e.w += w; else nxt.set(key, { s: ns, w });
+        }
+      }
+    }
+    cur = nxt;
+  }
+  return [...cur.values()].filter(e => e.s.c === k);
+}
+
+// Which structures does "tier >= T" accept inside a subset of size <= cap?  (all-cards-same-suit
+// flush and all-cards-consecutive straight need a 3-card witness; see cards.js evaluateHand.)
+function tierTest(T, cap) {
+  return s => {
+    const pair = s.n2 >= 1 && cap >= 2, twoPair = s.n2 >= 2 && cap >= 4, trips = s.h3 && cap >= 3;
+    const quads = s.h4 && cap >= 4, fh = s.h3 && s.n2 >= 2 && cap >= 5;
+    const flush = Math.max(...s.su) >= 3 && cap >= 3, straight = s.hr && cap >= 3, sfl = s.hs && cap >= 3;
+    switch (T) {
+      case 1: return pair || twoPair || trips || quads || fh || flush || straight || sfl;
+      case 2: return twoPair || trips || quads || fh || flush || straight || sfl;
+      case 3: return trips || quads || fh || flush || straight || sfl;
+      case 4: return straight || flush || fh || quads || sfl;
+      case 5: return flush || fh || quads || sfl;
+      case 6: return fh || quads || sfl;
+      case 7: return quads || sfl;
+      case 8: return sfl;
+      default: return null;
+    }
+  };
+}
+
+function pokerTierProb(k, cond, cap) {
+  const T = cond.tier;
+  if (T === 0) return done(k >= 1 && cap >= 1 ? 1 : 0);
+  const test = tierTest(T, cap);
+  const needSF = T >= 6, needSuit = T <= 5, needRun = T <= 4;
+  const states = featureDP(k, { suit: needSuit, run: needRun, sf: needSF });
+  let good = 0;
+  for (const { s, w } of states) if (test(s)) good += w;
+  return done(good / C(N, k));
+}
+
+function straightProb(k, L, cap) {
+  // some L distinct consecutive ranks (ace high only, ranks 2..14) all present in the pool
+  if (L < 1 || k < L) return done(0);
+  let cur = new Map([[`0,0,0`, { c: 0, r: 0, h: 0, w: 1 }]]);
+  for (let rank = 0; rank < 13; rank++) {
+    const nxt = new Map();
+    for (const e of cur.values()) for (let j = 0; j <= 4 && e.c + j <= k; j++) {
+      const r = j >= 1 ? Math.min(L, e.r + 1) : 0, h = e.h || (r >= L ? 1 : 0), c = e.c + j, key = `${c},${r},${h}`;
+      const add = e.w * C(4, j), x = nxt.get(key);
+      if (x) x.w += add; else nxt.set(key, { c, r, h, w: add });
+    }
+    cur = nxt;
+  }
+  let good = 0;
+  for (const e of cur.values()) if (e.c === k && e.h) good += e.w;
+  return done(good / C(N, k));
+}
+
+const VALUE_CLASSES = [[11, 4], [10, 16], [9, 4], [8, 4], [7, 4], [6, 4], [5, 4], [4, 4], [3, 4], [2, 4]];
+function sumThresholdProb(k, min, t) {
+  // best subset of <= t cards is simply the t highest values in the pool
+  const m = Math.min(t, k);
+  let cur = new Map([[`0,0`, { p: 0, top: 0, w: 1 }]]);
+  for (const [v, cnt] of VALUE_CLASSES) {
+    const nxt = new Map();
+    for (const e of cur.values()) for (let n = 0; n <= cnt && e.p + n <= k; n++) {
+      const take = Math.max(0, Math.min(n, m - e.p)), p = e.p + n, top = e.top + v * take, key = `${p},${top}`;
+      const add = e.w * C(cnt, n), x = nxt.get(key);
+      if (x) x.w += add; else nxt.set(key, { p, top, w: add });
+    }
+    cur = nxt;
+  }
+  let good = 0;
+  for (const e of cur.values()) if (e.p === k && e.top >= min) good += e.w;
+  return done(good / C(N, k));
+}
+
+function exactProb(cond, k, cap) {
+  if (k <= 0 || cap <= 0) return done(0);
+  const mod = cond && cond.exactCount != null ? cond.exactCount : null;   // forces one exact subset size
+  if (mod != null && k < mod) return done(0);
+  const type = !cond ? 'any' : cond.type;
+  // In free-size mode a witness of w cards must fit under the cap; with a forced size m it must fit in m.
+  const room = mod != null ? mod : cap;
+
+  switch (type) {
+    case 'any': return done(1);
+    case 'exactCount': return done(k >= cond.count && (mod == null || mod === cond.count) ? 1 : 0);
+    case 'suitCount': {
+      const c = cond.count ?? 1;
+      return done(c <= room ? tailGE(13, k, c) : 0);
+    }
+    case 'suitCountExact': {
+      const c = cond.count;
+      if (mod != null) { let s = 0; for (let x = c; x <= Math.min(13, k); x++) if (k - x >= mod - c && c <= mod) s += hyperPmf(13, k, x); return done(s); }
+      if (c === 0) return done(1 - hyperPmf(13, k, k) ); // some non-suit card exists unless pool is all that suit
+      return done(c <= cap ? tailGE(13, k, c) : 0);
+    }
+    case 'colorCount': {
+      const c = cond.count;
+      return done(c <= room ? tailGE(26, k, c) : 0);
+    }
+    case 'allSuits': {
+      if (room < 4) return done(0);
+      let p = 0;
+      for (let j = 0; j <= 4; j++) p += (j % 2 ? -1 : 1) * C(4, j) * C(N - 13 * j, k) / C(N, k);
+      return done(p);
+    }
+    case 'cardIn': {
+      const L = new Set(cond.cards.map(c => `${c.rank}${c.suit}`)).size;
+      return done(1 - C(N - L, k) / C(N, k));
+    }
+    case 'parity': {
+      const K = cond.parity === 'even' ? 24 : 28;
+      if (cond.mode === 'all') return done(tailGE(K, k, mod != null ? mod : 1));
+      return done(cond.count <= room ? tailGE(K, k, cond.count) : 0);
+    }
+    case 'exactRank': return done(cond.requireAll ? tailGE(4, k, mod != null ? mod : 1) : tailGE(4, k, 1));
+    case 'sumThreshold': return sumThresholdProb(k, cond.min, room);
+    case 'straightLen': return mod != null && mod !== cond.len ? done(0) : straightProb(k, cond.len, cap);
+    case 'pokerTier': {
+      if (cond.exactTier || mod != null) return null;
+      return pokerTierProb(k, cond, cap);
+    }
+    default: return null;   // sumExact etc.
+  }
+}
+
+// ---- src/prob/sampler.js ----
+// Seeded Monte Carlo: uses the ported game logic (findOpponentCombo) as the oracle.
+
+
+function sampleProb(cond, k, cap, { n = 20000, seed = 12345 } = {}) {
+  if (k <= 0 || cap <= 0) return { p: 0, method: 'estimated', stderr: 0 };
+  const deck = freshDeck(), rng = mulberry32(seed), scratch = new Array(52);
+  let hit = 0;
+  for (let i = 0; i < n; i++) if (findOpponentCombo(sampleSubset(deck, k, rng, scratch), cond, cap)) hit++;
+  const p = hit / n;
+  return { p, method: 'estimated', stderr: Math.sqrt(p * (1 - p) / n) };
+}
+
+// Full enumeration of every k-card pool (tests only; feasible for k <= 4).
+function bruteForceProb(cond, k, cap) {
+  const deck = freshDeck();
+  let hit = 0, total = 0;
+  const pick = [];
+  (function rec(start) {
+    if (pick.length === k) { total++; if (findOpponentCombo(pick, cond, cap)) hit++; return; }
+    for (let i = start; i < 52; i++) { pick.push(deck[i]); rec(i + 1); pick.pop(); }
+  })(0);
+  return hit / total;
+}
+
+function probSatisfiable(cond,k,cap,opts){return exactProb(cond,k,cap)??sampleProb(cond,k,cap,opts);}
+window.FB={probSatisfiable,effectiveCap,exactProb,sampleProb};
+
+})();
+const P=window.FB;
+const TYPES={
+ 'Pair or better (poker tier 1)':()=>({type:'pokerTier',tier:1}),
+ 'Two Pair or better (tier 2)':()=>({type:'pokerTier',tier:2}),
+ 'Three of a Kind or better (tier 3)':()=>({type:'pokerTier',tier:3}),
+ 'Straight or better (tier 4)':()=>({type:'pokerTier',tier:4}),
+ 'Flush or better (tier 5)':()=>({type:'pokerTier',tier:5}),
+ 'Full House or better (tier 6)':()=>({type:'pokerTier',tier:6}),
+ 'Four of a Kind or better (tier 7)':()=>({type:'pokerTier',tier:7}),
+ 'Straight Flush (tier 8)':()=>({type:'pokerTier',tier:8}),
+ 'Any card':()=>({type:'any'}),
+ 'N cards of one suit (or more)':v=>({type:'suitCount',suit:'♥',count:+v.n}),
+ 'N cards of one color (or more)':v=>({type:'colorCount',color:'red',count:+v.n}),
+ 'Straight of exactly N cards':v=>({type:'straightLen',len:+v.n}),
+ 'All four suits':()=>({type:'allSuits'}),
+ 'Card total at least N':v=>({type:'sumThreshold',min:+v.n}),
+ 'N even cards (or more)':v=>({type:'parity',parity:'even',count:+v.n}),
+ 'A specific rank (e.g. any 7)':()=>({type:'exactRank',rank:7}),
+};
+const NEEDS_N=['N cards of one suit (or more)','N cards of one color (or more)','Straight of exactly N cards','Card total at least N','N even cards (or more)'];
+const $=id=>document.getElementById(id);
+$('type').innerHTML=Object.keys(TYPES).map(k=>`<option>${k}</option>`).join('');
+$('params').innerHTML='<label id="nl" style="display:none">N <input id="n" type="number" value="2" min="1" max="40"></label>';
+const pct=p=>(p*100).toFixed(1)+'%';
+function row(k,r){return `<tr><td>${k}</td><td>${pct(r.p)}<span class="b" style="width:${Math.round(r.p*160)}px"></span></td><td>${r.method}</td></tr>`}
+function render(){
+ const name=$('type').value;$('nl').style.display=NEEDS_N.includes(name)?'inline-block':'none';
+ const cond=TYPES[name]({n:$('n').value});
+ const cap=P.effectiveCap({condition:cond,maxCards:+$('maxc').value});
+ $('capnote').textContent='Effective card cap used: '+cap+(cap!==+$('maxc').value?' (the game limits this requirement type to fewer cards)':'');
+ let h='<tr><th>Opponent cards held</th><th>Chance item can fire</th><th>Method</th></tr>',ests=false;
+ for(let k=1;k<=12;k++){const r=P.probSatisfiable(cond,k,cap);if(r.method!=='exact')ests=true;h+=row(k,r)}
+ $('out').innerHTML=h;
+ $('method').textContent=ests?'Some rows are sampled estimates.':'All rows are exact.';
+ const caps=[[1,2],[2,4],[3,3],[4,5],[5,5],[6,5],[7,4]];
+ const ks=[2,3,4,5,6,8,10];
+ let a='<tr><th>Tier</th>'+ks.map(k=>`<th>k=${k}</th>`).join('')+'</tr>';
+ const nm=['','Pair','Two Pair','Trips','Straight','Flush','Full House','Quads'];
+ for(const [t,c] of caps)a+=`<tr><td>${nm[t]} (cap ${c})</td>`+ks.map(k=>`<td>${pct(P.probSatisfiable({type:'pokerTier',tier:t},k,c).p)}</td>`).join('')+'</tr>';
+ $('all').innerHTML=a;
+}
+$('type').onchange=$('n').oninput=$('maxc').oninput=render;render();
+</script></main></body></html>

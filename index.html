@@ -3006,12 +3006,11 @@ function generateMap() {
   // middle lane reads as the map's main through-line) plus one random side, and occasionally skips
   // the middle entirely to let a path run straight from the top lane to the bottom lane.
   function pickLanesForRow(k) {
+    // Every row now always includes the middle lane, so the middle lane is one unbroken straight
+    // line from start to boss (the map's main path). Rows with 2 nodes add one random side lane and
+    // rows with 3 use all lanes, and those side nodes weave into the middle line from above/below.
     if (k >= 3) return [0, 1, 2];
-    if (k === 1) {
-      const roll = Math.random();
-      return [roll < 0.6 ? 1 : roll < 0.8 ? 0 : 2];
-    }
-    if (Math.random() < 0.15) return [0, 2];
+    if (k === 1) return [1];
     return Math.random() < 0.5 ? [0, 1] : [1, 2];
   }
   const rowLanes = rowCounts.map(k => pickLanesForRow(k));
@@ -7472,6 +7471,7 @@ const UPDATE_LOG = [
       'Fixed a glitch at the Fleet Compound where clearing the Carnival Matching Game board would just deal you a fresh board and let you keep playing (and earning) indefinitely. It now ends your visit once you clear it, same as Plinko, Blackjack, Poker, and the Auction. The map\'s own Grid Anomaly matching game stops are unaffected.',
     ],
     Visual: [
+      'The map now always has one straight line running through the middle lane from start to boss, with the top and bottom stops weaving in and out of it.',
       'The Dealership popup on the map now shows a big picture and its button says Enter instead of Go Here.',
       'Removed leftover all-caps text (Bust, Win, Push, Lose, Maxed, and a few others) so labels use normal capitalization.',
       'Stop Details popup cleaned up: dropped the redundant "Stop Details" header text, packed HP/Draws/Difficulty into a tight column on the left with the item cards stacked underneath (2 wide, wrapping to a new row), and moved the picture into the empty space on the right at full height. Armor is now shown as a small "+X Armor" note right next to HP instead of its own paragraph.',

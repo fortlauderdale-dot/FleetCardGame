@@ -32,6 +32,9 @@
   .map-popup-overlay{position:fixed;inset:0;background:rgba(11,15,25,0.75);backdrop-filter:blur(4px);display:flex;align-items:flex-start;justify-content:center;z-index:10000;padding:14px;padding-top:90px;overflow-y:auto}
   .map-popup-overlay .wo{max-width:400px;width:100%;margin:0}
   .map-popup-overlay .wo.wide{max-width:640px}
+  .popupHeroArt{margin:10px 0 6px;text-align:center}
+  .popupHeroArt img{display:block;width:100%;max-height:300px;object-fit:contain;margin:0 auto;border-radius:10px}
+  .popupHeroFallback{font-size:120px;line-height:1.1;text-align:center}
   .artZoomModal{cursor:zoom-out;z-index:20000}
   .artZoomBox{position:relative;display:flex;flex-direction:column;align-items:center;gap:12px;cursor:default}
   .artZoomImgWrap{width:min(70vw,420px);height:min(70vw,420px);display:flex;align-items:center;justify-content:center}
@@ -2021,7 +2024,7 @@ const ITEMS = {
     condition: { type: 'pokerTier', tier: 2 }, baseMult: 1, kind: 'poison',
     note: 'Needs Two Pair. Poison damage.' },
   w2_fog_swarm_thicken: { id: 'w2_fog_swarm_thicken', name: 'Thickening Fog', maxCards: 3, usesPerTurn: 1,
-    condition: { type: 'colorCount', color: 'black', count: 2 }, baseMult: 1.3, kind: 'poison',
+    condition: { type: 'colorCount', color: 'blk', count: 2 }, baseMult: 1.3, kind: 'poison',
     note: 'Needs 2+ Black cards. The fog bank swells and settles in thicker. Poison damage.' },
   w2_tusk_charge: { id: 'w2_tusk_charge', name: 'Tusk Charge', maxCards: 1, usesPerTurn: 1,
     condition: { type: 'any', exactCount: 1 }, flatAmount: 12,
@@ -2508,7 +2511,7 @@ function renderStandardItemCard(item, opts = {}) {
     : eKind === 'lightning' ? `<span class="effectTip" style="color:var(--lightning)" data-tip="Lightning damage is randomized between 25% and 100% power every time it fires.">Lightning</span>`
     : '';
   const effUnlockThreshold = item.id === 'impound_release' ? Math.max(35, (item.unlockThreshold || 45) - utilityLevel('impound_release') * 5) : item.unlockThreshold;
-  const unlockLine = item.unlockThreshold != null && footerHTML == null ? `<div class="note" style="margin:2px 0 0"><span class="hoverTip" data-title="Play cards through it to count down a ${effUnlockThreshold}-point charge (based on the cards' value, no damage dealt). Once charged, it draws 4 cards each use, once per turn, for the rest of that battle. Charge resets every new battle.">Charges at ${effUnlockThreshold}</span></div>` : '';
+  const unlockLine = item.unlockThreshold != null && footerHTML == null ? `<div class="note" style="margin:2px 0 0"><span class="hoverTip" data-title="Play cards through it to count down a ${effUnlockThreshold}-point charge (based on the cards' value, no damage dealt). Once charged, it draws 4 cards each use, once per turn, for the rest of that battle. Charge resets every new battle.">Charges at ${effUnlockThreshold}${item.id === 'impound_release' ? ', then Draw 4' : ''}</span></div>` : '';
   const staticKindLine = footerHTML == null ? `<div class="note" style="margin:0">${formatKindAmount(item, kindTag)}</div>` : '';
   const cardHTML = cards.map((c, i) => {
     const handIdx = opts.idxs ? opts.idxs[i] : i;
@@ -4113,7 +4116,7 @@ function openFleetBlackjack(options) {
     dealerCardsEl.innerHTML = visibleCards.map(cardHTML).join('') + (state.dealer.revealed ? '' : cardBackHTML());
     if (state.dealer.revealed) {
       const v = blackjackHandValue(state.dealer.cards);
-      dealerTotalEl.textContent = v.busted ? 'BUST' : String(v.total) + (v.soft ? ' (soft)' : '');
+      dealerTotalEl.textContent = v.busted ? 'Bust' : String(v.total) + (v.soft ? ' (soft)' : '');
       dealerTotalEl.className = 'fleetBjHandTotal ' + (v.busted ? 'bjBust' : '');
     } else {
       dealerTotalEl.textContent = 'Showing ' + rankLabel(state.dealer.cards[0].rank);
@@ -4125,9 +4128,9 @@ function openFleetBlackjack(options) {
     handsWrap.innerHTML = state.hands.map((hand, i) => {
       const st = handStatus(hand);
       const canTarget = state.pool.length > 0 && selectedPoolIdx != null && canReceiveCard(hand);
-      const statusLabel = st.busted ? 'BUST' : st.natural ? 'Blackjack!' : st.total === 21 ? '21 - Locked' : hand.cards.length ? String(st.total) + (st.soft ? ' (soft)' : '') : 'Empty';
+      const statusLabel = st.busted ? 'Bust' : st.natural ? 'Blackjack!' : st.total === 21 ? '21 - Locked' : hand.cards.length ? String(st.total) + (st.soft ? ' (soft)' : '') : 'Empty';
       const statusClass = st.busted ? 'bjBust' : (st.natural || st.total === 21) ? 'bjLocked' : '';
-      const resultLabel = hand.outcome ? `<div class="fleetBjHandOutcome ${hand.outcome}">${hand.outcome === 'win' ? 'WIN' : hand.outcome === 'push' ? 'PUSH' : 'LOSE'}</div>` : '';
+      const resultLabel = hand.outcome ? `<div class="fleetBjHandOutcome ${hand.outcome}">${hand.outcome === 'win' ? 'Win' : hand.outcome === 'push' ? 'Push' : 'Lose'}</div>` : '';
       return `<div class="fleetBjHand ${st.busted ? 'busted' : ''} ${canTarget ? 'targetable' : ''}" data-bjhand="${i}">
         <div class="fleetBjHandReward">${hand.reward.label}</div>
         <div class="fleetBjHandCards">${hand.cards.map(cardHTML).join('')}</div>
@@ -4502,7 +4505,7 @@ function openFleetPoker(options) {
             <div class="fleetPokerTierLabel">${hand.cBest.label}</div>
           </div>
         </div>
-        <div class="fleetPokerOutcome ${hand.outcome}">${hand.outcome === 'win' ? `YOU WIN - ${rewardLabelFor(hand.reward)}` : hand.outcome === 'lose' ? 'YOU LOSE' : 'PUSH'}</div>
+        <div class="fleetPokerOutcome ${hand.outcome}">${hand.outcome === 'win' ? `You win - ${rewardLabelFor(hand.reward)}` : hand.outcome === 'lose' ? 'You lose' : 'Push'}</div>
       </div>`;
     }).join('');
     playSfx(state.playerHands.some(h => h.outcome === 'win') ? 'open' : 'lose');
@@ -6264,7 +6267,7 @@ function nodePopupContent(r, c) {
       accent: o.boss ? '#7a0000' : isElite ? '#d9861f' : null,
     };
   }
-  if (node.type === 'shop') return { title: 'Dealership', art: iconImg('node-dealership.png', ICON.cart, 64), rows: [], extra: '<div class="note">Buy a vehicle with coins.</div>', actionLabel: 'Go Here' };
+  if (node.type === 'shop') return { title: 'Dealership', art: iconImg('node-dealership.png', ICON.cart, 64), heroImg: 'Icons/node-dealership.png', heroFallback: ICON.cart, rows: [], extra: '<div class="note">Buy a vehicle with coins.</div>', actionLabel: 'Enter' };
   if (node.type === 'rest') return { title: 'Pit Stop', art: iconImg('node-service-station.png', ICON.wrench, 64), rows: [], extra: '<div class="note">Restore 30 health.</div>', actionLabel: 'Go Here' };
   if (node.type === 'blacksmith') return { title: 'Tuning Garage', art: iconImg('node-tuning-garage.png', ICON.hammer, 64), rows: [], extra: '<div class="note">Spend coins to permanently boost a card (or a whole rank/suit), for this run only.</div>', actionLabel: 'Go Here' };
   if (node.type === 'chopshop') return { title: 'Chop Shop', art: iconImg('node-chop-shop.png', ICON.curse, 64), rows: [], extra: '<div class="note">Spend coins to convert an Item to poison, burn, or curse, or add card slots.</div>', actionLabel: 'Go Here' };
@@ -6312,8 +6315,9 @@ function nodePopupScreen(r, c) {
             <div class="wo-eyebrow"${info.accent ? ` style="color:${info.accent}"` : ''}>${info.eyebrow || 'Stop Details'}</div>
             <h1 style="margin:2px 0 0">${info.title}</h1>
           </div>
-          <div style="flex-shrink:0">${info.art}</div>
+          ${info.heroImg ? '' : `<div style="flex-shrink:0">${info.art}</div>`}
         </div>
+        ${info.heroImg ? `<div class="popupHeroArt"><img src="${info.heroImg}" alt="" onerror="this.outerHTML='<div class=&quot;popupHeroFallback&quot;>${info.heroFallback || ''}</div>'"></div>` : ''}
         ${info.rows.length ? `<div class="note" style="margin:8px 0;font-weight:700;color:var(--ink);font-size:13px">${info.rows.map(([k,v])=>`${k}: ${v}`).join(' &nbsp;&middot;&nbsp; ')}</div>` : ''}`}
         ${info.extra || ''}
         ${rewardsHTML}
@@ -6428,7 +6432,7 @@ function runUpgradeScreen() {
     return `<div class="shopcard" style="padding:8px 10px"><div class="hdr" style="margin:0"><span>${def.label}</span><span class="note" style="margin:0">Current: ${currentLabel}</span></div>
       <div class="note" style="margin:2px 0 6px">${def.desc}</div>
       <div style="display:flex;justify-content:flex-end;align-items:center;gap:10px">
-        <span class="price" style="white-space:nowrap">${maxed ? 'MAXED' : cost + ' coins'}</span>
+        <span class="price" style="white-space:nowrap">${maxed ? 'Maxed' : cost + ' coins'}</span>
         <button class="wo-btn amber" data-runupgrade="${kind}" ${canAfford ? '' : 'disabled'} style="padding:8px 12px;font-size:13px;white-space:nowrap">${maxed ? 'Maxed for this run' : full ? 'Full health' : 'Buy'}</button>
       </div>
     </div>`;
@@ -6554,7 +6558,7 @@ function battleScreen() {
         ${bonusLine}
         ${lightningRollLine}
         ${drawBonusLine}
-        ${item.unlockThreshold != null ? `<div class="itemBonusLine" style="color:#f5c451;font-weight:700;text-align:center">Draw 4 cards each turn once unlocked</div>` : ''}
+        ${item.unlockThreshold != null ? `<div class="itemBonusLine" style="color:#f5c451;font-weight:700;text-align:center">${item.id === 'impound_release' ? 'Once charged: Draw 4 cards each turn' : 'Draw 4 cards each turn once unlocked'}</div>` : ''}
         ${hypPreviewHTML}
         <div class="vcards">${cardHTML}</div>
       </div>
@@ -6627,7 +6631,7 @@ function battleScreen() {
           </div>
         </div>
       </div>
-      <div class="vsMark">VS</div>
+      <div class="vsMark">vs</div>
       <div class="duelSide opp"><div class="artZoomTrigger" data-artzoom="opp">${art(opp, 72)}</div>
         <div class="sideInfo">
           <h3 style="justify-content:flex-start;gap:6px;flex-wrap:nowrap"><span style="color:var(--red)">${opp.name}</span>${opp.boss ? ` <span class="hoverTip" style="color:var(--red);font-size:13px" data-title="This is a boss fight - taking too long on a turn costs extra health, so don't sit on it.">&#9201;</span>` : ''}
@@ -6950,8 +6954,8 @@ function blacksmithScreen() {
     const leftVisual = opt.scope === 'card'
       ? `<div class="card ${suitColorClass(SUITS.find(s=>s.s===opt.suit)?.color, opt.suit)}"><div>${rankLabel(opt.rank)}</div><div style="font-size:16px">${opt.suit}</div></div>`
       : opt.scope === 'rank'
-        ? `<div class="card"><div>${rankLabel(opt.rank)}</div><div style="font-size:11px;letter-spacing:.02em">ALL</div></div>`
-        : `<div class="card ${suitColorClass(SUITS.find(s=>s.s===opt.suit)?.color, opt.suit)}"><div style="font-size:11px;letter-spacing:.02em">ALL</div><div style="font-size:16px">${opt.suit}</div></div>`;
+        ? `<div class="card"><div>${rankLabel(opt.rank)}</div><div style="font-size:11px;letter-spacing:.02em">All</div></div>`
+        : `<div class="card ${suitColorClass(SUITS.find(s=>s.s===opt.suit)?.color, opt.suit)}"><div style="font-size:11px;letter-spacing:.02em">All</div><div style="font-size:16px">${opt.suit}</div></div>`;
     const badge = (amt) => amt > 0 ? `<span style="position:absolute;top:-6px;right:-6px;background:#2fae66;color:#fff;font-size:10px;font-weight:800;border-radius:10px;padding:1px 5px;box-shadow:0 0 0 2px #12163a">+${amt}</span>` : '';
     const leftMini = `<div style="position:relative;display:inline-block">${leftVisual}${badge(bonus)}</div>`;
     const rightMini = `<div style="position:relative;display:inline-block">${leftVisual}${badge(maxed ? bonus : bonus + SCOPE_TUNE_DAMAGE[opt.scope])}</div>`;
@@ -7068,9 +7072,9 @@ function worldCompleteScreen(fromWorld, toWorld) {
         <div class="wo-body" style="text-align:center">
           <div class="wo-eyebrow">World Complete</div>
           <h1 class="worldCompleteTitle">${fromName}</h1>
-          <div class="worldCompleteBanner">COMPLETE</div>
+          <div class="worldCompleteBanner">Complete</div>
           <div class="wo-sub" style="margin:14px 0">That boss didn't stand a chance. The route's clear and Fort Lauderdale owes your fleet one. Fuel up, because ${toName} is coming in hot.</div>
-          <img class="worldCompleteImg" src="Transitions/world-${fromWorld}-complete.png" alt="" onerror="this.style.display='none'">
+          <img class="worldCompleteImg" src="Transitions/world-${fromWorld}-complete.jpg" alt="" onerror="this.style.display='none'">
           <button class="wo-btn amber" id="advanceWorldBtn" style="width:100%;margin-top:14px;font-size:16px;padding:14px">Head Into ${toName}</button>
         </div>
       </div>
@@ -7219,7 +7223,7 @@ function upgradeScreen() {
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-top:3px">
         <div class="note hoverTip" style="margin:0;font-weight:700;color:var(--ink)" data-title="${u.desc}">Currently: ${u.currentValue(lvl)}</div>
         <div style="display:flex;align-items:center;gap:6px;flex-wrap:nowrap">
-          <span class="price" style="white-space:nowrap">${maxed ? 'MAX' : cost + ' pts'}</span>
+          <span class="price" style="white-space:nowrap">${maxed ? 'Max' : cost + ' pts'}</span>
           ${lvl > 0 ? `<button class="wo-btn gray hoverTip" data-leveldown="${u.id}" data-title="Refunds +${refund} points" style="padding:6px 10px;font-size:12px;white-space:nowrap">Refund</button>` : ''}
           ${maxed ? '' : `<button class="wo-btn amber" data-levelup="${u.id}" style="padding:6px 10px;font-size:12px;white-space:nowrap" ${META.points < cost ? 'disabled' : ''}>Level Up</button>`}
         </div>
@@ -7229,7 +7233,7 @@ function upgradeScreen() {
   };
 
   const sections = ['high', 'medium', 'low'].map(tier => `
-    <div style="margin-top:18px;font-weight:800;font-size:15px;text-transform:uppercase;letter-spacing:0.03em;color:${TIER_COLOR[tier]};border-bottom:2px solid ${TIER_COLOR[tier]};padding-bottom:4px">${TIER_LABEL[tier]}</div>
+    <div style="margin-top:18px;font-weight:800;font-size:15px;text-transform:none;letter-spacing:0.03em;color:${TIER_COLOR[tier]};border-bottom:2px solid ${TIER_COLOR[tier]};padding-bottom:4px">${TIER_LABEL[tier]}</div>
     <div style="margin:8px 0">${groups[tier].map(cardFor).join('')}</div>
   `).join('');
 
@@ -7425,6 +7429,8 @@ const UPDATE_LOG = [
       'Added Anthony as a new Easter egg opponent, with two new Items: Torque Check (needs a Pair) and Diagnostic Deep-Dive (needs cards totaling 7+, draws a card immediately).',
     ],
     'Item cards': [
+      'Fixed Thickening Fog, which could never fire because it was looking for the wrong color name. It now works with 2 or more Black cards.',
+      'Impound Release now says "Once charged: Draw 4 cards each turn" right on the card, and "Charges at 45, then Draw 4" in the shop.',
       'Fixed Rapid Intervention (and any other item with a flat built-in bonus) showing "Bonus +30% from tuning" before it had ever actually been tuned - that wording now only shows once you have actually put a tuning level into it.',
       'Cursed Carpool and a handful of other single-card requirement items (the ones that need one specific card, like 3 of Clubs) now show a full-size mini playing card instead of the rank plus a tiny suit square, so the exact card is easier to make out at a glance. Convoy-style items that just need a count of a suit (Club Convoy, Diamond Convoy, etc.) are unchanged, since those aren\'t asking for one specific card.',
     ],
@@ -7432,6 +7438,8 @@ const UPDATE_LOG = [
       'Fixed a glitch at the Fleet Compound where clearing the Carnival Matching Game board would just deal you a fresh board and let you keep playing (and earning) indefinitely. It now ends your visit once you clear it, same as Plinko, Blackjack, Poker, and the Auction. The map\'s own Grid Anomaly matching game stops are unaffected.',
     ],
     Visual: [
+      'The Dealership popup on the map now shows a big picture and its button says Enter instead of Go Here.',
+      'Removed leftover all-caps text (Bust, Win, Push, Lose, Maxed, and a few others) so labels use normal capitalization.',
       'Stop Details popup cleaned up: dropped the redundant "Stop Details" header text, packed HP/Draws/Difficulty into a tight column on the left with the item cards stacked underneath (2 wide, wrapping to a new row), and moved the picture into the empty space on the right at full height. Armor is now shown as a small "+X Armor" note right next to HP instead of its own paragraph.',
       'Map-node and resource-icon artwork wired up and permanently baked in: Dealership, Service Station, Tuning Garage, Chop Shop, Overdrive Bay, Supply Cache, Fleet Compound, Fleet Plinko, Fleet Blackjack, Fleet Poker, and Fleet Auction all use their real pictures now (with an emoji fallback if an image is ever missing), and the coin/gem/fuel/energy/heart icons in the top bar and everywhere else are sized to match.',
       'Fixed a bug where the Fleet Compound (and every other non-battle map node) never actually used its uploaded picture on the map itself, even though the same picture worked fine on the Stop Details popup - the map was only ever drawing the emoji fallback. All map nodes are also a bit larger now so they\'re easier to tell apart at a glance.',
@@ -7901,8 +7909,8 @@ function render(html) {
     const returnToMap = JOKER_GLITCH_POPUP?.returnToMap; JOKER_GLITCH_POPUP = null;
     MATCH_OVERLAY_ACTIVE = false;
     if (!returnToMap) { if (!RUN.castleState) RUN.castleState = {}; RUN.castleState.matchPlayed = true; }
-    if (returnToMap) { RUN.lastNotice = 'CRITICAL GLITCH! A Red Joker and a Black Joker were flipped together. The board has reset.'; render(mapScreen()); }
-    else render(castleMenuScreen('CRITICAL GLITCH! A Red Joker and a Black Joker were flipped together. The board has reset.'));
+    if (returnToMap) { RUN.lastNotice = 'Critical glitch! A Red Joker and a Black Joker were flipped together. The board has reset.'; render(mapScreen()); }
+    else render(castleMenuScreen('Critical glitch! A Red Joker and a Black Joker were flipped together. The board has reset.'));
   };
   const matchPopupContinueBtn = document.getElementById('matchPopupContinueBtn');
   if (matchPopupContinueBtn) matchPopupContinueBtn.onclick = () => {

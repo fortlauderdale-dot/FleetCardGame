@@ -3686,7 +3686,7 @@ function openFleetPlinko(options) {
   // chip visibly can't drift across a bucket boundary once it's down here, and it settles resting
   // on the bucket floor instead of vanishing the moment it reaches the top of the bucket row.
   const dividerThickness = 4;
-  const dividerHeight = 36;
+  const dividerHeight = 14;
   const dividerXs = [];
   for (let i = 1; i < slotCount; i++) dividerXs.push(sidePadding + i * slotWidth);
 
@@ -3700,8 +3700,12 @@ function openFleetPlinko(options) {
   // finally walked it down to the slots.
   const pegs = [];
   const pegTop = 60;
-  const pegBottom = slotTop - 20;
-  const pegRows = FLEET_PLINKO_CONFIG.pegRows;
+  // The lowest row of pegs is dropped (same row spacing, one fewer row) so the last pegs sit well clear of
+  // the divider posts - with them close together a chip could wedge between a peg and a post and stall.
+  const origPegBottom = slotTop - 20;
+  const origRowSpacing = (origPegBottom - pegTop) / (FLEET_PLINKO_CONFIG.pegRows - 1);
+  const pegBottom = origPegBottom - origRowSpacing;
+  const pegRows = FLEET_PLINKO_CONFIG.pegRows - 1;
   const pegsPerRow = FLEET_PLINKO_CONFIG.pegsPerRow;
   const rowSpacing = (pegBottom - pegTop) / (pegRows - 1);
   const colGap = (W - sidePadding * 2) / (pegsPerRow - 1);
@@ -4363,6 +4367,15 @@ function openFleetPoker(options) {
   function cardBackHTML() { return `<div class="card back big"></div>`; }
   function rewardLabelFor(reward) { return reward.type === 'item' ? `🚚 ${reward.label}` : reward.label; }
 
+  // The computer's hole cards are face-up for the whole build phase (dealing, flop, turn) so the player
+  // knows what they're up against, then flip face-down once the river is out (all five community cards
+  // showing) and stay hidden until the final showdown reveals them.
+  function computerRowHTML(i) {
+    const hide = state.community.length >= FLEET_POKER_CONFIG.communityCount;
+    const cards = state.computerHands[i].cards;
+    return `<div class="fleetPokerCompRow"><div class="note" style="margin:6px 0 2px">Computer${hide ? '' : ' (visible until the river)'}</div>
+      <div class="fleetPokerHandCards" style="justify-content:center">${cards.map(c => hide ? '<div class="card back mini"></div>' : `<div class="card mini ${suitColorClass(c.color, c.suit)}"><div>${rankLabel(c.rank)}</div><div>${c.suit}</div></div>`).join('')}</div></div>`;
+  }
   function renderHands() {
     handsWrap.innerHTML = state.playerHands.map((hand, i) => {
       const full = hand.cards.length >= FLEET_POKER_CONFIG.cardsPerHand;
@@ -4371,6 +4384,7 @@ function openFleetPoker(options) {
       return `<div class="fleetPokerHand ${full ? 'full' : ''} ${canTarget ? 'targetable' : ''}" data-pkhand="${i}">
         <div class="fleetPokerHandReward">${rewardLabelFor(hand.reward)}</div>
         <div class="fleetPokerHandCards">${hand.cards.map(cardHTML).join('')}${placeholders}</div>
+        ${computerRowHTML(i)}
       </div>`;
     }).join('');
     handsWrap.querySelectorAll('[data-pkhand]').forEach(el => {
@@ -4445,17 +4459,17 @@ function openFleetPoker(options) {
     revealBtn.disabled = true;
     if (revealStage === 0) {
       state.community.push(drawCard(), drawCard(), drawCard());
-      renderCommunityStrip('Flop'); playSfx('open');
+      renderCommunityStrip('Flop'); renderHands(); playSfx('open');
       message.textContent = 'The flop is down.';
       revealStage = 1; revealBtn.textContent = 'Reveal the Turn'; revealBtn.disabled = false;
     } else if (revealStage === 1) {
       state.community.push(drawCard());
-      renderCommunityStrip('Turn'); playSfx('open');
+      renderCommunityStrip('Turn'); renderHands(); playSfx('open');
       message.textContent = 'The turn is down.';
       revealStage = 2; revealBtn.textContent = 'Reveal the River'; revealBtn.disabled = false;
     } else if (revealStage === 2) {
       state.community.push(drawCard());
-      renderCommunityStrip('River'); playSfx('open');
+      renderCommunityStrip('River'); renderHands(); playSfx('open');
       message.textContent = 'The river is down.';
       revealStage = 3; revealBtn.textContent = 'Show Hands';
       revealBtn.disabled = false;
@@ -4537,28 +4551,37 @@ function openFleetPoker(options) {
 const FLEET_AUCTION_CONFIG = {
   inspectCost: 5,
   bidIncrement: 5,
+  // Computer bidders never bid past a lot's real value (blind ranges sit well under it, revealed
+  // ranges top out at exactly its value), so a lot can never cost the player more than it is
+  // worth from the bots' pushing alone. Each bot also skips a random share of lots outright and has a
+  // small coin pool, which is what leaves real deals on the table. blindRange / revealedRange are
+  // fractions of the lot's value, rolled fresh per lot; skipChance is the odds the bot ignores a lot.
   bidders: [
-    { id: 'steady', name: 'Steady Eddie', baseCapMultiplier: 2.0, revealedCapMultiplier: 2.0, chipsRange: [70, 110],
-      style: "Bids cautiously - won't chase a lot past about double its starting value, revealed or not." },
-    { id: 'bigspender', name: 'Big Spender', baseCapMultiplier: 2.5, revealedCapMultiplier: 4.0, chipsRange: [120, 180],
-      style: 'Plays it safer on a mystery lot, but pushes hard once a lot is revealed - up to 4x its starting value.' },
+    { id: 'steady', name: 'Steady Eddie', blindRange: [0.35, 0.6], revealedRange: [0.5, 0.75], skipChance: 0.3, chipsRange: [40, 70],
+      style: "Bids cautiously - never pays more than the lot is worth, and sits out some lots entirely." },
+    { id: 'bigspender', name: 'Big Spender', blindRange: [0.3, 0.5], revealedRange: [0.7, 1.0], skipChance: 0.2, chipsRange: [60, 95],
+      style: "Lowballs a mystery lot, but will pay up to a revealed lot's full value - never more." },
   ],
 };
 function auctionLotPool() {
   const ownedIds = new Set(RUN.hero?.items || []);
-  const itemPool = Object.values(ITEMS).filter(it => it.cost > 0 && !ownedIds.has(it.id));
+  const allItems = Object.values(ITEMS).filter(it => it.cost > 0 && !ownedIds.has(it.id));
+  // One lot is always a real Item, and it leans toward the better ones (60+ coin value) when any are left.
+  const goodItems = allItems.filter(it => it.cost >= 60);
+  const itemPool = goodItems.length ? goodItems : allItems;
   const itemId = itemPool.length ? shuffle([...itemPool])[0].id : 'supply_bag';
   const item = ITEMS[itemId] || ITEMS['supply_bag'];
   const currencyOptions = shuffle([
-    { type: 'coins', amount: 30, label: '+30 Coins', value: 30 },
     { type: 'coins', amount: 60, label: '+60 Coins', value: 60 },
-    { type: 'gems', amount: 2, label: '+2 Gems', value: 50 },
-    { type: 'fuel', amount: 3, label: '+3 Fuel', value: 30 },
+    { type: 'coins', amount: 90, label: '+90 Coins', value: 90 },
+    { type: 'gems', amount: 3, label: '+3 Gems', value: 75 },
+    { type: 'fuel', amount: 5, label: '+5 Fuel', value: 40 },
   ]);
   const itemLot = { type: 'item', itemId: item.id, label: item.name, value: item.cost || 50 };
   return shuffle([itemLot, currencyOptions[0], currencyOptions[1]]);
 }
-function startingBidFor(lot) { return Math.max(10, Math.round(lot.value * 0.4 + Math.random() * 10)); }
+// Opening bids start low (about a fifth of the lot's value) so there is room to actually win a deal.
+function startingBidFor(lot) { return Math.max(5, Math.round((lot.value * 0.2 + Math.random() * 8) / 5) * 5); }
 function applyAuctionHaul(haul) {
   if (!RUN) return;
   if (!RUN.castleState) RUN.castleState = {};
@@ -4598,7 +4621,14 @@ function openFleetAuction(options) {
   const state = {
     lots: auctionLotPool().map(reward => {
       const startBid = startingBidFor(reward);
-      return { reward, startBid, currentBid: startBid, highBidder: null, revealed: false, resolved: false, won: false };
+      // Each bot's hidden willingness to pay for this specific lot, rolled once: blind, revealed, and
+      // whether it is interested at all. Always at or under the lot's value.
+      const caps = {};
+      for (const b of FLEET_AUCTION_CONFIG.bidders) {
+        const roll = r => Math.min(reward.value, Math.round(reward.value * (r[0] + Math.random() * (r[1] - r[0]))));
+        caps[b.id] = { blind: roll(b.blindRange), revealed: roll(b.revealedRange), interested: Math.random() >= b.skipChance };
+      }
+      return { reward, startBid, currentBid: startBid, highBidder: null, revealed: false, resolved: false, won: false, caps };
     }),
     lotIndex: 0,
     haul: { coins: 0, gems: 0, fuel: 0, itemIds: [] },
@@ -4616,7 +4646,7 @@ function openFleetAuction(options) {
       <div class="wo-stripe"></div>
       <div class="wo-body">
         <h1 style="margin:2px 0 0;text-align:center">Fleet <em>Auction</em></h1>
-        <div class="note" style="margin-top:2px;text-align:center">Three mystery lots. Inspect before you bid, or take the gamble blind.</div>
+        <div class="note" style="margin-top:2px;text-align:center">Three mystery lots, and one is always an Item. Inspect before you bid, or take the gamble blind.</div>
         <div id="fleetAuctionBidders" class="fleetAuctionBidders"></div>
         <div id="fleetAuctionLots" class="fleetAuctionLots"></div>
         <div id="fleetAuctionMessage" style="min-height:22px;text-align:center;font-size:13px;color:var(--dim)"></div>
@@ -4699,7 +4729,8 @@ function openFleetAuction(options) {
     let best = null;
     for (const bidder of FLEET_AUCTION_CONFIG.bidders) {
       if (lot.highBidder === bidder.id) continue;
-      const cap = lot.startBid * (lot.revealed ? bidder.revealedCapMultiplier : bidder.baseCapMultiplier);
+      if (!lot.caps[bidder.id].interested) continue;
+      const cap = lot.revealed ? lot.caps[bidder.id].revealed : lot.caps[bidder.id].blind;
       const nextBid = lot.currentBid + FLEET_AUCTION_CONFIG.bidIncrement;
       // A bidder now also needs the coins in its own remaining pool to raise, not just to stay
       // under its willingness-to-pay cap - previously the cap was the only limit, so a bidder

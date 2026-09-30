@@ -1356,7 +1356,6 @@ function computeItemAmountBase(item, cards, level, condResult, isOpponent) {
   }
   if (item.perCardBonus && cards.length > 1) mult += item.perCardBonus * (cards.length - 1);
   
-  if (item.id === 'fender_bender' && !isOpponent && RUN.hero?.heroId === 'admin' && META.levels.adminTune) mult += 0.1 * META.levels.adminTune;
   const rawSum = cards.reduce((a, c) => a + cardValue(c.rank) + (c.bonus || 0), 0);
   const flatBonus = (item.flatBonus || 0) + (item.flatBonusPerLevel || 0) * level;
   const amount = Math.round((Math.round(rawSum * mult) + flatBonus) * worldMult);
@@ -2914,9 +2913,6 @@ const UPGRADE_DEFS = [
   { id: 'fuelpen', label: 'Fuel Efficiency',      desc: 'Running out of fuel costs less health when it happens.', tier: 'low',
     currentValue: lvl => `${Math.max(0, 10 - lvl * 2)} HP lost (was 10)`,
     unlock: { points: 600 } },
-  { id: 'adminTune', label: 'Admin Vehicle Pair Bonus', desc: '+10% to the Admin Vehicle\'s One-Two Punch Pair bonus per level.', tier: 'low',
-    currentValue: lvl => `+${lvl * 10}%`,
-    unlock: { points: 700 } },
 ];
 const MAX_LEVEL = 10; 
 // One dial for how expensive every Career Point upgrade is. 1 = the old prices, 1.5 = half again as much.
@@ -8625,6 +8621,7 @@ const UPDATE_LOG = [
     'Career Points': [
       'The Career Points page is narrower, the bars have their own color so the rows do not blend together, and the three section headers are gone in favor of one long list that keeps the color coding.',
       'Most upgrades now unlock after you have earned a set number of Career Points in total, and every upgrade costs 50 percent more.',
+      'Removed the Admin Vehicle Pair Bonus upgrade. Career Points no longer buy anything that makes an item card hit harder, and any Career Points you spent on it are refunded.',
     ],
     Tutorial: [
       'The first battle is now staged. You start with a 2, two 9s, a King and an Ace against an opponent with exactly 48 health, and the steps run in a new order: pick your cards, load an item, attack, end turn. A second turn with the King and Ace finishes it for a Perfect Win.',
@@ -9477,6 +9474,8 @@ document.addEventListener('mouseover', (e) => {
 
 /* ========== STABILIZATION PATCH ========== */
 META.devModeActive = META.playerName?.toLowerCase() === "devmode";
+// The Admin Vehicle Pair Bonus upgrade was removed (Career Points must not make item cards hit harder). Refund anything spent on it.
+if (META.levels && META.levels.adminTune) { let back = 0; for (let i = 0; i < META.levels.adminTune; i++) back += Math.round(UPGRADE_TIERS.low.baseCost * Math.pow(UPGRADE_TIERS.low.growth, i)); META.points += back; delete META.levels.adminTune; saveMeta(); }
 (function(){
   const tip=document.createElement('div');tip.className='jsFloatTip';document.body.appendChild(tip);
   document.body.classList.add('jsTooltipActive');

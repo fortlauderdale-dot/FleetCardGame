@@ -172,6 +172,17 @@
   .popupItemRow{display:grid;grid-template-columns:repeat(auto-fill,125px);justify-content:start;gap:8px}
   .pickItemRow{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-start;margin-left:178px}
   .pickItemRow .itemCard{flex:0 0 125px;width:125px;height:156px;min-height:156px;max-height:156px;overflow:hidden}
+  /* Vehicle ability card: its own look (not an item card). Same footprint as an item card so rows stay even. */
+  .abilityCard{flex:0 0 125px;width:125px;height:156px;box-sizing:border-box;overflow:hidden;cursor:default;position:relative;
+    display:flex;flex-direction:column;align-items:center;text-align:center;padding:7px 6px 6px;border-radius:14px;
+    background:radial-gradient(120% 90% at 50% 0%,rgba(31,182,166,0.28) 0%,rgba(10,14,26,0.95) 62%);
+    border:1px solid #1fb6a6;box-shadow:inset 0 0 14px rgba(31,182,166,0.25),0 0 8px rgba(31,182,166,0.18)}
+  .abilityCard .abilityTag{font-size:9.5px;letter-spacing:.06em;color:#7fe3d8;font-family:var(--mono);opacity:.9}
+  .abilityCard .abilityName{font-weight:700;font-size:12.5px;color:var(--amber);margin:3px 0 6px;line-height:1.2}
+  .abilityCard .abilityCost{display:inline-flex;align-items:center;gap:4px;padding:2px 10px;border-radius:999px;
+    background:rgba(31,182,166,0.16);border:1px solid rgba(31,182,166,0.55);color:#f0f3f8;font-weight:700;font-size:13px}
+  .abilityCard .abilityCost .vart{width:13px;height:13px;font-size:13px}
+  .abilityCard .abilityDesc{margin-top:8px;font-size:11px;line-height:1.3;color:#cfd6e2}
   #dealer-viewport .dealerRow{
     display:grid; grid-template-columns:repeat(6, 141px); justify-content:center;
     align-items:start; gap:10px; padding:8px 4px 14px;
@@ -321,8 +332,8 @@
   /* Per-vehicle picture fit (measured from each PNG's visible bounds): scale + nudge so every vehicle
      fills about the same space and sits just under the Choose button, regardless of how much empty
      margin its image file has. */
-  .pickPortrait[data-hero="sidebyside"] .vart img{transform:translate(1.2px,-4.8px) scale(1.068)}
-  .pickPortrait[data-hero="admin"] .vart img{transform:translate(-0.4px,-5.0px) scale(1.07)}
+  .pickPortrait[data-hero="sidebyside"] .vart img{transform:translate(1.0px,-8.0px) scale(0.82)}
+  .pickPortrait[data-hero="admin"] .vart img{transform:translate(-0.4px,4.2px) scale(1.07)}
   .pickPortrait[data-hero="beachtractor"] .vart img{transform:translate(0.3px,-3.4px) scale(1.467)}
   .pickPortrait[data-hero="interstate"] .vart img{transform:translate(-0.4px,-10.3px) scale(1.074)}
   .pickPortrait[data-hero="forklift"] .vart img{transform:translate(-7.4px,-8.7px) scale(1.616)}
@@ -2568,13 +2579,12 @@ function heroAbilityCardHTML(heroId) {
     : sp.type === 'dodge' ? `${Math.round(sp.chance * 100)}% chance to dodge the next attack.`
     : sp.type === 'refuel' ? `Refill ${sp.amountPerUnit} Fuel.`
     : sp.desc;
-  return `<div class="itemCard" style="cursor:default;background:rgba(10,14,26,0.9) !important;border:1px solid #1fb6a6;box-shadow:inset 0 0 12px rgba(31,182,166,0.25)">
-    <div class="itemCard-sec">
-      <div class="hdr" style="font-weight:600;color:var(--amber)">${sp.name}</div>
-      <div class="itemReqLine">${ICON.energy} ${cost}${sp.type === 'dodge' || sp.type === 'refuel' ? '' : '+'} Energy</div>
-    </div>
-    <div class="itemDivider"></div>
-    <div class="itemCard-sec"><div class="note hoverTip" data-title="${String(sp.desc).replace(/"/g, '&quot;')}">${shortDesc}</div></div>
+  const tip = String(sp.desc).replace(/"/g, '&quot;');
+  return `<div class="abilityCard" data-title="${tip}">
+    <div class="abilityTag">Ability</div>
+    <div class="abilityName">${sp.name}</div>
+    <div class="abilityCost">${ICON.energy} ${cost} Energy</div>
+    <div class="abilityDesc">${shortDesc}</div>
   </div>`;
 }
 function isStarterUnlocked(id) {
@@ -5046,7 +5056,7 @@ function startBattle(opponentDef, row, col, castleStage=0) {
   if (row === 0 && col === 0) {
     if (RUN.world === 1 && !META.hasSeenTutorial) BATTLE.showTutorialBanner = true;
     else if (RUN.world >= 2 && !META.hasSeenPoisonTutorial) {
-      battleLog('WARNING: Poison slips past your Armor and deals damage at the end of your turn!');
+      battleLog('Warning: Poison slips past your armor and deals damage at the end of your turn!');
       META.hasSeenPoisonTutorial = true; saveMeta();
     }
   }
@@ -6680,7 +6690,7 @@ function battleScreen() {
           <div class="bar-wrap"><div class="bar-fill bar-health" style="width:${healthPct}%"></div><div class="bar-text">${RUN.health} / ${RUN.maxHealth}</div></div>
           <div style="margin-top:6px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
             <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-start">
-              ${BATTLE.playerArmor ? `<span class="armorText hoverTip" style="font-weight:800;font-size:13px" data-title="Armor protects against incoming attacks, absorbing damage equal to the amount shown."><span class="vart" style="width:12px;height:12px;font-size:12px">${ICON.shield}</span> ${BATTLE.playerArmor} ARMOR</span>` : ''}
+              ${BATTLE.playerArmor ? `<span class="armorText hoverTip" style="font-weight:800;font-size:13px" data-title="Armor protects against incoming attacks, absorbing damage equal to the amount shown."><span class="vart" style="width:12px;height:12px;font-size:12px">${ICON.shield}</span> ${BATTLE.playerArmor} armor</span>` : ''}
               ${BATTLE.itemCurses && Object.keys(BATTLE.itemCurses).length ? `<span class="status curseStatus hoverTip" data-title="One or more of your Items is cursed - fire it before your turn ends or take its curse damage."><span class="vart" style="width:12px;height:12px;font-size:12px">${ICON.curse}</span> ${Object.keys(BATTLE.itemCurses).length} Item${Object.keys(BATTLE.itemCurses).length > 1 ? 's' : ''} cursed</span>` : ''}
               ${BATTLE.itemHexes && Object.keys(BATTLE.itemHexes).length ? `<span class="status hoverTip" style="color:var(--hex);font-weight:800;font-size:13px" data-title="One or more of your Items is hexed - firing it will feed a card to the opponent."><span class="vart" style="width:12px;height:12px;font-size:12px">${ICON.hex}</span> ${Object.keys(BATTLE.itemHexes).length} Item${Object.keys(BATTLE.itemHexes).length > 1 ? 's' : ''} hexed</span>` : ''}
               ${BATTLE.itemFrozen && Object.keys(BATTLE.itemFrozen).length ? `<span class="status hoverTip" style="color:var(--ice);font-weight:800;font-size:13px" data-title="One or more of your Items is frozen - drop cards into it to thaw it."><span class="vart" style="width:12px;height:12px;font-size:12px">${ICON.ice}</span> ${Object.keys(BATTLE.itemFrozen).length} Item${Object.keys(BATTLE.itemFrozen).length > 1 ? 's' : ''} frozen</span>` : ''}
@@ -6701,7 +6711,7 @@ function battleScreen() {
           <div style="margin-top:6px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
             ${BATTLE.opponent.burns?.length ? `<span class="attackChip" data-detonate="1" style="background:var(--amber);color:#062622;border-color:#0d8377;font-size:10px;padding:4px 8px;white-space:nowrap">Detonate for ${BATTLE.opponent.burns.reduce((a,b)=>a+(b.stages[b.stageIdx]||0),0)} now</span>` : '<span></span>'}
             <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
-              ${BATTLE.opponent.armor > 0 ? `<span class="status hoverTip" style="color:#5a7fa8;font-weight:800;font-size:13px" data-title="Armor absorbs damage from your direct attacks before it reaches their health. Poison, burn, and curse damage ignore it.">${ICON.defense || '🛡️'} ${BATTLE.opponent.armor} ARMOR</span>` : ''}
+              ${BATTLE.opponent.armor > 0 ? `<span class="status hoverTip" style="color:#5a7fa8;font-weight:800;font-size:13px" data-title="Armor absorbs damage from your direct attacks before it reaches their health. Poison, burn, and curse damage ignore it.">${ICON.defense || '🛡️'} ${BATTLE.opponent.armor} armor</span>` : ''}
               ${(BATTLE.opponent.poisonStacks||[]).length ? `<span class="status poisonStatus hoverTip" data-title="Poison now: ${(BATTLE.opponent.poisonStacks||[]).reduce((a,n)=>a+n,0)} damage. Next turn: ${(BATTLE.opponent.poisonStacks||[]).map(n=>Math.max(0,n-3)).reduce((a,n)=>a+n,0)} damage.">${ICON.poison} ${(BATTLE.opponent.poisonStacks||[]).reduce((a,n)=>a+n,0)} poison</span>` : ''}
               ${BATTLE.opponent.burns?.length ? (() => { const burns=BATTLE.opponent.burns; const now=burns.reduce((a,b)=>a+(b.stages[b.stageIdx]||0),0); const future=[1,2].map(offset=>burns.reduce((a,b)=>a+(b.stages[b.stageIdx+offset]||0),0)).filter(n=>n>0); const nextText=future.length ? `Next: ${future.join(', ')}` : 'No more burn damage.'; return `<span class="status burnStatus hoverTip" data-title="${nextText}">${ICON.fire} ${now} <b><u>Burn Damage</u></b></span>`; })() : ''}
               ${BATTLE.opponentItemCurses && Object.keys(BATTLE.opponentItemCurses).length ? `<span class="status curseStatus hoverTip" data-title="${Object.entries(BATTLE.opponentItemCurses).map(([k,v])=>`${ITEMS[k.replace(/_\d+$/,'')]?.name||'Item'}: ${v} if not fired`).join(' | ')}">${ICON.curse} ${Object.keys(BATTLE.opponentItemCurses).length} Item${Object.keys(BATTLE.opponentItemCurses).length>1?'s':''} cursed</span>` : ''}
@@ -7496,6 +7506,9 @@ const UPDATE_LOG = [
       'Fixed a glitch at the Fleet Compound where clearing the Carnival Matching Game board would just deal you a fresh board and let you keep playing (and earning) indefinitely. It now ends your visit once you clear it, same as Plinko, Blackjack, Poker, and the Auction. The map\'s own Grid Anomaly matching game stops are unaffected.',
     ],
     Visual: [
+      'Changed the last few shouting-style labels in battle (the armor chips and the first poison warning) to normal capitalization.',
+      'Pick Your Vehicle: the Golf Cart and Admin Vehicle pictures now sit lower so they line up with the other vehicles, and the Golf Cart no longer touches its Choose button.',
+      'Pick Your Vehicle: each vehicle\'s special ability is now its own rounded teal Ability card instead of looking like an Item card, and it shows the set Energy cost (for example "4 Energy" or "5 Energy") without the old "+".',
       'The map now always has one straight line running through the middle lane from start to boss, with the top and bottom stops weaving in and out of it.',
       'The Dealership popup on the map now shows a big picture and its button says Enter instead of Go Here.',
       'Removed leftover all-caps text (Bust, Win, Push, Lose, Maxed, and a few others) so labels use normal capitalization.',

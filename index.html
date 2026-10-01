@@ -2038,10 +2038,10 @@ const ITEMS = {
   w1_talon_dive: { id: 'w1_talon_dive', name: 'Talon Dive', maxCards: 3, usesPerTurn: 1,
     condition: { type: 'pokerTier', tier: 3 }, baseMult: 1,
     note: 'Needs Three of a Kind. Drops out of the sky, talons first.' },
-  w1_wave_crash: { id: 'w1_wave_crash', name: 'Wave Crash', maxCards: 5, usesPerTurn: 1,
+  w1_wave_crash: { id: 'w1_wave_crash', name: 'Bottle Service', maxCards: 5, usesPerTurn: 1,
     condition: { type: 'sumThreshold', min: 25 }, flatAmount: 32,
-    note: `Needs cards totaling ${SIGMA_TIP}25+. A full wall of water comes down.` },
-  w1_riptide_sweep: { id: 'w1_riptide_sweep', name: 'Riptide Sweep', maxCards: 5, usesPerTurn: 1,
+    note: `Needs cards totaling ${SIGMA_TIP}25+. Big Al sends the whole tab your way.` },
+  w1_riptide_sweep: { id: 'w1_riptide_sweep', name: 'Entourage Rush', maxCards: 5, usesPerTurn: 1,
     condition: { type: 'any' }, perFaceCardDamage: 10,
     note: 'Needs any card. Damage scales with how many face cards (J/Q/K) it plays.' },
 
@@ -2712,7 +2712,7 @@ const WORLD_1_POOLS = {
     { id: 'w1_jellyfish_swarm', name: 'Drifting Jellyfish Swarm', icon: '🪼', image: 'Hazards/drifting-jellyfish-swarm.png', hp: 94, minTier: 2, drawRate: 3, items: ['w1_sting_barrage', 'w1_jelly_drift'] },
     { id: 'w1_beach_cat_colony', name: 'Feral Beach Cat Colony', icon: '🐈', image: 'Hazards/feral-beach-cat-colony.png', hp: 93, minTier: 2, drawRate: 3, items: ['w1_claw_skirmish', 'w1_cat_colony_pounce'] },
   ],
-  boss: { id: 'rogue_wave', name: 'The Rogue Wave', icon: '🌊', image: 'Hazards/rogue-wave.png', hp: 150, minTier: 3, drawRate: 5, boss: true, usesPerTurn: 2, startArmor: 25, armorRegen: 12, items: ['w1_wave_crash', 'w1_riptide_sweep'], attackInfo: 'Attack: uses its best poker hand for heavy damage and can hit twice a turn. Builds a wall of water that keeps regenerating its own armor - no curses, just brute force.' },
+  boss: { id: 'rogue_wave', name: 'Big Al', icon: '🥂', image: 'Hazards/big-al.png', hp: 150, minTier: 3, drawRate: 5, boss: true, usesPerTurn: 2, startArmor: 25, armorRegen: 12, items: ['w1_wave_crash', 'w1_riptide_sweep'], attackInfo: 'Attack: uses his best poker hand for heavy damage and can hit twice a turn. His entourage keeps his armor topped up every turn - no curses, just brute force.' },
 };
 const WORLD_2_POOLS = {
   regulars: [
@@ -3487,7 +3487,7 @@ const DIFF_PATCH = {
   },
   "lab_wave_undertow": {
    "id": "lab_wave_undertow",
-   "name": "Undertow",
+   "name": "Canal Wake",
    "maxCards": 3,
    "usesPerTurn": 1,
    "condition": {
@@ -3498,7 +3498,7 @@ const DIFF_PATCH = {
    "baseMult": 0,
    "drawAmount": 2,
    "drawPerLevel": 0,
-   "note": "Needs 3 Black cards. Drags the tide back out and brings it back bigger. Draws 2 cards for its next attack."
+   "note": "Needs 3 Black cards. The yacht backs out of the slip and the wake comes back bigger. Draws 2 cards for its next attack."
   },
   "lab_matriarch_brood": {
    "id": "lab_matriarch_brood",
@@ -8760,6 +8760,7 @@ const UPDATE_LOG = [
     ],
     Opponents: [
       'Added Anthony as a new Easter egg opponent, with two new Items: Torque Check (needs a Pair) and Diagnostic Deep-Dive (needs cards totaling 7+, draws a card immediately).',
+      'The World 1 boss is now Big Al, with new attack names to match.',
     ],
     'Item cards': [
       'Diamond Convoy and other single-suit cards now say 1-4 diamond cards instead of Any diamond, so it is clear you can play more than one.',

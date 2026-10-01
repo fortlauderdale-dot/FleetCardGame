@@ -107,6 +107,7 @@
   .cur.health .vart{transform:scale(1.3);transform-origin:right center}
   .cur.pts .vart{transform:scale(1.3);transform-origin:center;margin-inline:1.7px}
   .cur{position:relative;cursor:help}[data-title]:hover::after{content:attr(data-title);position:absolute;z-index:50;left:50%;transform:translateX(-50%);top:calc(100% + 6px);width:max-content;max-width:220px;background:#000000;color:#ffffff;padding:7px 9px;border-radius:6px;font:12px var(--disp);white-space:normal;box-shadow:0 0 8px rgba(31,182,166,0.4);border:1px solid #1fb6a6;text-align:left;pointer-events:none}[data-title]{position:relative;cursor:help}.bossPreview{border:2px solid var(--red);background:#1a0e0e}.mapboss{font-size:12px;font-family:var(--mono);color:var(--dim);margin-top:8px}
+  .parityWord{font-weight:800;color:var(--amber)}
   .hoverTip{position:relative;cursor:help;text-decoration:underline dotted;text-underline-offset:2px}
   .tipLeft[data-title]:hover::after,.tipLeft.effectTip:hover::after{left:0;transform:none}
   .tipRight[data-title]:hover::after,.tipRight.effectTip:hover::after{left:auto;right:0;transform:none}
@@ -1286,16 +1287,22 @@ function kw(text, key) {
   const g = GLOSSARY[(key || text).toLowerCase()];
   return g ? `<span class="hoverTip" data-title="${g}">${text}</span>` : text;
 }
+// Even and Odd are called out in bold amber with a hover popup, since players often forget which ranks count.
+function parityWordHTML(parity) {
+  const even = parity === 'even';
+  const tip = even ? 'Even Cards: 2, 4, 6, 8, 10 and Queen.' : 'Odd Cards: Ace, 3, 5, 7, 9, Jack and King.';
+  return `<span class="hoverTip parityWord" data-title="${tip}">${even ? 'Even' : 'Odd'}</span>`;
+}
 function itemRequirementText(item) {
   const max = effectiveMaxCards(item);
   let cond = item.condition;
   if (item.id === 'drawstone' && cond?.type === 'sumThreshold') cond = { ...cond, min: Math.max(4, cond.min - utilityLevel('drawstone')) };
   let specific = '';
-  if (cond?.type === 'suitCount') specific = cond.count === 1 ? (max > 1 ? `At least 1 ${suitMicroCardHTML(cond.suit)} (up to ${max} cards)` : `Any ${suitMicroCardHTML(cond.suit)}`) : `At least ${cond.count} ${suitMicroCardHTML(cond.suit)}`;
+  if (cond?.type === 'suitCount') specific = cond.count === 1 ? (max > 1 ? `1-${max} ${suitMicroCardHTML(cond.suit)} cards` : `Any ${suitMicroCardHTML(cond.suit)}`) : `At least ${cond.count} ${suitMicroCardHTML(cond.suit)}`;
   else if (cond?.type === 'colorCount') specific = `${cond.count}+ ${kw(cond.color === 'red' ? 'Red' : 'Black')} cards`;
   else if (cond?.type === 'allSuits') specific = `one of each ${kw('Suit')}`;
   else if (cond?.type === 'cardIn') specific = describeCondition(cond);
-  else if (cond?.type === 'parity') specific = `Up to ${max} ${cond.parity === 'odd' ? `<span class="hoverTip" data-title="Odd Cards: Ace, 3, 5, 7, 9.">Odd</span>` : cond.parity} cards`;
+  else if (cond?.type === 'parity') specific = `Up to ${max} ${parityWordHTML(cond.parity)} cards`;
   else if (cond?.type === 'exactRank') specific = cond.requireAll ? `all ${rankLabel(cond.rank)}s` : `Any ${rankLabel(cond.rank)}`;
   else if (cond?.type === 'straightLen') specific = `${cond.len}-card ${kw('Straight')}`;
   else if (cond?.type === 'sumThreshold') specific = `Card(s) need to total ${cond.min} or higher`;
@@ -8713,7 +8720,6 @@ const UPDATE_LOG = [
       'Updated the burn notes and tooltips to explain the new rules.',
     ],
     Minigames: [
-      'Diamond Convoy (and other single-suit items) now say "At least 1 diamond (up to 4 cards)" so it is clear the other cards can be anything.',
       'Fleet Plinko: the left and right drop buttons now release the chip over a peg like the center one, so it no longer falls straight down.',
       'Fleet Blackjack: the final hands and the dealer stay on screen after you stand, and a popup says what you won. Click Collect to finish.',
       'Fleet Poker: the cards are bigger. The computer\'s hands now stay hidden until you have placed all nine cards.',
@@ -8723,19 +8729,17 @@ const UPDATE_LOG = [
       'The Body Shop is narrower, and Refuel and Dent Repair are now tight one-line rows with smaller buttons.',
     ],
     'New worlds': [
-      'World 7, Port Everglades, is here with 21 regular opponents, 3 elites and a boss. Its regulars mix every kind of damage. The boss is the Harbormaster, who throws away his whole hand every turn and draws 5 new cards with only 3 face up. Three Black cards close the gates for 47 armor, four Red cards hit for 48, so you have to read what you can see and guess the rest.',
-      'World 8, The Fleet Compound, is here too with 21 regulars, 3 elites and the Evil Mechanic, who swings twice a turn with shock, sabotage, freeze and hex. Beating World 8 is now the end of the campaign.',
+      'World 7, Port Everglades, is here with 21 regular opponents, 3 elites and a boss. Its regulars mix every kind of damage. The boss is the Harbormaster, who throws away his hand every turn and draws new cards.',
+      'World 8, The Fleet Compound, is here too with 21 regulars, 3 elites and the Evil Mechanic as boss. Beating World 8 is now the end of the campaign.',
     ],
     Difficulty: [
+      'The biggest single hit an opponent can land is now 99.',
       'Opponent difficulty was reworked from the Difficulty Lab. Opponents that hit far too soft or far too hard for their world are nudged toward a healthy range, and opponents already inside it are left alone. Elites now have 2 to 3 items and bosses 3 to 4.',
       'Early fights last longer. Opponents have more health in World 1 and the bonus fades out by World 4, and every world now also builds up a little across its rows.',
-      'Lightning now uses one shared roll from 0 to 100 percent for you and the opponent, and your status bar shows the current roll.',
-      'Poison and Burn from opponents now land on you instead of on themselves, and the biggest single hit an opponent can land is now 99.',
-      'Sixteen items that said Needs Two Pair but could only hold 3 cards can now hold 4, so they fire on an actual Two Pair.',
       'Every difficulty number now lives in one settings block at the top of the game file. A dev-only Difficulty Tuning screen (name your fleet devmode to see it) lets you test changes, start a run in any world, and read a fight log that records how each real fight went compared with the engine estimate.',
     ],
     'Career Points': [
-      'The home screen and the vehicle pick screen now say that losing a run costs you everything you gathered except your Career Points, which carry over for upgrades. Pick Your Vehicle also has Back and Spend Career Points buttons.',
+      'The home and vehicle pick screens now say a loss costs you everything except Career Points. Pick Your Vehicle also has Back and Spend Career Points buttons.',
       'The Career Points page is narrower, the bars have their own color so the rows do not blend together, and the three section headers are gone in favor of one long list that keeps the color coding.',
       'Most upgrades now unlock after you have earned a set number of Career Points in total, and every upgrade costs 50 percent more.',
       'Removed the Admin Vehicle Pair Bonus upgrade. Career Points no longer buy anything that makes an item card hit harder, and any Career Points you spent on it are refunded.',
@@ -8744,6 +8748,7 @@ const UPDATE_LOG = [
       'The first battle is now staged. You start with a 2, two 9s, a King and an Ace against an opponent with exactly 48 health, and the steps run in a new order: pick your cards, load an item, attack, end turn. A second turn with the King and Ace finishes it for a Perfect Win.',
     ],
     Battle: [
+      'Poison from opponents now lands on you instead of on themselves.',
       'The win popup is much tighter, and a Perfect Win now says Perfect Win!',
       'Your health bar and the opponent\'s health bar are now the same size, and Grumpy Sea Turtle and other opponents that draw when hit say *Draws 1 when hit* under their bar.',
       'You can sort the opponent\'s face-up cards by value or suit, same as your own hand. Face-down cards stay at the end so sorting never gives them away.',
@@ -8753,19 +8758,21 @@ const UPDATE_LOG = [
     'Supply Cache': [
       'The Supply Cache choice screen is easier to read. The made-up names are gone, each choice just says what you win with the downside underneath, and the third choice is now free.',
     ],
-    'Match game': [
-      'The Grid Anomaly popup title is centered, the pair matched popup now opens higher on the page, and matching a pair plays a happy sound while a miss plays a wah-wah.',
-    ],
     Opponents: [
       'Added Anthony as a new Easter egg opponent, with two new Items: Torque Check (needs a Pair) and Diagnostic Deep-Dive (needs cards totaling 7+, draws a card immediately).',
     ],
     'Item cards': [
+      'Diamond Convoy and other single-suit cards now say 1-4 diamond cards instead of Any diamond, so it is clear you can play more than one.',
+      'The words Even and Odd on item cards (Splinter Snap, Odd Shift and others) are now bold and colored, with a hover popup. Even is 2, 4, 6, 8, 10 and Queen. Odd is Ace, 3, 5, 7, 9, Jack and King.',
+      'Lightning now uses one shared roll from 0 to 100 percent for you and the opponent, and your status bar shows the current roll.',
+      'Sixteen items that said Needs Two Pair but could only hold 3 cards can now hold 4, so they fire on an actual Two Pair.',
       'Fixed Thickening Fog, which could never fire because it was looking for the wrong color name. It now works with 2 or more Black cards.',
       'Impound Release now says "Once charged: Draw 4 cards each turn" right on the card, and "Charges at 45, then Draw 4" in the shop.',
       'Fixed Rapid Intervention (and any other item with a flat built-in bonus) showing "Bonus +30% from tuning" before it had ever actually been tuned - that wording now only shows once you have actually put a tuning level into it.',
-      'Cursed Carpool and a handful of other single-card requirement items (the ones that need one specific card, like 3 of Clubs) now show a full-size mini playing card instead of the rank plus a tiny suit square, so the exact card is easier to make out at a glance. Convoy-style items that just need a count of a suit (Club Convoy, Diamond Convoy, etc.) are unchanged, since those aren\'t asking for one specific card.',
+      'Cursed Carpool and a handful of other single-card requirement items (the ones that need one specific card, like 3 of Clubs) now show a full-size mini playing card instead of the rank plus a tiny suit square, so the exact card is easier to make out at a glance.',
     ],
     'Match game': [
+      'The Grid Anomaly popup title is centered, the pair matched popup now opens higher on the page, and matching a pair plays a happy sound while a miss plays a wah-wah.',
       'Fixed a glitch at the Fleet Compound where clearing the Carnival Matching Game board would just deal you a fresh board and let you keep playing (and earning) indefinitely. It now ends your visit once you clear it, same as Plinko, Blackjack, Poker, and the Auction. The map\'s own Grid Anomaly matching game stops are unaffected.',
     ],
     Visual: [
@@ -8814,11 +8821,7 @@ function updateLogHTML() {
 }
 // Shown on the home screen and the vehicle pick screen so it is clear what a loss costs.
 function runRulesPanelHTML() {
-  return `<div class="panel" style="margin-bottom:10px;border-left:5px solid var(--amber)">
-    <div class="hdr"><span>How a run works</span><span></span></div>
-    <div class="note" style="margin:4px 0"><b>If you lose a run,</b> you lose everything you gathered on it: coins, gems, fuel, items and run upgrades.</div>
-    <div class="note" style="margin:4px 0"><b>You keep your Career Points</b> (you have ${META.points}). They carry over, and you can spend them on Career Point Upgrades to power up before your next run.</div>
-  </div>`;
+  return `<div class="wo-sub" style="margin:0 0 12px;line-height:1.5">Lose a run and you lose everything except your Career Points.<br>Career Points carry over, so spend them on upgrades before your next run.</div>`;
 }
 function metaScreen() {
   const hasSave = !!loadRunSave();
@@ -8834,11 +8837,11 @@ function metaScreen() {
           </div>
         </div>
         <div class="wo-sub">Career Points: ${META.points} &middot; Best route: ${META.bestRun}/21 &middot; High score: ${META.highScore} &middot; Runs played: ${META.runsPlayed}</div>
+        ${runRulesPanelHTML()}
         <div class="panel" style="margin-bottom:10px">
           <div class="hdr"><span>${META.playerName ? `Welcome, ${META.playerName.replace(/</g,'&lt;')}` : 'Welcome! Name Your Fleet'}</span><span></span></div>
           <input id="playerNameInput" type="text" maxlength="18" placeholder="Your name" value="${(META.playerName||'').replace(/"/g,'&quot;')}" style="width:100%;padding:9px 10px;border:2px solid #1fb6a6;border-radius:6px;font-family:var(--disp);font-size:15px;color:#ffffff;background:#1a2038">
         </div>
-        ${runRulesPanelHTML()}
         ${hasSave ? `<button class="wo-btn" id="continueRunBtn" style="margin-bottom:10px;width:100%">Continue Run</button>` : `<button class="wo-btn" id="startRunBtn" style="margin-bottom:10px;width:100%">New Run</button>`}
         ${hasSave ? `<button class="wo-btn gray" id="startRunBtn" style="width:100%;margin-bottom:10px">New Run (overwrites save)</button>` : ''}
         <button class="wo-btn amber" id="viewUpgradesBtn" style="width:100%">Career Point Upgrades</button>

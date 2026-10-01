@@ -254,6 +254,10 @@
   .card.big{width:58px;height:80px;font-size:19px;cursor:default;gap:2px}
   .card.big div:last-child{font-size:27px !important;line-height:1}
   .card.back.big::after{font-size:22px}
+  /* Extra-large cards for Fleet Poker so hand cards are easy to read at a glance. */
+  .card.big.xl{width:72px;height:100px;font-size:24px}
+  .card.big.xl div:last-child{font-size:34px !important}
+  .card.back.big.xl::after{font-size:28px}
   .suitMicroCard{display:inline-flex;align-items:center;justify-content:center;width:16px;height:20px;border-radius:3px;background:#ffffff;color:#12163a;font-size:12px;font-weight:800;line-height:1;vertical-align:-3px;margin:0 1px;box-shadow:0 0 0 1px rgba(0,0,0,0.2)}
   .suitMicroCard.red{color:#e5484d}
   .suitMicroCard.suit-club{color:var(--green)}
@@ -310,6 +314,10 @@
 
   .shopcard{border:1px solid var(--blue-light);background:var(--bg);border-radius:6px;padding:10px;margin-bottom:8px;box-sizing:border-box;width:100%}
   .shopcard h3{margin:0 0 8px}
+  .bodyShopWo{max-width:460px;margin:16px auto}
+  .bodyShopRow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 10px}
+  .bodyShopRow h3{margin:0;font-size:15px}
+  .bodyShopBtn{padding:7px 12px;font-size:13px;white-space:nowrap}
   .shopGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
   .shopGrid .shopcard{margin-bottom:0}
   @media (max-width:600px){.shopGrid{grid-template-columns:1fr}}
@@ -427,6 +435,10 @@
   .itemCard.cursed{border-color:var(--purple) !important;box-shadow:inset 0 0 12px rgba(138,79,224,0.3)}
   .itemCard.burnTargetable{box-shadow:0 0 0 2px var(--red);transition:box-shadow .15s ease,transform .1s ease}
   .itemCard.burnTargetable:hover{box-shadow:0 0 0 3px var(--red),0 0 14px rgba(220,40,40,0.5);transform:translateY(-2px)}
+  .itemCard.burned{background:rgba(229,72,77,0.20) !important;border-color:#e5484d !important;box-shadow:0 0 0 2px rgba(229,72,77,0.55)}
+  .burnBadge{display:inline-block;white-space:nowrap;background:#e5484d;color:#fff;font-weight:800;font-size:11px;padding:1px 7px;border-radius:6px;margin-left:4px}
+  .detonateItemBtn{margin-top:4px;background:var(--amber);color:#062622;border:2px solid #0d8377;border-radius:6px;font-weight:800;font-size:12px;padding:3px 10px;cursor:pointer}
+  .detonateItemBtn:hover{filter:brightness(1.1)}
   .burnTargetOverlay{position:absolute;inset:0;border-radius:8px;pointer-events:none;display:flex;align-items:center;justify-content:center;z-index:2;
     background:repeating-linear-gradient(45deg, rgba(220,40,40,0.45) 0 10px, rgba(255,140,40,0.45) 10px 20px);}
   .burnTargetOverlay span{background:rgba(20,8,8,0.82);color:#ffffff;font-weight:800;font-size:12px;padding:4px 9px;border-radius:6px;text-shadow:0 1px 2px rgba(0,0,0,0.6);white-space:nowrap}
@@ -549,6 +561,8 @@
   .fleetBjHand.targetable,.fleetPokerHand.targetable{cursor:pointer;border-color:var(--amber);box-shadow:0 0 12px rgba(255,196,77,0.4)}
   .fleetBjHandReward,.fleetPokerHandReward{font-size:11.5px;font-weight:800;color:#f5c451;margin-bottom:6px;min-height:16px}
   .fleetBjHandCards,.fleetPokerHandCards{display:flex;justify-content:center;gap:4px;flex-wrap:wrap;min-height:80px;align-items:center}
+  .fleetPokerHand .fleetPokerHandCards,.fleetPokerMatchSide .fleetPokerHandCards{min-height:100px}
+  .fleetPokerHand{min-width:250px}
   .fleetBjHandTotal{margin-top:6px;font-size:14px;font-weight:800;color:var(--ink)}
   .fleetBjHandTotal.bjBust{color:var(--red)}
   .fleetBjHandTotal.bjLocked{color:var(--green)}
@@ -570,6 +584,7 @@
   .fleetAuctionBidders{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;padding-top:10px}
   .fleetAuctionBidder{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:6px 12px;text-align:center;cursor:help}
   .fleetAuctionBidderName{font-size:12px;font-weight:700;color:var(--ink)}
+  .fleetAuctionYou{border-color:rgba(255,196,77,0.6);cursor:default}
   .fleetAuctionBidderChips{font-size:11.5px;color:var(--dim);margin-top:2px}
   .fleetAuctionResultRow{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-top:1px dashed rgba(255,255,255,0.15);font-size:13px}
   .fleetAuctionResultRow:first-child{border-top:none}
@@ -1069,8 +1084,9 @@ function opponentAttackBoxHTML(opp, showStatus) {
       const key = `${itemId}_${i}`;
       const frozenAmt = showStatus && BATTLE.opponentItemFrozen && BATTLE.opponentItemFrozen[key];
       const isBurnTarget = !!(pendingBurn && item.kind !== 'storage');
+      const burnedNow = showStatus && BATTLE.opponentItemBurns && BATTLE.opponentItemBurns[key];
       const card = renderStandardItemCard(item, {
-        usesBadgeText: swings === Infinity ? '∞' : String(swings), frozenState: frozenAmt || null,
+        usesBadgeText: swings === Infinity ? '∞' : String(swings), frozenState: frozenAmt || null, burnedAmt: burnedNow || null,
         burnTargetKey: isBurnTarget ? key : null, burnTargetAmount: isBurnTarget ? pendingBurn.amount : null,
       });
       if (!showStatus) return card;
@@ -1078,12 +1094,12 @@ function opponentAttackBoxHTML(opp, showStatus) {
       const curseAmt = BATTLE.opponentItemCurses && BATTLE.opponentItemCurses[key];
       const burnAmt = BATTLE.opponentItemBurns && BATTLE.opponentItemBurns[key];
       const hexStacks = BATTLE.opponentItemHexes && BATTLE.opponentItemHexes[key];
-      const tag = curseAmt ? `<span class="curseBadge">Cursed: ${curseAmt}</span>` : burnAmt ? `<span class="curseBadge">Burn: ${burnAmt}</span>` : hexStacks ? `<span class="curseBadge">Hexed x${hexStacks}</span>` : '';
+      const tag = curseAmt ? `<span class="curseBadge">Cursed: ${curseAmt}</span>` : burnAmt ? `<span class="curseBadge" style="background:#e5484d;color:#fff">Burn: ${burnAmt} (+${(BATTLE.opponentItemBurnStep && BATTLE.opponentItemBurnStep[key]) || 1} each turn)</span><br><button class="detonateItemBtn" data-detonateitem="${key}">Detonate for ${burnAmt}</button>` : hexStacks ? `<span class="curseBadge">Hexed x${hexStacks}</span>` : '';
       return tag ? `${card}<div class="note" style="margin:2px 0 0;text-align:center">${tag}</div>` : card;
     }).join('');
   }
   const EFFECT_TIP = {
-    burn: 'Burn deals damage over the next few turns after it lands, weaker each turn.',
+    burn: 'Burn sets an Item on fire. The burn grows every turn, so you can detonate it right away for less or let it build. If the Item is fired while it burns, it still attacks, but its owner takes the burn damage.',
     poison: 'Poison deals damage at the end of a turn, then weakens after it ticks.',
     curse: 'Curse locks onto one of your equipped Items - fire that Item before your turn ends or take the curse damage instead.',
     stun: 'Stun cancels your next counter-attack.',
@@ -1275,7 +1291,7 @@ function itemRequirementText(item) {
   let cond = item.condition;
   if (item.id === 'drawstone' && cond?.type === 'sumThreshold') cond = { ...cond, min: Math.max(4, cond.min - utilityLevel('drawstone')) };
   let specific = '';
-  if (cond?.type === 'suitCount') specific = `${cond.count === 1 ? 'Any' : `At least ${cond.count}`} ${suitMicroCardHTML(cond.suit)}`;
+  if (cond?.type === 'suitCount') specific = cond.count === 1 ? (max > 1 ? `At least 1 ${suitMicroCardHTML(cond.suit)} (up to ${max} cards)` : `Any ${suitMicroCardHTML(cond.suit)}`) : `At least ${cond.count} ${suitMicroCardHTML(cond.suit)}`;
   else if (cond?.type === 'colorCount') specific = `${cond.count}+ ${kw(cond.color === 'red' ? 'Red' : 'Black')} cards`;
   else if (cond?.type === 'allSuits') specific = `one of each ${kw('Suit')}`;
   else if (cond?.type === 'cardIn') specific = describeCondition(cond);
@@ -1738,7 +1754,7 @@ const ITEMS = {
     note: 'Up to 4 cards. Poison equal to 75% of your total card value.' },
   torch_burn: { id: 'torch_burn', name: 'Smoldering Engine', cost: 100, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'pokerTier', tier: 1 }, baseMult: 1, kind: 'burn',
-    note: 'Needs a Pair. Burns over 3 turns instead of hitting directly, and burns can stack.' },
+    note: 'Needs a Pair. Sets one of their Items on fire. The burn grows every turn until you detonate it, or until they fire that Item and take the burn themselves. Burns can stack.' },
   supply_bag: { id: 'supply_bag', name: 'Cupholder Stash', cost: 65, maxCards: 2, kind: 'storage', maxStore: 2, weightless: true,
     note: 'Holds up to 2 cards of any kind turn to turn (up to 5 with Chop Shop upgrades). Weightless, does not use an Item slot. Never attacks, never gets cursed. Click a stored card to take it back.' },
   supply_bag_big: { id: 'supply_bag_big', name: 'Center Console Stash', cost: 65, maxCards: 5, kind: 'storage', maxStore: 5, weightless: true,
@@ -2536,7 +2552,7 @@ function renderStandardItemCard(item, opts = {}) {
     interactive = false, slotKey = null, cards = [], cursedAmt = null, ready = false,
     usesBadgeText = null, usesDepleted = false, cooldownLeft = 0, hypPreviewHTML = '',
     footerHTML = null, level = 0, kindOverride = null, frozenState = null,
-    burnTargetKey = null, burnTargetAmount = null,
+    burnTargetKey = null, burnTargetAmount = null, burnedAmt = null,
   } = opts;
   const eKind = kindOverride || effectiveKind(item);
   const burnOverlayHTML = burnTargetKey ? `<div class="burnTargetOverlay"><span>Burn: ${burnTargetAmount}</span></div>` : '';
@@ -2571,7 +2587,7 @@ function renderStandardItemCard(item, opts = {}) {
   const drawBonusLine = (item.drawAmount || item.drawUsesCardCount) ? `<div class="itemBonusLine hoverTip" data-title="Draws ${drawN} card${drawN === 1 ? '' : 's'} immediately after this item is used.">Draw ${drawN} card${drawN === 1 ? '' : 's'}</div>` : '';
   const bonusLine = itemBonusLineHTML(item, level);
   const kindTag = eKind === 'poison' ? `<span class="effectTip poisonText" data-tip="Poison deals its damage at the end of the opponent's turn, then drops by 3 each turn until it's gone.">Poison</span>`
-    : eKind === 'burn' ? `<span class="effectTip burnText" data-tip="Burn hits for full damage, then half, then a quarter, fading out over 3 turns.">Burn</span>`
+    : eKind === 'burn' ? `<span class="effectTip burnText" data-tip="Burn sets an Item on fire. The burn grows every turn, so you can detonate it right away for less or let it build. If the Item is fired while it burns, it still attacks, but its owner takes the burn damage.">Burn</span>`
     : eKind === 'curse' ? `<span class="effectTip curseText" data-tip="Curse goes off if this item isn't fired again before the opponent's next turn.">Curse</span>`
     : eKind === 'defense' ? `<span class="effectTip" style="color:var(--defense)" data-tip="Armor protects against incoming attacks, absorbing damage equal to the amount shown.">Armor</span>`
     : eKind === 'hex' ? `<span class="effectTip" style="color:var(--hex)" data-tip="Hex messes with card flow between you and the opponent - firing a hexed Item feeds one of its cards to whoever cast the hex.">Hex</span>`
@@ -2587,7 +2603,7 @@ function renderStandardItemCard(item, opts = {}) {
   }).join('');
 
   const frozenReqLine = frozenState ? `<span class="hoverTip" data-title="This Item is frozen solid and can't fire. It thaws out on its own as its owner works through it.">Frozen: ${Math.max(0, frozenState.threshold - frozenState.progress)} to thaw</span>` : null;
-  return `<div class="itemCard kind-${eKind} ${ready ? 'ready' : ''} ${cursedAmt ? 'cursed' : ''} ${frozenState ? 'frozenLock' : ''} ${burnTargetKey ? 'burnTargetable' : ''}"${dragAttrs}>
+  return `<div class="itemCard kind-${eKind} ${ready ? 'ready' : ''} ${cursedAmt ? 'cursed' : ''} ${frozenState ? 'frozenLock' : ''} ${burnTargetKey ? 'burnTargetable' : ''} ${burnedAmt ? 'burned' : ''}"${dragAttrs}>
     ${usesBadge}
     <div class="itemCard-sec">
       <div class="hdr" style="font-weight:600">${item.name}${cursedAmt ? ` <span class="vart" style="width:12px;height:12px;font-size:12px;color:var(--purple)">${ICON.curse}</span> cursed` : ''}</div>
@@ -4515,7 +4531,7 @@ function castleInnScreen(message='') {
   const fuelCost = fuelPurchase * SERVICE_STATION_FUEL_COST_PER_UNIT;
   const sleepCost = RUN.innSleeps === 0 ? 0 : 20 * RUN.innSleeps;
   return `${noticeHTML()}
-  <div class="wo">
+  <div class="wo bodyShopWo">
     <div class="wo-stripe"></div>
     <div class="wo-body">
       <h1 style="text-align:center">Body <em>Shop</em></h1>
@@ -4525,14 +4541,14 @@ function castleInnScreen(message='') {
         <button class="wo-btn purple" id="openRunUpgradeFromInnBtn" style="flex:1">Upgrades</button>
       </div>
       ${message ? `<div class="panel"><div class="note">${message}</div></div>` : ''}
-      <div style="max-width:420px;margin:0 auto">
-        <div class="shopcard">
+      <div>
+        <div class="shopcard bodyShopRow">
           <h3>Refuel</h3>
-          <button class="wo-btn" id="castleFuelBtn" ${fuelPurchase <= 0 ? 'disabled' : ''}>+${fuelPurchase} Fuel${fuelCost ? ` = ${fuelCost} coins` : ''}</button>
+          <button class="wo-btn bodyShopBtn" id="castleFuelBtn" ${fuelPurchase <= 0 ? 'disabled' : ''}>+${fuelPurchase} Fuel${fuelCost ? ` = ${fuelCost} coins` : ''}</button>
         </div>
-        <div class="shopcard">
+        <div class="shopcard bodyShopRow">
           <h3>Dent Repair</h3>
-          <button class="wo-btn" id="castleRestBtn" ${RUN.health >= RUN.maxHealth ? 'disabled' : ''}>+30 Health${sleepCost ? ` = ${sleepCost} coins` : ''}</button>
+          <button class="wo-btn bodyShopBtn" id="castleRestBtn" ${RUN.health >= RUN.maxHealth ? 'disabled' : ''}>+30 Health${sleepCost ? ` = ${sleepCost} coins` : ''}</button>
         </div>
       </div>
     </div>
@@ -4698,7 +4714,7 @@ const FLEET_PLINKO_CONFIG = {
   boardHeight: 460,
   pegRows: 10,
   pegsPerRow: 12,
-  dropSlotFractions: [0.2, 0.5, 0.8],
+  dropSlotFractions: [0.2272, 0.5, 0.7728],
   // Dropped 25% (was 0.20) per Drew's request - a slower fall gives each drop more visible hang
   // time over the pegs, which reads as more suspenseful than the chip just blipping straight down.
   gravity: 0.15,
@@ -5311,7 +5327,7 @@ function openFleetBlackjack(options) {
     if (!state.hasDrawnOnce) {
       message.textContent = 'Nothing to Stand on.';
       haul.lost = true;
-      setTimeout(() => { overlay.remove(); onComplete(haul); }, 900);
+      showResultPopup(haul, 'Nothing to Stand on', 'You left without hitting, so nothing was banked.');
       return;
     }
 
@@ -5343,7 +5359,22 @@ function openFleetBlackjack(options) {
     const dealerLabel = dealerFinal.busted ? 'Dealer busts!' : `Dealer stands on ${dealerFinal.total}.`;
     message.textContent = `${dealerLabel} ${haul.lost ? 'Nothing banked.' : `Banked: ${formatBjHaul(haul)}`}`;
     playSfx(haul.lost ? 'lose' : 'open');
-    setTimeout(() => { overlay.remove(); onComplete(haul); }, 1600);
+    showResultPopup(haul, dealerLabel, haul.lost ? 'No hand beat the dealer. Nothing banked.' : `You won ${formatBjHaul(haul)}.`);
+  }
+  // Final hands stay on screen. The popup sits at the bottom so the hands and dealer stay visible, and
+  // the round only closes when the player clicks Collect.
+  function showResultPopup(haul, headline, detail) {
+    if (document.getElementById('fleetBjResultPop')) return;
+    const pop = document.createElement('div');
+    pop.id = 'fleetBjResultPop';
+    pop.style.cssText = 'position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:10001;width:min(440px,92vw);background:var(--panel,#10202a);border:2px solid ' + (haul.lost ? 'var(--red,#e0524d)' : 'var(--green,#2fd18b)') + ';border-radius:12px;padding:14px 16px;text-align:center;box-shadow:0 8px 30px rgba(0,0,0,.55)';
+    pop.innerHTML = `
+      <div style="font-size:13px;color:var(--dim)">${headline}</div>
+      <div style="font-size:20px;font-weight:700;margin:4px 0 10px">${haul.lost ? 'Better luck next hand' : 'You won!'}</div>
+      <div style="font-size:15px;margin-bottom:12px">${detail}</div>
+      <button class="wo-btn ${haul.lost ? 'gray' : 'green'}" id="fleetBjCollectBtn">${haul.lost ? 'Close' : 'Collect'}</button>`;
+    overlay.appendChild(pop);
+    document.getElementById('fleetBjCollectBtn').onclick = () => { pop.remove(); overlay.remove(); onComplete(haul); };
   }
 
   drawBtn.onclick = startDraw;
@@ -5460,24 +5491,25 @@ function openFleetPoker(options) {
   const exitBtn = document.getElementById('fleetPokerExitBtn');
 
   let selectedPoolIdx = null;
-  function cardHTML(c) { return `<div class="card big ${suitColorClass(c.color, c.suit)}"><div>${rankLabel(c.rank)}</div><div>${c.suit}</div></div>`; }
-  function cardBackHTML() { return `<div class="card back big"></div>`; }
+  function cardHTML(c) { return `<div class="card big xl ${suitColorClass(c.color, c.suit)}"><div>${rankLabel(c.rank)}</div><div>${c.suit}</div></div>`; }
+  function cardBackHTML() { return `<div class="card back big xl"></div>`; }
   function rewardLabelFor(reward) { return reward.type === 'item' ? `🚚 ${reward.label}` : reward.label; }
 
   // The computer's hole cards are face-up for the whole build phase (dealing, flop, turn) so the player
   // knows what they're up against, then flip face-down once the river is out (all five community cards
   // showing) and stay hidden until the final showdown reveals them.
   function computerRowHTML(i) {
+    if (!state.allPlaced) return '';
     const hide = state.community.length >= FLEET_POKER_CONFIG.communityCount;
     const cards = state.computerHands[i].cards;
-    return `<div class="fleetPokerCompRow"><div class="note" style="margin:6px 0 2px">Computer${hide ? '' : ' (visible until the river)'}</div>
+    return `<div class="fleetPokerCompRow"><div class="note" style="margin:6px 0 2px">Computer${hide ? '' : ' (face up until the river)'}</div>
       <div class="fleetPokerHandCards" style="justify-content:center">${cards.map(c => hide ? '<div class="card back mini"></div>' : `<div class="card mini ${suitColorClass(c.color, c.suit)}"><div>${rankLabel(c.rank)}</div><div>${c.suit}</div></div>`).join('')}</div></div>`;
   }
   function renderHands() {
     handsWrap.innerHTML = state.playerHands.map((hand, i) => {
       const full = hand.cards.length >= FLEET_POKER_CONFIG.cardsPerHand;
       const canTarget = state.pool.length > 0 && selectedPoolIdx != null && !full;
-      const placeholders = Array.from({ length: FLEET_POKER_CONFIG.cardsPerHand - hand.cards.length }).map(() => '<div class="card back mini"></div>').join('');
+      const placeholders = Array.from({ length: FLEET_POKER_CONFIG.cardsPerHand - hand.cards.length }).map(() => '<div class="card back big xl"></div>').join('');
       return `<div class="fleetPokerHand ${full ? 'full' : ''} ${canTarget ? 'targetable' : ''}" data-pkhand="${i}">
         <div class="fleetPokerHandReward">${rewardLabelFor(hand.reward)}</div>
         <div class="fleetPokerHandCards">${hand.cards.map(cardHTML).join('')}${placeholders}</div>
@@ -5491,7 +5523,7 @@ function openFleetPoker(options) {
   function renderPool() {
     if (!state.pool.length) { poolWrap.style.display = 'none'; poolEl.innerHTML = ''; return; }
     poolWrap.style.display = '';
-    poolEl.innerHTML = state.pool.map((c, i) => `<div class="card big ${suitColorClass(c.color, c.suit)} ${selectedPoolIdx === i ? 'selected' : ''}" data-poolcard="${i}" style="cursor:pointer"><div>${rankLabel(c.rank)}</div><div>${c.suit}</div></div>`).join('');
+    poolEl.innerHTML = state.pool.map((c, i) => `<div class="card big xl ${suitColorClass(c.color, c.suit)} ${selectedPoolIdx === i ? 'selected' : ''}" data-poolcard="${i}" style="cursor:pointer"><div>${rankLabel(c.rank)}</div><div>${c.suit}</div></div>`).join('');
     poolEl.querySelectorAll('[data-poolcard]').forEach(el => { el.onclick = () => { selectedPoolIdx = +el.dataset.poolcard; renderPool(); renderHands(); }; });
   }
   function updateControls() {
@@ -5546,6 +5578,8 @@ function openFleetPoker(options) {
     dealBtn.style.display = 'none';
     exitBtn.style.display = 'none';
     revealStage = 0;
+    state.allPlaced = true;
+    renderHands();
     renderCommunityStrip('Hole cards locked in.');
     message.textContent = 'Ready when you are.';
     revealBtn.textContent = 'Reveal the Flop';
@@ -5771,7 +5805,12 @@ function openFleetAuction(options) {
   // how it decides whether to raise - so it's clear who you're bidding against and why, instead
   // of an invisible cap with no explanation.
   function renderBidders() {
-    biddersWrap.innerHTML = FLEET_AUCTION_CONFIG.bidders.map(b => `
+    const youBox = `
+      <div class="fleetAuctionBidder fleetAuctionYou">
+        <div class="fleetAuctionBidderName">You</div>
+        <div class="fleetAuctionBidderChips" style="color:var(--amber);font-weight:800">${ICON.coin} ${RUN.chips} coins</div>
+      </div>`;
+    biddersWrap.innerHTML = youBox + FLEET_AUCTION_CONFIG.bidders.map(b => `
       <div class="fleetAuctionBidder hoverTip" data-title="${b.style}">
         <div class="fleetAuctionBidderName">${b.name}</div>
         <div class="fleetAuctionBidderChips">${ICON.coin} ${state.bidderChips[b.id]} coins left</div>
@@ -6319,6 +6358,24 @@ function detonateOpponentItemCurse(key, why) {
 function applyOpponentItemBurn(key, amount) {
   BATTLE.opponentItemBurns = BATTLE.opponentItemBurns || {};
   BATTLE.opponentItemBurns[key] = (BATTLE.opponentItemBurns[key] || 0) + amount;
+  BATTLE.opponentItemBurnStep = BATTLE.opponentItemBurnStep || {};
+  BATTLE.opponentItemBurnStep[key] = (BATTLE.opponentItemBurnStep[key] || 0) + Math.max(1, Math.round(amount * 0.5));
+}
+// Player chooses to cash in a burning Item early for whatever it has built up to so far.
+function detonateOpponentItemBurn(key) {
+  if (!BATTLE || !BATTLE.opponentItemBurns || !BATTLE.opponentItemBurns[key]) return;
+  const amt = BATTLE.opponentItemBurns[key];
+  delete BATTLE.opponentItemBurns[key];
+  if (BATTLE.opponentItemBurnStep) delete BATTLE.opponentItemBurnStep[key];
+  const name = ITEMS[key.replace(/_\d+$/, '')]?.name || 'Item';
+  const before = BATTLE.opponent.hpNow;
+  BATTLE.opponent.hpNow = Math.max(0, before - amt);
+  if (amt === before && before > 0) BATTLE.exactKill = true;
+  battleLog(`You detonate ${BATTLE.opponent.name}'s burning ${name} for ${amt} damage.`);
+  playSfx('hit'); flashScreen('hit-opponent');
+  saveRun();
+  if (BATTLE.opponent.hpNow <= 0) { winBattle(); return; }
+  render(battleScreen());
 }
 function chooseCurseTarget(key) {
   if (!BATTLE.pendingTarget || BATTLE.pendingTarget.type !== 'curse') return;
@@ -6341,7 +6398,7 @@ function chooseBurnTarget(key) {
   BATTLE.pendingTarget = null;
   applyOpponentItemBurn(key, amount);
   const name = ITEMS[key.replace(/_\d+$/, '')]?.name || 'Item';
-  battleLog(`${itemName} ignites ${BATTLE.opponent.name}'s ${name} for ${BATTLE.opponentItemBurns[key]} burn. Firing it will backfire into their own health.`);
+  battleLog(`${itemName} ignites ${BATTLE.opponent.name}'s ${name} for ${BATTLE.opponentItemBurns[key]} burn. The burn grows by ${BATTLE.opponentItemBurnStep[key]} each turn. Detonate it now or let it build. If they fire it, they take the burn damage.`);
   saveRun();
   render(battleScreen());
 }
@@ -6658,7 +6715,7 @@ if (idxs.some(i => BATTLE.usedThisTurn.has(i))) {
       playSfx('poison');
     } else if (eKind === 'burn') {
       BATTLE.pendingTarget = { type: 'burn', amount, itemName: item.name };
-      battleLog(`${item.name} [${cardsStr}] - ${condResult.label}! Select an item slot on ${BATTLE.opponent.name}'s inventory to ignite for ${amount} (${breakdown}).`);
+      battleLog(`${item.name} [${cardsStr}] - ${condResult.label}! Select an item slot on ${BATTLE.opponent.name}'s inventory to ignite for ${amount}. It grows every turn (${breakdown}).`);
       playSfx('burn');
     } else if (eKind === 'curse') {
       BATTLE.pendingTarget = { type: 'curse', amount, itemName: item.name };
@@ -6707,6 +6764,13 @@ if (idxs.some(i => BATTLE.usedThisTurn.has(i))) {
       }
     }
   }
+  let selfBurn = 0;
+  if (BATTLE.itemBurns && BATTLE.itemBurns[slotKey]) {
+    selfBurn = BATTLE.itemBurns[slotKey];
+    delete BATTLE.itemBurns[slotKey];
+    if (BATTLE.itemBurnStep) delete BATTLE.itemBurnStep[slotKey];
+    if (BATTLE.itemBurnFresh) delete BATTLE.itemBurnFresh[slotKey];
+  }
   if (BATTLE.itemCurses && BATTLE.itemCurses[slotKey]) { delete BATTLE.itemCurses[slotKey]; battleLog(`${item.name}'s curse cleared.`); }
   if (BATTLE.itemHexes && BATTLE.itemHexes[slotKey]) {
     const stacks = BATTLE.itemHexes[slotKey];
@@ -6750,6 +6814,14 @@ if (idxs.some(i => BATTLE.usedThisTurn.has(i))) {
     winBattle();
     return;
   }
+  if (selfBurn > 0) {
+    RUN.health = Math.max(0, RUN.health - selfBurn);
+    BATTLE.lastHit = { amount: selfBurn, source: `your burning ${item.name}` };
+    battleLog(`${item.name} was burning. The attack still lands, but the burn hits you for ${selfBurn}, which skips your armor. Health: ${RUN.health}/${RUN.maxHealth}.`);
+    playSfx('hurt'); flashScreen('hurt'); showDamagePopup(selfBurn, 'Burn');
+    saveRun();
+    if (RUN.health <= 0) { IN_BATTLE = false; clearBattleSave(); playSfx('lose'); render(nodeResultScreen(false, { lastHit: BATTLE.lastHit })); return; }
+  }
   render(battleScreen());
   } finally {
     item.condition = oldCond;
@@ -6771,6 +6843,16 @@ function resolveOpponentAttackEffect(attack, oppDmg) {
   if (attack.effect === 'damage') return '';
   if (attack.effect === 'burn' && DIFF.dotHitsPlayer) {
     const amount=Math.max(3,Math.round(oppDmg*0.45));
+    const burnable = RUN.hero.items.map((id, i) => `${id}_${i}`).filter(k => { const it = ITEMS[k.replace(/_\d+$/, '')]; return it && it.kind !== 'storage'; });
+    if (burnable.length) {
+      const k = burnable[Math.floor(Math.random() * burnable.length)];
+      BATTLE.itemBurns = BATTLE.itemBurns || {}; BATTLE.itemBurnStep = BATTLE.itemBurnStep || {}; BATTLE.itemBurnFresh = BATTLE.itemBurnFresh || {};
+      BATTLE.itemBurns[k] = (BATTLE.itemBurns[k] || 0) + amount;
+      BATTLE.itemBurnStep[k] = (BATTLE.itemBurnStep[k] || 0) + Math.max(1, Math.round(amount * 0.5));
+      BATTLE.itemBurnFresh[k] = true;
+      playSfx('burn');
+      return ` Your ${ITEMS[k.replace(/_\d+$/, '')].name} catches fire for ${amount}. The burn grows every turn. If you fire it, the attack still lands, but you take the burn damage.`;
+    }
     BATTLE.playerBurns=BATTLE.playerBurns||[]; BATTLE.playerBurns.push({stages:[amount,Math.round(amount/2),Math.round(amount/4)],stageIdx:0});
     playSfx('burn');
     return ` You are burning for ${amount}.`;
@@ -6982,6 +7064,7 @@ function endTurn() {
       if (BATTLE.opponent.items && BATTLE.opponent.items.length) {
         let itemPick = null;
         let burnBlockedPick = null;
+        let burnBackfire = 0;
         for (let slotPos = 0; slotPos < BATTLE.opponent.items.length; slotPos++) {
           const itemId = BATTLE.opponent.items[slotPos];
           const item = ITEMS[itemId];
@@ -7004,18 +7087,9 @@ function endTurn() {
           const validPokerAttack = best && opponentAttackIsValid(item, best, BATTLE.oppPool, itemCap);
           if (cond.met && validPokerAttack) { itemPick = { item, best, cond, key: slotKeyForBurn }; break; }
         }
-        if (!itemPick && burnBlockedPick) {
-          const { item, key } = burnBlockedPick;
-          const amt = BATTLE.opponentItemBurns[key] || 0;
-          delete BATTLE.opponentItemBurns[key];
-          oppItemUsesThisTurn[item.id] = (oppItemUsesThisTurn[item.id] || 0) + 1;
-          const before = BATTLE.opponent.hpNow;
-          BATTLE.opponent.hpNow = Math.max(0, before - amt);
-          if (amt === before && before > 0) BATTLE.exactKill = true;
-          battleLog(`${BATTLE.opponent.name} had no safer option and fires the burned ${item.name} - it backfires for ${amt} damage!`);
-          if (BATTLE.opponent.hpNow <= 0) { winBattle(); return; }
-          continue;
-        }
+        // Burned items are only used when the opponent has no safer option. The attack still lands,
+        // but the opponent also takes the burn damage that has built up on that item.
+        if (!itemPick && burnBlockedPick) itemPick = burnBlockedPick;
         if (!itemPick) break;
         const { item, best, cond, key } = itemPick;
         if (item.opponentEffect === 'earlyEscape') {
@@ -7025,6 +7099,11 @@ function endTurn() {
           return;
         }
         oppItemUsesThisTurn[item.id] = (oppItemUsesThisTurn[item.id] || 0) + 1;
+        if (BATTLE.opponentItemBurns && BATTLE.opponentItemBurns[key]) {
+          burnBackfire = BATTLE.opponentItemBurns[key];
+          delete BATTLE.opponentItemBurns[key];
+          if (BATTLE.opponentItemBurnStep) delete BATTLE.opponentItemBurnStep[key];
+        }
         if (BATTLE.opponentItemCurses && BATTLE.opponentItemCurses[key]) {
           delete BATTLE.opponentItemCurses[key];
           battleLog(`${BATTLE.opponent.name}'s ${item.name} fires and breaks the curse trap on it.`);
@@ -7107,6 +7186,13 @@ function endTurn() {
         BATTLE.recentDiscard.push(...best.cards.filter(c => !cardIncludes(hexStolenCards, c)));
         BATTLE.oppPool = BATTLE.oppPool.filter(c => !cardIncludes(best.cards, c));
         diffOppItemDraw(item);
+        if (burnBackfire > 0 && RUN.health > 0) {
+          const before = BATTLE.opponent.hpNow;
+          BATTLE.opponent.hpNow = Math.max(0, before - burnBackfire);
+          if (burnBackfire === before && before > 0) BATTLE.exactKill = true;
+          battleLog(`${BATTLE.opponent.name}'s ${item.name} was burning. They still attack, but the burn hits them for ${burnBackfire} damage.`);
+          if (BATTLE.opponent.hpNow <= 0) { winBattle(); return; }
+        }
         if (RUN.health <= 0) break;
         continue;
       }
@@ -7193,8 +7279,15 @@ function endTurn() {
   
   if (BATTLE.opponentItemBurns && Object.keys(BATTLE.opponentItemBurns).length) {
     Object.keys(BATTLE.opponentItemBurns).forEach(k => {
-      BATTLE.opponentItemBurns[k] = Math.floor(BATTLE.opponentItemBurns[k] * 0.5);
-      if (BATTLE.opponentItemBurns[k] <= 0) delete BATTLE.opponentItemBurns[k];
+      BATTLE.opponentItemBurns[k] += ((BATTLE.opponentItemBurnStep && BATTLE.opponentItemBurnStep[k]) || 1);
+    });
+  }
+  // Burning player Items grow too, except on the turn they were set on fire.
+  if (BATTLE.itemBurns && Object.keys(BATTLE.itemBurns).length) {
+    BATTLE.itemBurnFresh = BATTLE.itemBurnFresh || {};
+    Object.keys(BATTLE.itemBurns).forEach(k => {
+      if (BATTLE.itemBurnFresh[k]) { delete BATTLE.itemBurnFresh[k]; return; }
+      BATTLE.itemBurns[k] += ((BATTLE.itemBurnStep && BATTLE.itemBurnStep[k]) || 1);
     });
   }
 
@@ -7655,6 +7748,7 @@ function battleScreen() {
     const cards = idxs.map(i => BATTLE.hand[i]);
     const level = itemLevel(itemId);
     const cursedAmt = BATTLE.itemCurses && BATTLE.itemCurses[slotKey];
+    const burnedAmt = BATTLE.itemBurns && BATTLE.itemBurns[slotKey];
     const hexedFlag = BATTLE.itemHexes && BATTLE.itemHexes[slotKey];
     const frozenState = BATTLE.itemFrozen && BATTLE.itemFrozen[slotKey];
 
@@ -7726,10 +7820,10 @@ function battleScreen() {
     const usesBadgeText = isChargingUnlockItem ? '∞' : cap === Infinity ? '∞' : `${Math.max(0, usesLeft)}`;
     const cooldownLeft = item.cooldown != null ? (BATTLE.itemCooldowns?.[slotKey] || 0) : 0;
     const isDepletedThisTurn = !isChargingUnlockItem && cap !== Infinity && usesLeft <= 0;
-    return `<div class="itemCard kind-${eKind} ${ready ? 'ready' : ''} ${cursedAmt ? 'cursed' : ''} ${frozenState ? 'frozenLock' : ''} ${isDepletedThisTurn ? 'depleted-lockout' : ''}" data-assign="${slotKey}" style="border-style:dashed;border-width:2px">
+    return `<div class="itemCard kind-${eKind} ${ready ? 'ready' : ''} ${cursedAmt ? 'cursed' : ''} ${burnedAmt ? 'burned' : ''} ${frozenState ? 'frozenLock' : ''} ${isDepletedThisTurn ? 'depleted-lockout' : ''}" data-assign="${slotKey}" style="border-style:dashed;border-width:2px">
       ${isDepletedThisTurn ? '' : `<div class="usesBadge hoverTip" data-title="Uses left this turn">${usesBadgeText}</div>`}
       <div class="itemCard-sec">
-        <div class="hdr" style="font-weight:600">${item.name}${cursedAmt ? ` <span class="vart" style="width:12px;height:12px;font-size:12px;color:var(--purple)">${ICON.curse}</span> cursed` : ''}${hexedFlag ? ` <span class="vart" style="width:12px;height:12px;font-size:12px;color:var(--hex)">${ICON.hex}</span> hexed${hexedFlag > 1 ? ` x${hexedFlag}` : ''}` : ''}${frozenState ? ` <span class="vart" style="width:12px;height:12px;font-size:12px;color:var(--ice)">${ICON.ice}</span> frozen` : ''}</div>
+        <div class="hdr" style="font-weight:600">${item.name}${cursedAmt ? ` <span class="vart" style="width:12px;height:12px;font-size:12px;color:var(--purple)">${ICON.curse}</span> cursed` : ''}${burnedAmt ? ` <span class="burnBadge hoverTip" data-title="This Item is on fire. The burn grows by ${(BATTLE.itemBurnStep && BATTLE.itemBurnStep[slotKey]) || 1} each turn. If you fire it, the attack still lands, but you take ${burnedAmt} burn damage.">Burn ${burnedAmt}</span>` : ''}${hexedFlag ? ` <span class="vart" style="width:12px;height:12px;font-size:12px;color:var(--hex)">${ICON.hex}</span> hexed${hexedFlag > 1 ? ` x${hexedFlag}` : ''}` : ''}${frozenState ? ` <span class="vart" style="width:12px;height:12px;font-size:12px;color:var(--ice)">${ICON.ice}</span> frozen` : ''}</div>
         <div class="itemReqLine">${frozenState ? `<span class="hoverTip" data-title="This Item is frozen and can't fire normally. Drop any cards into it - their value counts toward thawing it out.">Frozen: ${Math.max(0, frozenState.threshold - frozenState.progress)} to thaw</span>` : itemRequirementText(item, eKind)}</div>
       </div>
       <div class="itemDivider"></div>
@@ -7748,7 +7842,7 @@ function battleScreen() {
       ${(() => {
         const hasKindAmount = item.flatAmount != null || (item.baseMult ?? 1) > 0;
         const kindTag = eKind==='poison'?`<span class="effectTip poisonText" data-tip="Poison deals its damage at the end of the opponent's turn, then drops by 3 each turn until it's gone.">Poison</span>`
-          :eKind==='burn'?`<span class="effectTip burnText" data-tip="Burn hits for full damage, then half, then a quarter, fading out over 3 turns.">Burn</span>`
+          :eKind==='burn'?`<span class="effectTip burnText" data-tip="Burn sets an Item on fire. The burn grows every turn, so you can detonate it right away for less or let it build. If the Item is fired while it burns, it still attacks, but its owner takes the burn damage.">Burn</span>`
           :eKind==='curse'?`<span class="effectTip curseText" data-tip="Curse goes off if this item isn't fired again before the opponent's next turn.">Curse</span>`
           :eKind==='defense'?`<span class="effectTip" style="color:var(--defense)" data-tip="Armor protects against incoming attacks, absorbing damage equal to the amount shown.">Armor</span>`
           :eKind==='hex'?`<span class="effectTip" style="color:var(--hex)" data-tip="Hex messes with card flow between you and the opponent - firing a hexed Item feeds one of its cards to whoever cast the hex.">Hex</span>`
@@ -7804,6 +7898,7 @@ function battleScreen() {
               ${BATTLE.playerArmor ? `<span class="armorText hoverTip" style="font-weight:800;font-size:13px" data-title="Armor protects against incoming attacks, absorbing damage equal to the amount shown."><span class="vart" style="width:12px;height:12px;font-size:12px">${ICON.shield}</span> ${BATTLE.playerArmor} armor</span>` : ''}
               ${diffLightningChip()}
               ${(BATTLE.playerPoison||[]).length ? `<span class="status poisonStatus hoverTip" data-title="Poison hits you for ${(BATTLE.playerPoison||[]).reduce((a,n)=>a+n,0)} at the end of this turn and skips armor. It weakens by 3 after each tick.">${ICON.poison} ${(BATTLE.playerPoison||[]).reduce((a,n)=>a+n,0)}</span>` : ''}
+              ${BATTLE.itemBurns && Object.keys(BATTLE.itemBurns).length ? `<span class="status burnStatus hoverTip" data-title="${Object.entries(BATTLE.itemBurns).map(([k,v])=>`${ITEMS[k.replace(/_\d+$/,'')]?.name||'Item'}: ${v}`).join(' | ')}. Fire a burning Item and the attack still lands, but you take its burn damage.">${ICON.fire} ${Object.keys(BATTLE.itemBurns).length} of your Items burning</span>` : ''}
               ${(BATTLE.playerBurns||[]).length ? `<span class="status burnStatus hoverTip" data-title="Burn hits you for ${BATTLE.playerBurns.reduce((a,x)=>a+(x.stages[x.stageIdx]||0),0)} at the end of this turn, then fades.">${ICON.fire} ${BATTLE.playerBurns.reduce((a,x)=>a+(x.stages[x.stageIdx]||0),0)}</span>` : ''}
               ${BATTLE.itemCurses && Object.keys(BATTLE.itemCurses).length ? `<span class="status curseStatus hoverTip" data-title="One or more of your Items is cursed - fire it before your turn ends or take its curse damage."><span class="vart" style="width:12px;height:12px;font-size:12px">${ICON.curse}</span> ${Object.keys(BATTLE.itemCurses).length} Item${Object.keys(BATTLE.itemCurses).length > 1 ? 's' : ''} cursed</span>` : ''}
               ${BATTLE.itemHexes && Object.keys(BATTLE.itemHexes).length ? `<span class="status hoverTip" style="color:var(--hex);font-weight:800;font-size:13px" data-title="One or more of your Items is hexed - firing it will feed a card to the opponent."><span class="vart" style="width:12px;height:12px;font-size:12px">${ICON.hex}</span> ${Object.keys(BATTLE.itemHexes).length} Item${Object.keys(BATTLE.itemHexes).length > 1 ? 's' : ''} hexed</span>` : ''}
@@ -7828,7 +7923,7 @@ function battleScreen() {
               ${(BATTLE.opponent.poisonStacks||[]).length ? `<span class="status poisonStatus hoverTip" data-title="Poison now: ${(BATTLE.opponent.poisonStacks||[]).reduce((a,n)=>a+n,0)} damage. Next turn: ${(BATTLE.opponent.poisonStacks||[]).map(n=>Math.max(0,n-3)).reduce((a,n)=>a+n,0)} damage.">${ICON.poison} ${(BATTLE.opponent.poisonStacks||[]).reduce((a,n)=>a+n,0)} poison</span>` : ''}
               ${BATTLE.opponent.burns?.length ? (() => { const burns=BATTLE.opponent.burns; const now=burns.reduce((a,b)=>a+(b.stages[b.stageIdx]||0),0); const future=[1,2].map(offset=>burns.reduce((a,b)=>a+(b.stages[b.stageIdx+offset]||0),0)).filter(n=>n>0); const nextText=future.length ? `Next: ${future.join(', ')}` : 'No more burn damage.'; return `<span class="status burnStatus hoverTip" data-title="${nextText}">${ICON.fire} ${now} <b><u>Burn Damage</u></b></span>`; })() : ''}
               ${BATTLE.opponentItemCurses && Object.keys(BATTLE.opponentItemCurses).length ? `<span class="status curseStatus hoverTip" data-title="${Object.entries(BATTLE.opponentItemCurses).map(([k,v])=>`${ITEMS[k.replace(/_\d+$/,'')]?.name||'Item'}: ${v} if not fired`).join(' | ')}">${ICON.curse} ${Object.keys(BATTLE.opponentItemCurses).length} Item${Object.keys(BATTLE.opponentItemCurses).length>1?'s':''} cursed</span>` : ''}
-              ${BATTLE.opponentItemBurns && Object.keys(BATTLE.opponentItemBurns).length ? `<span class="status burnStatus hoverTip" data-title="${Object.entries(BATTLE.opponentItemBurns).map(([k,v])=>`${ITEMS[k.replace(/_\d+$/,'')]?.name||'Item'}: ${v} if fired`).join(' | ')}">${ICON.fire} ${Object.keys(BATTLE.opponentItemBurns).length} Item${Object.keys(BATTLE.opponentItemBurns).length>1?'s':''} burned</span>` : ''}
+              ${BATTLE.opponentItemBurns && Object.keys(BATTLE.opponentItemBurns).length ? `<span class="status burnStatus hoverTip" data-title="${Object.entries(BATTLE.opponentItemBurns).map(([k,v])=>`${ITEMS[k.replace(/_\d+$/,'')]?.name||'Item'}: ${v} (+${(BATTLE.opponentItemBurnStep&&BATTLE.opponentItemBurnStep[k])||1} each turn)`).join(' | ')}">${ICON.fire} ${Object.keys(BATTLE.opponentItemBurns).length} Item${Object.keys(BATTLE.opponentItemBurns).length>1?'s':''} burned</span>` : ''}
               ${BATTLE.opponentItemHexes && Object.keys(BATTLE.opponentItemHexes).length ? `<span class="status hoverTip" style="color:var(--hex)" data-title="${Object.entries(BATTLE.opponentItemHexes).map(([k,v])=>`${ITEMS[k.replace(/_\d+$/,'')]?.name||'Item'}: steals ${v} card${v>1?'s':''} when fired`).join(' | ')}">${ICON.hex} ${Object.keys(BATTLE.opponentItemHexes).length} Item${Object.keys(BATTLE.opponentItemHexes).length>1?'s':''} hexed</span>` : ''}
               ${BATTLE.opponentItemFrozen && Object.keys(BATTLE.opponentItemFrozen).length ? `<span class="status hoverTip" style="color:var(--ice)" data-title="${Object.entries(BATTLE.opponentItemFrozen).map(([k,v])=>`${ITEMS[k.replace(/_\d+$/,'')]?.name||'Item'}: ${Math.max(0,v.threshold-v.progress)} to thaw`).join(' | ')}">${ICON.ice} ${Object.keys(BATTLE.opponentItemFrozen).length} Item${Object.keys(BATTLE.opponentItemFrozen).length>1?'s':''} frozen</span>` : ''}
             </div>
@@ -8377,6 +8472,11 @@ function starterSelectScreen() {
       <div class="wo-stripe"></div>
       <div class="wo-body">
         <h1>Pick Your <em>Vehicle</em></h1>
+        ${runRulesPanelHTML()}
+        <div style="display:flex;gap:8px;margin:8px 0">
+          <button class="wo-btn gray" id="starterBackBtn" style="flex:1">Back</button>
+          <button class="wo-btn amber" id="starterUpgradesBtn" style="flex:1">Spend Career Points</button>
+        </div>
         <div style="margin:12px 0">${rows}</div>
       </div>
     </div>
@@ -8606,6 +8706,22 @@ const UPDATE_LOG = [
     ],
   } },
   { date: '2026-09-28', categories: {
+    Burn: [
+      'Burn is reworked. Burning an Item now makes the number on that Item card go up every turn instead of fading. Burned Item cards turn red and show the burn and how much it grows each turn.',
+      'Detonate button: on a burning opponent Item you can cash it in right away for what it has built up so far, or wait and let it grow. The bigger it gets, the less likely the opponent is to use that Item.',
+      'If a burning Item is fired, the attack still lands, but its owner takes the burn damage. The same now goes for you: when an opponent burns one of your Items, firing it still attacks, but you take the burn.',
+      'Updated the burn notes and tooltips to explain the new rules.',
+    ],
+    Minigames: [
+      'Diamond Convoy (and other single-suit items) now say "At least 1 diamond (up to 4 cards)" so it is clear the other cards can be anything.',
+      'Fleet Plinko: the left and right drop buttons now release the chip over a peg like the center one, so it no longer falls straight down.',
+      'Fleet Blackjack: the final hands and the dealer stay on screen after you stand, and a popup says what you won. Click Collect to finish.',
+      'Fleet Poker: the cards are bigger. The computer\'s hands now stay hidden until you have placed all nine cards.',
+      'Fleet Auction: your coin count is now always shown next to the other bidders.',
+    ],
+    'Body Shop': [
+      'The Body Shop is narrower, and Refuel and Dent Repair are now tight one-line rows with smaller buttons.',
+    ],
     'New worlds': [
       'World 7, Port Everglades, is here with 21 regular opponents, 3 elites and a boss. Its regulars mix every kind of damage. The boss is the Harbormaster, who throws away his whole hand every turn and draws 5 new cards with only 3 face up. Three Black cards close the gates for 47 armor, four Red cards hit for 48, so you have to read what you can see and guess the rest.',
       'World 8, The Fleet Compound, is here too with 21 regulars, 3 elites and the Evil Mechanic, who swings twice a turn with shock, sabotage, freeze and hex. Beating World 8 is now the end of the campaign.',
@@ -8619,6 +8735,7 @@ const UPDATE_LOG = [
       'Every difficulty number now lives in one settings block at the top of the game file. A dev-only Difficulty Tuning screen (name your fleet devmode to see it) lets you test changes, start a run in any world, and read a fight log that records how each real fight went compared with the engine estimate.',
     ],
     'Career Points': [
+      'The home screen and the vehicle pick screen now say that losing a run costs you everything you gathered except your Career Points, which carry over for upgrades. Pick Your Vehicle also has Back and Spend Career Points buttons.',
       'The Career Points page is narrower, the bars have their own color so the rows do not blend together, and the three section headers are gone in favor of one long list that keeps the color coding.',
       'Most upgrades now unlock after you have earned a set number of Career Points in total, and every upgrade costs 50 percent more.',
       'Removed the Admin Vehicle Pair Bonus upgrade. Career Points no longer buy anything that makes an item card hit harder, and any Career Points you spent on it are refunded.',
@@ -8680,7 +8797,7 @@ function updateLogHTML() {
           ${UPDATE_LOG.slice().reverse().map((entry, i) => `
             <details ${i === 0 ? 'open' : ''} style="margin-top:10px">
               <summary class="note" style="font-weight:800;color:var(--ink);cursor:pointer">${entry.date}</summary>
-              ${UPDATE_LOG_CATEGORY_ORDER.filter(cat => entry.categories[cat] && entry.categories[cat].length).map(cat => `
+              ${[...UPDATE_LOG_CATEGORY_ORDER, ...Object.keys(entry.categories).filter(c => !UPDATE_LOG_CATEGORY_ORDER.includes(c))].filter(cat => entry.categories[cat] && entry.categories[cat].length).map(cat => `
                 <div style="margin-top:8px">
                   <div class="note" style="font-weight:700;color:var(--amber);font-size:12px;letter-spacing:0.03em">${cat}</div>
                   <ul style="margin:3px 0 0 18px;padding:0">
@@ -8694,6 +8811,14 @@ function updateLogHTML() {
       </div>
     </div>
   `;
+}
+// Shown on the home screen and the vehicle pick screen so it is clear what a loss costs.
+function runRulesPanelHTML() {
+  return `<div class="panel" style="margin-bottom:10px;border-left:5px solid var(--amber)">
+    <div class="hdr"><span>How a run works</span><span></span></div>
+    <div class="note" style="margin:4px 0"><b>If you lose a run,</b> you lose everything you gathered on it: coins, gems, fuel, items and run upgrades.</div>
+    <div class="note" style="margin:4px 0"><b>You keep your Career Points</b> (you have ${META.points}). They carry over, and you can spend them on Career Point Upgrades to power up before your next run.</div>
+  </div>`;
 }
 function metaScreen() {
   const hasSave = !!loadRunSave();
@@ -8713,6 +8838,7 @@ function metaScreen() {
           <div class="hdr"><span>${META.playerName ? `Welcome, ${META.playerName.replace(/</g,'&lt;')}` : 'Welcome! Name Your Fleet'}</span><span></span></div>
           <input id="playerNameInput" type="text" maxlength="18" placeholder="Your name" value="${(META.playerName||'').replace(/"/g,'&quot;')}" style="width:100%;padding:9px 10px;border:2px solid #1fb6a6;border-radius:6px;font-family:var(--disp);font-size:15px;color:#ffffff;background:#1a2038">
         </div>
+        ${runRulesPanelHTML()}
         ${hasSave ? `<button class="wo-btn" id="continueRunBtn" style="margin-bottom:10px;width:100%">Continue Run</button>` : `<button class="wo-btn" id="startRunBtn" style="margin-bottom:10px;width:100%">New Run</button>`}
         ${hasSave ? `<button class="wo-btn gray" id="startRunBtn" style="width:100%;margin-bottom:10px">New Run (overwrites save)</button>` : ''}
         <button class="wo-btn amber" id="viewUpgradesBtn" style="width:100%">Career Point Upgrades</button>
@@ -8797,6 +8923,7 @@ function render(html) {
     if (wasStep4 && typeof window.finishCombatTraining === 'function') window.finishCombatTraining();
   };
   const vehicleSpecialBtn = document.getElementById('vehicleSpecialBtn'); if (vehicleSpecialBtn) vehicleSpecialBtn.onclick = () => useVehicleSpecial();
+  app.querySelectorAll('[data-detonateitem]').forEach(el => el.onclick = (e) => { e.stopPropagation(); detonateOpponentItemBurn(el.dataset.detonateitem); });
   app.querySelectorAll('[data-detonate]').forEach(el => el.onclick = (e) => { e.stopPropagation(); detonateBurn(); });
   const sortToggleBtn = document.getElementById('sortToggleBtn'); if (sortToggleBtn) sortToggleBtn.onclick = toggleHandSort;
   const oppSortBtn = document.getElementById('oppSortBtn'); if (oppSortBtn) oppSortBtn.onclick = () => { RUN.oppSortMode = (RUN.oppSortMode || 'value') === 'value' ? 'suit' : 'value'; saveRun(); render(battleScreen()); };
@@ -8893,6 +9020,8 @@ function render(html) {
     playerNameInput.oninput = () => { META.playerName = playerNameInput.value.trim().slice(0, 18); META.devModeActive = META.playerName.toLowerCase() === 'devmode'; saveMeta(); if (META.devModeActive) render(metaScreen()); };
     playerNameInput.onblur = () => { if (!META.devModeActive) render(metaScreen()); };
   }
+  const starterBackBtn = document.getElementById('starterBackBtn'); if (starterBackBtn) starterBackBtn.onclick = () => render(metaScreen());
+  const starterUpgradesBtn = document.getElementById('starterUpgradesBtn'); if (starterUpgradesBtn) starterUpgradesBtn.onclick = () => render(upgradeScreen());
   const viewUpgradesBtn = document.getElementById('viewUpgradesBtn'); if (viewUpgradesBtn) viewUpgradesBtn.onclick = () => render(upgradeScreen());
   const leaveChopShopBtn = document.getElementById('leaveChopShopBtn'); if (leaveChopShopBtn) leaveChopShopBtn.onclick = () => render(RETURN_TO_CASTLE_MENU ? castleMenuScreen() : mapScreen());
   const leaveOverdriveBtn = document.getElementById('leaveOverdriveBtn'); if (leaveOverdriveBtn) leaveOverdriveBtn.onclick = () => render(RETURN_TO_CASTLE_MENU ? castleMenuScreen() : mapScreen());

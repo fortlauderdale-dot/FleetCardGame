@@ -3203,7 +3203,26 @@ function migrateOppIds(root) {
   })(root);
   return root;
 }
-function loadRunSave() { try { const raw = localStorage.getItem(RUN_KEY); if (raw) return migrateOppIds(JSON.parse(raw)); } catch (e) {} return null; }
+// Older World 3 maps had three nodes on the Fleet Compound row, so a route could skip the Compound.
+// For a saved run that has not reached that row yet, collapse the row back to the single Compound
+// node and rebuild the two sets of connections around it (same rule generateMap uses for a
+// single-node row). A run that is already on or past that row is left alone.
+function repairCompoundRow(run) {
+  try {
+    const nodes = run && run.map && run.map.nodes, edges = run && run.map && run.map.edges;
+    if (!Array.isArray(nodes) || !Array.isArray(edges)) return run;
+    const r = nodes.findIndex(row => row.some(n => n && n.type === 'castle'));
+    if (r < 1 || nodes[r].length <= 1 || !nodes[r + 1]) return run;
+    if (run.currentRow >= r || (run.path || []).some(p => p.row >= r)) return run;
+    nodes[r] = [nodes[r].find(n => n && n.type === 'castle')];
+    const kept = edges.filter(e => e.fromRow !== r - 1 && e.fromRow !== r);
+    nodes[r - 1].forEach((_, a) => kept.push({ fromRow: r - 1, fromCol: a, toRow: r, toCol: 0 }));
+    nodes[r + 1].forEach((_, b) => kept.push({ fromRow: r, fromCol: 0, toRow: r + 1, toCol: b }));
+    run.map.edges = kept;
+  } catch (e) {}
+  return run;
+}
+function loadRunSave() { try { const raw = localStorage.getItem(RUN_KEY); if (raw) return repairCompoundRow(migrateOppIds(JSON.parse(raw))); } catch (e) {} return null; }
 function clearRunSave() { try { localStorage.removeItem(RUN_KEY); } catch (e) {} }
 
 /* ========== BATTLE SAVE ========== */
@@ -4254,10 +4273,10 @@ diffApplyGlobals();
 function generateMap() {
   const nodes = [], edges = [];
   const castleRow = 10;
-  const isWorld3 = RUN.world === 3;
+  // The Fleet Compound row is always a single node in every world, so every route has to pass
+  // through it. World 3 used to widen this row to 3 nodes, which let a route skip the Compound.
   const rowCounts = [1,2,1,2,3,1,2,3,2,2,1,2,3,2,2,3,2,2,3,2];
-  if (isWorld3) rowCounts[castleRow] = 3;
-  const castleCol = isWorld3 ? 1 : 0;
+  const castleCol = 0;
   const worldMultiplier = RUN.worldMultiplier || 1.0;
   const highwayPools = WORLD_POOLS_BY_WORLD[RUN.world] || WORLD_1_POOLS;
   const highwayRegularQueue = shuffle([...highwayPools.regulars]);
@@ -4304,10 +4323,9 @@ function generateMap() {
     return Math.random() < 0.5 ? [0, 1] : [1, 2];
   }
   const rowLanes = rowCounts.map(k => pickLanesForRow(k));
-  // The Fleet Compound is the run's central hub - keep it anchored on the middle lane (except
-  // World 3, whose castle row is forced to all 3 lanes above) so the "main line" reliably runs
-  // through it rather than it randomly landing on a top/bottom detour.
-  if (!isWorld3) rowLanes[castleRow] = [1];
+  // The Fleet Compound is the run's central hub - keep it anchored on the middle lane so the
+  // "main line" reliably runs through it rather than it randomly landing on a top/bottom detour.
+  rowLanes[castleRow] = [1];
   for (let r=0;r<rowCounts.length;r++) {
     const row=[];
     for(let c=0;c<rowCounts[r];c++) {
@@ -8981,6 +8999,9 @@ const UPDATE_LOG = [
     Audio: [
       'Added a sound for armor blocking a hit - plays whether you\'re hitting an opponent with armor or they\'re hitting you while you have armor.',
       'Damage numbers now stay on screen about a second longer, and if you take more than one hit at once, the numbers stack in a vertical list instead of piling up on top of each other.',
+    ],
+    Map: [
+      'Fixed World 3 letting you route around the Fleet Compound. Every route now passes through it, same as the other worlds. A World 3 run in progress that has not reached the Compound yet is fixed too.',
     ],
   } },
 ];

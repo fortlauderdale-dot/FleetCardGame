@@ -2308,24 +2308,24 @@ const ITEMS = {
   w5_frost_seal: { id: 'w5_frost_seal', name: 'Frost Door Seal', maxCards: 4, usesPerTurn: 1,
     condition: { type: 'pokerTier', tier: 2 }, baseMult: 1.35, kind: 'ice',
     note: 'Needs Two Pair. The roll-up door freezes mid-close and seals an Item shut with it.' },
-  w5_naynay_hard_nay: { id: 'w5_naynay_hard_nay', name: 'Hard Nay', maxCards: 2, usesPerTurn: 1,
+  w5_naynay_mind_games: { id: 'w5_naynay_mind_games', name: 'Mind Games', maxCards: 2, usesPerTurn: 1,
     condition: { type: 'pokerTier', tier: 1 }, baseMult: 1.3,
-    note: 'Needs a Pair. The answer was always going to be no.' },
-  w5_naynay_side_eye: { id: 'w5_naynay_side_eye', name: 'Side Eye', maxCards: 1, usesPerTurn: 1,
+    note: 'Needs a Pair. She knows exactly what you were thinking, and uses it.' },
+  w5_naynay_guilt_trip: { id: 'w5_naynay_guilt_trip', name: 'Guilt Trip', maxCards: 1, usesPerTurn: 1,
     condition: { type: 'any', exactCount: 1 }, flatAmount: 7,
-    note: 'Needs exactly 1 card. A long, quiet look that still stings.' },
-  w5_logi_bear_hug: { id: 'w5_logi_bear_hug', name: 'Pallet Bear Hug', maxCards: 3, usesPerTurn: 1,
+    note: 'Needs exactly 1 card. One quiet sigh and suddenly it is all your fault.' },
+  w5_logi_bear_roundhouse: { id: 'w5_logi_bear_roundhouse', name: 'Roundhouse Kick', maxCards: 3, usesPerTurn: 1,
     condition: { type: 'sumThreshold', min: 20 }, flatAmount: 24,
-    note: 'Needs cards totaling 20 or higher. Logi Bear has carried heavier loads than you.' },
-  w5_logi_bear_nudge: { id: 'w5_logi_bear_nudge', name: 'Pallet Nudge', maxCards: 1, usesPerTurn: 1,
+    note: 'Needs cards totaling 20 or higher. A spinning kick from a bear with a black belt.' },
+  w5_logi_bear_chop: { id: 'w5_logi_bear_chop', name: 'Karate Chop', maxCards: 1, usesPerTurn: 1,
     condition: { type: 'any', exactCount: 1 }, flatAmount: 8,
-    note: 'Needs exactly 1 card. One pallet, gently shoved your way.' },
-  ee_naynay_hard_nay: { id: 'ee_naynay_hard_nay', name: 'Hard Nay', maxCards: 2, usesPerTurn: 1,
+    note: 'Needs exactly 1 card. Quick, flat-handed and right on target.' },
+  ee_naynay_mind_games: { id: 'ee_naynay_mind_games', name: 'Mind Games', maxCards: 2, usesPerTurn: 1,
     condition: { type: 'pokerTier', tier: 1 }, baseMult: 1,
-    note: 'Needs a Pair. The answer was always going to be no.' },
-  ee_logi_bear_hug: { id: 'ee_logi_bear_hug', name: 'Pallet Bear Hug', maxCards: 3, usesPerTurn: 1,
+    note: 'Needs a Pair. She knows exactly what you were thinking, and uses it.' },
+  ee_logi_bear_roundhouse: { id: 'ee_logi_bear_roundhouse', name: 'Roundhouse Kick', maxCards: 3, usesPerTurn: 1,
     condition: { type: 'sumThreshold', min: 14 }, flatAmount: 14,
-    note: 'Needs cards totaling 14 or higher. Logi Bear has carried heavier loads than you.' },
+    note: 'Needs cards totaling 14 or higher. A spinning kick from a bear with a black belt.' },
   w5_chiller_blast: { id: 'w5_chiller_blast', name: 'Blast Chiller Vent', maxCards: 3, usesPerTurn: 1,
     condition: { type: 'straightLen', len: 3 }, baseMult: 1.45, kind: 'ice',
     note: 'Needs a 3-card straight (example: 6, 7, 8). A full blast of negative-forty air locks an Item solid.' },
@@ -2890,12 +2890,12 @@ const WORLD_5_POOLS = {
     { id: 'w5_inventory_clerk', name: 'Inventory Clerk', icon: '📋', image: 'Hazards/inventory-clerk.png', hp: 60, minTier: 1, drawRate: 2, items: ['w5_bot_grab', 'w5_bot_beep'] },
     { id: 'w5_pallet_wrapper', name: 'Pallet Wrapper', icon: '🎞️', image: 'Hazards/pallet-wrapper.png', hp: 58, minTier: 1, drawRate: 2, items: ['w5_arm_snatch'] },
     { id: 'w5_ammonia_leak', name: 'Ammonia Leak', icon: '☣️', image: 'Hazards/ammonia-leak.png', hp: 54, minTier: 1, drawRate: 2, items: ['w5_ammonia_fumes', 'w5_leak_drip'] },
-    { id: 'w5_naynay', name: 'NayNay', icon: '🐾', image: 'Hazards/naynay.png', hp: 56, minTier: 1, drawRate: 2, items: ['w5_naynay_hard_nay', 'w5_naynay_side_eye'] },
+    { id: 'w5_naynay', name: 'NayNay', icon: '🐾', image: 'Hazards/naynay.png', hp: 56, minTier: 1, drawRate: 2, items: ['w5_naynay_mind_games', 'w5_naynay_guilt_trip'] },
     { id: 'w5_overheated_compressor', name: 'Overheated Compressor', icon: '🔥', image: 'Hazards/overheated-compressor.png', hp: 60, minTier: 1, drawRate: 2, items: ['w5_compressor_blowout', 'w5_compressor_hum'] },
     { id: 'w5_blown_a_c_compressor', name: 'Blown A/C Compressor', icon: '🔌', image: 'Hazards/blown-a-c-compressor.png', hp: 52, minTier: 1, drawRate: 2, items: ['w5_panel_arc','w5_compressor_recharge'] },
     { id: 'w5_unmarked_wet_floor', name: 'Unmarked Wet Floor', icon: '⚠️', image: 'Hazards/unmarked-wet-floor.png', hp: 54, minTier: 1, drawRate: 2, items: ['w5_catwalk_slip'] },
     { id: 'w5_stuck_bay_door', name: 'Stuck Bay Door', icon: '❄️', image: 'Hazards/stuck-bay-door.png', hp: 62, minTier: 1, drawRate: 2, startArmor: 14, items: ['w5_frost_seal'] },
-    { id: 'w5_logi_bear', name: 'Logi Bear', icon: '🐻', image: 'Hazards/logi-bear.png', hp: 60, minTier: 1, drawRate: 2, items: ['w5_logi_bear_hug', 'w5_logi_bear_nudge'] },
+    { id: 'w5_logi_bear', name: 'Logi Bear', icon: '🐻', image: 'Hazards/logi-bear.png', hp: 60, minTier: 1, drawRate: 2, items: ['w5_logi_bear_roundhouse', 'w5_logi_bear_chop'] },
     { id: 'w5_walk_in_freezer', name: 'Walk-In Freezer', icon: '🧊', image: 'Hazards/walk-in-freezer.png', hp: 66, minTier: 1, drawRate: 2, items: ['w5_freezer_gust'] },
     { id: 'w5_malfunctioning_ice_machine', name: 'Malfunctioning Ice Machine', icon: '🧊', image: 'Hazards/malfunctioning-ice-machine.png', hp: 56, minTier: 1, drawRate: 2, items: ['w5_machine_jam'] },
     { id: 'w5_slippery_dock_plate', name: 'Slippery Dock Plate', icon: '🛼', image: 'Hazards/slippery-dock-plate.png', hp: 52, minTier: 1, drawRate: 2, items: ['w5_plate_skid'] },
@@ -2959,8 +2959,8 @@ const EASTER_EGG_OPPONENTS = [
 const EASTER_EGG_SPAWN_CHANCE = 0.05;
 // NayNay and Logi Bear live in World 5, but each can also show up once in World 1 as a gentler Easter egg.
 const WORLD_1_BONUS_EGGS = [
-  { id: 'ee_naynay', name: 'NayNay', icon: '🐾', image: 'Hazards/naynay.png', hp: 46, minTier: 1, drawRate: 2, items: ['ee_naynay_hard_nay'] },
-  { id: 'ee_logi_bear', name: 'Logi Bear', icon: '🐻', image: 'Hazards/logi-bear.png', hp: 52, minTier: 1, drawRate: 2, items: ['ee_logi_bear_hug'] },
+  { id: 'ee_naynay', name: 'NayNay', icon: '🐾', image: 'Hazards/naynay.png', hp: 46, minTier: 1, drawRate: 2, items: ['ee_naynay_mind_games'] },
+  { id: 'ee_logi_bear', name: 'Logi Bear', icon: '🐻', image: 'Hazards/logi-bear.png', hp: 52, minTier: 1, drawRate: 2, items: ['ee_logi_bear_roundhouse'] },
 ];
 const OPPONENT_SWING_CAP = [22, 28, 34, 40, 46, 52, 60];
 function revealFraction(row) { return [1.0, 0.8, 0.6, 0.4, 0.25, 0.1, 0][Math.min(row, 6)]; }
@@ -3085,7 +3085,6 @@ function worldCareerPoints(world, cleared) {
 // A Perfect Kill only happens when your final hit exactly matches an opponent's remaining
 // HP, so it's a skill moment worth a small flat Career Points nod, not a trickle.
 const PERFECT_KILL_CP = 5;
-const PERFECT_KILL_FUEL_CHANCE = 1 / 3;
 // A small flat Career Points nod for beating an Elite-tier opponent, tracked separately so the
 // end-of-run summary can show how much of that run's score came from Elite fights specifically.
 const ELITE_KILL_CP = 5;
@@ -4801,7 +4800,7 @@ function castleDungeonScreen(message='') {
 }
 const SERVICE_STATION_FUEL_COST_PER_UNIT = 5;
 const SERVICE_STATION_MAX_FUEL_PER_VISIT = 10;
-// Fuel (Body Shop and Service Station share one count) gets pricier the more you buy in one world: the first 10 units cost 5 coins each,
+// Fuel gets pricier (the Body Shop and the Service Station each keep their own count) the more you buy in one world: the first 10 units cost 5 coins each,
 // then each extra unit costs 5 more than the last (10, 15, 20...). The count resets every world.
 const BODY_SHOP_FUEL_FULL_PRICE_UNITS = 10;
 function bodyShopFuelUnitPrice(boughtSoFar) {
@@ -4809,6 +4808,7 @@ function bodyShopFuelUnitPrice(boughtSoFar) {
   return SERVICE_STATION_FUEL_COST_PER_UNIT * (1 + extra);
 }
 function bodyShopFuelBought() { return (RUN.castleState && RUN.castleState.fuelBought) || 0; }
+function stationFuelBought() { return (RUN.castleState && RUN.castleState.stationFuelBought) || 0; }
 function bodyShopFuelQuote() {
   const bought = bodyShopFuelBought();
   const missing = Math.max(0, RUN.maxFuel - RUN.fuel);
@@ -4823,6 +4823,7 @@ function bodyShopFuelQuote() {
 function resetBodyShopFuelState() {
   if (!RUN.castleState) RUN.castleState = {};
   RUN.castleState.fuelBought = 0;
+  RUN.castleState.stationFuelBought = 0;
 }
 function castleInnScreen(message='') {
   const fuelQuote = bodyShopFuelQuote();
@@ -7714,8 +7715,8 @@ function winBattle(outlast) {
   const exactKillBonus = BATTLE.exactKill && !outlast;
   let chipReward = baseChipReward + (exactKillBonus ? 15 : 0);
   const gemReward = base.gemReward + (exactKillBonus ? 1 : 0);
-  // Fuel is scarce on purpose now - only a Perfect Kill refuels you at all, and only 1 in 3 of them do.
-  const fuelReward = (exactKillBonus && Math.random() < PERFECT_KILL_FUEL_CHANCE) ? 1 : 0;
+  // Fuel is scarce on purpose now - only a Perfect Kill refuels you at all.
+  const fuelReward = exactKillBonus ? 1 : 0;
   // Career Points are otherwise a flat end-of-run bonus now, but a Perfect Kill is a
   // skill-gated moment worth a small nod on its own, same as the fuel it grants.
   const pointsReward = exactKillBonus ? PERFECT_KILL_CP : 0;
@@ -7877,7 +7878,7 @@ function nodePopupScreen(r, c) {
       <div class="cur chip">${ICON.coin} +15 coins</div>
       <div class="cur gem">${ICON.gem} +1 gem</div>
       <div class="cur pts">${ICON.star} +${PERFECT_KILL_CP} Career Points</div>
-      <div class="cur fuel hoverTip" data-title="1 in 3 Perfect Wins also give +1 fuel.">${ICON.fuel} +1 fuel (1 in 3)</div>
+      <div class="cur fuel">${ICON.fuel} +1 fuel</div>
     </div>` : '';
   return `<div class="map-popup-overlay">
     <div class="wo${info.bigArt ? ' wide' : ''}" style="width:100%${info.accent ? `;border-color:${info.accent}` : ''}">
@@ -8524,7 +8525,7 @@ function garageScreen(message='') {
 
         <div class="shopcard">
           <h3>Fuel Dispenser</h3>
-          <button class="wo-btn amber hoverTip" id="stationFuelBtn" data-title="Fuel gets more expensive the more you buy in one world, here and at the Body Shop combined. The price resets in the next world." ${RUN.chips < bodyShopFuelUnitPrice(bodyShopFuelBought()) || RUN.fuel >= RUN.maxFuel ? 'disabled' : ''}>1 Fuel = ${bodyShopFuelUnitPrice(bodyShopFuelBought())} Coins</button>
+          <button class="wo-btn amber hoverTip" id="stationFuelBtn" data-title="Fuel gets more expensive the more you buy here in one world. The price resets in the next world." ${RUN.chips < bodyShopFuelUnitPrice(stationFuelBought()) || RUN.fuel >= RUN.maxFuel ? 'disabled' : ''}>1 Fuel = ${bodyShopFuelUnitPrice(stationFuelBought())} Coins</button>
         </div>
       </div>
     </div>
@@ -9076,7 +9077,7 @@ const UPDATE_LOG = [
       'You can sort the opponent\'s face-up cards by value or suit, same as your own hand. Face-down cards stay at the end so sorting never gives them away.',
       'Opponents that throw away their hand every turn or make you discard now show a Heads Up note when you tap their stop and again when the fight starts. Grid Storm is removed.',
       'Ice item cards now say Frozen and how many points it takes to thaw (for example Frozen Brake Line says Frozen: 14 to thaw) instead of Ice.',
-      'Perfect Wins now give +1 fuel about 1 time in 3, and the result screen shows it when you get it.',
+      'Perfect Wins give +1 fuel, now shown on the map popup and the result screen.',
     ],
     'Supply Cache': [
       'The Supply Cache choice screen is easier to read. The made-up names are gone, each choice just says what you win with the downside underneath, and the third choice is now free.',
@@ -9373,12 +9374,12 @@ function render(html) {
   const stationFuelBtn = document.getElementById('stationFuelBtn');
   if (stationFuelBtn) {
     stationFuelBtn.onclick = () => {
-      const stationPrice = bodyShopFuelUnitPrice(bodyShopFuelBought());
+      const stationPrice = bodyShopFuelUnitPrice(stationFuelBought());
       if (RUN.chips >= stationPrice && RUN.fuel < RUN.maxFuel) {
         RUN.chips -= stationPrice;
         RUN.fuel += 1;
         if (!RUN.castleState) RUN.castleState = {};
-        RUN.castleState.fuelBought = bodyShopFuelBought() + 1;
+        RUN.castleState.stationFuelBought = stationFuelBought() + 1;
         playSfx('buy');
         saveRun();
         render(mapScreen());

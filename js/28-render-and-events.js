@@ -371,7 +371,15 @@ function render(html) {
           } else {
             endRun(true);
           }
-        } else render(mapScreen());
+        } else {
+          // The first battle you ever win shows the Career Points note one time.
+          if (!META.seenRunRulesNote) {
+            META.seenRunRulesNote = true;
+            saveMeta();
+            RULES_NOTE_POPUP = true;
+          }
+          render(mapScreen());
+        }
       } else endRun(false);
     };
   const advanceWorldBtn = document.getElementById('advanceWorldBtn');
@@ -418,6 +426,39 @@ function render(html) {
   if (starterBackBtn) starterBackBtn.onclick = () => render(metaScreen());
   const starterUpgradesBtn = document.getElementById('starterUpgradesBtn');
   if (starterUpgradesBtn) starterUpgradesBtn.onclick = () => render(upgradeScreen());
+  const rulesNoteOkBtn = document.getElementById('rulesNoteOkBtn');
+  if (rulesNoteOkBtn)
+    rulesNoteOkBtn.onclick = () => {
+      RULES_NOTE_POPUP = false;
+      render(mapScreen());
+    };
+  const homeTipShowBtn = document.getElementById('homeTipShowBtn');
+  if (homeTipShowBtn)
+    homeTipShowBtn.onclick = () => {
+      HOME_TIP_POPUP = true;
+      render(metaScreen());
+    };
+  const homeTipHideBtn = document.getElementById('homeTipHideBtn');
+  if (homeTipHideBtn)
+    homeTipHideBtn.onclick = () => {
+      META.hideHomeTip = true;
+      saveMeta();
+      render(metaScreen());
+    };
+  const homeTipOkBtn = document.getElementById('homeTipOkBtn');
+  if (homeTipOkBtn)
+    homeTipOkBtn.onclick = () => {
+      HOME_TIP_POPUP = false;
+      render(metaScreen());
+    };
+  const homeTipNeverBtn = document.getElementById('homeTipNeverBtn');
+  if (homeTipNeverBtn)
+    homeTipNeverBtn.onclick = () => {
+      HOME_TIP_POPUP = false;
+      META.hideHomeTip = true;
+      saveMeta();
+      render(metaScreen());
+    };
   const viewUpgradesBtn = document.getElementById('viewUpgradesBtn');
   if (viewUpgradesBtn) viewUpgradesBtn.onclick = () => render(upgradeScreen());
   const leaveChopShopBtn = document.getElementById('leaveChopShopBtn');

@@ -545,7 +545,7 @@ function mapScreen() {
             `class="wo-eyebrow">Fleet Onboarding</div><h3>Welcome, ${parsedName}!</h3><p>Click the node to ` +
             `the left to start your journey.</p></div>`
         : '';
-    })()}</div>${MAP_POPUP ? nodePopupScreen(MAP_POPUP.row, MAP_POPUP.col) : ''}${TREASURE_POPUP ? treasureScreen(TREASURE_POPUP) : ''}${GARAGE_POPUP ? garageScreen(GARAGE_MESSAGE) : ''}${MATCH_OVERLAY_ACTIVE ? castleMatchScreen() : ''}</div>` +
+    })()}</div>${MAP_POPUP ? nodePopupScreen(MAP_POPUP.row, MAP_POPUP.col) : ''}${TREASURE_POPUP ? treasureScreen(TREASURE_POPUP) : ''}${GARAGE_POPUP ? garageScreen(GARAGE_MESSAGE) : ''}${MATCH_OVERLAY_ACTIVE ? castleMatchScreen() : ''}${RULES_NOTE_POPUP ? rulesNotePopupHTML() : ''}</div>` +
     `<div class="regionCaption">World ${RUN.world}: ${WORLD_NAMES[RUN.world] || WORLD_NAMES[1]}</div></div></div>`
   );
 }

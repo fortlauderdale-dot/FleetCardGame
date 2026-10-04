@@ -87,6 +87,14 @@ function endRun(won) {
   const bonus = worldCareerPoints(RUN.world, cleared);
   earnPoints(bonus);
   META.bestRun = Math.max(META.bestRun, RUN.path.length);
+  // Furthest point reached: the highest world, then the most stops cleared in that world.
+  const beatsBest =
+    RUN.world > (META.bestStopWorld || 0) ||
+    (RUN.world === META.bestStopWorld && RUN.path.length > (META.bestStop || 0));
+  if (beatsBest) {
+    META.bestStopWorld = RUN.world;
+    META.bestStop = RUN.path.length;
+  }
   META.highScore = Math.max(META.highScore, RUN.scoreThisRun);
   META.runsPlayed++;
   saveMeta();

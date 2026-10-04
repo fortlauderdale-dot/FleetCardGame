@@ -46,6 +46,79 @@ function runRulesPanelHTML() {
     `before your next run.</div>`
   );
 }
+// Home screen stats: how far you got and your best score. Career Points are on the upgrades button.
+function homeStatsHTML() {
+  let furthest = 'Not yet';
+  if (META.bestStopWorld) {
+    furthest = `World ${META.bestStopWorld} - ${WORLD_NAMES[META.bestStopWorld] || ''}, stop ${META.bestStop}/21`;
+  } else if (META.bestRun) {
+    // Older saves only know the best stop count, not which world it was in.
+    const w = META.bestWorld || 1;
+    furthest =
+      w === 1 ? `World 1 - ${WORLD_NAMES[1]}, stop ${META.bestRun}/21` : `World ${w} - ${WORLD_NAMES[w] || ''}`;
+  }
+  const row = (label, value) =>
+    `<div class="homeStat"><span class="homeStatLabel">${label}</span><span class="homeStatValue">${value}</span></div>`;
+  return `<div class="homeStats">${row('Furthest', furthest)}${row('High score', META.highScore)}</div>`;
+}
+
+// Add to Home Screen tip. Only shown on phones and tablets that are not already running the game from the
+// Home Screen, and it can be hidden for good.
+function homeScreenPlatform() {
+  const ua = navigator.userAgent || '';
+  const standalone =
+    navigator.standalone === true || (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
+  if (standalone) return null;
+  if (/iPhone|iPad|iPod/i.test(ua) || (/Macintosh/i.test(ua) && navigator.maxTouchPoints > 1)) return 'ios';
+  if (/Android/i.test(ua)) return 'android';
+  return null;
+}
+let HOME_TIP_POPUP = false;
+function homeTipBannerHTML() {
+  if (META.hideHomeTip || !homeScreenPlatform()) return '';
+  return (
+    `<div class="homeTipBanner"><span class="homeTipText">Plays better on your phone when added to your ` +
+    `Home Screen.</span><button class="wo-btn teal homeTipBtn" id="homeTipShowBtn">Show me how</button>` +
+    `<button class="homeTipClose" id="homeTipHideBtn" aria-label="Hide this tip">&times;</button></div>`
+  );
+}
+function homeTipPopupHTML() {
+  const platform = homeScreenPlatform() || 'ios';
+  const steps =
+    platform === 'android'
+      ? [
+          'Open this page in Chrome.',
+          'Tap the menu button (three dots) at the top right.',
+          'Tap Add to Home screen (or Install app).',
+          'Tap Add or Install.',
+        ]
+      : [
+          'Open this page in Safari.',
+          'Tap the Share button (the square with an arrow) at the bottom of the screen.',
+          'Scroll down and tap Add to Home Screen.',
+          'Tap Add at the top right.',
+        ];
+  return (
+    `<div class="map-popup-overlay"><div class="wo" style="max-width:380px"><div class="wo-stripe"></div>` +
+    `<div class="wo-body"><div class="wo-eyebrow">Better on your phone</div><h1>Add to <em>Home Screen</em></h1>` +
+    `<div class="note" style="margin:6px 0 8px">It opens full screen with no browser bars, loads faster, and ` +
+    `keeps working without WiFi once it has loaded one time.</div>` +
+    `<ol class="homeTipSteps">${steps.map((t) => `<li>${t}</li>`).join('')}</ol>` +
+    `<button class="wo-btn teal" id="homeTipOkBtn" style="width:100%;margin-top:10px">Got it</button>` +
+    `<button class="wo-btn gray" id="homeTipNeverBtn" style="width:100%;margin-top:8px">Do not show this again</button>` +
+    `</div></div></div>`
+  );
+}
+// Shown once, after the first battle you win.
+let RULES_NOTE_POPUP = false;
+function rulesNotePopupHTML() {
+  return (
+    `<div class="map-popup-overlay"><div class="wo" style="max-width:380px"><div class="wo-stripe"></div>` +
+    `<div class="wo-body" style="text-align:center"><div class="wo-eyebrow">Good to know</div>` +
+    `<h1>Career <em>Points</em></h1>` + runRulesPanelHTML() +
+    `<button class="wo-btn teal" id="rulesNoteOkBtn" style="width:100%">Got it</button></div></div></div>`
+  );
+}
 function metaScreen() {
   const hasSave = !!loadRunSave();
   return (
@@ -60,13 +133,9 @@ function metaScreen() {
             <div class="note" style="margin:0;font-size:13px;opacity:0.9">🏆 Haley was first to beat World 2!</div>
           </div>
         </div>
-        <div class="wo-sub">Career Points: ${META.points} &middot; Best ` +
-    `route: ${META.bestRun}/21 &middot; High score: ${META.highScore} &middot; Runs played: ${META.runsPlayed}</div>
-        ${runRulesPanelHTML()}
+        ${homeStatsHTML()}
+        ${homeTipBannerHTML()}
         <div class="panel" style="margin-bottom:10px">
-          <div class="hdr">` +
-    `<span>${META.playerName ? `Welcome, ${META.playerName.replace(/</g, '&lt;')}` : 'Welcome! Name Your Fleet'}</span>` +
-    `<span></span></div>
           <input id="playerNameInput" type="text" maxlength="18" placeholder="Your name" ` +
     `value="${(META.playerName || '').replace(/"/g, '&quot;')}" style="width:100%;padding:9px 10px;` +
     `border:2px solid #1fb6a6;border-radius:6px;font-family:var(--disp);font-size:15px;color:#ffffff;background:#1a2038">
@@ -83,7 +152,7 @@ function metaScreen() {
               `margin-bottom:10px">New Run (overwrites save)</button>`
             : ''
         }
-        <button class="wo-btn amber" id="viewUpgradesBtn" style="width:100%">Career Point Upgrades</button>
+        <button class="wo-btn amber" id="viewUpgradesBtn" style="width:100%">Career Point Upgrades (${META.points})</button>
         ${
           META.devModeActive
             ? `<button class="wo-btn gray" style="width:100%;margin-top:10px;` +
@@ -117,6 +186,7 @@ function metaScreen() {
       </div>
     </div>
     ${updateLogHTML()}
+    ${HOME_TIP_POPUP ? homeTipPopupHTML() : ''}
   `
   );
 }

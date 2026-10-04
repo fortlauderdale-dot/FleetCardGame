@@ -392,6 +392,9 @@ const UPDATE_LOG = [
       'Match game prizes now use the same colors, icons and font as the resource bar at the top, for pairs and for the end of visit total.',
     ],
     Visual: [
+      'Home Screen cleanup: the Career Points note moved to a one time popup after your first win, the stats now show how far you got (World, name and stop) and your high score, and the Career Points count is on the upgrades button.',
+      'The Welcome line is gone. The name box just says Your name.',
+      'New tip on the Home Screen for phones that explains how to add the game to your Home Screen on iPhone or Android.',
       'The Fleet Compound menu now fits on one screen on a phone, with two places side by side.',
       'The match game is now called Fleet Matching Game everywhere, so it fits on one line.',
       'New Home Screen icon on iPhone: the Fleet Compound garage instead of a plain F. Delete and re-add the Home Screen icon to see it.',

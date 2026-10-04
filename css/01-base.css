@@ -406,3 +406,73 @@ body {
   border-color: #5c2ea0;
 }
 /* The three buttons in the top resource bar (Run Upgrade purple, Forfeit Run red, Run Dashboard gray) share one size everywhere */
+
+.homeStats {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 8px 0 12px;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border-left: 3px solid #1fb6a6;
+  border-radius: 6px;
+}
+.homeStat {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  flex-wrap: wrap;
+}
+.homeStatLabel {
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--dim);
+  min-width: 70px;
+}
+.homeStatValue {
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+}
+.homeTipBanner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px;
+  padding: 8px 8px 8px 10px;
+  background: rgba(31, 182, 166, 0.12);
+  border: 1px solid rgba(31, 182, 166, 0.45);
+  border-radius: 8px;
+}
+.homeTipText {
+  flex: 1;
+  font-size: 12px;
+  line-height: 1.3;
+  color: #d9f5f1;
+}
+.homeTipBtn {
+  width: auto !important;
+  padding: 6px 10px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.homeTipClose {
+  background: none;
+  border: none;
+  color: var(--dim);
+  font-size: 22px;
+  line-height: 1;
+  padding: 0 4px;
+  cursor: pointer;
+}
+.homeTipSteps {
+  text-align: left;
+  margin: 8px 0 0;
+  padding-left: 22px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: #fff;
+}
+.homeTipSteps li {
+  margin: 4px 0;
+}

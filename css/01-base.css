@@ -579,3 +579,4 @@ body {
 .homeShoutouts { max-width: 480px; margin: 10px auto 8px; text-align: center; font-size: 13px; line-height: 1.5; opacity: 0.9; color: var(--dim); }
 .homeFooter { margin-bottom: -12px; }
 .homeTitleInner { display: flex; flex-direction: column; }
+.homeBtn, .homeNameInput { font-size: 19px; }

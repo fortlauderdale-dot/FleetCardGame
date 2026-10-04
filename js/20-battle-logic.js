@@ -96,11 +96,12 @@ function startBattle(opponentDef, row, col, castleStage = 0) {
   resortHandAndRelink(RUN.handSortMode);
   drawOpponentStartingHand();
   // The very first battle is staged so it teaches the game: a 2-9-9-K-A hand, and an opponent with exactly 48
-  // health and no armor. The two 9s make a Pair (27 with Fender Bender), which leaves 21, and next turn the King
-  // and Ace add up to exactly 21. A Perfect Win, learned by playing.
-  if (row === 0 && col === 0 && RUN.world === 1 && !META.hasSeenTutorial) {
+  // health and no armor. The two 9s make a Pair (27 with Fender Bender), which leaves 21, the 2 goes into Guard
+  // Rail for armor, and next turn the King and Ace add up to exactly 21. A Perfect Win, learned by playing.
+  // It is staged the same way on every run. Only a first-time player also gets the step by step hints.
+  if (row === 0 && col === 0 && RUN.world === 1) {
     if (RUN.hero.items.includes('fender_bender')) stageTutorialBattle();
-    else {
+    else if (!META.hasSeenTutorial) {
       META.hasSeenTutorial = true;
       saveMeta();
       BATTLE.showTutorialBanner = false;

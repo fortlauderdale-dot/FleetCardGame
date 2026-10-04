@@ -115,14 +115,21 @@ window.renderCombatTrainingStep = function (step) {
     return;
   }
   // The walkthrough follows what is actually on the table, so it stays correct if the player changes their mind:
-  // step 1 = pick the two 9s, step 2 = drop them into Fender Bender, step 3 = press Attack, step 4 = End Turn.
+  // step 1 = pick the two 9s, step 2 = drop them into Fender Bender, step 3 = press Attack, step 4 = put the 2
+  // into Guard Rail for armor, step 5 = End Turn.
   const nineIdx = BATTLE.hand.map((c, i) => (c.rank === 9 ? i : -1)).filter((i) => i >= 0);
   const ninesSelected = nineIdx.length >= 2 && nineIdx.every((i) => selectedIdx.includes(i));
-  const slotHasCards = Object.values(BATTLE.slots || {}).some((a) => a && a.length);
+  const slotHasCards = Object.entries(BATTLE.slots || {}).some(([k, a]) => k.startsWith('fender_bender') && a && a.length);
   if (step === 1 && (ninesSelected || slotHasCards)) step = slotHasCards ? 3 : 2;
   else if (step === 2 && slotHasCards) step = 3;
   else if (step === 2 && !ninesSelected) step = 1;
   else if (step === 3 && !slotHasCards) step = ninesSelected ? 2 : 1;
+  // Armor step: skip it when there is no Guard Rail to use, no 2 left to play, or armor is already up.
+  const guardKey = Object.keys(BATTLE.slots || {}).find((k) => k.startsWith('guard_rail'));
+  const guardHasCards = !!(guardKey && BATTLE.slots[guardKey].length);
+  const twoIdx = BATTLE.hand.findIndex((c) => c.rank === 2);
+  if (step === 4 && (BATTLE.playerArmor > 0 || !RUN.hero.items.includes('guard_rail') || (twoIdx < 0 && !guardHasCards)))
+    step = 5;
   window.__combatTrainingStep = step;
   const tutorialBox = document.createElement('div');
   tutorialBox.id = 'combat-training-flow-card';
@@ -138,7 +145,7 @@ window.renderCombatTrainingStep = function (step) {
       tutorialBox.style.left = Math.max(8, rect.left + rect.width / 2 - 140) + 'px';
       tutorialBox.style.top = rect.bottom + 20 + 'px';
       tutorialBox.innerHTML =
-        `<div class="wo-eyebrow">Step 1 of 4</div><h3>Using Your ` +
+        `<div class="wo-eyebrow">Step 1 of 5</div><h3>Using Your ` +
         `Cards</h3><p>Tap cards in your hand, then click any matching item slot to load them in. Start ` +
         `by tapping the two 9s.</p>`;
       document.body.appendChild(tutorialBox);
@@ -153,7 +160,7 @@ window.renderCombatTrainingStep = function (step) {
       tutorialBox.style.top = rect.top - 190 + 'px';
       if (rect.top - 190 < 60) tutorialBox.style.top = rect.bottom + 16 + 'px';
       tutorialBox.innerHTML =
-        `<div class="wo-eyebrow">Step 2 of 4</div><h3>Your Item Cards</h3>` +
+        `<div class="wo-eyebrow">Step 2 of 5</div><h3>Your Item Cards</h3>` +
         `<p>These dashed panels are your equipped item cards. Each one shows the exact hand you need to ` +
         `fire it. Fender Bender likes a Pair, so click it to drop your two 9s into place.</p>`;
       document.body.appendChild(tutorialBox);
@@ -170,7 +177,7 @@ window.renderCombatTrainingStep = function (step) {
       tutorialBox.style.top = rect.top - 10 + 'px';
       if (rect.right + 300 > window.innerWidth) tutorialBox.style.left = Math.max(8, rect.left - 304) + 'px';
       tutorialBox.innerHTML =
-        `<div class="wo-eyebrow">Step 3 of 4</div><h3>Firing an Item</h3>` +
+        `<div class="wo-eyebrow">Step 3 of 5</div><h3>Firing an Item</h3>` +
         `<p>Once the cards you've loaded satisfy an item's requirement, its Attack button lights up. ` +
         `Click it to fire that item.</p>`;
       document.body.appendChild(tutorialBox);
@@ -178,6 +185,40 @@ window.renderCombatTrainingStep = function (step) {
       window.renderCombatTrainingStep(4);
     }
   } else if (step === 4) {
+    const guardCard = document.querySelector('.itemCard[data-assign^="guard_rail"]');
+    const defendChip = document.querySelector('.itemCard .defendChip');
+    const twoSelected = twoIdx >= 0 && selectedIdx.includes(twoIdx);
+    let target = null;
+    let text = '';
+    if (guardHasCards && defendChip) {
+      target = defendChip.closest('.itemCard');
+      text =
+        'Your 2 is loaded. Click the Defend button on Guard Rail to turn it into armor. Armor soaks up the ' +
+        "opponent's next hit before it reaches your health.";
+    } else if (twoSelected && guardCard) {
+      target = guardCard;
+      text = 'Guard Rail takes any card and turns it into armor. Click it to load your 2.';
+    } else {
+      target = document.querySelector('.handWorkspace');
+      text =
+        'Some item cards protect you instead of attacking. Guard Rail turns one card into armor that blocks ' +
+        'damage equal to its value. Tap your 2 to select it.';
+    }
+    if (target) {
+      target.classList.add('combat-spotlight-focus');
+      const rect = target.getBoundingClientRect();
+      tutorialBox.style.left = Math.max(8, rect.left + rect.width / 2 - 140) + 'px';
+      tutorialBox.style.top = rect.bottom + 20 + 'px';
+      if (target.classList.contains('itemCard')) {
+        tutorialBox.style.top = rect.top - 190 + 'px';
+        if (rect.top - 190 < 60) tutorialBox.style.top = rect.bottom + 16 + 'px';
+      }
+      tutorialBox.innerHTML = `<div class="wo-eyebrow">Step 4 of 5</div><h3>Armor</h3><p>${text}</p>`;
+      document.body.appendChild(tutorialBox);
+    } else {
+      window.renderCombatTrainingStep(5);
+    }
+  } else if (step === 5) {
     const endTurnBtn = document.getElementById('endTurnBtn');
     if (endTurnBtn) {
       endTurnBtn.classList.add('combat-spotlight-focus');
@@ -185,7 +226,7 @@ window.renderCombatTrainingStep = function (step) {
       tutorialBox.style.left = Math.max(8, rect.left + rect.width / 2 - 140) + 'px';
       tutorialBox.style.top = rect.bottom + 24 + 'px';
       tutorialBox.innerHTML =
-        `<div class="wo-eyebrow">Step 4 of 4</div><h3>Ending Your ` +
+        `<div class="wo-eyebrow">Step 5 of 5</div><h3>Ending Your ` +
         `Turn</h3><p>When you can't fire any more of your item cards, or just want to save what's left ` +
         `for next turn, click End Turn.</p>`;
       document.body.appendChild(tutorialBox);

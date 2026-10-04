@@ -83,6 +83,14 @@ function generateMap() {
     nodes.push(row);
   }
   nodes[0][0].type = 'battle';
+  // The very first fight of World 1 is the same for everyone: Spring Breaker with exactly 48 health and no armor.
+  // The staged hand (see stageTutorialBattle) is built so the first fight can end in a Perfect Win.
+  if (RUN.world === 1) {
+    const tutorialOpp = WORLD_1_POOLS.regulars.find((o) => o.id === 'w1_spring_breaker');
+    if (tutorialOpp) {
+      nodes[0][0].opponent = { ...JSON.parse(JSON.stringify(tutorialOpp)), hp: 48, startArmor: 0, armorRegen: 0 };
+    }
+  }
   nodes[1].forEach((n) => (n.type = 'battle'));
   nodes[2][0] = { type: 'shop', lane: nodes[2][0].lane };
   nodes[castleRow][castleCol] = { type: 'castle', lane: nodes[castleRow][castleCol].lane };

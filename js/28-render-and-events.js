@@ -189,9 +189,10 @@ function render(html) {
       e.stopPropagation();
       const match = el.dataset.attack.match(/^(.+)_(\d+)$/);
       if (!match) return;
-      const wasStep3 = window.__combatTrainingStep === 3;
+      const wasStep = window.__combatTrainingStep;
       executePlayerAttack(match[1], Number(match[2]));
-      if (wasStep3 && typeof window.renderCombatTrainingStep === 'function') window.renderCombatTrainingStep(4);
+      if ((wasStep === 3 || wasStep === 4) && typeof window.renderCombatTrainingStep === 'function')
+        window.renderCombatTrainingStep(4);
     };
   });
   const forfeitRunBtn = document.getElementById('forfeitRunBtn');
@@ -199,9 +200,11 @@ function render(html) {
   const endTurnBtn = document.getElementById('endTurnBtn');
   if (endTurnBtn)
     endTurnBtn.onclick = () => {
-      const wasStep4 = window.__combatTrainingStep === 4;
+      const trainingStep = window.__combatTrainingStep;
       endTurn();
-      if (wasStep4 && typeof window.finishCombatTraining === 'function') window.finishCombatTraining();
+      // Ending the turn at the armor step or the last step finishes the walkthrough.
+      if ((trainingStep === 4 || trainingStep === 5) && typeof window.finishCombatTraining === 'function')
+        window.finishCombatTraining();
     };
   const vehicleSpecialBtn = document.getElementById('vehicleSpecialBtn');
   if (vehicleSpecialBtn) vehicleSpecialBtn.onclick = () => useVehicleSpecial();

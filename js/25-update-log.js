@@ -402,6 +402,9 @@ const UPDATE_LOG = [
       'The Dealership now shows its Item cards three across on phones.',
     ],
     Misc: [
+      ('The first battle of every run is now the same: Spring Breaker with 48 health and the same starting hand, ' +
+        'so a Perfect Win is always possible on your second turn. New players get a hint for each step, and there is a ' +
+        'new armor step where you put one card into Guard Rail.'),
       ('You can now move your save to another browser or a Home Screen icon. On the home screen, ' +
         'open Move my save, tap Make code, copy it, then paste it into the same box on the other one and tap Load code.'),
       ('Fleet Plinko: Game Over spots now move to new places on every drop instead of growing ' +

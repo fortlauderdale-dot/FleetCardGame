@@ -486,6 +486,7 @@ function opponentAttackBoxHTML(opp, showStatus) {
           burnTargetAmount: isBurnTarget ? pendingBurn.amount : null,
           pickKey: tgtElig && tgtElig.has(key) ? key : null,
           picked: !!(tgt && tgt.targetKey === key),
+          scaleOpp: opp,
         });
         if (!showStatus) return card;
         if (isBurnTarget) return card;

@@ -179,11 +179,21 @@ function itemRequirementText(item) {
   const base = max === 1 ? '1 card' : `Up to ${max} cards`;
   return specific || base;
 }
-function formatKindAmount(item, kindTagHTML) {
+// The flat number an opponent's Item really hits for, after world and difficulty scaling.
+// Shown on the card so what it says is what it does.
+function opponentFlatShown(item, opp) {
+  if (item.flatAmount == null || !opp) return null;
+  if (item.noScaling || opp.fixedNumbers) return item.flatAmount;
+  let shown = Math.round(item.flatAmount * (RUN.worldMultiplier || 1.0) * (opp.diffDmgScale || 1));
+  // During a fight, the opponent's per-hit damage cap also applies.
+  if (typeof BATTLE !== 'undefined' && BATTLE && BATTLE.opponent === opp) shown = Math.min(shown, diffSwingCap());
+  return shown;
+}
+function formatKindAmount(item, kindTagHTML, flatShown = null) {
   const hasKindAmount = item.flatAmount != null || (item.baseMult ?? 1) > 0;
   if (!hasKindAmount) return kindTagHTML || '';
   if (item.flatAmount != null && (item.baseMult ?? 0) === 0) {
-    const amountText = `${item.flatAmount}`;
+    const amountText = `${flatShown ?? item.flatAmount}`;
     return kindTagHTML ? [kindTagHTML, amountText].filter(Boolean).join(' ') : `<b>Attack</b> ${amountText}`;
   }
   const maxC = effectiveMaxCards(item);

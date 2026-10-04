@@ -27,6 +27,7 @@ function renderStandardItemCard(item, opts = {}) {
     burnedDetonateKey = null,
     pickKey = null,
     picked = false,
+    scaleOpp = null,
   } = opts;
   const eKind = kindOverride || effectiveKind(item);
   const burnOverlayHTML = burnTargetKey
@@ -161,7 +162,7 @@ function renderStandardItemCard(item, opts = {}) {
         `at ${effUnlockThreshold}${item.id === 'impound_release' ? ', then Draw 4' : ''}</span></div>`
       : '';
   const staticKindLine =
-    footerHTML == null ? `<div class="note" style="margin:0">${formatKindAmount(item, kindTag)}</div>` : '';
+    footerHTML == null ? `<div class="note" style="margin:0">${formatKindAmount(item, kindTag, opponentFlatShown(item, scaleOpp))}</div>` : '';
   const cardHTML = cards
     .map((c, i) => {
       const handIdx = opts.idxs ? opts.idxs[i] : i;

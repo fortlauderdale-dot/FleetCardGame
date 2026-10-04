@@ -137,7 +137,7 @@ function metaScreen() {
       <div class="wo-stripe"></div>
       <div class="wo-body">
         <div class="homeHeader">
-          <h1 class="homeTitle"><span class="homeTitleTop">Fleet</span><em class="homeTitleBottom">Duel</em></h1>
+          <h1 class="homeTitle"><span class="homeTitleInner"><span class="homeTitleTop">Fleet</span><em class="homeTitleBottom">Duel</em></span></h1>
           <img class="homeHero" src="Icons/node-fleet-compound.png" alt="The Fleet Compound">
         </div>
         <div class="homeRunRow">

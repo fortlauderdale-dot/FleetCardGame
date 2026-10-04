@@ -572,9 +572,10 @@ body {
 }
 
 .homeHeader { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 0 12px; }
-.wo .homeTitle { margin: 0; display: flex; flex-direction: column; line-height: 0.95; font-size: 40px; position: relative; z-index: 1; }
+.wo .homeTitle { margin: 0; flex: 1 1 0; display: flex; justify-content: center; line-height: 0.95; font-size: 40px; position: relative; z-index: 1; }
 .homeTitleTop { display: block; }
 .homeTitleBottom { display: block; margin-left: 22px; font-style: normal; }
 .homeHero { display: block; flex: 0 0 66%; min-width: 0; width: 66%; height: auto; border: 0; margin: -16px -14px -14px 0; }
 .homeShoutouts { max-width: 480px; margin: 10px auto 8px; text-align: center; font-size: 13px; line-height: 1.5; opacity: 0.9; color: var(--dim); }
 .homeFooter { margin-bottom: -12px; }
+.homeTitleInner { display: flex; flex-direction: column; }

@@ -585,3 +585,8 @@ body {
 .homeSaveWrap .homeSavePanel { margin: 0; padding-right: 34px; }
 .homeSaveSummary { margin: 0; cursor: pointer; font-weight: 700; font-size: 12px; white-space: nowrap; }
 .homeSaveClose { position: absolute; top: 4px; right: 6px; background: none; border: none; color: var(--dim); font-size: 22px; line-height: 1; padding: 2px 6px; cursor: pointer; }
+/* Only very narrow phones (360px wide or less) get the tighter footer */
+@media (max-width: 360px) {
+  .homeFooter { gap: 14px; }
+  .homeFeedback { font-size: 10.5px; }
+}

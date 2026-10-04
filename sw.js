@@ -1,7 +1,7 @@
 // Fleet Duel offline support. Saves the game page and every picture on the first visit,
 // so the game keeps working with no internet (a flight, for example).
 // Bump CACHE_VERSION whenever pictures or game files change so phones download the new ones.
-const CACHE_VERSION = 'fleet-duel-v4';
+const CACHE_VERSION = 'fleet-duel-v5';
 const GAME_FILES = [
   'manifest.webmanifest',
   'apple-touch-icon-v2.png',
@@ -267,9 +267,9 @@ const PICTURES = [
   'Vehicles/arff.png',
   'Vehicles/beach-tractor.png',
   'Vehicles/bearcat.png',
-  'Vehicles/castle-champion.png',
-  'Vehicles/castle-guard.png',
-  'Vehicles/castle-overlord.png',
+  'Vehicles/compound-champion.png',
+  'Vehicles/compound-guard.png',
+  'Vehicles/compound-overlord.png',
   'Vehicles/crown-vic.png',
   'Vehicles/fire-truck.png',
   'Vehicles/forklift.png',

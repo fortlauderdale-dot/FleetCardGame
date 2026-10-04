@@ -3577,9 +3577,9 @@ function reenterCurrentNode(row, col) {
   render(mapScreen());
 }
 let RETURN_TO_CASTLE_MENU = false;
-const CASTLE_FIRST = { id:'castleGuard', name:'Castle Guard', tier:2, icon:'🛡️', image: 'Vehicles/castle-guard.png', hp:75, minTier:2, drawRate: 3, items: ['opp_castle_poke_t2'] };
-const CASTLE_SECOND = { id:'castleChampion', name:'Castle Champion', tier:3, icon:'🏰', image: 'Vehicles/castle-champion.png', hp:105, minTier:3, drawRate: 4, items: ['opp_castle_poke_t3'] };
-const CASTLE_THIRD = { id:'castleOverlord', name:'Compound Overlord', tier:4, icon:'👑', image: 'Vehicles/castle-overlord.png', hp:210, minTier:3, drawRate: 5, usesPerTurn:2, items: ['opp_castle_poke_t3', 'fender_bender'] };
+const CASTLE_FIRST = { id:'castleGuard', name:'Compound Guard', tier:2, icon:'🛡️', image: 'Vehicles/compound-guard.png', hp:75, minTier:2, drawRate: 3, items: ['opp_castle_poke_t2'] };
+const CASTLE_SECOND = { id:'castleChampion', name:'Compound Champion', tier:3, icon:'🏰', image: 'Vehicles/compound-champion.png', hp:105, minTier:3, drawRate: 4, items: ['opp_castle_poke_t3'] };
+const CASTLE_THIRD = { id:'castleOverlord', name:'Compound Overlord', tier:4, icon:'👑', image: 'Vehicles/compound-overlord.png', hp:210, minTier:3, drawRate: 5, usesPerTurn:2, items: ['opp_castle_poke_t3', 'fender_bender'] };
 let DUNGEON_WIN_POPUP = null; 
 function castleMenuScreen(message='') {
   return `${noticeHTML()}

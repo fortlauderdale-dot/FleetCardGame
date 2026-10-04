@@ -375,6 +375,7 @@ const UPDATE_LOG = [
         'fire several times a turn, and some cost HP or heal you when fired.'),
     ],
     Opponents: [
+      'Castle Guard and Castle Champion are now Compound Guard and Compound Champion, to match Compound Overlord.',
       'Anchor Drag now always hits for its listed damage instead of being weakened by difficulty scaling.',
       ('Opponent Items that name a hand now fire on exactly that hand. Feral Beach Cat\'s Claw ' +
         'Skirmish needs Two Pair, so it no longer fires on a straight or a straight flush.'),
@@ -403,6 +404,7 @@ const UPDATE_LOG = [
       'The Dealership now shows its Item cards three across on phones.',
     ],
     Misc: [
+      'The revive from Limp Home now asks with an in-game pop-up instead of a browser box.',
       ('The first battle of every run is now the same: Spring Breaker with 48 health and the same starting hand, ' +
         'so a Perfect Win is always possible on your second turn. New players get a hint for each step, and there is a ' +
         'new armor step where you put one card into Guard Rail.'),

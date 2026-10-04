@@ -293,23 +293,45 @@ function heroPerkLine(id) {
   if (k.startEnergy) parts.push(`Start the run with ${k.startEnergy} Energy.`);
   return parts.join(' ');
 }
-// One-time revive (Large SUV). Asks first, only once per run, and only if the player says yes.
-function offerRevive() {
+// One-time revive (Large SUV). Shows an in-game pop-up the first time you fall in a run. Returns true when it
+// took over (the pop-up is up and one of its buttons finishes the job), false when there is nothing to offer.
+// afterRevive runs once the player says yes; saying no ends the fight as a loss.
+function offerRevive(afterRevive) {
   const sp = RUN && RUN.hero ? VEHICLE_SPECIALS[RUN.hero.heroId] : null;
   if (!sp || sp.type !== 'revive' || RUN.reviveUsed || !IN_BATTLE || !BATTLE) return false;
   const hp = Math.max(1, Math.round((RUN.maxHealth * sp.amountPerUnit) / 100));
-  const ok = window.confirm(
-    `You have been defeated. Use ${sp.name} to get back up with ${hp} ` + `health? You can only do this once per run.`
-  );
-  if (!ok) return false;
-  RUN.reviveUsed = true;
-  RUN.health = hp;
-  clearPlayerEffects();
-  BATTLE.dodgeChance = 0;
-  battleLog(`${sp.name}! You get back up with ${hp} health and every effect cleared.`);
-  playSfx('heal');
-  flashScreen('heal');
-  saveRun();
+  const old = document.getElementById('revivePopup');
+  if (old) old.remove();
+  const box = document.createElement('div');
+  box.id = 'revivePopup';
+  box.innerHTML =
+    `<div class="map-popup-overlay"><div class="wo" style="max-width:380px"><div class="wo-stripe"></div>` +
+    `<div class="wo-body" style="text-align:center"><div class="wo-eyebrow">Defeated</div>` +
+    `<h1>${sp.name}</h1>` +
+    `<p class="note">Get back up with ${hp} health and every effect cleared? You can only do this once per run.</p>` +
+    `<button class="wo-btn teal" id="reviveYesBtn" style="width:100%;margin-bottom:8px">Get Back Up</button>` +
+    `<button class="wo-btn gray" id="reviveNoBtn" style="width:100%">Accept Defeat</button>` +
+    `</div></div></div>`;
+  document.body.appendChild(box);
+  document.getElementById('reviveYesBtn').onclick = () => {
+    box.remove();
+    RUN.reviveUsed = true;
+    RUN.health = hp;
+    clearPlayerEffects();
+    BATTLE.dodgeChance = 0;
+    battleLog(`${sp.name}! You get back up with ${hp} health and every effect cleared.`);
+    playSfx('heal');
+    flashScreen('heal');
+    saveRun();
+    if (afterRevive) afterRevive();
+  };
+  document.getElementById('reviveNoBtn').onclick = () => {
+    box.remove();
+    IN_BATTLE = false;
+    clearBattleSave();
+    playSfx('lose');
+    render(nodeResultScreen(false, { lastHit: BATTLE.lastHit }));
+  };
   return true;
 }
 function useVehicleSpecial() {

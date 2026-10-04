@@ -612,7 +612,8 @@ function executePlayerAttack(itemId, index) {
       flashScreen('hurt');
       showDamagePopup(selfBurn, 'Burn');
       saveRun();
-      if (RUN.health <= 0 && !offerRevive()) {
+      if (RUN.health <= 0) {
+        if (offerRevive(() => render(battleScreen()))) return;
         IN_BATTLE = false;
         clearBattleSave();
         playSfx('lose');
@@ -1289,14 +1290,18 @@ function endTurn() {
   }
 
   diffTickPlayerDots();
-  if (RUN.health <= 0 && !offerRevive()) {
+  if (RUN.health <= 0) {
+    if (offerRevive(finishEndTurn)) return;
     IN_BATTLE = false;
     clearBattleSave();
     playSfx('lose');
     render(nodeResultScreen(false, { lastHit: BATTLE.lastHit }));
     return;
   }
-
+  finishEndTurn();
+}
+// The last part of ending a turn, after the opponent has attacked and you are still standing (or got back up).
+function finishEndTurn() {
   if (BATTLE.playerHandPurgeActive) {
     const stashedIdxs = new Set();
     Object.entries(BATTLE.slots).forEach(([key, idxs]) => {

@@ -591,10 +591,10 @@ function reenterCurrentNode(row, col) {
 let RETURN_TO_CASTLE_MENU = false;
 const CASTLE_FIRST = {
   id: 'castleGuard',
-  name: 'Castle Guard',
+  name: 'Compound Guard',
   tier: 2,
   icon: '🛡️',
-  image: 'Vehicles/castle-guard.png',
+  image: 'Vehicles/compound-guard.png',
   hp: 75,
   minTier: 2,
   drawRate: 3,
@@ -602,10 +602,10 @@ const CASTLE_FIRST = {
 };
 const CASTLE_SECOND = {
   id: 'castleChampion',
-  name: 'Castle Champion',
+  name: 'Compound Champion',
   tier: 3,
   icon: '🏰',
-  image: 'Vehicles/castle-champion.png',
+  image: 'Vehicles/compound-champion.png',
   hp: 105,
   minTier: 3,
   drawRate: 4,
@@ -616,7 +616,7 @@ const CASTLE_THIRD = {
   name: 'Compound Overlord',
   tier: 4,
   icon: '👑',
-  image: 'Vehicles/castle-overlord.png',
+  image: 'Vehicles/compound-overlord.png',
   hp: 210,
   minTier: 3,
   drawRate: 5,

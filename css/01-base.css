@@ -572,8 +572,8 @@ body {
   margin: 4px 0;
 }
 
-.homeHeader { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 0 12px; }
-.wo .homeTitle { margin: 0; flex: 1 1 0; display: flex; justify-content: center; line-height: 0.95; font-size: 46px; position: relative; z-index: 1; }
+.homeHeader { display: flex; align-items: center; justify-content: space-between; gap: 2px; margin: 0 0 12px; }
+.wo .homeTitle { margin: 0 0 0 6px; flex: 1 1 0; display: flex; justify-content: center; line-height: 0.95; font-size: 46px; position: relative; z-index: 1; }
 .homeTitleTop { display: block; }
 .homeTitleBottom { display: block; margin-left: 22px; font-style: normal; }
 .homeHero { display: block; flex: 0 0 66%; min-width: 0; width: 66%; height: auto; border: 0; margin: -16px -14px -14px 0; }

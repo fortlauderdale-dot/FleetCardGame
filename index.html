@@ -9809,6 +9809,7 @@ const UPDATE_LOG = [
       'Bosses have less health than before, and the World 3 and World 4 bosses no longer freeze your Items.',
     ],
     Misc: [
+      'You can now move your save to another browser or a Home Screen icon. On the home screen, open Move my save, tap Make code, copy it, then paste it into the same box on the other one and tap Load code.',
       'Fleet Plinko: Game Over spots now move to new places on every drop instead of growing out from the center. The pegs are packed much tighter so a chip keeps bouncing all the way down, and the walls between the bottom slots now sit directly under pegs so a chip cannot get stuck.',
       'Fleet Blackjack: the dealer now plays three hands, one facing each of yours, with one card showing on each. Your hands pay out on their own, so a strong dealer hand will not take all three. A true blackjack now beats a dealer 21 made with more cards. Rewards are bigger, and your two hands sit on top with the third centered below so everything fits without scrolling.',
       'Fleet Poker: two hands on top and one centered below, with the cards you are placing at the top. Tap an Item prize to see its real card. The computer\'s cards stay face up once yours are placed, the five board cards sit in one row with the Reveal button right under them, and the row stays pinned to the top if you scroll.',
@@ -9884,6 +9885,16 @@ function metaScreen() {
         ${hasSave ? `<button class="wo-btn gray" id="startRunBtn" style="width:100%;margin-bottom:10px">New Run (overwrites save)</button>` : ''}
         <button class="wo-btn amber" id="viewUpgradesBtn" style="width:100%">Career Point Upgrades</button>
         ${META.devModeActive ? `<button class="wo-btn gray" style="width:100%;margin-top:10px;padding:6px 10px;font-size:12px" onclick="render(diffScreen())">Difficulty Tuning</button>` : ''}
+        <details class="panel" style="margin-top:12px">
+          <summary class="note" style="margin:0;cursor:pointer;font-weight:700">Move my save to another browser or Home Screen</summary>
+          <div class="note" style="margin:8px 0 6px">On the one that has your progress, tap Make code, then copy the code. On the new one, paste it in the box and tap Load code.</div>
+          <textarea id="saveCodeBox" rows="3" placeholder="Save code" style="width:100%;box-sizing:border-box;padding:8px;border:2px solid #1fb6a6;border-radius:6px;background:#0b0f19;color:#fff;font-size:12px"></textarea>
+          <div style="display:flex;gap:8px;margin-top:6px">
+            <button class="wo-btn teal" id="saveCodeMakeBtn" style="flex:1;padding:8px 6px;font-size:12px">Make code</button>
+            <button class="wo-btn amber" id="saveCodeLoadBtn" style="flex:1;padding:8px 6px;font-size:12px">Load code</button>
+          </div>
+          <div class="note" id="saveCodeMsg" style="margin:6px 0 0"></div>
+        </details>
         <div style="display:flex;align-items:center;gap:10px;opacity:0.7;margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.08)">
           <div class="note" style="margin:0;font-size:11px;white-space:nowrap">Made by Drew</div>
           <div class="note" style="margin:0;flex:1;text-align:right;font-size:11px">Feedback and bug reports welcome, send them to Drew.</div>
@@ -10617,6 +10628,34 @@ function render(html) {
   });
 
   const backToMetaBtn = document.getElementById('backToMetaBtn'); if (backToMetaBtn) backToMetaBtn.onclick = () => render(metaScreen());
+  const saveCodeBox = document.getElementById('saveCodeBox');
+  if (saveCodeBox) {
+    const msg = t => { const m = document.getElementById('saveCodeMsg'); if (m) m.textContent = t; };
+    let loadArmed = false;
+    document.getElementById('saveCodeMakeBtn').onclick = () => {
+      try {
+        const pack = { v: 1, meta: localStorage.getItem(META_KEY), run: localStorage.getItem(RUN_KEY), battle: localStorage.getItem(BATTLE_KEY) };
+        saveCodeBox.value = 'FD1:' + btoa(unescape(encodeURIComponent(JSON.stringify(pack))));
+        saveCodeBox.focus(); saveCodeBox.select();
+        let copied = false;
+        try { copied = !!(navigator.clipboard && navigator.clipboard.writeText); if (copied) navigator.clipboard.writeText(saveCodeBox.value).catch(() => {}); } catch (e) {}
+        msg(copied ? 'Code made and copied. Paste it on the other one.' : 'Code made. Press and hold the box, choose Select All, then Copy.');
+      } catch (e) { msg('Could not make a code.'); }
+    };
+    document.getElementById('saveCodeLoadBtn').onclick = () => {
+      const raw = (saveCodeBox.value || '').trim();
+      if (!raw.startsWith('FD1:')) { msg('Paste a save code first. It starts with FD1:'); return; }
+      let pack;
+      try { pack = JSON.parse(decodeURIComponent(escape(atob(raw.slice(4))))); if (!pack || pack.v !== 1) throw 0; } catch (e) { msg('That code does not look right. Make a new one and try again.'); return; }
+      if (!loadArmed) { loadArmed = true; msg('This replaces the save on this device. Tap Load code again to confirm.'); return; }
+      try {
+        if (pack.meta) localStorage.setItem(META_KEY, pack.meta);
+        if (pack.run) localStorage.setItem(RUN_KEY, pack.run); else localStorage.removeItem(RUN_KEY);
+        if (pack.battle) localStorage.setItem(BATTLE_KEY, pack.battle); else localStorage.removeItem(BATTLE_KEY);
+        msg('Loaded. Reloading...'); setTimeout(() => location.reload(), 400);
+      } catch (e) { msg('Could not load the code.'); }
+    };
+  }
   const startRunBtn = document.getElementById('startRunBtn'); if (startRunBtn) startRunBtn.onclick = () => { clearRunSave(); render(starterSelectScreen()); };
   const continueRunBtn = document.getElementById('continueRunBtn'); if (continueRunBtn) continueRunBtn.onclick = () => { RUN = loadRunSave(); 
   RUN.maxGems=10+(META.levels.gemCap||0)*2; 

@@ -264,6 +264,16 @@ body {
   text-align: center;
   margin: 16px 0;
 }
+.matchPrizeRow {
+  margin: 16px 0;
+}
+.matchPrizeChips {
+  justify-content: center;
+  margin: 12px 0;
+}
+.matchPrizeChips .cur {
+  font-size: 18px;
+}
 .matchTallyList {
   list-style: none;
   padding: 0;

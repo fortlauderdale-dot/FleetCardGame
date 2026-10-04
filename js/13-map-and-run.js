@@ -852,19 +852,31 @@ function renderMatchOverlay() {
 let JOKER_GLITCH_POPUP = null;
 // Builds the "here's what you won" line for the end-of-attempts popup out of this visit's
 // visitTally, skipping anything that stayed at zero. Returns a fallback line if nothing was won.
+// Match game prizes use the same colored chips, icons and fonts as the resource bar at the top of the screen,
+// so each prize looks like the thing it adds to. r = { coins, gems, fuel, health, energy, points }.
+function matchRewardChipsHTML(r) {
+  const chips = [];
+  if (r.coins) chips.push(`<div class="cur chip">${ICON.coin} +${r.coins} coins</div>`);
+  if (r.gems) chips.push(`<div class="cur gem">${ICON.gem} +${r.gems} gems</div>`);
+  if (r.fuel) chips.push(fuelChipHTML(r.fuel, true));
+  if (r.health) chips.push(`<div class="cur health">${ICON.heart} +${r.health} health</div>`);
+  if (r.energy) chips.push(`<div class="cur energy">${ICON.energy} +${r.energy} energy</div>`);
+  if (r.points) chips.push(`<div class="cur pts">${ICON.star} +${r.points} Career Points</div>`);
+  if (!chips.length) return '';
+  return `<div class="currencies matchPrizeChips">${chips.join('')}</div>`;
+}
 function matchVisitTallyLabel(st) {
   const t = (st && st.visitTally) || {};
-  const parts = [];
-  if (t.coins) parts.push(`+${t.coins} coins`);
-  if (t.gems) parts.push(`+${t.gems} gems`);
-  if (t.fuel) parts.push(`+${t.fuel} fuel`);
-  if (t.health) parts.push(`+${t.health} health`);
-  if (t.energy) parts.push(`+${t.energy} energy`);
-  if (t.points) parts.push(`+${t.points} Career Points`);
-  // Each reward gets its own bulleted line.
-  return parts.length
-    ? `<ul class="matchTallyList">${parts.map((p) => `<li>${p}</li>`).join('')}</ul>`
-    : 'No pairs matched this ' + 'visit.';
+  // The visit tally already turns fuel into coins for vehicles without a tank, so fuel is passed as 0 there.
+  const chips = matchRewardChipsHTML({
+    coins: t.coins,
+    gems: t.gems,
+    fuel: usesCoinTravel() ? 0 : t.fuel,
+    health: t.health,
+    energy: t.energy,
+    points: t.points,
+  });
+  return chips || 'No pairs matched this visit.';
 }
 function jackpotPreviewCardHTML(st) {
   const item = ITEMS[st.matchJackpotItemId];

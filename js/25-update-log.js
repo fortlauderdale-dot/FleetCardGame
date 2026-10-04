@@ -386,6 +386,9 @@ const UPDATE_LOG = [
     'Item cards': [
       'Item cards and the battle log no longer use exclamation marks, like Bonus +50% if Pair.',
     ],
+    'Match game': [
+      'Match game prizes now use the same colors, icons and font as the resource bar at the top, for pairs and for the end of visit total.',
+    ],
     Visual: [
       'A Perfect Win now shows only Perfect Win! at the top, without the Battle Won line above it.',
       'The Dealership now shows its Item cards three across on phones.',

@@ -1004,6 +1004,7 @@ function render(html) {
             MATCH_POPUP = {
               suitLabel: ga === 'RJ' ? 'Red Joker' : ga === 'BJ' ? 'Black Joker' : ga,
               rewardLabel: reward.label || '',
+              rewardHTML: matchRewardChipsHTML(reward),
               boardCleared: false,
             };
           }

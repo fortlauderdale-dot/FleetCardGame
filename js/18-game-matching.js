@@ -169,7 +169,9 @@ function castleMatchScreen() {
           ? `<div style="display:flex;justify-content:center;` + `margin:8px 0">${MATCH_POPUP.cardHTML}</div>`
           : ''
       }<div ` +
-      `class="treasure-prize">${MATCH_POPUP.rewardLabel}</div>${
+      `class="${MATCH_POPUP.rewardHTML ? 'matchPrizeRow' : 'treasure-prize'}">${
+        MATCH_POPUP.rewardHTML || MATCH_POPUP.rewardLabel
+      }</div>${
         MATCH_POPUP.boardCleared
           ? '<div class="note">Board cleared! The matching game is ' + 'done for this run.</div>'
           : ''

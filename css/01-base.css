@@ -594,3 +594,4 @@ body {
 .homeSaveShow { background: none; border: none; color: var(--dim); font-size: 11px; text-decoration: underline; cursor: pointer; padding: 4px 8px; opacity: 0.8; }
 .homeFeedback { position: relative; top: -2px; }
 .homeNameInput { font-weight: 700; letter-spacing: 0.01em; }
+.homeBtn { height: 49px; padding-top: 0; padding-bottom: 0; }

@@ -450,6 +450,13 @@ function render(html) {
       saveMeta();
       render(metaScreen());
     };
+  const homeSaveHideBtn = document.getElementById('homeSaveHideBtn');
+  if (homeSaveHideBtn)
+    homeSaveHideBtn.onclick = () => {
+      META.hideSaveBox = true;
+      saveMeta();
+      render(metaScreen());
+    };
   const homeTipOkBtn = document.getElementById('homeTipOkBtn');
   if (homeTipOkBtn)
     homeTipOkBtn.onclick = () => {

@@ -581,3 +581,7 @@ body {
 .homeFooter { margin-bottom: -9px; }
 .homeTitleInner { display: flex; flex-direction: column; }
 .homeBtn, .homeNameInput { font-size: 19px; }
+.homeSaveWrap { position: relative; max-width: 480px; margin: 10px auto 0; }
+.homeSaveWrap .homeSavePanel { margin: 0; padding-right: 34px; }
+.homeSaveSummary { margin: 0; cursor: pointer; font-weight: 700; font-size: 12px; white-space: nowrap; }
+.homeSaveClose { position: absolute; top: 4px; right: 6px; background: none; border: none; color: var(--dim); font-size: 22px; line-height: 1; padding: 2px 6px; cursor: pointer; }

@@ -159,24 +159,6 @@ function metaScreen() {
               `padding:6px 10px;font-size:12px" onclick="render(diffScreen())">Difficulty Tuning</button>`
             : ''
         }
-        <details class="panel homeSavePanel">
-          <summary class="note" style="margin:0;cursor:pointer;font-weight:700">Move my save to ` +
-    `another browser or home screen</summary>
-          <div class="note" style="margin:8px 0 6px">On the one that has your progress, tap ` +
-    `Make code, then copy the code. On the new one, paste it in the box and tap Load code.</div>
-          <textarea id="saveCodeBox" rows="3" placeholder="Save code" style="width:100%;` +
-    `box-sizing:border-box;padding:8px;border:2px solid #1fb6a6;border-radius:6px;background:#0b0f19;` +
-    `color:#fff;font-size:12px"></textarea>
-          <div style="display:flex;gap:8px;margin-top:6px">
-            <button class="wo-btn teal" id="saveCodeMakeBtn" style="flex:1;padding:8px 6px;` +
-    `font-size:12px">Make code</button>
-            <button class="wo-btn gray" id="saveCodePasteBtn" style="flex:1;padding:8px 6px;` +
-    `font-size:12px">Paste</button>
-            <button class="wo-btn amber" id="saveCodeLoadBtn" style="flex:1;padding:8px 6px;` +
-    `font-size:12px">Load code</button>
-          </div>
-          <div class="note" id="saveCodeMsg" style="margin:6px 0 0"></div>
-        </details>
         <div class="homeFooter">
           <div class="homeMadeBy"><span class="homeMadeByLabel">Made by</span><span class="homeMadeByName">Drew</span></div>
           <div class="homeFeedback">Feedback and bug reports are appreciated</div>
@@ -188,6 +170,19 @@ function metaScreen() {
       <div>🏆 Haley was first to beat World 2!</div>
     </div>
     ${updateLogHTML()}
+    ${META.hideSaveBox ? '' : `<div class="homeSaveWrap">
+        <details class="panel homeSavePanel">
+          <summary class="note homeSaveSummary">Move my save to another browser or phone</summary>
+          <div class="note" style="margin:8px 0 6px">On the one that has your progress, tap Make code, then copy the code. On the new one, paste it in the box and tap Load code.</div>
+          <textarea id="saveCodeBox" rows="3" placeholder="Save code" style="width:100%;box-sizing:border-box;padding:8px;border:2px solid #1fb6a6;border-radius:6px;background:#0b0f19;color:#fff;font-size:12px"></textarea>
+          <div style="display:flex;gap:8px;margin-top:6px">
+            <button class="wo-btn teal" id="saveCodeMakeBtn" style="flex:1;padding:8px 6px;font-size:12px">Make code</button>
+            <button class="wo-btn gray" id="saveCodePasteBtn" style="flex:1;padding:8px 6px;font-size:12px">Paste</button>
+            <button class="wo-btn amber" id="saveCodeLoadBtn" style="flex:1;padding:8px 6px;font-size:12px">Load code</button>
+          </div>
+          <div class="note" id="saveCodeMsg" style="margin:6px 0 0"></div>
+        </details>
+<button class="homeSaveClose" id="homeSaveHideBtn" aria-label="Hide this box">&times;</button></div>`}
     ${HOME_TIP_POPUP ? homeTipPopupHTML() : ''}
   `
   );

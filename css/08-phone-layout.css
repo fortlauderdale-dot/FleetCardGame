@@ -1,0 +1,87 @@
+/* ████████████████████████████████████████████████████████████████████████████████████ */
+/* ██                                                                                ██ */
+/* ██  Phone Layout                                                                  ██ */
+/* ██  Tighter spacing for every page on a phone.                                    ██ */
+/* ██                                                                                ██ */
+/* ████████████████████████████████████████████████████████████████████████████████████ */
+
+/* Phone layout cleanup for every page: no blank gap above titles, tighter boxes, one-row nav buttons */
+@media (max-width: 700px) {
+  #app {
+    padding-top: calc(var(--curH, 0px) + 8px);
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+  .wo {
+    margin: 6px 0;
+  }
+  .wo-stripe {
+    height: 6px;
+  }
+  .wo-body {
+    padding: 8px 12px 14px;
+  }
+  .wo h1 {
+    margin-top: 0;
+  }
+  .facilityExitBtn,
+  #leaveShopBtn,
+  [id^="openRunUpgradeFrom"] {
+    white-space: nowrap !important;
+    font-size: 12px !important;
+    padding: 9px 6px !important;
+    min-width: 0;
+  }
+  .facilityExitBtn,
+  #leaveShopBtn {
+    flex: 1 1 auto !important;
+  }
+  [id^="openRunUpgradeFrom"] {
+    flex: 0 0 auto !important;
+    width: auto;
+  }
+  .holoCard {
+    padding: 8px 4px !important;
+    margin-bottom: 6px;
+  }
+  .holoRow {
+    gap: 4px !important;
+    margin: 4px 0 !important;
+  }
+  .holoRow .itemCard {
+    zoom: 0.82;
+  }
+  .holoMid {
+    flex: 0 1 84px !important;
+    min-width: 0;
+  }
+  .holoMid .wo-btn {
+    white-space: normal !important;
+    width: 100%;
+    line-height: 1.15;
+    padding: 6px 3px !important;
+    font-size: 11.5px !important;
+  }
+  .holoMid .price {
+    font-size: 11.5px !important;
+  }
+  #blacksmith-viewport .panel {
+    padding: 6px;
+  }
+  .dashItemRow {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 3px !important;
+    justify-content: center;
+  }
+  .dashItemPanel {
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    padding: 2px !important;
+    margin: 0 !important;
+  }
+  .dashItemPanel .itemCard {
+    zoom: 0.8;
+  }
+}

@@ -1,7 +1,47 @@
 // Fleet Duel offline support. Saves the game page and every picture on the first visit,
 // so the game keeps working with no internet (a flight, for example).
-// Bump CACHE_VERSION whenever pictures change so phones download the new ones.
-const CACHE_VERSION = 'fleet-duel-v1';
+// Bump CACHE_VERSION whenever pictures or game files change so phones download the new ones.
+const CACHE_VERSION = 'fleet-duel-v2';
+const GAME_FILES = [
+  'css/01-base.css',
+  'css/02-battle-board.css',
+  'css/03-cards.css',
+  'css/04-map.css',
+  'css/05-stop-details.css',
+  'css/06-phone-battle.css',
+  'css/07-minigames.css',
+  'css/08-phone-layout.css',
+  'css/09-minigames-layout.css',
+  'js/01-cards-and-hands.js',
+  'js/02-effects-and-icons.js',
+  'js/03-item-rules.js',
+  'js/04-item-catalog.js',
+  'js/05-vehicles.js',
+  'js/06-card-display.js',
+  'js/07-opponents.js',
+  'js/08-profile-and-saves.js',
+  'js/09-opponents-more.js',
+  'js/10-difficulty-settings.js',
+  'js/11-difficulty-table.js',
+  'js/12-difficulty-engine.js',
+  'js/13-map-and-run.js',
+  'js/14-game-plinko.js',
+  'js/15-game-blackjack.js',
+  'js/16-game-poker.js',
+  'js/17-game-auction.js',
+  'js/18-game-matching.js',
+  'js/19-garage-and-run-end.js',
+  'js/20-battle-logic.js',
+  'js/21-battle-actions.js',
+  'js/22-screens-map.js',
+  'js/23-screens-battle.js',
+  'js/24-screens-garage-shops.js',
+  'js/25-update-log.js',
+  'js/26-main-menu.js',
+  'js/27-picture-fitting.js',
+  'js/28-render-and-events.js',
+  'js/29-startup.js',
+];
 const PICTURES = [
   'Hazards/aggressive-shopper.png',
   'Hazards/alpha-frigatebird.png',
@@ -242,7 +282,7 @@ self.addEventListener('install', (event) => {
       await cache.add('./').catch(() => {});
       await cache.add('./index.html').catch(() => {});
       // One picture failing should not stop the rest from saving.
-      for (const file of PICTURES) {
+      for (const file of [...GAME_FILES, ...PICTURES]) {
         await cache.add(file).catch(() => {});
       }
     })

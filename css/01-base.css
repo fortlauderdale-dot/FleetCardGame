@@ -1,0 +1,398 @@
+:root {
+  --blue: #4a5fc7;
+  --blue-dark: #1a2038;
+  --blue-light: #232a4d;
+  --white: #2b3350;
+  --bg: linear-gradient(135deg, #0b0f19 0%, #151b2d 100%);
+  --ink: #ffffff;
+  --dim: #8b93c4;
+  --amber: #1fb6a6;
+  --red: #e5484d;
+  --green: #2fae66;
+  --purple: #8a4fe0;
+  --gold: #d4af00;
+  --energy: #00f5d4;
+  --defense: #2563a8;
+  --defense-light: #e8f0f8;
+  --defense-border: #6a94c4;
+  --hex: #c23fc4;
+  --ice: #3fcfef;
+  --lightning: #f2c94c;
+  --disp: "Aptos", "Aptos Display", ui-sans-serif, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --mono: "Aptos", "Aptos Display", ui-sans-serif, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+}
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  background-attachment: fixed;
+  color: var(--ink);
+  font-family: var(--disp);
+  font-size: 16px;
+  overflow-x: hidden;
+}
+body.world-1 .mapwrap {
+  background:
+    linear-gradient(0deg, rgba(31, 182, 166, 0.08) 1px, transparent 1px) 0 0/100% 32px,
+    linear-gradient(90deg, rgba(31, 182, 166, 0.08) 1px, transparent 1px) 0 0/32px 100%,
+    linear-gradient(135deg, #061b36 0%, #082d4d 52%, #075b68 100%);
+}
+body.world-2 .mapwrap {
+  background:
+    linear-gradient(0deg, rgba(132, 170, 84, 0.07) 1px, transparent 1px) 0 0/100% 32px,
+    linear-gradient(90deg, rgba(132, 170, 84, 0.07) 1px, transparent 1px) 0 0/32px 100%,
+    linear-gradient(135deg, #18261b 0%, #253323 52%, #17251d 100%);
+}
+body.world-3 .mapwrap {
+  background:
+    linear-gradient(0deg, rgba(151, 105, 214, 0.07) 1px, transparent 1px) 0 0/100% 32px,
+    linear-gradient(90deg, rgba(151, 105, 214, 0.07) 1px, transparent 1px) 0 0/32px 100%,
+    linear-gradient(135deg, #130f20 0%, #20152f 52%, #29183c 100%);
+}
+body.world-5 .mapwrap {
+  background:
+    linear-gradient(0deg, rgba(63, 207, 239, 0.08) 1px, transparent 1px) 0 0/100% 32px,
+    linear-gradient(90deg, rgba(63, 207, 239, 0.08) 1px, transparent 1px) 0 0/32px 100%,
+    linear-gradient(135deg, #0a1826 0%, #0f2438 52%, #123044 100%);
+}
+body.world-6 .mapwrap {
+  background:
+    linear-gradient(0deg, rgba(242, 201, 76, 0.07) 1px, transparent 1px) 0 0/100% 32px,
+    linear-gradient(90deg, rgba(242, 201, 76, 0.07) 1px, transparent 1px) 0 0/32px 100%,
+    linear-gradient(135deg, #1c1526 0%, #241a2e 52%, #2e1a24 100%);
+}
+body.world-7 .mapwrap {
+  background:
+    linear-gradient(0deg, rgba(255, 150, 70, 0.07) 1px, transparent 1px) 0 0/100% 32px,
+    linear-gradient(90deg, rgba(255, 150, 70, 0.07) 1px, transparent 1px) 0 0/32px 100%,
+    linear-gradient(135deg, #0f1d2a 0%, #1a2b3a 52%, #2a2622 100%);
+}
+body.world-8 .mapwrap {
+  background:
+    linear-gradient(0deg, rgba(235, 80, 60, 0.08) 1px, transparent 1px) 0 0/100% 32px,
+    linear-gradient(90deg, rgba(235, 80, 60, 0.08) 1px, transparent 1px) 0 0/32px 100%,
+    linear-gradient(135deg, #1a1012 0%, #2a1518 52%, #2b1d10 100%);
+}
+button {
+  font-family: var(--disp);
+  cursor: pointer;
+}
+#app {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 60px 18px 100px;
+}
+html,
+body {
+  overscroll-behavior-y: none;
+}
+.game-stage {
+}
+.treasure-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(11, 15, 25, 0.75);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 20px;
+}
+.treasure-modal .wo {
+  max-width: 560px;
+  width: 100%;
+  margin: 0;
+}
+.fuelHealModal {
+  align-items: flex-end;
+  padding-bottom: min(34vh, 220px);
+}
+.map-popup-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(11, 15, 25, 0.75);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  z-index: 10000;
+  padding: 14px;
+  padding-top: 90px;
+  overflow-y: auto;
+}
+.map-popup-overlay .wo {
+  max-width: 400px;
+  width: 100%;
+  margin: 0;
+}
+.map-popup-overlay .wo.wide {
+  max-width: 720px;
+}
+.popupHeroArt {
+  margin: 10px 0 6px;
+  text-align: center;
+}
+.popupHeroArt img {
+  display: block;
+  width: 100%;
+  max-height: 300px;
+  object-fit: contain;
+  margin: 0 auto;
+  border-radius: 10px;
+}
+.popupHeroFallback {
+  font-size: 120px;
+  line-height: 1.1;
+  text-align: center;
+}
+.artZoomModal {
+  cursor: zoom-out;
+  z-index: 20000;
+}
+.artZoomBox {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  cursor: zoom-out;
+}
+.artZoomImgWrap {
+  width: min(70vw, 420px);
+  height: min(70vw, 420px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.artZoomImgWrap .vart {
+  width: 100% !important;
+  height: 100% !important;
+  font-size: min(70vw, 420px) !important;
+}
+.artZoomImgWrap .vart span {
+  font-size: min(70vw, 420px) !important;
+}
+.artZoomLabel {
+  color: var(--ink);
+  font-weight: 800;
+  font-size: 18px;
+  text-align: center;
+}
+.artZoomClose {
+  position: absolute;
+  top: -20px;
+  right: -20px;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 2px solid var(--dim);
+  background: #1a2038;
+  color: var(--ink);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 2;
+  padding: 0;
+}
+.artZoomClose::after {
+  content: "";
+  position: absolute;
+  inset: -10px;
+}
+.artZoomTrigger {
+  position: relative;
+  cursor: zoom-in;
+  display: inline-flex;
+}
+.artZoomTrigger::after {
+  content: "🔍";
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  font-size: 10px;
+  background: rgba(11, 15, 25, 0.8);
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.85;
+  pointer-events: none;
+}
+.artZoomTrigger:hover::after {
+  opacity: 1;
+}
+#battle-viewport .artZoomTrigger::after {
+  content: none;
+}
+.match-modal {
+  position: fixed !important;
+  inset: 0 !important;
+  background: rgba(11, 15, 25, 0.82) !important;
+  backdrop-filter: blur(4px);
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 3000000 !important;
+  padding: 20px;
+  pointer-events: auto !important;
+}
+.match-modal .wo {
+  max-width: 360px;
+  width: 100%;
+  margin: 0;
+  pointer-events: auto;
+}
+.match-modal.placed {
+  display: block !important;
+  padding: 0;
+}
+.match-modal.placed .wo {
+  position: fixed;
+  width: min(360px, calc(100vw - 24px));
+}
+.treasure-prize {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--blue);
+  text-align: center;
+  margin: 16px 0;
+}
+.matchTallyList {
+  list-style: none;
+  padding: 0;
+  margin: 14px auto;
+  max-width: 220px;
+  text-align: left;
+}
+.matchTallyList li {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--blue);
+  padding: 4px 0 4px 20px;
+  position: relative;
+}
+.matchTallyList li::before {
+  content: "•";
+  position: absolute;
+  left: 2px;
+  color: var(--amber);
+}
+.worldCompleteWo {
+  border-color: #f5c451 !important;
+  box-shadow:
+    0 0 34px rgba(245, 196, 81, 0.45),
+    6px 6px 0 #1a2038 !important;
+}
+.worldCompleteWo .wo-stripe {
+  background: linear-gradient(90deg, #f5c451 0%, #f2a93f 50%, #f5c451 100%);
+}
+.worldCompleteTitle {
+  font-size: 34px;
+  margin: 6px 0 0;
+  line-height: 1.05;
+}
+.worldCompleteBanner {
+  display: inline-block;
+  margin-top: 6px;
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  color: #7a5200;
+  background: linear-gradient(180deg, #ffe9a8, #f5c451);
+  padding: 4px 22px;
+  border-radius: 6px;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.15);
+}
+.worldCompleteImg {
+  display: block;
+  width: 100%;
+  max-width: 480px;
+  aspect-ratio: 3/2;
+  height: auto;
+  object-fit: contain;
+  border-radius: 8px;
+  margin: 14px auto 0;
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.08);
+}
+.wo {
+  background: var(--white);
+  color: var(--ink);
+  border: 3px solid var(--blue-dark);
+  border-radius: 12px;
+  box-shadow:
+    0 0 20px rgba(31, 182, 166, 0.25),
+    6px 6px 0 #1a2038;
+  padding: 0;
+  margin: 16px 0;
+  overflow: hidden;
+}
+.wo-stripe {
+  height: 10px;
+  background: linear-gradient(90deg, #2b3350 0%, #3d4a72 50%, #1fb6a6 100%);
+}
+.wo-body {
+  padding: 20px 22px 24px;
+}
+.wo-eyebrow {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--dim);
+}
+.wo h1 {
+  margin: 6px 0 2px;
+  font-size: clamp(24px, 5.5vw, 34px);
+  line-height: 1.05;
+  font-weight: 700;
+  color: var(--blue);
+}
+.wo h1 em {
+  font-style: normal;
+  color: var(--amber);
+}
+.wo-sub {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--dim);
+  margin: 8px 0 14px;
+}
+.wo-btn {
+  padding: 12px 18px;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  background: var(--blue);
+  color: #fff;
+  border: 3px solid var(--blue-dark);
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 var(--blue-dark);
+}
+.wo-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 var(--blue-dark);
+}
+.wo-btn.amber {
+  background: var(--amber);
+  color: #062622;
+  border-color: #0d8377;
+}
+.wo-btn.gray {
+  background: #3a4160;
+  border-color: #252b46;
+}
+#backToCastleMenuBtn {
+  border: 1px solid #1fb6a6;
+  box-shadow: 0 0 6px rgba(31, 182, 166, 0.5);
+}
+.wo-btn.purple {
+  background: var(--purple);
+  border-color: #5c2ea0;
+}
+/* The three buttons in the top resource bar (Run Upgrade purple, Forfeit Run red, Run Dashboard gray) share one size everywhere */

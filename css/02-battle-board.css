@@ -1,0 +1,943 @@
+/* ████████████████████████████████████████████████████████████████████████████████████ */
+/* ██                                                                                ██ */
+/* ██  Run Bar Buttons                                                               ██ */
+/* ██  Run Upgrade, Forfeit Run and Run Dashboard.                                   ██ */
+/* ██                                                                                ██ */
+/* ████████████████████████████████████████████████████████████████████████████████████ */
+
+.currencyHeader .wo-btn.runBarBtn {
+  padding: 3px 7px !important;
+  font-size: 10px !important;
+  line-height: 1.2 !important;
+  white-space: nowrap !important;
+  min-width: 0 !important;
+  width: auto !important;
+  flex: 0 0 auto !important;
+}
+.wo-btn.green {
+  background: var(--green);
+  border-color: #1f7a48;
+}
+.wo-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.wo-btn.half {
+  width: 48%;
+}
+h1,
+h3 {
+  color: #1fb6a6;
+  text-shadow: 0 1px 0 #0b0f19;
+}
+.wo h1 em {
+  text-shadow: 0 1px 0 #0b0f19;
+}
+.panel {
+  background: rgba(21, 27, 45, 0.85) !important;
+  border: 1px solid rgba(31, 182, 166, 0.3);
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 12px;
+  box-shadow: none;
+}
+.hdr {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  color: var(--dim);
+  margin-bottom: 8px;
+}
+.runStatRow {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  color: var(--ink);
+  margin: 0 0 6px;
+}
+.runStatRow:last-child {
+  margin-bottom: 0;
+}
+.runStatLabel {
+  color: var(--dim);
+}
+.bar-wrap {
+  height: 20px;
+  background: var(--blue-light);
+  border-radius: 7px;
+  overflow: hidden;
+  border: 1px solid var(--blue-light);
+  position: relative;
+}
+.bar-fill {
+  height: 100%;
+  transition: width 0.25s;
+}
+.bar-hp {
+  background: var(--red);
+}
+.bar-health {
+  background: var(--blue);
+}
+.bar-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 800;
+  color: #ffffff;
+  font-family: var(--mono);
+  pointer-events: none;
+}
+.duelSide .bar-text {
+  font-size: 14px;
+}
+.grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.currencies {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+  font-family: var(--mono);
+  font-size: 11.5px;
+}
+.currencyHeader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  max-width: 1180px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  padding: 9px 18px;
+  background: #12163a;
+  border-bottom: 1px solid rgba(31, 182, 166, 0.3);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+}
+.cur {
+  border: 1px solid var(--blue-light);
+  border-radius: 6px;
+  padding: 4px 8px;
+  display: inline-flex;
+  align-items: center;
+  overflow: visible;
+}
+.panel:has(> .currencyHeader) {
+  padding: 0;
+  border: none;
+  background: transparent !important;
+  box-shadow: none;
+  min-height: 0;
+  margin: 0;
+}
+.cur.gem {
+  color: var(--purple);
+  border-color: var(--purple);
+  background: #f5effd;
+}
+.cur.fuel {
+  color: var(--green);
+  border-color: var(--green);
+  background: #eef9ee;
+}
+.cur.energy {
+  color: var(--energy);
+  border-color: var(--energy);
+  background: rgba(0, 245, 212, 0.08);
+}
+.cur.chip {
+  color: #a35f00;
+  border-color: var(--amber);
+  background: #fff4e0;
+}
+.cur.pts {
+  color: #ffd54a;
+  border: 1px solid #ffd54a;
+  background: #1a2038;
+}
+.cur.health {
+  color: var(--red);
+  border-color: var(--red);
+  background: #fdecec;
+}
+/* Resource icon zoom, approved 2026-09-28: icons grow from their right edge (icons stay put next
+     to the number) so pill box sizes never change - only the picture inside gets bigger. */
+.cur.chip .vart {
+  transform: translateX(3px) scale(2.2, 2.7);
+  transform-origin: right center;
+}
+.cur.gem .vart {
+  transform: translateX(3px) scale(2.2);
+  transform-origin: right center;
+}
+.cur.fuel .vart {
+  transform: scale(2.4);
+  transform-origin: right center;
+  margin-left: 8px;
+}
+.cur.energy .vart {
+  transform: translateX(4px) scale(2.1);
+  transform-origin: right center;
+}
+.cur.health .vart {
+  transform: scale(1.3);
+  transform-origin: right center;
+}
+.cur.pts .vart {
+  transform: scale(1.3);
+  transform-origin: center;
+  margin-inline: 1.7px;
+}
+.cur {
+  position: relative;
+  cursor: help;
+}
+[data-title]:hover::after {
+  content: attr(data-title);
+  position: absolute;
+  z-index: 50;
+  left: 50%;
+  transform: translateX(-50%);
+  top: calc(100% + 6px);
+  width: max-content;
+  max-width: 220px;
+  background: #000000;
+  color: #ffffff;
+  padding: 7px 9px;
+  border-radius: 6px;
+  font: 12px var(--disp);
+  white-space: normal;
+  box-shadow: 0 0 8px rgba(31, 182, 166, 0.4);
+  border: 1px solid #1fb6a6;
+  text-align: left;
+  pointer-events: none;
+}
+[data-title] {
+  position: relative;
+  cursor: help;
+}
+.bossPreview {
+  border: 2px solid var(--red);
+  background: #1a0e0e;
+}
+.mapboss {
+  font-size: 12px;
+  font-family: var(--mono);
+  color: var(--dim);
+  margin-top: 8px;
+}
+.parityWord {
+  font-weight: 800;
+  color: var(--amber);
+}
+.hoverTip {
+  position: relative;
+  cursor: help;
+  text-decoration: underline dotted;
+  text-underline-offset: 2px;
+}
+.tipLeft[data-title]:hover::after,
+.tipLeft.effectTip:hover::after {
+  left: 0;
+  transform: none;
+}
+.tipRight[data-title]:hover::after,
+.tipRight.effectTip:hover::after {
+  left: auto;
+  right: 0;
+  transform: none;
+}
+.upgradeNum {
+  color: var(--amber);
+}
+.jsTooltipActive .effectTip:hover::after,
+.jsTooltipActive [data-title]:hover::after,
+.jsTooltipActive .hoverTip:hover::after {
+  display: none !important;
+}
+.jsFloatTip {
+  position: fixed;
+  z-index: 100000;
+  max-width: 230px;
+  background: #000000;
+  color: #ffffff;
+  padding: 8px;
+  border-radius: 6px;
+  font: 11px var(--disp);
+  text-align: left;
+  box-shadow: 3px 3px 0 #1fb6a6;
+  pointer-events: none;
+  border: 1px solid #1fb6a6;
+  display: none;
+}
+@media (min-width: 900px) {
+  .matchLayout {
+    grid-template-columns: minmax(0, 1fr) minmax(200px, 240px) !important;
+  }
+  .matchGrid {
+    max-width: 520px !important;
+  }
+  .matchGrid .card.mini {
+    height: 76px;
+    font-size: 15px;
+  }
+}
+.matchGrid .card.mini.matchTile {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 3/4;
+  max-width: 75px;
+  max-height: 100px;
+  min-width: 0;
+  padding: 0;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+.matchGrid .card.mini.matchTile:not(.back) {
+  background: #ffffff !important;
+  color: #1a1a2e;
+}
+.matchGrid .card.mini.matchTile:not(.back) div:nth-child(2) {
+  font-size: min(46px, 9.5vw) !important;
+  line-height: 1;
+  font-weight: 800;
+}
+.matchGrid .card.mini.matchTile .vart {
+  width: min(68px, 15vw) !important;
+  height: min(68px, 15vw) !important;
+}
+@media (max-width: 600px) {
+  .matchGrid {
+    gap: 5px !important;
+  }
+  .matchBoardWrap .wo-body {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+  .matchGrid .card.mini.matchTile.back div:first-child {
+    font-size: min(24px, 6vw);
+  }
+}
+.matchGrid .card.mini.matchTile.red:not(.back) div:nth-child(2) {
+  color: #c62828;
+}
+.matchGrid .card.mini.matchTile:not(.back):not(.red) div:nth-child(2) {
+  color: #1a1a2e;
+}
+.matchGrid .card.mini.matchTile.joker-outline-red:not(.back) {
+  outline: 3px solid #ff8a80 !important;
+  background: #c62828 !important;
+}
+.matchGrid .card.mini.matchTile.joker-outline-black:not(.back) {
+  outline: 3px solid #e8e8ee !important;
+  background: #26262e !important;
+}
+.glitchWarningBanner {
+  margin-top: 10px;
+  padding: 6px 8px;
+  border-radius: 5px;
+  background: rgba(229, 72, 77, 0.12);
+  border: 1px solid var(--red);
+  color: var(--red);
+  font-weight: 700;
+  font-size: 11px;
+  text-align: center;
+}
+.castleBtn-exit {
+  order: -1;
+}
+.duelHead {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto minmax(0, 1fr) auto;
+  column-gap: 8px;
+  align-items: center;
+}
+.vsMark {
+  align-self: center;
+  margin: 0 2px;
+}
+.duelArt {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.duelSide {
+  min-width: 0;
+}
+.duelSide .sideInfo {
+  min-width: 0;
+}
+.duelSide h3 {
+  margin: 0 0 6px;
+  font-size: 18px;
+  color: var(--blue);
+  min-height: 22px;
+  line-height: 1.25;
+  display: flex;
+  align-items: flex-start;
+  overflow: visible;
+}
+.duelSide.opp {
+  text-align: right;
+}
+.duelSide .bar-wrap {
+  height: 18px;
+  width: 100%;
+}
+.duelSide .sideRow {
+  min-height: 34px;
+}
+.vsMark {
+  font-family: var(--mono);
+  font-weight: 800;
+  color: var(--dim);
+  font-size: 13px;
+}
+.bigicon {
+  font-size: 30px;
+  line-height: 1;
+}
+.itemCard.targetPickable {
+  box-shadow: 0 0 0 2px var(--amber);
+  cursor: pointer;
+}
+.itemCard.targetPickable:hover {
+  box-shadow:
+    0 0 0 3px var(--amber),
+    0 0 14px rgba(212, 175, 0, 0.5);
+}
+.itemCard.targetPicked,
+.itemCard.targetPicked:hover {
+  box-shadow:
+    0 0 0 3px #ffffff,
+    0 0 16px var(--amber);
+}
+.targetBar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9000;
+  box-sizing: border-box;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 8px 12px;
+  background: #12163a;
+  border-top: 1px solid rgba(31, 182, 166, 0.5);
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.targetBarText {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.25;
+}
+body:has(.targetBar) #app {
+  padding-bottom: 110px;
+}
+.abilityWrap {
+  display: flex;
+  gap: 2px;
+  min-width: 0;
+  flex: 1 1 0;
+}
+.abilityWrap .abilityBtn {
+  flex: 1 1 0;
+  min-width: 0;
+}
+.abilityInfoBtn {
+  flex: 0 0 20px;
+  width: 20px;
+  padding: 0 !important;
+  font-size: 11px !important;
+  font-style: italic;
+  font-weight: 800;
+  min-width: 0;
+}
+.abilityInfoLine {
+  margin: 6px 0 0;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+/* ████████████████████████████████████████████████████████████████████████████████████ */
+/* ██                                                                                ██ */
+/* ██  Battle Board                                                                  ██ */
+/* ██  Opponent and player sides, logs and the battle layout.                        ██ */
+/* ██                                                                                ██ */
+/* ████████████████████████████████████████████████████████████████████████████████████ */
+
+.duelBoard {
+  display: grid;
+  grid-template-columns: 1fr 90px 1fr;
+  gap: 8px;
+  align-items: start;
+}
+@media (max-width: 700px) {
+  .duelBoard {
+    grid-template-columns: 1fr;
+  }
+  .duelHead {
+    grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr) auto;
+    column-gap: 8px;
+  }
+  .vsMark {
+    display: none;
+  }
+}
+@media (max-width: 480px) {
+  .duelHead {
+    column-gap: 5px;
+  }
+  .duelArt .vart {
+    width: 58px !important;
+    height: 58px !important;
+  }
+  .duelSide h3 {
+    font-size: 15px;
+  }
+}
+.deckStack {
+  text-align: center;
+  padding-top: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  box-sizing: border-box;
+}
+.deckStack .card.back {
+  cursor: default;
+  pointer-events: none;
+}
+.deckStack .card.back::after {
+  content: none;
+}
+.wo-btn.red {
+  background: var(--red);
+  border-color: #a83236;
+}
+.wo-btn.teal {
+  background: transparent;
+  border: 2px solid #1fb6a6;
+  color: #1fb6a6;
+  box-shadow: none;
+}
+.wo-btn.cyan {
+  background: #3fcfef;
+  border-color: #1c9fb8;
+  color: #062733;
+}
+.wo-btn.magenta {
+  background: #c23fc4;
+  border-color: #8a2c8c;
+}
+.wo-btn.gold {
+  background: #f2c94c;
+  border-color: #b8931f;
+  color: #3a2c05;
+}
+.duelMatchup {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+}
+.matchupSide {
+  min-width: 0;
+}
+.playerSide {
+  border-left: 4px solid var(--blue);
+}
+.opponentSide {
+  border-right: 4px solid var(--red);
+}
+@media (max-width: 800px) {
+  .duelMatchup {
+    grid-template-columns: 1fr;
+  }
+}
+.vslot {
+  border: 2px dashed var(--blue-light);
+  border-radius: 8px;
+  padding: 10px;
+  width: 160px;
+  background: var(--bg);
+  cursor: pointer;
+}
+.vslot.filled {
+  border-style: solid;
+  border-color: var(--amber);
+}
+.vslot.ready {
+  border-color: var(--green);
+}
+.vslot.defense {
+  border-color: #4a7fd8;
+}
+.vslot.poison {
+  border-color: #5a8a3a;
+}
+.vslot .vname {
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--blue);
+}
+.vslot .vreq {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--dim);
+  margin: 3px 0;
+}
+.vslot .vcards {
+  display: flex;
+  gap: 3px;
+  flex-wrap: wrap;
+  min-height: 30px;
+  margin-top: 6px;
+}
+#battle-viewport .itemGrid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  width: 100%;
+  gap: 10px;
+}
+#battle-viewport .itemGrid .itemCard {
+  flex: 0 0 calc(25% - 7.5px);
+  box-sizing: border-box;
+  margin: 0;
+}
+.popupItemRow {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 125px);
+  justify-content: start;
+  gap: 8px;
+}
+.pickItemRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-start;
+  margin-left: 178px;
+}
+.pickItemRow .itemCard {
+  flex: 0 0 125px;
+  width: 125px;
+  height: 156px;
+  min-height: 156px;
+  max-height: 156px;
+  overflow: hidden;
+}
+/* Vehicle ability card: its own look (not an item card). Same footprint as an item card so rows stay even. */
+.abilityCard {
+  flex: 0 0 125px;
+  width: 125px;
+  height: 156px;
+  box-sizing: border-box;
+  overflow: hidden;
+  cursor: default;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 7px 6px 6px;
+  border-radius: 14px;
+  background: radial-gradient(120% 90% at 50% 0%, rgba(31, 182, 166, 0.28) 0%, rgba(10, 14, 26, 0.95) 62%);
+  border: 1px solid #1fb6a6;
+  box-shadow:
+    inset 0 0 14px rgba(31, 182, 166, 0.25),
+    0 0 8px rgba(31, 182, 166, 0.18);
+}
+.abilityCard .abilityTag {
+  font-size: 9.5px;
+  letter-spacing: 0.06em;
+  color: #7fe3d8;
+  font-family: var(--mono);
+  opacity: 0.9;
+}
+.abilityCard .abilityName {
+  font-weight: 700;
+  font-size: 12.5px;
+  color: var(--amber);
+  margin: 3px 0 6px;
+  line-height: 1.2;
+}
+.abilityCard .abilityCost {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: rgba(31, 182, 166, 0.16);
+  border: 1px solid rgba(31, 182, 166, 0.55);
+  color: #f0f3f8;
+  font-weight: 700;
+  font-size: 13px;
+}
+.abilityCard .abilityCost .vart {
+  width: 13px;
+  height: 13px;
+  font-size: 13px;
+}
+.abilityCard .abilityDesc {
+  margin-top: 8px;
+  font-size: 11px;
+  line-height: 1.3;
+  color: #cfd6e2;
+}
+#dealer-viewport .dealerRow {
+  display: grid;
+  grid-template-columns: repeat(6, 141px);
+  justify-content: center;
+  align-items: start;
+  gap: 10px;
+  padding: 8px 4px 14px;
+  width: 100%;
+  max-width: 906px;
+  margin: 0 auto;
+}
+#dealer-viewport .dealerCardPanel {
+  width: 141px;
+  min-width: 141px;
+  max-width: 141px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  padding: 8px;
+  box-sizing: border-box;
+  overflow: hidden;
+  margin: 0;
+}
+@media (max-width: 850px) {
+  #dealer-viewport .dealerRow {
+    grid-template-columns: repeat(4, 141px);
+  }
+}
+@media (max-width: 600px) {
+  #dealer-viewport .dealerRow {
+    grid-template-columns: repeat(3, minmax(0, 141px));
+    gap: 8px;
+  }
+  #dealer-viewport .dealerCardPanel {
+    width: auto;
+    min-width: 0;
+    max-width: none;
+  }
+}
+@media (max-width: 420px) {
+  #dealer-viewport .dealerRow {
+    grid-template-columns: repeat(2, minmax(0, 141px));
+  }
+}
+#dealer-viewport .dealerCardPanel .itemCard {
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+#dealer-viewport .emptyItemSlot {
+  border: 2px dashed rgba(31, 182, 166, 0.3);
+  width: 125px;
+  height: 150px;
+  min-height: 150px;
+  max-height: 150px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 16px;
+  background: transparent !important;
+  color: rgba(31, 182, 166, 0.35) !important;
+  font-size: 11px;
+  font-weight: 700;
+  margin: 0 auto;
+}
+#dealer-viewport .dealerMetaDivider {
+  height: 1px;
+  background: rgba(31, 182, 166, 0.2);
+  margin: 8px 0 6px;
+  flex-shrink: 0;
+}
+#dealer-viewport .dealerMeta {
+  width: 100%;
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-height: 52px;
+}
+#dealer-viewport h1 {
+  text-align: center;
+}
+.facilityExitBtn {
+  background: #ffc44d !important;
+  color: #12163a !important;
+  border-color: #ffc44d !important;
+  font-weight: 800 !important;
+  text-transform: none !important;
+}
+#chopshop-viewport .wo {
+  max-width: 640px;
+  margin-left: auto;
+  margin-right: auto;
+}
+#overdrive-viewport .wo {
+  max-width: 820px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.itemCard {
+  border-radius: 8px;
+  padding: 6px 4px;
+  background: rgba(10, 14, 26, 0.9) !important;
+  border: 1px solid rgba(31, 182, 166, 0.2);
+  width: 125px;
+  min-width: 125px;
+  max-width: 125px;
+  min-height: 150px;
+  height: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  box-sizing: border-box;
+  font-size: 12px;
+  position: relative;
+  transition: box-shadow 0.15s ease;
+}
+.emptyItemSlot {
+  border-radius: 8px;
+  padding: 6px 4px;
+  background: transparent !important;
+  border: 2px dashed rgba(31, 182, 166, 0.3);
+  width: 125px;
+  min-width: 125px;
+  max-width: 125px;
+  min-height: 150px;
+  height: auto;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(31, 182, 166, 0.35);
+  font-size: 11px;
+  font-weight: 700;
+}
+.itemCard:hover {
+  box-shadow: 0 0 14px rgba(31, 182, 166, 0.35);
+}
+.itemCard-sec {
+  width: 100%;
+  flex: 0 0 auto;
+}
+.itemCard > .itemCard-sec:first-of-type {
+  flex: 0 0 auto;
+  min-height: 38px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.itemCard-footer {
+  margin-top: auto;
+  width: 100%;
+  flex: 0 0 auto;
+  min-height: 30px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.itemCard-cards-sec {
+  flex: 0 0 auto;
+  min-height: 46px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+.usesBadge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  font-size: 9px;
+  font-weight: 800;
+  background: none;
+  color: #1fb6a6;
+  border: none;
+  padding: 0;
+  line-height: 1.4;
+}
+.usesBadge.depleted {
+  background: none;
+  color: var(--dim);
+}
+.itemCard.ready {
+  border-color: var(--green) !important;
+}
+.itemCard .hdr {
+  width: 100%;
+  justify-content: center;
+  text-align: center;
+  overflow: visible;
+  white-space: normal;
+  text-overflow: clip;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  line-height: 1.15;
+}
+.itemCard .vcards {
+  display: flex;
+  gap: 2px;
+  flex-wrap: wrap;
+  justify-content: center;
+  min-height: 22px;
+  margin-top: 4px;
+}
+.itemReqLine {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #f0f3f8;
+  margin: 3px 0 2px;
+  line-height: 1.3;
+  overflow: visible;
+  white-space: normal;
+  text-overflow: clip;
+  width: 100%;
+}
+.itemCard .note {
+  color: #f0f3f8;
+}
+.itemBonusLine {
+  font-size: 10.5px;
+  color: #f5c451;
+  margin: 0;
+  line-height: 1.2;
+}
+.itemBonusLine b {
+  font-weight: 800;
+  cursor: help;
+  position: relative;
+}

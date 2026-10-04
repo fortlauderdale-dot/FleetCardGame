@@ -1,0 +1,316 @@
+/* ████████████████████████████████████████████████████████████████████████████████████ */
+/* ██                                                                                ██ */
+/* ██  Playing Cards                                                                 ██ */
+/* ██  Card faces, suits and card sizes.                                             ██ */
+/* ██                                                                                ██ */
+/* ████████████████████████████████████████████████████████████████████████████████████ */
+
+.card {
+  width: 48px;
+  height: 64px;
+  border-radius: 5px;
+  background: #ffffff;
+  color: #12163a;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 17px;
+  border: 2px solid #12163a;
+  cursor: pointer;
+  user-select: none;
+  flex-shrink: 0;
+  gap: 1px;
+}
+.card div:last-child {
+  font-size: 23px;
+  line-height: 1;
+}
+.card.red {
+  color: #e5484d;
+}
+.card.suit-club {
+  color: var(--green);
+}
+.card.selected {
+  outline: 3px solid var(--amber);
+  transform: translateY(-6px);
+}
+.card.sweepRemove {
+  outline: 3px solid var(--red);
+  transform: translateY(-6px);
+}
+.card.matched {
+  outline: 3px solid var(--green);
+}
+.card.cursed {
+  outline: 2px solid var(--purple);
+}
+.card.mini {
+  width: 30px;
+  height: 42px;
+  font-size: 11px;
+  cursor: pointer;
+  gap: 0;
+}
+.card.mini div:last-child {
+  font-size: 14px !important;
+  line-height: 1;
+}
+/* Bigger card size used in Fleet Poker/Blackjack - those minigame panels have plenty of room
+     and the plain .card.mini size (30x42, built for a tight in-hand strip) read as too tiny there. */
+.card.big {
+  width: 58px;
+  height: 80px;
+  font-size: 19px;
+  cursor: default;
+  gap: 2px;
+}
+.card.big div:last-child {
+  font-size: 27px !important;
+  line-height: 1;
+}
+.card.back.big::after {
+  font-size: 22px;
+}
+/* Extra-large cards for Fleet Poker so hand cards are easy to read at a glance. */
+.card.big.xl {
+  width: 72px;
+  height: 100px;
+  font-size: 24px;
+}
+.card.big.xl div:last-child {
+  font-size: 34px !important;
+}
+.card.back.big.xl::after {
+  font-size: 28px;
+}
+.suitMicroCard {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 20px;
+  border-radius: 3px;
+  background: #ffffff;
+  color: #12163a;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+  vertical-align: -3px;
+  margin: 0 1px;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.2);
+}
+.suitMicroCard.red {
+  color: #e5484d;
+}
+.suitMicroCard.suit-club {
+  color: var(--green);
+}
+/* Full rank+suit mini card, for requirement text that names one specific card (e.g. Cursed
+     Carpool's "3 of Clubs or 4 of Clubs") - bigger and clearer than the plain suitMicroCard glyph,
+     which just showed the rank as text next to a tiny colored square. Conditions that reference a
+     count of a suit rather than a specific card (suitCount, e.g. Diamond Convoy) still use
+     suitMicroCard above and are untouched. */
+.reqMiniCard {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 48px;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #12163a;
+  font-weight: 800;
+  line-height: 1.1;
+  vertical-align: middle;
+  margin: 2px 3px;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.2);
+}
+.reqMiniCard div:first-child {
+  font-size: 14px;
+}
+.reqMiniCard div:last-child {
+  font-size: 18px;
+}
+.reqMiniCard.red {
+  color: #e5484d;
+}
+.reqMiniCard.suit-club {
+  color: var(--green);
+}
+.card.back {
+  background: var(--blue);
+  color: transparent;
+  position: relative;
+}
+.card.back::after {
+  content: "?";
+  color: var(--ink);
+  position: absolute;
+  font-size: 16px;
+}
+.card.back.mini::after {
+  font-size: 12px;
+}
+
+.hand {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 6px 0;
+}
+.note {
+  color: var(--dim);
+  font-size: 12px;
+  margin: 6px 0;
+  font-family: var(--mono);
+}
+.kv {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 0;
+  border-bottom: 1px dashed var(--blue-light);
+  font-family: var(--mono);
+  font-size: 12.5px;
+}
+.kv b {
+  color: var(--blue);
+}
+.price {
+  color: var(--amber);
+  font-weight: 700;
+}
+#map-viewport .mapwrap {
+  position: relative;
+  margin: 0 auto;
+  overflow-x: auto;
+  overflow-y: visible;
+  border: 2px solid #1a2038;
+  border-radius: 12px;
+  padding: 14px 10px 12px;
+}
+.regionTitlePinned {
+  position: absolute;
+  top: 14px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-family: var(--disp);
+  font-weight: 700;
+  font-size: 20px;
+  color: #1fb6a6;
+  text-shadow: 0 2px 0 #0b0f19;
+  z-index: 10;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+.mapnode-wrap {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+}
+.mapnode-wrap:hover {
+  z-index: 80;
+}
+.mapnode-wrap:hover .tooltip {
+  display: block;
+}
+.mapnode-wrap .tooltip {
+  top: 120%;
+  bottom: auto;
+}
+.mapnode-wrap.bottomrow .tooltip {
+  top: auto;
+  bottom: 120%;
+}
+#map-viewport .mapnode.current {
+  animation: singleNodePulse 1.4s ease-in-out infinite !important;
+}
+@keyframes singleNodePulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 4px rgba(0, 245, 212, 0.3),
+      inset 0 0 8px rgba(0, 245, 212, 0.2);
+    border-color: var(--energy);
+  }
+  50% {
+    box-shadow:
+      0 0 20px 6px rgba(0, 245, 212, 0.6),
+      inset 0 0 14px rgba(0, 245, 212, 0.4);
+    border-color: #ffffff;
+  }
+}
+#map-viewport .mapnode.avail {
+  animation: none !important;
+  border: 3px solid var(--green) !important;
+  background: #ffffff !important;
+  color: var(--green) !important;
+  box-shadow: 0 0 12px rgba(47, 174, 102, 0.45) !important;
+}
+.floating-tutorial-card {
+  position: absolute;
+  z-index: 1000;
+  background: var(--white);
+  border: 2px dashed var(--amber);
+  border-radius: 8px;
+  padding: 12px;
+  max-width: 260px;
+  box-shadow:
+    3px 3px 0 var(--blue-dark),
+    0 0 14px rgba(31, 182, 166, 0.35);
+  font-size: 12px;
+  line-height: 1.4;
+  left: 110px;
+  top: 70px;
+}
+.floating-tutorial-card .wo-eyebrow {
+  color: var(--energy);
+  font-size: 10px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.floating-tutorial-card h3 {
+  font-size: 15px;
+  margin: 0 0 4px 0;
+  color: #ffffff;
+}
+.floating-tutorial-card p {
+  margin: 0;
+}
+@keyframes mapNodeWiggle {
+  0%,
+  100% {
+    transform: translateX(-2px) rotate(-4deg);
+  }
+  50% {
+    transform: translateX(2px) rotate(4deg);
+  }
+}
+.mapnode.type-match_hazard {
+  animation: mapNodeWiggle 1.8s ease-in-out infinite;
+}
+.tooltip {
+  display: none;
+  position: absolute;
+  bottom: 120%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 90;
+  background: #000000 !important;
+  color: #ffffff !important;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  line-height: 1.5;
+  padding: 7px 10px;
+  border-radius: 6px;
+  white-space: nowrap;
+  z-index: 5;
+  box-shadow: 0 0 8px rgba(31, 182, 166, 0.4);
+  border: 1px solid #1fb6a6;
+  text-align: left;
+}

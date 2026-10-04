@@ -1,0 +1,461 @@
+/* ████████████████████████████████████████████████████████████████████████████████████ */
+/* ██                                                                                ██ */
+/* ██  Map                                                                           ██ */
+/* ██  Map stops, art fitting and fog.                                               ██ */
+/* ██                                                                                ██ */
+/* ████████████████████████████████████████████████████████████████████████████████████ */
+
+.mapnode {
+  position: relative;
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  overflow: hidden;
+  font-size: 19px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid;
+  background: var(--white);
+}
+/* Per-image map-node zoom: several AI-generated icons/opponent art have a lot of empty
+     transparent margin baked into the square canvas, so the subject reads small inside the round
+     node badge even though the art box itself fills the circle. Scaling the <img> (not the .vart
+     wrapper) zooms in on the subject while the node badge's overflow:hidden above keeps it clipped
+     to the circle instead of spilling outside it. Tune these per image as needed. */
+.mapnode img[src*="runaway-kite"] {
+  transform: scale(1.35);
+}
+.mapnode img[src*="node-fleet-compound"] {
+  transform: scale(2.1);
+}
+.mapnode img[src*="node-dealership"] {
+  transform: scale(2.1);
+}
+/* Big Al: the picture sits low in its canvas, so lift it to the middle and make it a little bigger everywhere it shows */
+.vart img[src$="Hazards/rogue-wave.png"] {
+  transform: translate(-0.6%, -11.6%) scale(1.25);
+}
+.mapnode.future {
+  background: #8a8f9e;
+  border-color: #8a8f9e;
+  color: #d4d7e0;
+  cursor: default;
+  opacity: 0.6;
+}
+.mapnode.farfuture {
+  background: #8a8f9e;
+  border-color: #8a8f9e;
+  color: #d4d7e0;
+  cursor: default;
+  opacity: 0.4;
+}
+.mapnode.avail {
+  background: var(--white);
+  border-color: var(--amber);
+  box-shadow: 0 0 0 5px #1fb6a633;
+  cursor: pointer;
+}
+.mapnode.done {
+  background: #6b7080;
+  border-color: #6b7080;
+  color: #dfe2ea;
+  cursor: default;
+  opacity: 0.7;
+}
+.mapnode.current {
+  background: var(--blue);
+  border-color: var(--blue-dark);
+  color: #fff;
+  cursor: default;
+  box-shadow: 0 0 0 5px #4a5fc755;
+  animation: herePulse 1.4s ease-in-out infinite;
+}
+.mapnode.future .vart,
+.mapnode.farfuture .vart,
+.mapnode.done .vart {
+  filter: grayscale(1);
+}
+@keyframes herePulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 4px #4a5fc755;
+  }
+  50% {
+    box-shadow: 0 0 0 9px #4a5fc722;
+  }
+}
+.mapnode.worldboss {
+  width: 106px;
+  height: 106px;
+  font-size: 32px;
+  animation: world3BossGlow 1.3s ease-in-out infinite;
+  border-color: #c81e1e;
+}
+@keyframes world3BossGlow {
+  0%,
+  100% {
+    box-shadow: 0 0 10px 4px rgba(220, 20, 20, 0.55);
+  }
+  50% {
+    box-shadow: 0 0 26px 10px rgba(255, 40, 40, 0.95);
+  }
+}
+.mapnode.elitenode {
+  border-color: #d9861f;
+  box-shadow:
+    0 0 0 5px rgba(217, 134, 31, 0.28),
+    0 0 14px rgba(217, 134, 31, 0.55);
+  animation: eliteNodeGlow 1.8s ease-in-out infinite;
+}
+@keyframes eliteNodeGlow {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 5px rgba(217, 134, 31, 0.28),
+      0 0 12px rgba(217, 134, 31, 0.5);
+  }
+  50% {
+    box-shadow:
+      0 0 0 8px rgba(217, 134, 31, 0.4),
+      0 0 20px rgba(217, 134, 31, 0.8);
+  }
+}
+.hereTag {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 4px);
+  transform: translateX(-50%);
+  white-space: nowrap;
+  background: var(--blue-dark);
+  color: #fff;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 2px 6px;
+  border-radius: 4px;
+  pointer-events: none;
+}
+.hereTag::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 4px solid transparent;
+  border-top-color: var(--blue-dark);
+}
+
+.shopcard {
+  border: 1px solid var(--blue-light);
+  background: var(--bg);
+  border-radius: 6px;
+  padding: 10px;
+  margin-bottom: 8px;
+  box-sizing: border-box;
+  width: 100%;
+}
+.shopcard h3 {
+  margin: 0 0 8px;
+}
+.bodyShopWo {
+  max-width: 460px;
+  margin: 16px auto;
+}
+.bodyShopRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px;
+}
+.bodyShopRow h3 {
+  margin: 0;
+  font-size: 15px;
+}
+.bodyShopBtn {
+  padding: 7px 12px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+.shopGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.shopGrid .shopcard {
+  margin-bottom: 0;
+}
+@media (max-width: 600px) {
+  .shopGrid {
+    grid-template-columns: 1fr;
+  }
+}
+.pickcard {
+  border: 2px solid var(--blue-light);
+  background: var(--bg);
+  border-radius: 10px;
+  padding: 16px;
+  width: 160px;
+  text-align: center;
+}
+.pickrow {
+  border: 2px solid var(--blue-dark);
+  background: var(--bg);
+  border-radius: 10px;
+  position: relative;
+}
+.pickrow.locked {
+  opacity: 0.8;
+}
+.pickrow.locked .lockedPortrait .vart {
+  filter: brightness(0.55) saturate(0.6);
+}
+.pickrow.locked .pickItemRow.lockedNote {
+  width: auto;
+  flex: 1;
+}
+.pickLeftCol {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 170px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.pickLeftCol .pname {
+  text-align: center;
+  margin: 0 0 4px;
+  white-space: normal;
+}
+.chooseBtnWrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 6px;
+}
+.pickcard .picon {
+  font-size: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.pname {
+  font-weight: 700;
+  font-size: 17px;
+  letter-spacing: 0.01em;
+  color: var(--blue);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (max-width: 420px) {
+  .pname {
+    font-size: 13px;
+  }
+}
+.ptag {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--dim);
+  margin: 4px 0 0;
+}
+.pickcard .ptag {
+  margin: 4px 0 10px;
+}
+.pickcard.locked {
+  opacity: 0.55;
+}
+.pickcard.locked .picon {
+  filter: grayscale(1);
+}
+.levelbar {
+  height: 8px;
+  background: var(--blue-light);
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 6px 0;
+}
+.levelbar i {
+  display: block;
+  height: 100%;
+  background: var(--gold);
+}
+.cacheGrid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+.cacheOpt {
+  flex: 0 0 calc(50% - 5px);
+  min-height: 92px;
+  padding: 12px 10px;
+  border-radius: 10px;
+  border: 3px solid;
+  background: #1a2038;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-align: center;
+  box-shadow: 3px 3px 0 #0b0f19;
+}
+.cacheOpt:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 #0b0f19;
+}
+.cacheOpt .cacheReward {
+  font-size: 20px;
+  font-weight: 800;
+  color: #fff;
+}
+.cacheOpt .cacheNote {
+  font-size: 12px;
+  line-height: 1.3;
+  color: #d5daf2;
+  font-weight: 600;
+}
+.cacheOpt .cacheNote.cacheBad {
+  color: #ffb0a8;
+}
+.cacheGreen {
+  border-color: #2fae66;
+}
+.cacheGreen:hover {
+  background: #1c3a2c;
+}
+.cacheTeal {
+  border-color: #1fb6a6;
+}
+.cacheTeal:hover {
+  background: #15343a;
+}
+.cachePurple {
+  border-color: #8a4fe0;
+}
+.cachePurple:hover {
+  background: #2c2150;
+}
+.upgRow {
+  padding: 8px 12px;
+}
+.upgBar {
+  height: 10px;
+  background: #4d5680;
+  border: 1px solid #7d87b8;
+  border-radius: 5px;
+  overflow: hidden;
+  margin-top: 7px;
+}
+.upgBar i {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+}
+.upgDot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  margin-right: 5px;
+  vertical-align: -1px;
+}
+
+.ic {
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.15em;
+  display: inline-block;
+}
+.vart {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.vart img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+.pickrow {
+  min-height: 190px;
+}
+.chooseBtnWrap {
+  position: relative;
+  z-index: 2;
+}
+.pickPortrait {
+  width: 140px;
+  height: 140px;
+  flex: 0 0 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: -14px;
+}
+/* Per-vehicle picture fit (measured from each PNG's visible bounds): scale + nudge so every vehicle
+     fills about the same space and sits just under the Choose button, regardless of how much empty
+     margin its image file has. */
+.pickPortrait[data-hero="sidebyside"] .vart img {
+  transform: translate(1px, -8px) scale(0.82);
+}
+.pickPortrait[data-hero="admin"] .vart img {
+  transform: translate(-0.4px, 4.2px) scale(1.07);
+}
+.pickPortrait[data-hero="beachtractor"] .vart img {
+  transform: translate(0.3px, -3.4px) scale(1.467);
+}
+.pickPortrait[data-hero="interstate"] .vart img {
+  transform: translate(-0.4px, -10.3px) scale(1.074);
+}
+.pickPortrait[data-hero="forklift"] .vart img {
+  transform: translate(-7.4px, -8.7px) scale(1.616);
+}
+.pickPortrait[data-hero="convoy"] .vart img {
+  transform: translate(0px, -5.7px) scale(1.167);
+}
+.pickPortrait[data-hero="towtruck"] .vart img {
+  transform: translate(-0.6px, -4.8px) scale(1.166);
+}
+.pickPortrait[data-hero="tanker"] .vart img {
+  transform: translate(0.2px, -10px) scale(1.388);
+}
+.pickPortrait[data-hero="crownvic"] .vart img {
+  transform: translate(0.1px, -7.9px) scale(1.028);
+}
+.pickPortrait[data-hero="firetruck"] .vart img {
+  transform: translate(-0.3px, -5.1px) scale(1.53);
+}
+.pickPortrait[data-hero="arff"] .vart img {
+  transform: translate(-0.5px, -5.6px) scale(1.123);
+}
+.pickPortrait[data-hero="bearcat"] .vart img {
+  transform: translate(-1.5px, -4.5px) scale(1.34);
+}
+.pickPortrait .vart {
+  width: 100% !important;
+  height: 100% !important;
+  font-size: 60px !important;
+}
+.pickPortrait .vart span {
+  font-size: 60px !important;
+}
+.stopTitleRow {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+.stopRewardInline {
+  margin: 0;
+}

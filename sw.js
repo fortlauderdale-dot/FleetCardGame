@@ -3,6 +3,10 @@
 // Bump CACHE_VERSION whenever pictures or game files change so phones download the new ones.
 const CACHE_VERSION = 'fleet-duel-v3';
 const GAME_FILES = [
+  'manifest.webmanifest',
+  'apple-touch-icon-v2.png',
+  'icon-192.png',
+  'icon-512.png',
   'css/01-base.css',
   'css/02-battle-board.css',
   'css/03-cards.css',

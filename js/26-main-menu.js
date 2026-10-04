@@ -136,8 +136,10 @@ function metaScreen() {
     <div class="wo">
       <div class="wo-stripe"></div>
       <div class="wo-body">
-        <h1 style="margin:0 0 10px">Fleet <em>Duel</em></h1>
-        <div class="homeHero"><img src="Icons/node-fleet-compound.png" alt="The Fleet Compound"></div>
+        <div class="homeHeader">
+          <h1 class="homeTitle"><span class="homeTitleTop">Fleet</span><em class="homeTitleBottom">Duel</em></h1>
+          <img class="homeHero" src="Icons/node-fleet-compound.png" alt="The Fleet Compound">
+        </div>
         <div class="homeRunRow">
           <input id="playerNameInput" class="homeNameInput" type="text" maxlength="18" placeholder="Your name" ` +
     `value="${(META.playerName || '').replace(/"/g, '&quot;')}">

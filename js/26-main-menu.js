@@ -87,8 +87,8 @@ let HOME_TIP_POPUP = false;
 function homeTipBannerHTML() {
   if (META.hideHomeTip || !homeScreenPlatform()) return '';
   return (
-    `<div class="homeTipBanner"><span class="homeTipText">Play better: add to your ` +
-    `home screen.</span><button class="homeTipBtn" id="homeTipShowBtn">Show me how</button>` +
+    `<div class="homeTipBanner" id="homeTipShowBtn" role="button"><div class="homeTipText"><b>Playing on ` +
+    `mobile?</b><br>Click here to improve gameplay</div><span class="homeTipArrow">&rsaquo;</span>` +
     `<button class="homeTipClose" id="homeTipHideBtn" aria-label="Hide this tip">&times;</button></div>`
   );
 }
@@ -145,18 +145,16 @@ function metaScreen() {
         </div>
         ${homeStatsHTML()}
         ${homeTipBannerHTML()}
-        <input id="playerNameInput" class="homeNameInput" type="text" maxlength="18" placeholder="Your name" ` +
-    `value="${(META.playerName || '').replace(/"/g, '&quot;')}">
-        ${
-          hasSave
-            ? `<button class="wo-btn homeBtn" id="continueRunBtn">Continue Run</button>`
-            : `<button class="wo-btn homeBtn" id="startRunBtn">New Run</button>`
-        }
-        ${
-          hasSave
-            ? `<button class="wo-btn gray homeBtn" id="startRunBtn">New Run (overwrites save)</button>`
-            : ''
-        }
+        <div class="homeRunRow">
+          <div class="homeNameBox"><input id="playerNameInput" type="text" maxlength="18" placeholder="Your name" ` +
+    `value="${(META.playerName || '').replace(/"/g, '&quot;')}"></div>
+          ${
+            hasSave
+              ? `<button class="wo-btn homeBtn" id="continueRunBtn">Continue Run</button>`
+              : `<button class="wo-btn homeBtn" id="startRunBtn">New Run</button>`
+          }
+        </div>
+        ${hasSave ? `<button class="wo-btn gray homeBtn" id="startRunBtn">New Run (overwrites save)</button>` : ''}
         <button class="wo-btn amber homeBtn" id="viewUpgradesBtn">Career Point Upgrades (${META.points})</button>
         ${
           META.devModeActive

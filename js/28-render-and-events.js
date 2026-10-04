@@ -444,7 +444,8 @@ function render(html) {
     };
   const homeTipHideBtn = document.getElementById('homeTipHideBtn');
   if (homeTipHideBtn)
-    homeTipHideBtn.onclick = () => {
+    homeTipHideBtn.onclick = (e) => {
+      e.stopPropagation();
       META.hideHomeTip = true;
       saveMeta();
       render(metaScreen());

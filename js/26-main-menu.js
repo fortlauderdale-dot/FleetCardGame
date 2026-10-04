@@ -146,8 +146,8 @@ function metaScreen() {
         ${homeStatsHTML()}
         ${homeTipBannerHTML()}
         <div class="homeRunRow">
-          <div class="homeNameBox"><input id="playerNameInput" type="text" maxlength="18" placeholder="Your name" ` +
-    `value="${(META.playerName || '').replace(/"/g, '&quot;')}"></div>
+          <input id="playerNameInput" class="homeNameInput" type="text" maxlength="18" placeholder="Your name" ` +
+    `value="${(META.playerName || '').replace(/"/g, '&quot;')}">
           ${
             hasSave
               ? `<button class="wo-btn homeBtn" id="continueRunBtn">Continue Run</button>`

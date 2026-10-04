@@ -115,6 +115,7 @@ function render(html) {
     }
   }
   syncStopArtHeights(app);
+  fitHomeStats();
   fitAllArt(app);
   requestAnimationFrame(() => fitAllArt(app));
   battleLayoutPass();

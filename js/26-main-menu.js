@@ -48,18 +48,28 @@ function runRulesPanelHTML() {
 }
 // Home screen stats: how far you got and your best score. Career Points are on the upgrades button.
 function homeStatsHTML() {
-  let furthest = 'Not yet';
+  let bestRun = 'Not yet';
   if (META.bestStopWorld) {
-    furthest = `World ${META.bestStopWorld} - ${WORLD_NAMES[META.bestStopWorld] || ''}, stop ${META.bestStop}/21`;
+    bestRun = `World ${META.bestStopWorld} - ${WORLD_NAMES[META.bestStopWorld] || ''}, ${META.bestStop}/21`;
   } else if (META.bestRun) {
     // Older saves only know the best stop count, not which world it was in.
     const w = META.bestWorld || 1;
-    furthest =
-      w === 1 ? `World 1 - ${WORLD_NAMES[1]}, stop ${META.bestRun}/21` : `World ${w} - ${WORLD_NAMES[w] || ''}`;
+    bestRun = w === 1 ? `World 1 - ${WORLD_NAMES[1]}, ${META.bestRun}/21` : `World ${w} - ${WORLD_NAMES[w] || ''}`;
   }
   const row = (label, value) =>
-    `<div class="homeStat"><span class="homeStatLabel">${label}</span><span class="homeStatValue">${value}</span></div>`;
-  return `<div class="homeStats">${row('Furthest', furthest)}${row('High score', META.highScore)}</div>`;
+    `<div class="homeStat"><span class="homeStatLabel">${label}</span> <span class="homeStatValue">${value}</span></div>`;
+  return `<div class="homeStats" id="homeStats">${row('Best Run:', bestRun)}${row('High Score:', META.highScore)}</div>`;
+}
+// Both stat lines share one font size, shrunk only as much as needed so each stays on one line.
+function fitHomeStats() {
+  const box = document.getElementById('homeStats');
+  if (!box) return;
+  let size = 14;
+  box.style.fontSize = size + 'px';
+  while (size > 10.5 && [...box.children].some((r) => r.scrollWidth > r.clientWidth + 1)) {
+    size -= 0.5;
+    box.style.fontSize = size + 'px';
+  }
 }
 
 // Add to Home Screen tip. Only shown on phones and tablets that are not already running the game from the
@@ -77,8 +87,8 @@ let HOME_TIP_POPUP = false;
 function homeTipBannerHTML() {
   if (META.hideHomeTip || !homeScreenPlatform()) return '';
   return (
-    `<div class="homeTipBanner"><span class="homeTipText">Plays better on your phone when added to your ` +
-    `Home Screen.</span><button class="wo-btn teal homeTipBtn" id="homeTipShowBtn">Show me how</button>` +
+    `<div class="homeTipBanner"><span class="homeTipText">Play better: add to your ` +
+    `home screen.</span><button class="homeTipBtn" id="homeTipShowBtn">Show me how</button>` +
     `<button class="homeTipClose" id="homeTipHideBtn" aria-label="Hide this tip">&times;</button></div>`
   );
 }
@@ -135,33 +145,28 @@ function metaScreen() {
         </div>
         ${homeStatsHTML()}
         ${homeTipBannerHTML()}
-        <div class="panel" style="margin-bottom:10px">
-          <input id="playerNameInput" type="text" maxlength="18" placeholder="Your name" ` +
-    `value="${(META.playerName || '').replace(/"/g, '&quot;')}" style="width:100%;padding:9px 10px;` +
-    `border:2px solid #1fb6a6;border-radius:6px;font-family:var(--disp);font-size:15px;color:#ffffff;background:#1a2038">
-        </div>
+        <input id="playerNameInput" class="homeNameInput" type="text" maxlength="18" placeholder="Your name" ` +
+    `value="${(META.playerName || '').replace(/"/g, '&quot;')}">
         ${
           hasSave
-            ? `<button class="wo-btn" id="continueRunBtn" style="margin-bottom:10px;` +
-              `width:100%">Continue Run</button>`
-            : `<button class="wo-btn" id="startRunBtn" ` + `style="margin-bottom:10px;width:100%">New Run</button>`
+            ? `<button class="wo-btn homeBtn" id="continueRunBtn">Continue Run</button>`
+            : `<button class="wo-btn homeBtn" id="startRunBtn">New Run</button>`
         }
         ${
           hasSave
-            ? `<button class="wo-btn gray" id="startRunBtn" style="width:100%;` +
-              `margin-bottom:10px">New Run (overwrites save)</button>`
+            ? `<button class="wo-btn gray homeBtn" id="startRunBtn">New Run (overwrites save)</button>`
             : ''
         }
-        <button class="wo-btn amber" id="viewUpgradesBtn" style="width:100%">Career Point Upgrades (${META.points})</button>
+        <button class="wo-btn amber homeBtn" id="viewUpgradesBtn">Career Point Upgrades (${META.points})</button>
         ${
           META.devModeActive
             ? `<button class="wo-btn gray" style="width:100%;margin-top:10px;` +
               `padding:6px 10px;font-size:12px" onclick="render(diffScreen())">Difficulty Tuning</button>`
             : ''
         }
-        <details class="panel" style="margin-top:12px">
+        <details class="panel homeSavePanel">
           <summary class="note" style="margin:0;cursor:pointer;font-weight:700">Move my save to ` +
-    `another browser or Home Screen</summary>
+    `another browser or home screen</summary>
           <div class="note" style="margin:8px 0 6px">On the one that has your progress, tap ` +
     `Make code, then copy the code. On the new one, paste it in the box and tap Load code.</div>
           <textarea id="saveCodeBox" rows="3" placeholder="Save code" style="width:100%;` +
@@ -177,11 +182,9 @@ function metaScreen() {
           </div>
           <div class="note" id="saveCodeMsg" style="margin:6px 0 0"></div>
         </details>
-        <div style="display:flex;align-items:center;gap:10px;opacity:0.7;margin-top:12px;` +
-    `padding-top:10px;border-top:1px solid rgba(255,255,255,0.08)">
-          <div class="note" style="margin:0;font-size:11px;white-space:nowrap">Made by Drew</div>
-          <div class="note" style="margin:0;flex:1;text-align:right;font-size:11px">Feedback ` +
-    `and bug reports welcome, send them to Drew.</div>
+        <div class="homeFooter">
+          <div class="homeMadeBy"><span class="homeMadeByLabel">Made by</span><span class="homeMadeByName">Drew</span></div>
+          <div class="homeFeedback">Feedback and bug reports are appreciated</div>
         </div>
       </div>
     </div>

@@ -392,6 +392,7 @@ const UPDATE_LOG = [
       'Match game prizes now use the same colors, icons and font as the resource bar at the top, for pairs and for the end of visit total.',
     ],
     Visual: [
+      'Home Screen polish: Best Run and High Score share one size on one line each, the home screen tip is a bright yellow banner on two lines, the name box, buttons and save box line up at the same width, and Made by Drew and the feedback line are cleaner.',
       'Home Screen cleanup: the Career Points note moved to a one time popup after your first win, the stats now show how far you got (World, name and stop) and your high score, and the Career Points count is on the upgrades button.',
       'The Welcome line is gone. The name box just says Your name.',
       'New tip on the Home Screen for phones that explains how to add the game to your Home Screen on iPhone or Android.',

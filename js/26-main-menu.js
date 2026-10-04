@@ -170,7 +170,7 @@ function metaScreen() {
       <div>🏆 Haley was first to beat World 2!</div>
     </div>
     ${updateLogHTML()}
-    ${META.hideSaveBox ? '' : `<div class="homeSaveWrap">
+    ${META.hideSaveBox ? `<div class="homeSaveShowRow"><button class="homeSaveShow" id="homeSaveShowBtn">Show save transfer box</button></div>` : `<div class="homeSaveWrap">
         <details class="panel homeSavePanel">
           <summary class="note homeSaveSummary">Move my save to another browser or phone</summary>
           <div class="note" style="margin:8px 0 6px">On the one that has your progress, tap Make code, then copy the code. On the new one, paste it in the box and tap Load code.</div>

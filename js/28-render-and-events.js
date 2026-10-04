@@ -457,6 +457,13 @@ function render(html) {
       saveMeta();
       render(metaScreen());
     };
+  const homeSaveShowBtn = document.getElementById('homeSaveShowBtn');
+  if (homeSaveShowBtn)
+    homeSaveShowBtn.onclick = () => {
+      META.hideSaveBox = false;
+      saveMeta();
+      render(metaScreen());
+    };
   const homeTipOkBtn = document.getElementById('homeTipOkBtn');
   if (homeTipOkBtn)
     homeTipOkBtn.onclick = () => {

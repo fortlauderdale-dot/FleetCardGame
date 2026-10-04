@@ -590,3 +590,5 @@ body {
   .homeFooter { gap: 14px; }
   .homeFeedback { font-size: 10.5px; }
 }
+.homeSaveShowRow { text-align: center; margin: 10px 0 4px; }
+.homeSaveShow { background: none; border: none; color: var(--dim); font-size: 11px; text-decoration: underline; cursor: pointer; padding: 4px 8px; opacity: 0.8; }

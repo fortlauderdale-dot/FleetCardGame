@@ -604,3 +604,4 @@ body {
 .homeCredit { display: block; margin-top: 6px; padding-right: 2px; font-size: 11px; font-weight: 400; line-height: 1.2; letter-spacing: 0.02em; color: var(--dim); opacity: 0.75; }
 .homeBtn, .homeNameInput { font-size: 20px; }
 .homeRunRow .homeBtn { flex: 0 0 46%; }
+.homeTitleCol { margin-top: -20px; margin-bottom: -20px; }

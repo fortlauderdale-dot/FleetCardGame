@@ -4545,7 +4545,8 @@ function diffTuneOpponent(scaled, base, row, kind) {
   if (DIFF.curseBoost && rec.cm > 1) scaled.diffCurseMult = rec.cm;
   if (st >= 0.5) {
     if (rec.d !== base.drawRate) scaled.drawRate = rec.d;
-    if (DIFF.drawOnHit && rec.dh && !scaled.special) scaled.special = { type: 'drawOnHit', amount: 1 };
+    // Draw on hit starts after the Fleet Compound in World 1 (row 10), never before it.
+    if (DIFF.drawOnHit && rec.dh && !scaled.special && (RUN.world >= 2 || row > 10)) scaled.special = { type: 'drawOnHit', amount: 1 };
   }
   scaled.hp = Math.max(1, Math.round(scaled.hp * hpF));
   // estimate: blend between the raw number and the fully corrected number by strength, then apply the damage dials
@@ -7425,8 +7426,8 @@ function opponentPlannedAttackCards(maxCards) {
     const key = `${items[slotPos]}_${slotPos}`;
     if (BATTLE.opponentItemFrozen && BATTLE.opponentItemFrozen[key]) continue;
     const itemCap = effectiveMaxCards(item) ?? maxCards;
-    const best = findOpponentCombo(BATTLE.oppPool, item.condition, itemCap);
-    const cond = best ? checkCondition(item.condition, best.cards) : { met: false };
+    const best = findOpponentCombo(BATTLE.oppPool, opponentCond(item), itemCap);
+    const cond = best ? checkCondition(opponentCond(item), best.cards) : { met: false };
     if (BATTLE.opponentItemBurns && BATTLE.opponentItemBurns[key]) { if (!burnPick && cond.met) burnPick = best; continue; }
     if (cond.met && best && opponentAttackIsValid(item, best, BATTLE.oppPool, itemCap)) return best.cards;
   }
@@ -7829,6 +7830,13 @@ function resolveOpponentAttackEffect(attack, oppDmg) {
   }
   return '';
 }
+// Opponent Items fire on exactly the hand they name. "Needs Two Pair" no longer fires on a straight or a flush
+// just because those rank higher (a player's own Items keep the "this hand or better" rule).
+function opponentCond(item) {
+  const c = item && item.condition;
+  if (c && c.type === 'pokerTier' && c.tier >= 1 && !c.exactTier) return { ...c, exactTier: true };
+  return c;
+}
 function opponentHasExactPokerTier(pool, tier, maxCards) {
   const cap = Math.min(maxCards, pool.length);
   if (cap <= 0) return false;
@@ -8017,15 +8025,15 @@ function endTurn() {
           if ((oppItemUsesThisTurn[itemId] || 0) >= cap) continue;
        if (BATTLE.opponentItemBurns && BATTLE.opponentItemBurns[slotKeyForBurn]) {
             if (!burnBlockedPick) {
-              const bestBurn = findOpponentCombo(BATTLE.oppPool, item.condition, effectiveMaxCards(item) ?? maxCards);
-              const condBurn = bestBurn ? checkCondition(item.condition, bestBurn.cards) : { met: false };
+              const bestBurn = findOpponentCombo(BATTLE.oppPool, opponentCond(item), effectiveMaxCards(item) ?? maxCards);
+              const condBurn = bestBurn ? checkCondition(opponentCond(item), bestBurn.cards) : { met: false };
               if (condBurn.met) burnBlockedPick = { item, best: bestBurn, cond: condBurn, key: slotKeyForBurn };
             }
             continue;
           }
           const itemCap = effectiveMaxCards(item) ?? maxCards;
-          const best = findOpponentCombo(BATTLE.oppPool, item.condition, itemCap);
-          const cond = best ? checkCondition(item.condition, best.cards) : { met: false };
+          const best = findOpponentCombo(BATTLE.oppPool, opponentCond(item), itemCap);
+          const cond = best ? checkCondition(opponentCond(item), best.cards) : { met: false };
           const validPokerAttack = best && opponentAttackIsValid(item, best, BATTLE.oppPool, itemCap);
           if (cond.met && validPokerAttack) { itemPick = { item, best, cond, key: slotKeyForBurn }; break; }
         }
@@ -9804,6 +9812,8 @@ const UPDATE_LOG = [
       'New Items: Full Pallet, Roof Rack, Hose Slam and a set of new vehicle Items. Some can fire several times a turn, and some cost HP or heal you when fired.',
     ],
     Opponents: [
+      'Opponent Items that name a hand now fire on exactly that hand. Feral Beach Cat\'s Claw Skirmish needs Two Pair, so it no longer fires on a straight or a straight flush.',
+      'Opponents with draw on hit no longer show up before the Fleet Compound in World 1.',
       'Frozen opponent Items now thaw the way yours do. The opponent feeds spare cards into the ice, keeps the cards its best attack needs, and the battle log shows which cards it used. A frozen Item cannot fire until it has thawed.',
       'Opponents no longer hex your Items for now. Their old hex Items hit like normal attacks instead.',
       'Bosses have less health than before, and the World 3 and World 4 bosses no longer freeze your Items.',

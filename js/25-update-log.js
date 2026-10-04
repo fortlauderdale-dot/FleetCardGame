@@ -382,6 +382,12 @@ const UPDATE_LOG = [
       'Opponents no longer hex your Items for now. Their old hex Items hit like normal attacks instead.',
       'Bosses have less health than before, and the World 3 and World 4 bosses no longer freeze your Items.',
     ],
+    'Item cards': [
+      'Item cards and the battle log no longer use exclamation marks, like Bonus +50% if Pair.',
+    ],
+    Visual: [
+      'The Dealership now shows its Item cards three across on phones.',
+    ],
     Misc: [
       ('You can now move your save to another browser or a Home Screen icon. On the home screen, ' +
         'open Move my save, tap Make code, copy it, then paste it into the same box on the other one and tap Load code.'),

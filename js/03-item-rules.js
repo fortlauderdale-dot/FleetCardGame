@@ -72,8 +72,8 @@ function checkCondition(cond, cards) {
   return result;
 }
 function bonusConditionText(cond) {
-  if (cond?.type === 'suitCount') return `${cond.count}${suitMicroCardHTML(cond.suit)}!`;
-  return `${describeCondition(cond)}!`;
+  if (cond?.type === 'suitCount') return `${cond.count}${suitMicroCardHTML(cond.suit)}`;
+  return `${describeCondition(cond)}`;
 }
 function itemBonusLineHTML(item, level) {
   if (!item.bonus) return '';

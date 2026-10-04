@@ -430,35 +430,35 @@ function executePlayerAttack(itemId, index) {
       if (freezeEligible.length) {
         BATTLE.pendingTarget = { type: 'ice', itemName: item.name, threshold: item.freezeThreshold || 20 };
         battleLog(
-          `${item.name} [${cardsStr}] - ${condResult.label}! Select an item slot ` +
+          `${item.name} [${cardsStr}] - ${condResult.label} Select an item slot ` +
             `on ${BATTLE.opponent.name}'s inventory to freeze.`
         );
       } else {
-        battleLog(`${item.name} [${cardsStr}] - ${condResult.label}! No eligible Item to freeze right now.`);
+        battleLog(`${item.name} [${cardsStr}] - ${condResult.label} No eligible Item to freeze right now.`);
       }
       playSfx('freeze');
     } else if (amount > 0 || item.flatAmount != null) {
       if (eKind === 'defense') {
         BATTLE.playerArmor += amount;
-        battleLog(`${item.name} [${cardsStr}] - ${condResult.label}! +${amount} armor - ${breakdown}`);
+        battleLog(`${item.name} [${cardsStr}] - ${condResult.label} +${amount} armor - ${breakdown}`);
         playSfx('armor');
         flashScreen('shield');
       } else if (eKind === 'poison') {
         BATTLE.opponent.poisonStacks = BATTLE.opponent.poisonStacks || [];
         BATTLE.opponent.poisonStacks.push(amount);
-        battleLog(`${item.name} [${cardsStr}] - ${condResult.label}! Applied ${amount} poison (${breakdown}).`);
+        battleLog(`${item.name} [${cardsStr}] - ${condResult.label} Applied ${amount} poison (${breakdown}).`);
         playSfx('poison');
       } else if (eKind === 'burn') {
         BATTLE.pendingTarget = { type: 'burn', amount, itemName: item.name };
         battleLog(
-          `${item.name} [${cardsStr}] - ${condResult.label}! Select an item slot ` +
+          `${item.name} [${cardsStr}] - ${condResult.label} Select an item slot ` +
             `on ${BATTLE.opponent.name}'s inventory to ignite for ${amount}. It grows every turn (${breakdown}).`
         );
         playSfx('burn');
       } else if (eKind === 'curse') {
         BATTLE.pendingTarget = { type: 'curse', amount, itemName: item.name };
         battleLog(
-          `${item.name} [${cardsStr}] - ${condResult.label}! Select an item slot ` +
+          `${item.name} [${cardsStr}] - ${condResult.label} Select an item slot ` +
             `on ${BATTLE.opponent.name}'s inventory to curse for ${amount} (${breakdown}).`
         );
         playSfx('curse');
@@ -481,11 +481,11 @@ function executePlayerAttack(itemId, index) {
         if (BATTLE.opponent.hpNow > 0) {
           BATTLE.pendingTarget = { type: 'hex', itemName: item.name };
           battleLog(
-            `${item.name} [${cardsStr}] - ${condResult.label}! ${amount} ` +
+            `${item.name} [${cardsStr}] - ${condResult.label} ${amount} ` +
               `damage${armorNote} (${breakdown}). Pick one of ${BATTLE.opponent.name}'s Items to hex.`
           );
         } else {
-          battleLog(`${item.name} [${cardsStr}] - ${condResult.label}! ${amount} damage${armorNote} (${breakdown}).`);
+          battleLog(`${item.name} [${cardsStr}] - ${condResult.label} ${amount} damage${armorNote} (${breakdown}).`);
         }
         if (armorAbsorbed > 0) playSfx('shield');
         playSfx('hex');
@@ -506,7 +506,7 @@ function executePlayerAttack(itemId, index) {
             ? ` (${armorAbsorbed} blocked by their ` +
               `armor${BATTLE.opponent.armor > 0 ? `, ${BATTLE.opponent.armor} ` + `left` : ''})`
             : '';
-        battleLog(`${item.name} [${cardsStr}] - ${condResult.label}! ${amount} damage${armorNote} (${breakdown}).`);
+        battleLog(`${item.name} [${cardsStr}] - ${condResult.label} ${amount} damage${armorNote} (${breakdown}).`);
         if (armorAbsorbed > 0) playSfx('shield');
         playSfx('hit');
         flashScreen('hit-opponent');

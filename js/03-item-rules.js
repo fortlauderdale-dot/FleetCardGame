@@ -198,7 +198,8 @@ function formatKindAmount(item, kindTagHTML, flatShown = null) {
   }
   const maxC = effectiveMaxCards(item);
   const multVal = item.baseMult ?? 1;
-  const amountText = multVal !== 1 ? `&times;${multVal}` : maxC > 1 ? SIGMA_TIP : '';
+  // Damage comes from the total value of the cards played (the summation), times the multiplier.
+  const amountText = multVal !== 1 ? `${SIGMA_TIP} &times;${multVal}` : maxC > 1 ? SIGMA_TIP : '';
   if (!amountText) return kindTagHTML || '';
   return kindTagHTML ? [kindTagHTML, amountText].filter(Boolean).join(' ') : `<b>Attack</b> ${amountText}`;
 }

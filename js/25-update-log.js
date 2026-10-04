@@ -362,6 +362,7 @@ const UPDATE_LOG = [
       'Pick Your Vehicle now shows a Perk card as well as the ability card.',
     ],
     'Item cards': [
+      'Item cards with a multiplier now show the summation symbol too, like Attack \u03a3 \u00d72, so it is clear what is being multiplied.',
       'Opponent Item cards now show the damage they really do, so a card that says 8 hits for 8.',
       ('Items that name a poker hand now fire on exactly that hand. A Pair Item no longer works ' +
         'with Three of a Kind, a Straight Item no longer works with a Straight Flush, and so on. A Flush ' +

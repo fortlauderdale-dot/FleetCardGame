@@ -40,7 +40,7 @@
   .fuelHealModal{align-items:flex-end;padding-bottom:min(34vh,220px)}
   .map-popup-overlay{position:fixed;inset:0;background:rgba(11,15,25,0.75);backdrop-filter:blur(4px);display:flex;align-items:flex-start;justify-content:center;z-index:10000;padding:14px;padding-top:90px;overflow-y:auto}
   .map-popup-overlay .wo{max-width:400px;width:100%;margin:0}
-  .map-popup-overlay .wo.wide{max-width:640px}
+  .map-popup-overlay .wo.wide{max-width:720px}
   .popupHeroArt{margin:10px 0 6px;text-align:center}
   .popupHeroArt img{display:block;width:100%;max-height:300px;object-fit:contain;margin:0 auto;border-radius:10px}
   .popupHeroFallback{font-size:120px;line-height:1.1;text-align:center}
@@ -83,6 +83,8 @@
   .wo-btn.gray{background:#3a4160;border-color:#252b46}
   #backToCastleMenuBtn{border:1px solid #1fb6a6;box-shadow:0 0 6px rgba(31,182,166,0.5)}
   .wo-btn.purple{background:var(--purple);border-color:#5c2ea0}
+  /* The three buttons in the top resource bar (Run Upgrade purple, Forfeit Run red, Run Dashboard gray) share one size everywhere */
+  .currencyHeader .wo-btn.runBarBtn{padding:3px 7px !important;font-size:10px !important;line-height:1.2 !important;white-space:nowrap !important;min-width:0 !important;width:auto !important;flex:0 0 auto !important}
   .wo-btn.green{background:var(--green);border-color:#1f7a48}
   .wo-btn:disabled{opacity:.4;cursor:default}
   .wo-btn.half{width:48%}
@@ -309,7 +311,7 @@
   .tooltip{display:none;position:absolute;bottom:120%;left:50%;transform:translateX(-50%);z-index:90;
     background:#000000 !important;color:#ffffff !important;font-family:var(--mono);font-size:10.5px;line-height:1.5;
     padding:7px 10px;border-radius:6px;white-space:nowrap;z-index:5;box-shadow:0 0 8px rgba(31,182,166,0.4);border:1px solid #1fb6a6;text-align:left}
-  .mapnode{position:relative;width:74px;height:74px;border-radius:50%;overflow:hidden;
+  .mapnode{position:relative;width:90px;height:90px;border-radius:50%;overflow:hidden;
     font-size:19px;display:flex;align-items:center;justify-content:center;border:2px solid;background:var(--white)}
   /* Per-image map-node zoom: several AI-generated icons/opponent art have a lot of empty
      transparent margin baked into the square canvas, so the subject reads small inside the round
@@ -406,7 +408,11 @@
      wide enough for 2 item cards per row); the picture fills the remaining width on the right and is
      height-matched to that column by syncStopArtHeights(), called after every render() ---*/
   .stopArtRow{display:flex;align-items:flex-start;flex-wrap:nowrap;gap:14px;margin:2px 0 4px}
-  .sdLeftCol{display:flex;flex-direction:column;flex:0 0 270px;min-width:0;gap:6px}
+  .sdLeftCol{display:flex;flex-direction:column;flex:0 0 400px;min-width:0;gap:6px}
+  /* Item cards on Stop Details sit three across and stretch to fill the column */
+  .sdLeftCol .popupItemRow{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;justify-content:stretch}
+  .sdLeftCol .popupItemRow .itemCard{width:100%;min-width:0;max-width:none}
+  .stopBossTag{margin-left:auto;color:var(--red);font-weight:800;font-size:15px;white-space:nowrap}
   .stopArtBig{flex:1 1 auto;width:auto;max-width:none;display:flex;align-items:center;justify-content:center}
   .stopArtBig .vart{width:100% !important;height:100% !important;font-size:70px !important}
   .stopArtBig .vart span{font-size:70px !important}
@@ -415,7 +421,7 @@
   .stopArtBig .vart img{width:100%;height:100%;object-fit:contain;border-radius:8px}
   .stopArtStats{width:100%;min-width:0;display:flex;flex-direction:column;gap:3px}
   .stopStatLine{display:flex;justify-content:flex-start;gap:8px;font-weight:700;font-size:12px;color:var(--ink);padding:2px 0;border-bottom:1px solid rgba(255,255,255,0.08)}
-  .stopStatLabel{color:var(--dim);min-width:64px}
+  .stopStatLabel{color:var(--dim);min-width:112px;flex:0 0 auto}
   .map-popup-overlay .wo-stripe{display:none}
   .map-popup-overlay .wo-eyebrow{display:none}
   .fleetgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -536,9 +542,15 @@
   .mapnode.type-treasure{background:#effbf1;border-color:#4cae68}
   .mapnode.type-rest{background:#fff9df;border-color:#d5b24a}
   .mapnode.type-blacksmith,.mapnode.type-chopshop{background:#fff8e9;border-color:#d99a30}
-  .mapnode.type-castle{background:#f2edff;border-color:#8a4fe0;width:120px;height:120px;font-size:52px;opacity:1;box-shadow:0 0 0 7px rgba(138,79,224,0.28),0 0 24px rgba(138,79,224,0.55);animation:castleGlow 2.4s ease-in-out infinite}
+  .mapnode.type-castle{background:#f2edff;border-color:#8a4fe0;width:148px;height:148px;font-size:64px;opacity:1;box-shadow:0 0 0 7px rgba(138,79,224,0.28),0 0 24px rgba(138,79,224,0.55);animation:castleGlow 2.4s ease-in-out infinite}
   @keyframes castleGlow{0%,100%{box-shadow:0 0 0 7px rgba(138,79,224,0.28),0 0 18px rgba(138,79,224,0.5)}50%{box-shadow:0 0 0 11px rgba(138,79,224,0.4),0 0 30px rgba(138,79,224,0.8)}}
   .mapnode-wrap.castlenode{z-index:20}
+  /* Stops you have not scouted yet: the fog picture fills the whole circle until the stop is uncovered */
+  .mapnode.fogged{background:#4a505e url('Icons/fog-bank.png') 50% 55%/auto 215% no-repeat !important;border-color:#8a8f9e !important;opacity:1 !important;box-shadow:inset 0 0 14px rgba(8,10,16,0.6)}
+  /* The page itself should not scroll on the map screen: no extra bottom padding, and the dynamic viewport height so a phone's browser bar does not add scroll */
+  body:has(#map-viewport) #app{padding-bottom:12px}
+  body:has(#map-viewport){min-height:0}
+  html:has(#map-viewport){min-height:0}
   .regionCaption{text-align:center;font-family:var(--disp);font-weight:700;font-size:14px;color:#1fb6a6;letter-spacing:0.02em;margin-top:8px}
   @media (max-width:700px){.resourceRow{grid-template-columns:1fr}}
   .castleMenu{display:flex;flex-direction:column;gap:10px;margin:14px auto;max-width:440px}
@@ -4653,13 +4665,16 @@ function diffIntensity(o) {
   return { label, color, pressure, styles: li.styles, est: li.est, was: li.was, sp: li.pressure };
 }
 function diffDifficultyRow(o, diff) {
+  // Returns a list of stat rows: Difficulty, then Strategic pressure on its own line directly below it.
   const li = diffIntensity(o);
-  if (!li) return ['Difficulty', `<span class="hoverTip" style="color:${diff.color};font-weight:800" data-title="A gauge of how tough this fight is, based on its HP, armor, and item power - higher difficulty pays out better rewards.">${diff.label}</span>`];
+  if (!li) return [['Difficulty', `<span class="hoverTip" style="color:${diff.color};font-weight:800" data-title="A gauge of how tough this fight is, based on its HP, armor, and item power - higher difficulty pays out better rewards.">${diff.label}</span>`]];
   const styleTip = li.styles.map(s => `${s}: ${DIFF_STYLE_TEXT[s] || ''}`).join(' ');
-  return ['Difficulty', `<span class="hoverTip" style="color:${li.color};font-weight:800" data-title="How much of your health this fight is expected to cost, compared with the healthy range for this kind of fight in this world. Better fights pay slightly better rewards.">${li.label}</span>` +
-    ` <span class="hoverTip" style="opacity:.85" data-title="${styleTip.replace(/"/g, '&quot;')}">&middot; ${li.styles[0]}</span>` +
-    ` <span class="hoverTip" style="opacity:.85" data-title="How many decisions this opponent forces on you (curses, freezes, hexes, poison, draws). Low means play your best cards.">&middot; Strategic pressure: ${li.pressure}</span>` +
-    (DIFF.showNumbers ? `<div class="note" style="margin:2px 0 0;font-size:11px">Engine estimate: raw threat about ${li.est}% of your health, strategic pressure about ${li.sp}% (untuned raw threat ${li.was}%, healthy range ${li.lo.toFixed(0)}-${li.hi.toFixed(0)}%)</div>` : '')];
+  return [
+    ['Difficulty', `<span class="hoverTip" style="color:${li.color};font-weight:800" data-title="How much of your health this fight is expected to cost, compared with the healthy range for this kind of fight in this world. Better fights pay slightly better rewards.">${li.label}</span>` +
+      ` <span class="hoverTip" style="opacity:.85" data-title="${styleTip.replace(/"/g, '&quot;')}">&middot; ${li.styles[0]}</span>`],
+    ['Strategic pressure', `<span class="hoverTip" style="font-weight:800" data-title="How many decisions this opponent forces on you (curses, freezes, hexes, poison, draws). Low means play your best cards.">${li.pressure}</span>` +
+      (DIFF.showNumbers ? `<div class="note" style="margin:2px 0 0;font-size:11px;font-weight:400">Engine estimate: raw threat about ${li.est}% of your health, strategic pressure about ${li.sp}% (untuned raw threat ${li.was}%, healthy range ${li.lo.toFixed(0)}-${li.hi.toFixed(0)}%)</div>` : '')]
+  ];
 }
 let DIFF_REPORT_WORLD = 1;
 function diffIsChanged(key) { return JSON.stringify(DIFF[key]) !== JSON.stringify(DIFFICULTY_DEFAULTS[key]); }
@@ -8408,7 +8423,7 @@ function currencyBar(extraHTML = '') {
     ${usesCoinTravel() ? `<div class="cur chip" data-title="This vehicle has no fuel tank. Every stop you travel to costs ${coinTravelCost()} coins. If you cannot pay, it costs you health, the same as running out of fuel.">${ICON.coin} ${coinTravelCost()} per stop</div>` : `<div class="cur fuel" data-title="Fuel is spent when you travel to another stop.">${ICON.fuel} ${RUN.fuel}/${RUN.maxFuel} <span class="curLbl">Fuel</span></div>`}
     <div class="cur energy" data-title="Energy powers vehicle abilities.">${ICON.energy} ${RUN.energy}/${RUN.maxEnergy} <span class="curLbl">Energy</span></div>
     <div class="cur pts" data-title="Career Points carry over between playthroughs and only buy Permanent Upgrades.">${ICON.star} ${META.points} <span class="curLbl">Career Points</span></div>
-    <div style="margin-left:auto;display:flex;gap:6px">${META.devModeActive ? `<button class="wo-btn gray" id="devPanelBtn" style="padding:3px 7px;font-size:10px">[🛠️ DEV]</button>` : ''}<button class="wo-btn purple" id="openRunSummaryBtn" style="padding:3px 7px;font-size:10px">Run Dashboard</button></div>
+    <div style="margin-left:auto;display:flex;gap:6px">${META.devModeActive ? `<button class="wo-btn gray runBarBtn" id="devPanelBtn">[🛠️ DEV]</button>` : ''}<button class="wo-btn gray runBarBtn" id="openRunSummaryBtn">Run Dashboard</button></div>
     ${extraHTML}
   </div>`;
 }
@@ -8487,13 +8502,14 @@ function nodePopupContent(r, c) {
     </div>`;
     return {
       title: o.name, art: art(o, 140), bigArt: true, rewardsInline,
+      titleTag: o.boss ? '<span class="stopBossTag">World Boss</span>' : '',
       rows: [
         ['HP', `${o.hp}${armorTag}`],
         ['Draws', `${o.drawRate}/turn`],
-        diffDifficultyRow(o, diff),
+        ...diffDifficultyRow(o, diff),
       ],
       itemsHTML: `<div class="popupItemRow">${opponentAttackBoxHTML(o)}</div>`,
-      extra: `${specialNote}${headsUpNote}${o.boss ? `<div class="note" style="color:var(--red);font-weight:700;margin-top:4px">World Boss</div>` : isElite ? `<div class="note" style="color:#d9861f;font-weight:700;margin-top:4px">Elite Battle</div>` : ''}`,
+      extra: `${specialNote}${headsUpNote}${o.boss ? '' : isElite ? `<div class="note" style="color:#d9861f;font-weight:700;margin-top:4px">Elite Battle</div>` : ''}`,
       rewards: { chipReward, gemReward, fuelReward },
       actionLabel: o.boss ? 'Battle Boss' : isElite ? 'Battle Elite' : 'Battle',
       eyebrow: o.boss ? 'Boss Battle' : isElite ? 'Elite Battle' : 'Stop Details',
@@ -8536,6 +8552,7 @@ function nodePopupScreen(r, c) {
         <div class="stopTitleRow">
           <h1 style="margin:2px 0 0">${info.title}</h1>
           ${info.rewardsInline || ''}
+          ${info.titleTag || ''}
         </div>
         <div class="stopArtRow">
           <div class="sdLeftCol">
@@ -8567,9 +8584,14 @@ function mapScreen() {
   const rows = RUN.map.nodes;
   const colW = 118;
   // Taller map on a phone held upright so it fills more of the screen
-  const mapH = (window.innerHeight > window.innerWidth && window.innerWidth <= 700) ? Math.round(Math.min(620, Math.max(345, window.innerHeight * 0.64))) : 345;
-  const mapS = mapH / 345;
-  const rowY = [65, 165, 265].map(y => Math.round(y * mapS));
+  const mapH = (window.innerHeight > window.innerWidth && window.innerWidth <= 700) ? Math.round(Math.min(620, Math.max(336, window.innerHeight * 0.58))) : 336;
+  // Rows keep a small fixed margin from the top and bottom edge, so a taller map spreads the rows apart
+  // instead of adding empty space above and below them.
+  // The map box has 16px of padding and border above the nodes and 14px below, so the top row sits 6px in from the
+  // top (still room for the tag) and the bottom row ends 22px above the bottom edge. Both edges then look the same.
+  const NODE_R = 45;
+  const rowTop = 6 + NODE_R, rowBottom = mapH - 38 - NODE_R;
+  const rowY = [rowTop, Math.round((rowTop + rowBottom) / 2), rowBottom];
   const CASTLE_GAP = 65;
   const castleR = rows.findIndex(row => row.some(n => n && n.type === 'castle'));
   const colX = r => 25 + r*colW + colW/2 + (castleR < 0 ? 0 : r > castleR ? CASTLE_GAP*2 : r === castleR ? CASTLE_GAP : 0);
@@ -8616,10 +8638,10 @@ function mapScreen() {
       const withinSight=r<=RUN.currentRow+visibleRange;
       const showReal=isBoss||isDone||isAvail||withinSight||isCastle;
       const isWorldBossNode = isBoss;
-      const cls=(isCurrent?'current':isDone?'done':isAvail?'avail':withinSight||isCastle?'future':'farfuture')+(isWorldBossNode?' worldboss':'')+(isElite?' elitenode':'');
-      const iconSize=isCastle&&showReal?84:isWorldBossNode&&showReal?62:46;
-      const battleIconSize=isWorldBossNode?104:78;
-      const icon=!showReal?`<span class="vart" style="width:30px;height:30px;font-size:30px">${ICON.fog}</span>`:(node.type==='battle'?art(node.opponent,battleIconSize):(NODE_ICON_FILE[node.type]?iconImg(NODE_ICON_FILE[node.type],NODE_ICON[node.type],iconSize):`<span class="vart" style="width:${iconSize}px;height:${iconSize}px;font-size:${iconSize}px">${NODE_ICON[node.type]}</span>`));
+      const cls=(isCurrent?'current':isDone?'done':isAvail?'avail':withinSight||isCastle?'future':'farfuture')+(isWorldBossNode?' worldboss':'')+(isElite?' elitenode':'')+(showReal?'':' fogged');
+      const iconSize=isCastle&&showReal?104:isWorldBossNode&&showReal?62:56;
+      const battleIconSize=isWorldBossNode?104:94;
+      const icon=!showReal?'':(node.type==='battle'?art(node.opponent,battleIconSize):(NODE_ICON_FILE[node.type]?iconImg(NODE_ICON_FILE[node.type],NODE_ICON[node.type],iconSize):`<span class="vart" style="width:${iconSize}px;height:${iconSize}px;font-size:${iconSize}px">${NODE_ICON[node.type]}</span>`));
       const title=!showReal?'Unscouted':(node.type==='battle'?node.opponent.name:NODE_TITLE[node.type]);
       let tip;
       if(!showReal) tip='Move closer to scout this stop.';
@@ -8646,7 +8668,7 @@ function mapScreen() {
       </div>`;
     }
   }
-  return `<div id="map-viewport">${noticeHTML()}<div class="panel">${currencyBar(`<div style="margin-left:auto;display:flex;gap:6px"><button class="wo-btn purple" id="openRunUpgradeFromMapBtn" style="padding:4px 9px;font-size:11px;white-space:nowrap;border-width:1px">Run Upgrade</button><button class="wo-btn gray" id="forfeitRunBtn" style="padding:4px 9px;font-size:11px;white-space:nowrap;border-width:1px;box-shadow:none">Forfeit Run</button></div>`)}</div><div class="panel"><div class="mapwrap" style="width:100%;height:${totalH}px;overflow-x:auto;overflow-y:hidden;position:relative"><div style="position:relative;width:${totalW}px;height:${totalH}px"><svg width="${totalW}" height="${totalH}" viewBox="0 0 ${totalW} ${totalH}" style="position:absolute;left:0;top:0;pointer-events:none">${svgLines}</svg>${nodesHTML}${(() => { const parsedName = String(META.playerName || 'Commander').trim().replace(/\w\S*/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()); return (RUN.world === 1 && RUN.currentRow === -1 && !RUN.onboardingDismissed) ? `<div class="floating-tutorial-card"><div class="wo-eyebrow">Fleet Onboarding</div><h3>Welcome, ${parsedName}!</h3><p>Click the node to the left to start your journey.</p></div>` : ''; })()}</div>${MAP_POPUP ? nodePopupScreen(MAP_POPUP.row, MAP_POPUP.col) : ''}${TREASURE_POPUP ? treasureScreen(TREASURE_POPUP) : ''}${GARAGE_POPUP ? garageScreen(GARAGE_MESSAGE) : ''}${MATCH_OVERLAY_ACTIVE ? castleMatchScreen() : ''}</div><div class="regionCaption">World ${RUN.world}: ${WORLD_NAMES[RUN.world] || WORLD_NAMES[1]}</div></div></div>`;
+  return `<div id="map-viewport">${noticeHTML()}<div class="panel">${currencyBar(`<div style="margin-left:auto;display:flex;gap:6px"><button class="wo-btn purple runBarBtn" id="openRunUpgradeFromMapBtn">Run Upgrade</button><button class="wo-btn red runBarBtn" id="forfeitRunBtn">Forfeit Run</button></div>`)}</div><div class="panel"><div class="mapwrap" style="width:100%;height:${totalH}px;overflow-x:auto;overflow-y:hidden;position:relative"><div style="position:relative;width:${totalW}px;height:${totalH}px"><svg width="${totalW}" height="${totalH}" viewBox="0 0 ${totalW} ${totalH}" style="position:absolute;left:0;top:0;pointer-events:none">${svgLines}</svg>${nodesHTML}${(() => { const parsedName = String(META.playerName || 'Commander').trim().replace(/\w\S*/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()); return (RUN.world === 1 && RUN.currentRow === -1 && !RUN.onboardingDismissed) ? `<div class="floating-tutorial-card"><div class="wo-eyebrow">Fleet Onboarding</div><h3>Welcome, ${parsedName}!</h3><p>Click the node to the left to start your journey.</p></div>` : ''; })()}</div>${MAP_POPUP ? nodePopupScreen(MAP_POPUP.row, MAP_POPUP.col) : ''}${TREASURE_POPUP ? treasureScreen(TREASURE_POPUP) : ''}${GARAGE_POPUP ? garageScreen(GARAGE_MESSAGE) : ''}${MATCH_OVERLAY_ACTIVE ? castleMatchScreen() : ''}</div><div class="regionCaption">World ${RUN.world}: ${WORLD_NAMES[RUN.world] || WORLD_NAMES[1]}</div></div></div>`;
 }
 /* ========== RUN-SCOPED UPGRADES (paid with coins, last only for this run) ========== */
 const MAX_ITEM_CAP = 9; 
@@ -8854,8 +8876,8 @@ function battleScreen() {
 
   return `<div id="battle-viewport">
     <div class="panel">${currencyBar(`<div style="margin-left:auto;display:flex;gap:6px">
-        <button class="wo-btn purple" id="openRunUpgradeFromBattleBtn" style="padding:4px 9px;font-size:11px;white-space:nowrap;border-width:1px">Run Upgrade</button>
-        <button class="wo-btn gray" id="forfeitRunBtn" style="padding:4px 9px;font-size:11px;white-space:nowrap;border-width:1px;box-shadow:none">Forfeit Run</button>
+        <button class="wo-btn purple runBarBtn" id="openRunUpgradeFromBattleBtn">Run Upgrade</button>
+        <button class="wo-btn red runBarBtn" id="forfeitRunBtn">Forfeit Run</button>
       </div>`)}</div>
     <div class="panel duelHead">
       <div class="duelArt you"><div class="artZoomTrigger" data-artzoom="you">${art(HEROES[RUN.hero?.heroId] || PLAYER_ART, 72)}</div></div>
@@ -9825,6 +9847,7 @@ const UPDATE_LOG = [
       'Fleet Blackjack: the dealer now plays three hands, one facing each of yours, with one card showing on each. Your hands pay out on their own, so a strong dealer hand will not take all three. A true blackjack now beats a dealer 21 made with more cards. Rewards are bigger, and your two hands sit on top with the third centered below so everything fits without scrolling.',
       'Fleet Poker: two hands on top and one centered below, with the cards you are placing at the top. Tap an Item prize to see its real card. The computer\'s cards stay face up once yours are placed, the five board cards sit in one row with the Reveal button right under them, and the row stays pinned to the top if you scroll.',
       'Fleet Compound Dungeon: the three battles are compact rows so the page fits without scrolling, the Battle button is on top, and the win screen is shorter with a red Cash Out button.',
+      'The map screen no longer scrolls the page when there is nothing below the map.',
       'Prize Items from Poker or the Auction can no longer push you past your Item slots. If you have no open slot, the prize shows as grayed out and pays coins instead.',
     ],
     'Match game': [
@@ -9837,9 +9860,12 @@ const UPDATE_LOG = [
       'Pictures now fit their boxes on every screen, with the whole subject shown instead of being clipped. Logi Bear, NayNay and others are fixed, and the battle screen fits better on phones.',
       'On a phone held upright, the battle screen opens scrolled to your cards. Names stay on one line so the health bars line up, and a slim bar with both sides\' health and effects stays pinned at the top while you scroll. The pictures sit above it. Sort, Draw, Discard and your ability share one row. End Turn, the deck and a small Reveal a card button sit between the two hands, and the opponent\'s cards start on the right. Item cards now sit three across, and the top bar shows just icons and numbers during battle. The opponent\'s cards now follow your Sort, so its own Sort button is gone.',
       'Map icons are noticeably bigger and their pictures fill the circle more, so you can tell what each stop is at a glance.',
+      'Battle Stop Details are tidier. Item cards sit three across, Strategic pressure has its own line directly under Difficulty, and the battle type tag sits beside the name.',
+      'Run Upgrade, Forfeit Run and Run Dashboard are now the same size everywhere. Run Upgrade stays purple, Forfeit Run is red and Run Dashboard is gray.',
     ],
     Map: [
       'On a phone held upright the map is taller and fills more of the screen.',
+      'Stops sit closer to the top and bottom edges of the map, the Fleet Compound is much larger so it stands out as the focal point, and stops you have not scouted yet are filled with fog until they are uncovered.',
       'Hex Items show up much less often in the Dealership for now.',
     ],
   } },

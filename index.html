@@ -2,7 +2,12 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Fleet Duel">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="theme-color" content="#0b0f19">
 <script>if(location.protocol!=='http:'&&location.protocol!=='https:'){document.write('<base href="https://fortlauderdale-dot.github.io/FleetCardGame/">');}</script>
 <title>Fleet Duel</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -28,6 +33,7 @@
   body.world-8 .mapwrap{background:linear-gradient(0deg,rgba(235,80,60,.08) 1px,transparent 1px) 0 0/100% 32px,linear-gradient(90deg,rgba(235,80,60,.08) 1px,transparent 1px) 0 0/32px 100%,linear-gradient(135deg,#1a1012 0%,#2a1518 52%,#2b1d10 100%)}
   button{font-family:var(--disp);cursor:pointer}
   #app{max-width:1180px;margin:0 auto;padding:60px 18px 100px}
+  html,body{overscroll-behavior-y:none}
   .game-stage{}
   .treasure-modal{position:fixed;inset:0;background:rgba(11,15,25,0.75);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:10000;padding:20px}
   .treasure-modal .wo{max-width:560px;width:100%;margin:0}
@@ -39,15 +45,17 @@
   .popupHeroArt img{display:block;width:100%;max-height:300px;object-fit:contain;margin:0 auto;border-radius:10px}
   .popupHeroFallback{font-size:120px;line-height:1.1;text-align:center}
   .artZoomModal{cursor:zoom-out;z-index:20000}
-  .artZoomBox{position:relative;display:flex;flex-direction:column;align-items:center;gap:12px;cursor:default}
+  .artZoomBox{position:relative;display:flex;flex-direction:column;align-items:center;gap:12px;cursor:zoom-out}
   .artZoomImgWrap{width:min(70vw,420px);height:min(70vw,420px);display:flex;align-items:center;justify-content:center}
   .artZoomImgWrap .vart{width:100% !important;height:100% !important;font-size:min(70vw,420px) !important}
   .artZoomImgWrap .vart span{font-size:min(70vw,420px) !important}
   .artZoomLabel{color:var(--ink);font-weight:800;font-size:18px;text-align:center}
-  .artZoomClose{position:absolute;top:-16px;right:-16px;width:34px;height:34px;border-radius:50%;border:2px solid var(--dim);background:#1a2038;color:var(--ink);font-size:18px;line-height:1;cursor:pointer}
+  .artZoomClose{position:absolute;top:-20px;right:-20px;width:42px;height:42px;border-radius:50%;border:2px solid var(--dim);background:#1a2038;color:var(--ink);font-size:22px;line-height:1;cursor:pointer;z-index:2;padding:0}
+  .artZoomClose::after{content:'';position:absolute;inset:-10px}
   .artZoomTrigger{position:relative;cursor:zoom-in;display:inline-flex}
   .artZoomTrigger::after{content:'🔍';position:absolute;bottom:-2px;right:-2px;font-size:10px;background:rgba(11,15,25,0.8);border-radius:50%;width:16px;height:16px;display:flex;align-items:center;justify-content:center;opacity:0.85;pointer-events:none}
   .artZoomTrigger:hover::after{opacity:1}
+  #battle-viewport .artZoomTrigger::after{content:none}
   .match-modal{position:fixed !important;inset:0 !important;background:rgba(11,15,25,0.82) !important;backdrop-filter:blur(4px);display:flex !important;align-items:center !important;justify-content:center !important;z-index:3000000 !important;padding:20px;pointer-events:auto !important}
   .match-modal .wo{max-width:360px;width:100%;margin:0;pointer-events:auto}
   .match-modal.placed{display:block !important;padding:0}
@@ -141,6 +149,16 @@
   .duelSide .sideRow{min-height:34px}
   .vsMark{font-family:var(--mono);font-weight:800;color:var(--dim);font-size:13px}
   .bigicon{font-size:30px;line-height:1}
+  .itemCard.targetPickable{box-shadow:0 0 0 2px var(--amber);cursor:pointer}
+  .itemCard.targetPickable:hover{box-shadow:0 0 0 3px var(--amber),0 0 14px rgba(212,175,0,0.5)}
+  .itemCard.targetPicked,.itemCard.targetPicked:hover{box-shadow:0 0 0 3px #ffffff,0 0 16px var(--amber)}
+  .targetBar{position:fixed;left:0;right:0;bottom:0;z-index:9000;box-sizing:border-box;max-width:1180px;margin:0 auto;padding:8px 12px;background:#12163a;border-top:1px solid rgba(31,182,166,0.5);box-shadow:0 -2px 10px rgba(0,0,0,0.4);display:flex;align-items:center;gap:8px}
+  .targetBarText{flex:1 1 auto;min-width:0;font-size:12px;font-weight:700;color:var(--ink);line-height:1.25}
+  body:has(.targetBar) #app{padding-bottom:110px}
+  .abilityWrap{display:flex;gap:2px;min-width:0;flex:1 1 0}
+  .abilityWrap .abilityBtn{flex:1 1 0;min-width:0}
+  .abilityInfoBtn{flex:0 0 20px;width:20px;padding:0 !important;font-size:11px !important;font-style:italic;font-weight:800;min-width:0}
+  .abilityInfoLine{margin:6px 0 0;font-size:11px;line-height:1.35}
   .duelBoard{display:grid;grid-template-columns:1fr 90px 1fr;gap:8px;align-items:start}
   @media (max-width:700px){ .duelBoard{grid-template-columns:1fr} .duelHead{grid-template-columns:auto minmax(0,1fr) minmax(0,1fr) auto;column-gap:8px} .vsMark{display:none} }
   @media (max-width:480px){ .duelHead{column-gap:5px} .duelArt .vart{width:58px !important;height:58px !important} .duelSide h3{font-size:15px} }
@@ -584,7 +602,7 @@
     .duelSide .sideRow>div{display:flex;flex-wrap:wrap;gap:0 8px;justify-content:flex-start !important}
     .duelSide .sideRow span,.duelSide .sideRow .status{font-size:10px !important;margin-top:3px}
     .duelSide #fuelHealBtn{grid-column:2;grid-row:1;height:18px;box-sizing:border-box;margin:0;padding:0 5px !important;font-size:9.5px !important;line-height:16px}
-    .duelBoard{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:5px;margin-top:4px}
+    .duelBoard{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:2px 5px;margin-top:2px}
     .duelBoard .panel{padding:8px;margin-bottom:0}
     .duelBoard>.panel:first-child{padding-top:10px;padding-bottom:6px}
     .duelBoard .handWorkspace>.hand{padding-top:0;padding-bottom:0}
@@ -596,7 +614,10 @@
     .deckStack>div{grid-column:2;grid-row:2;align-self:center;justify-self:center}
     .deckStack #endTurnBtn{grid-column:1;grid-row:2;align-self:center;justify-self:start}
     .deckStack .card.back{width:40px;height:54px}
-    .deckStack #endTurnBtn{width:auto !important;max-width:none !important;padding:12px 20px !important;margin-top:0 !important}
+    .deckStack #endTurnBtn{width:auto !important;max-width:none !important;padding:8px 20px !important;margin-top:0 !important}
+    .duelBoard>.deckStack>div{padding-top:0 !important}
+    #battle-viewport .duelBoard .panel{margin-bottom:0 !important}
+    #battle-viewport .duelMatchup{margin-top:2px}
     .oppPoolPanel>.scoutRow{grid-column:3;grid-row:2;align-self:center;justify-self:end}
     #scoutBtn{padding:5px 9px !important;font-size:10px !important;line-height:1.2;white-space:normal;text-align:center}
     #scoutBtn .revCost{display:block}
@@ -606,7 +627,10 @@
     #battle-viewport .itemGrid .itemCard .hdr{font-size:11px;padding-right:8px;box-sizing:border-box}
     .playerActionGrid{display:flex;gap:3px;margin-top:5px;justify-content:space-between}
     .playerActionGrid .wo-btn{padding:5px 5px !important;font-size:10px !important;flex:0 0 auto !important;min-width:0}
+    .playerActionGrid .abilityWrap{flex:1 1 0 !important}
     .playerActionGrid .abilityBtn{flex:1 1 0 !important;padding:5px 2px !important;white-space:normal !important;line-height:1.1;font-size:9.5px !important}
+    .playerActionGrid .abilityInfoBtn{flex:0 0 20px !important;padding:0 !important}
+    #battle-viewport .artZoomTrigger::after{content:none}
   }
    #app h1:has(+ .currencyHeader){text-align:center !important;width:100% !important;margin-bottom:4px !important;} .combat-training-box{position:fixed !important;z-index:2000000 !important;width:280px !important;background:#12163a !important;border:2px dashed var(--amber) !important;box-shadow:0 0 20px rgba(31,182,166,0.45),4px 4px 0 #0b0f19 !important;padding:16px !important;border-radius:10px !important;text-align:left !important;white-space:normal !important;font-family:var(--disp) !important;}.combat-training-box .wo-eyebrow{color:var(--energy) !important;font-size:10px !important;font-weight:600;letter-spacing:0.05em !important;margin-bottom:4px !important;}.combat-training-box h3{font-size:16px !important;margin:0 0 6px 0 !important;color:#ffffff !important;}.combat-training-box p{font-size:12.5px !important;line-height:1.45 !important;color:var(--dim) !important;margin:0 0 12px 0 !important;}.combat-spotlight-focus{outline:9999px solid rgba(11,15,25,0.65) !important;z-index:1999999 !important;position:relative !important;box-shadow:0 0 15px 5px var(--energy) !important;pointer-events:auto !important;}
   /* ===== Fleet Plinko (Fleet Compound minigame) ===== */
@@ -668,6 +692,60 @@
   .fleetAuctionLotTitle{font-size:11px;color:var(--dim);letter-spacing:.05em}
   .fleetAuctionLotContents{margin-top:6px;font-size:16px;font-weight:800;color:var(--ink);min-height:22px}
   .fleetAuctionLotStatus{margin-top:6px;font-size:11.5px;color:var(--dim)}
+  .dungeonRows{display:flex;flex-direction:column;gap:6px}
+  .dungeonRow{display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--blue-light);border-radius:8px;padding:6px 8px}
+  .dungeonRowName{display:flex;flex-direction:column;min-width:64px;line-height:1.15;text-align:left}
+  .dungeonRowName span{font-size:11px;color:var(--dim);font-weight:700}
+  .dungeonRowRewards{flex:1;display:flex !important;flex-wrap:wrap;justify-content:flex-end;gap:4px;margin:0 !important;padding:0 !important}
+  .dungeonRowRewards .cur{padding:2px 6px;font-size:12px}
+  /* ===== Phone layout cleanup for every page: no blank gap above titles, tighter boxes, one-row nav buttons ===== */
+  @media (max-width:700px){
+    #app{padding-top:calc(var(--curH,0px) + 8px);padding-left:10px;padding-right:10px}
+    .wo{margin:6px 0}
+    .wo-stripe{height:6px}
+    .wo-body{padding:8px 12px 14px}
+    .wo h1{margin-top:0}
+    .facilityExitBtn,#leaveShopBtn,[id^="openRunUpgradeFrom"]{white-space:nowrap !important;font-size:12px !important;padding:9px 6px !important;min-width:0}
+    .facilityExitBtn,#leaveShopBtn{flex:1 1 auto !important}
+    [id^="openRunUpgradeFrom"]{flex:0 0 auto !important;width:auto}
+    .holoCard{padding:8px 4px !important;margin-bottom:6px}
+    .holoRow{gap:4px !important;margin:4px 0 !important}
+    .holoRow .itemCard{zoom:.82}
+    .holoMid{flex:0 1 84px !important;min-width:0}
+    .holoMid .wo-btn{white-space:normal !important;width:100%;line-height:1.15;padding:6px 3px !important;font-size:11.5px !important}
+    .holoMid .price{font-size:11.5px !important}
+    #blacksmith-viewport .panel{padding:6px}
+    .dashItemRow{display:grid !important;grid-template-columns:repeat(3,1fr) !important;gap:3px !important;justify-content:center}
+    .dashItemPanel{width:auto !important;min-width:0 !important;max-width:none !important;padding:2px !important;margin:0 !important}
+    .dashItemPanel .itemCard{zoom:.8}
+  }
+  /* ===== Shared layout for Fleet Blackjack / Fleet Poker: two hands on top, third centered below, small cards so it fits a phone ===== */
+  .card.sm{width:40px;height:56px;font-size:14px;cursor:default;gap:0}
+  .card.sm div:last-child{font-size:20px !important;line-height:1}
+  .card.back.sm::after{font-size:16px}
+  .card.sm.pick{cursor:pointer;width:46px;height:64px;font-size:16px}
+  .card.sm.pick div:last-child{font-size:23px !important}
+  .fleetTwoOne{display:grid !important;grid-template-columns:1fr 1fr;gap:8px;padding-top:6px;max-width:560px;margin:0 auto}
+  .fleetTwoOne > :nth-child(3){grid-column:1 / -1;justify-self:center;width:calc(50% - 4px)}
+  .fleetTwoOne > .fleetBjHand,.fleetTwoOne > .fleetPokerHand{min-width:0;padding:6px}
+  .fleetTwoOne .fleetBjHandCards,.fleetTwoOne .fleetPokerHandCards{min-height:58px;gap:3px}
+  .fleetBjHandCards.many{gap:0 !important}
+  .fleetBjHandCards.many .card:not(:first-child){margin-left:-12px}
+  .fleetTwoOne .fleetBjHandReward,.fleetTwoOne .fleetPokerHandReward{margin-bottom:2px;min-height:0}
+  .bjLine{display:flex;justify-content:space-between;align-items:baseline;gap:6px;font-size:11px;color:var(--dim);margin:3px 2px 2px}
+  .bjLine b{color:var(--ink);font-size:12.5px;font-weight:800;text-align:right}
+  .bjLine b.bjBust,.bjLine b.bjBust *{color:var(--red)}
+  .bjLine b.bjLocked{color:var(--green)}
+  .bjLine.you{border-top:1px dashed rgba(255,255,255,0.15);padding-top:3px;margin-top:5px}
+  .fleetGameNote{margin:2px 0 4px;font-size:11.5px}
+  .fleetResultBox{margin-top:8px;border:2px solid var(--green);border-radius:10px;padding:8px;text-align:center}
+  .fleetResultBox.lose{border-color:var(--red)}
+  .fleetTray{min-height:84px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4px 0 6px;border-bottom:1px dashed rgba(255,255,255,0.15);margin-bottom:6px}
+  .fleetPokerBoard{position:sticky;top:0;z-index:20;background:var(--white);padding:6px 0 8px;margin-bottom:4px;border-bottom:1px solid rgba(31,182,166,0.35);text-align:center}
+  .fleetPokerBoard .fleetPokerHandCards{min-height:0}
+  .fleetTwoOne .fleetPokerOutcome{margin-top:4px;font-size:12.5px}
+  .fleetTwoOne .fleetPokerHand .hoverTip{cursor:pointer}
+  @media (max-width:650px){.fleetGame{padding:10px 8px 12px !important}}
   @media (max-width:650px){ .fleetBjHand,.fleetPokerHand,.fleetAuctionLot{min-width:170px;padding:8px} .fleetPokerMatchSide{min-width:170px} }
 </style>
 </head>
@@ -1153,6 +1231,8 @@ function opponentAttackBoxHTML(opp, showStatus) {
   const swings = opp.usesPerTurn ?? OPPONENT_USES_PER_TURN_DEFAULT;
   if (opp.items && opp.items.length) {
     const pendingBurn = showStatus && BATTLE.pendingTarget && BATTLE.pendingTarget.type === 'burn' ? BATTLE.pendingTarget : null;
+    const tgt = showStatus && BATTLE.targeting ? BATTLE.targeting : null;
+    const tgtElig = tgt ? new Set(targetEligibleKeys(tgt.type)) : null;
     return opp.items.map((itemId, i) => {
       const item = ITEMS[itemId];
       if (!item) return '';
@@ -1164,6 +1244,7 @@ function opponentAttackBoxHTML(opp, showStatus) {
       const card = renderStandardItemCard(item, {
         usesBadgeText: item.followUp ? null : (swings === Infinity ? '∞' : String(swings)), frozenState: frozenAmt || null, burnedAmt: burnedNow || null, burnedStep: burnedStepNow, burnedDetonateKey: burnedNow ? key : null,
         burnTargetKey: isBurnTarget ? key : null, burnTargetAmount: isBurnTarget ? pendingBurn.amount : null,
+        pickKey: (tgtElig && tgtElig.has(key)) ? key : null, picked: !!(tgt && tgt.targetKey === key),
       });
       if (!showStatus) return card;
       if (isBurnTarget) return card;
@@ -2942,10 +3023,13 @@ function renderStandardItemCard(item, opts = {}) {
     usesBadgeText = null, usesDepleted = false, cooldownLeft = 0, hypPreviewHTML = '',
     footerHTML = null, level = 0, kindOverride = null, frozenState = null,
     burnTargetKey = null, burnTargetAmount = null, burnedAmt = null, burnedStep = 0, burnedDetonateKey = null,
+    pickKey = null, picked = false,
   } = opts;
   const eKind = kindOverride || effectiveKind(item);
   const burnOverlayHTML = burnTargetKey ? `<div class="burnTargetOverlay"><span>Burn: ${burnTargetAmount}</span></div>` : (burnedAmt ? `<div class="burnedOverlay"><span class="burnedLabel">Burn: ${burnedAmt} (+${burnedStep || 1} each turn)</span>${burnedDetonateKey ? `<button class="detonateItemBtn" data-detonateitem="${burnedDetonateKey}">Detonate for ${burnedAmt}</button>` : ''}</div>` : '');
-  const dragAttrs = burnTargetKey
+  const dragAttrs = pickKey
+    ? ` data-targetkey="${pickKey}" data-title="Tap to select ${item.name}" style="cursor:pointer"`
+    : burnTargetKey
     ? ` data-targetkey="${burnTargetKey}" data-title="Click to ignite ${item.name}" style="cursor:pointer"`
     : interactive
     ? ` data-assign="${slotKey}" style="border-style:dashed;border-width:2px"`
@@ -2992,7 +3076,7 @@ function renderStandardItemCard(item, opts = {}) {
   }).join('');
 
   const frozenReqLine = frozenState ? `<span class="hoverTip" data-title="This Item is frozen solid and can't fire. It thaws out on its own as its owner works through it.">Frozen: ${Math.max(0, frozenState.threshold - frozenState.progress)} to thaw</span>` : null;
-  return `<div class="itemCard kind-${eKind} ${ready ? 'ready' : ''} ${cursedAmt ? 'cursed' : ''} ${frozenState ? 'frozenLock' : ''} ${burnTargetKey ? 'burnTargetable' : ''} ${burnedAmt ? 'burned' : ''} ${burnedDetonateKey && burnedAmt ? 'burnedOpp' : ''}"${dragAttrs}>
+  return `<div class="itemCard kind-${eKind} ${ready ? 'ready' : ''} ${cursedAmt ? 'cursed' : ''} ${frozenState ? 'frozenLock' : ''} ${burnTargetKey ? 'burnTargetable' : ''} ${pickKey ? 'targetPickable' : ''} ${picked ? 'targetPicked' : ''} ${burnedAmt ? 'burned' : ''} ${burnedDetonateKey && burnedAmt ? 'burnedOpp' : ''}"${dragAttrs}>
     ${usesBadge}
     <div class="itemCard-sec">
       <div class="hdr" style="font-weight:600">${item.name}${cursedAmt ? ` <span class="vart" style="width:12px;height:12px;font-size:12px;color:var(--purple)">${ICON.curse}</span> cursed` : ''}</div>
@@ -5186,13 +5270,12 @@ function castleDungeonScreen(message='') {
     const nextLabel = p.stage === 1 ? 'the High-Roller Battle' : 'the Overlord Battle';
     return `<div class="treasure-modal"><div class="wo" style="max-width:440px">
       <div class="wo-stripe"></div>
-      <div class="wo-body" style="text-align:center">
-        <div class="wo-eyebrow">Battle ${p.stage} Won</div>
-        <h1>Good <em>Job!</em></h1>
+      <div class="wo-body" style="text-align:center;padding-top:10px">
+        <h1 style="margin-top:0">Good <em>Job!</em></h1>
         <div class="note">You earned ${formatRewardParts({ coins: p.reward.coins, gems: p.reward.gems, fuel: p.reward.fuel, energy: p.reward.energy }, { coins: 'coins', gems: 'gems', fuel: 'fuel', energy: 'energy' })}.</div>
-        <div class="note" style="margin-top:6px">Are you willing to risk your earnings and continue on?</div>
+        <div class="note" style="margin-top:6px;white-space:nowrap;font-size:clamp(10px,3.1vw,13px)">Risk your earnings and keep going?</div>
         <button class="wo-btn amber" id="dungeonContinueBtn" style="width:100%;margin-top:10px">Continue to ${nextLabel}</button>
-        <button class="wo-btn gray" id="dungeonCashOutBtn" style="width:100%;margin-top:8px">Cash Out and Leave</button>
+        <button class="wo-btn red" id="dungeonCashOutBtn" style="width:100%;margin-top:8px">Cash Out and Leave</button>
       </div>
     </div></div>`;
   }
@@ -5202,19 +5285,18 @@ function castleDungeonScreen(message='') {
     <div class="wo-stripe"></div><div class="wo-body">
       <h1>Fleet Compound <em>Dungeon</em></h1>
       ${currencyBar()}
-      <div style="display:flex;gap:8px;margin:10px 0">
+      <div style="display:flex;gap:8px;margin:8px 0">
         <button class="wo-btn facilityExitBtn" id="backToCastleMenuBtn" style="flex:1">Back to Compound</button>
         <button class="wo-btn purple" id="openRunUpgradeFromDungeonBtn" style="flex:1">Upgrades</button>
       </div>
       ${message ? `<div class="panel"><div class="note">${message}</div></div>` : ''}
-      <div class="note" style="color:var(--red);font-weight:700;margin-bottom:8px;text-align:center;font-size:13px">Leaving locks the dungeon for this world only - you can try again in a later world.</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
-        <div class="shopcard" style="text-align:center${RUN.castleState?.firstDone ? ';opacity:0.55' : ''}"><h3>Battle 1</h3><div class="note" style="margin:0 0 4px;font-weight:700">Moderate</div><div class="currencies" style="justify-content:center"><div class="cur chip">${ICON.coin} 45</div><div class="cur gem">${ICON.gem} 1</div>${fuelChipHTML(1)}<div class="cur energy">${ICON.energy} 2</div></div></div>
-        <div class="shopcard" style="text-align:center${RUN.castleState?.secondDone ? ';opacity:0.55' : ''}"><h3>Battle 2</h3><div class="note" style="margin:0 0 4px;font-weight:700">Hard</div><div class="currencies" style="justify-content:center"><div class="cur chip">${ICON.coin} 100</div><div class="cur gem">${ICON.gem} 2</div>${fuelChipHTML(2)}<div class="cur energy">${ICON.energy} 4</div></div></div>
-        <div class="shopcard" style="text-align:center${RUN.castleState?.thirdDone ? ';opacity:0.55' : ''}"><h3>Battle 3</h3><div class="note" style="margin:0 0 4px;font-weight:700">Extreme</div><div class="currencies" style="justify-content:center"><div class="cur chip">${ICON.coin} 160</div><div class="cur gem">${ICON.gem} 4</div>${fuelChipHTML(4)}<div class="cur energy">${ICON.energy} 8</div></div><div class="note" style="margin-top:4px">+ Item Card</div></div>
+      ${locked ? `<div class="note" style="margin-top:8px">Dungeon closed for this world. You cashed out after Battle ${RUN.castleState?.secondDone ? 2 : 1}.</div>` : !RUN.castleState?.firstDone ? `<button class="wo-btn amber" id="castleBattle1Btn" style="width:100%;margin-bottom:8px">Battle 1</button>` : RUN.castleState?.thirdDone ? `<div class="note" style="margin-top:8px">Dungeon cleared for this world.</div>` : ''}
+      <div class="note" style="color:var(--red);font-weight:700;margin:0 0 8px;text-align:center;font-size:12px">Leaving locks the dungeon for this world only. You can try again in a later world.</div>
+      <div class="dungeonRows">
+        <div class="dungeonRow" style="${RUN.castleState?.firstDone ? 'opacity:0.55' : ''}"><div class="dungeonRowName"><b>Battle 1</b><span>Moderate</span></div><div class="currencies dungeonRowRewards"><div class="cur chip">${ICON.coin} 45</div><div class="cur gem">${ICON.gem} 1</div>${fuelChipHTML(1)}<div class="cur energy">${ICON.energy} 2</div></div></div>
+        <div class="dungeonRow" style="${RUN.castleState?.secondDone ? 'opacity:0.55' : ''}"><div class="dungeonRowName"><b>Battle 2</b><span>Hard</span></div><div class="currencies dungeonRowRewards"><div class="cur chip">${ICON.coin} 100</div><div class="cur gem">${ICON.gem} 2</div>${fuelChipHTML(2)}<div class="cur energy">${ICON.energy} 4</div></div></div>
+        <div class="dungeonRow" style="${RUN.castleState?.thirdDone ? 'opacity:0.55' : ''}"><div class="dungeonRowName"><b>Battle 3</b><span>Extreme</span></div><div class="currencies dungeonRowRewards"><div class="cur chip">${ICON.coin} 160</div><div class="cur gem">${ICON.gem} 4</div>${fuelChipHTML(4)}<div class="cur energy">${ICON.energy} 8</div><div class="cur" style="font-size:11px">+ Item Card</div></div></div>
       </div>
-      ${locked ? `<div class="note" style="margin-top:8px">Dungeon closed for this world. You cashed out after Battle ${RUN.castleState?.secondDone ? 2 : 1}.</div>` : !RUN.castleState?.firstDone ? `
-      <div class="shopcard"><button class="wo-btn amber" id="castleBattle1Btn" style="width:100%">Battle 1</button></div>` : RUN.castleState?.thirdDone ? `<div class="note" style="margin-top:8px">Dungeon cleared for this world.</div>` : ''}
     </div>
   </div>`;
 }
@@ -5424,20 +5506,20 @@ const FLEET_PLINKO_CONFIG = {
     { id: 'premium', label: '+2 Gems', type: 'gems', amount: 2 },
     { id: 'coins_small2', label: '+8 Coins', type: 'coins', amount: 8 },
   ],
-  // Order in which board columns turn into Game Over as the round count climbs. Index 4 sits
-  // just right of center on an 8-wide board - the easiest column for a centered pyramid to drop
-  // a chip into - so it goes hot first instead of a fixed edge slot nobody ever actually lands
-  // in. From there the danger spreads outward in both directions, closing off "just drop here
-  // every time" lanes one by one until, by round 13, the whole board is Game Over.
-  lossSlotOrder: [4, 3, 5, 2, 6, 1, 7, 0],
   boardWidth: 720,
   boardHeight: 460,
-  pegRows: 10,
-  pegsPerRow: 12,
-  dropSlotFractions: [0.2272, 0.5, 0.7728],
-  // Dropped 25% (was 0.20) per Drew's request - a slower fall gives each drop more visible hang
+  // Pegs are packed 3 per bucket (pegsPerRow = slotCount*3 + 1) so every bucket divider sits directly
+  // under a peg column, and the rows are much closer together so a chip keeps bouncing the whole way
+  // down instead of bouncing once or twice and then dropping straight through.
+  pegRows: 13,
+  pegsPerRow: 25,
+  pegRadius: 4,
+  pegRowSpacing: 24,
+  // Left/right/center drops sit exactly over peg columns 5, 12 and 19 of 24 (a peg in the first row).
+  dropSlotFractions: [5/24, 0.5, 19/24],
+  // Slowed earlier for suspense; raised again now that the pegs are packed tighter and the chip bounces much more on the way down.
   // time over the pegs, which reads as more suspenseful than the chip just blipping straight down.
-  gravity: 0.15,
+  gravity: 0.3,
   bounce: 0.62,
   horizontalFriction: 0.995,
   chipRadius: 7,
@@ -5469,7 +5551,7 @@ function openFleetPlinko(options) {
       <div class="wo-stripe"></div>
       <div class="wo-body">
         <h1 style="margin:2px 0 0">Fleet <em>Plinko</em></h1>
-        <div class="note" style="margin-top:2px">Pick a slot to drop from, or take your haul. Game Over spots start at the center and spread out the longer you keep pushing your luck.</div>
+        <div class="note" style="margin-top:2px">Pick a slot to drop from, or take your haul. Game Over spots move to new places on every drop, and more of the board turns Game Over the longer you keep pushing your luck.</div>
         <div id="fleetPlinkoStats">
           <div class="fleet-plinko-stat"><div class="fleet-plinko-stat-label">Current Haul</div><div class="fleet-plinko-stat-value" id="fleetPlinkoHaul">0</div></div>
           <div class="fleet-plinko-stat"><div class="fleet-plinko-stat-label">Drops</div><div class="fleet-plinko-stat-value" id="fleetPlinkoDrops">0</div></div>
@@ -5533,22 +5615,22 @@ function openFleetPlinko(options) {
   // finally walked it down to the slots.
   const pegs = [];
   const pegTop = 60;
-  // The lowest row of pegs is dropped (same row spacing, one fewer row) so the last pegs sit well clear of
-  // the divider posts - with them close together a chip could wedge between a peg and a post and stall.
-  const origPegBottom = slotTop - 20;
-  const origRowSpacing = (origPegBottom - pegTop) / (FLEET_PLINKO_CONFIG.pegRows - 1);
-  const pegBottom = origPegBottom - origRowSpacing;
-  const pegRows = FLEET_PLINKO_CONFIG.pegRows - 1;
+  const pegRows = FLEET_PLINKO_CONFIG.pegRows;
   const pegsPerRow = FLEET_PLINKO_CONFIG.pegsPerRow;
-  const rowSpacing = (pegBottom - pegTop) / (pegRows - 1);
+  const pegR = FLEET_PLINKO_CONFIG.pegRadius;
+  const rowSpacing = FLEET_PLINKO_CONFIG.pegRowSpacing;
   const colGap = (W - sidePadding * 2) / (pegsPerRow - 1);
+  // Even rows have a peg at every column, including the two on the side walls. Odd rows sit half a
+  // gap over, and their first and last pegs are left out so there is never a tight gap between a
+  // wall and a peg (a chip could wedge there). The last row is an even row, so a peg sits right above
+  // every bucket divider and the chip is always nudged to one side of a divider instead of resting on it.
   for (let row = 0; row < pegRows; row++) {
     const y = pegTop + row * rowSpacing;
     const staggered = row % 2 === 1;
-    const count = staggered ? pegsPerRow - 1 : pegsPerRow;
-    const startX = sidePadding + (staggered ? colGap / 2 : 0);
-    for (let col = 0; col < count; col++) {
-      pegs.push({ x: startX + col * colGap, y, r: 5 });
+    if (!staggered) {
+      for (let col = 0; col < pegsPerRow; col++) pegs.push({ x: sidePadding + col * colGap, y, r: pegR });
+    } else {
+      for (let col = 1; col < pegsPerRow - 2; col++) pegs.push({ x: sidePadding + (col + 0.5) * colGap, y, r: pegR });
     }
   }
   // The 3 discrete drop slots at the top of the board the player picks from before releasing a chip.
@@ -5558,23 +5640,30 @@ function openFleetPlinko(options) {
   }
 
   // How many board columns are Game Over for a given round (rounds are 1-indexed: the very
-  // first drop is round 1). Starts at 1 (the center column), becomes 2 after the first drop,
-  // then adds one more every 2 rounds after that until the whole board is Game Over.
+  // first drop is round 1). Starts at 1, becomes 2 after the first drop, then adds one more
+  // every 2 rounds after that until the whole board is Game Over.
   function activeLossCount(round) {
     if (round <= 1) return 1;
     if (round === 2) return 2;
-    return Math.min(FLEET_PLINKO_CONFIG.lossSlotOrder.length, 2 + Math.ceil((round - 2) / 2));
+    return Math.min(slotCount, 2 + Math.ceil((round - 2) / 2));
   }
-  // The slot layout for a specific round - computed fresh rather than baked into the config,
-  // since which columns are hazardous changes as the round count climbs. Two different callers
-  // use this: settleChip() resolves a drop's outcome against the round that drop was actually
-  // played on (state.round), while drawBoard() renders state.displayRound, which is bumped one
-  // round ahead right after a drop settles - so the board previews next round's danger zones
-  // while the player is deciding whether to push their luck again, instead of hiding the
-  // escalation until they've already committed to the next drop.
+  // Which columns are Game Over is picked at random for each round, then remembered so the
+  // preview shown while deciding is exactly what the next drop plays against.
+  const lossByRound = {};
+  function lossSetForRound(round) {
+    if (!lossByRound[round]) {
+      const idx = [];
+      for (let i = 0; i < slotCount; i++) idx.push(i);
+      for (let i = idx.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); const t = idx[i]; idx[i] = idx[j]; idx[j] = t; }
+      lossByRound[round] = new Set(idx.slice(0, activeLossCount(round)));
+    }
+    return lossByRound[round];
+  }
+  // The slot layout for a specific round. settleChip() resolves a drop against state.round, while
+  // drawBoard() renders state.displayRound, which is bumped one round ahead right after a drop
+  // settles so the board previews the next drop's Game Over columns while the player decides.
   function slotsForRound(round) {
-    const lossCount = activeLossCount(round);
-    const lossIdx = new Set(FLEET_PLINKO_CONFIG.lossSlotOrder.slice(0, lossCount));
+    const lossIdx = lossSetForRound(round);
     return FLEET_PLINKO_CONFIG.rewardTemplates.map((tpl, i) => lossIdx.has(i) ? { id: `loss_${i}`, label: 'Game Over', type: 'loss', amount: 0 } : coinifyReward(tpl));
   }
   function formatHaul() {
@@ -5633,6 +5722,8 @@ function openFleetPlinko(options) {
         ctx.fillText(words.slice(1).join(' '), x + slotWidth / 2, slotTop + 47);
       } else ctx.fillText(slot.label, x + slotWidth / 2, slotTop + 40);
     }
+    ctx.strokeStyle = 'rgba(191,238,232,0.55)'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(sidePadding, pegTop - 10); ctx.lineTo(sidePadding, slotTop); ctx.moveTo(W - sidePadding, pegTop - 10); ctx.lineTo(W - sidePadding, slotTop); ctx.stroke();
     // Divider posts between buckets - drawn as small walls (matching the peg palette) that stick
     // up above the bucket tops so it's visually obvious the chip can't cross between buckets once
     // it's down in this zone. They double as real collision walls in runPhysics.
@@ -5693,7 +5784,7 @@ function openFleetPlinko(options) {
   // instead of fighting. It also closes most of the empty corridor next to the wall in the
   // staggered rows (which have no peg that close to the edge at all), where a chip could
   // otherwise drift for a while doing nothing but weak, repeated wall grazes.
-  const wallInset = sidePadding - FLEET_PLINKO_CONFIG.chipRadius + 2;
+  const wallInset = sidePadding;
   function clampToWalls(chip) {
     if (chip.x - chip.r < wallInset) chip.x = wallInset + chip.r;
     if (chip.x + chip.r > W - wallInset) chip.x = W - wallInset - chip.r;
@@ -5824,14 +5915,16 @@ function openFleetPlinko(options) {
 const FLEET_BLACKJACK_CONFIG = {
   handCount: 3,
   drawSize: 3,
+  // Bigger payouts than the first version (10 coins was too small to matter). Each hand rolls one
+  // of these before any card is dealt, and only pays if that hand beats its dealer hand.
   rewardSlots: [
-    { id: 'coins_small', label: '+10 Coins', type: 'coins', amount: 10, weight: 22 },
-    { id: 'coins_medium', label: '+20 Coins', type: 'coins', amount: 20, weight: 16 },
-    { id: 'coins_large', label: '+35 Coins', type: 'coins', amount: 35, weight: 7 },
-    { id: 'fuel', label: '+1 Fuel', type: 'fuel', amount: 1, weight: 14 },
-    { id: 'fuel_big', label: '+2 Fuel', type: 'fuel', amount: 2, weight: 6 },
-    { id: 'gems', label: '+1 Gem', type: 'gems', amount: 1, weight: 9 },
-    { id: 'gems_big', label: '+2 Gems', type: 'gems', amount: 2, weight: 3 },
+    { id: 'coins_small', label: '+25 Coins', type: 'coins', amount: 25, weight: 20 },
+    { id: 'coins_medium', label: '+40 Coins', type: 'coins', amount: 40, weight: 14 },
+    { id: 'coins_large', label: '+60 Coins', type: 'coins', amount: 60, weight: 6 },
+    { id: 'fuel', label: '+2 Fuel', type: 'fuel', amount: 2, weight: 12 },
+    { id: 'fuel_big', label: '+3 Fuel', type: 'fuel', amount: 3, weight: 6 },
+    { id: 'gems', label: '+1 Gem', type: 'gems', amount: 1, weight: 10 },
+    { id: 'gems_big', label: '+2 Gems', type: 'gems', amount: 2, weight: 5 },
   ],
 };
 // Standard soft-ace blackjack scoring: Aces count as 11 unless that would bust the hand, in
@@ -5886,7 +5979,9 @@ function openFleetBlackjack(options) {
 
   const state = {
     hands: Array.from({ length: FLEET_BLACKJACK_CONFIG.handCount }, () => ({ cards: [], reward: weightedBlackjackReward() })),
-    dealer: { cards: [drawCard(), drawCard()], revealed: false },
+    // The dealer plays three hands too, one facing each of yours. Each shows one card face up and one face down.
+    dealerHands: Array.from({ length: FLEET_BLACKJACK_CONFIG.handCount }, () => ({ cards: [drawCard(), drawCard()] })),
+    dealerRevealed: false,
     pool: [],
     finished: false,
     hasDrawnOnce: false,
@@ -5910,21 +6005,17 @@ function openFleetBlackjack(options) {
   overlay.innerHTML = `
     <div class="wo wide" style="max-width:820px;width:100%">
       <div class="wo-stripe"></div>
-      <div class="wo-body">
+      <div class="wo-body fleetGame">
         <h1 style="margin:2px 0 0;text-align:center">Fleet <em>Blackjack</em></h1>
-        <div class="note" style="margin-top:2px;text-align:center">Every hand's reward is locked in from the start. Hit to fill your hands, or Stand once you like your totals - each hand only pays out if it beats the dealer.</div>
-        <div id="fleetBjDealerWrap" class="fleetBjDealerWrap">
-          <div class="fleetBjHandReward" style="color:var(--dim)">Dealer</div>
-          <div id="fleetBjDealerCards" class="fleetBjHandCards"></div>
-          <div id="fleetBjDealerTotal" class="fleetBjHandTotal"></div>
-        </div>
-        <div id="fleetBjMessage" style="min-height:22px;text-align:center;font-size:13px;color:var(--dim)"></div>
-        <div id="fleetBjHands" class="fleetBjHands"></div>
+        <div class="note fleetGameNote" style="text-align:center">Each of your hands plays the dealer hand above it and pays its reward if it wins. Hit to place cards, Stand when you're happy.</div>
+        <div id="fleetBjMessage" style="min-height:18px;text-align:center;font-size:13px;color:var(--dim)"></div>
+        <div id="fleetBjHands" class="fleetBjHands fleetTwoOne"></div>
         <div id="fleetBjPoolWrap" class="fleetMiniPoolWrap" style="display:none">
-          <div class="note" style="text-align:center;margin:8px 0 4px">Click a card, then click a hand to place it.</div>
+          <div class="note" style="text-align:center;margin:4px 0 4px">Tap a card, then tap a hand to place it.</div>
           <div id="fleetBjPool" style="display:flex;justify-content:center;gap:8px"></div>
         </div>
-        <div id="fleetBjControls" style="display:flex;justify-content:center;gap:10px;padding-top:14px;flex-wrap:wrap">
+        <div id="fleetBjResult"></div>
+        <div id="fleetBjControls" style="display:flex;justify-content:center;gap:10px;padding-top:10px;flex-wrap:wrap">
           <button class="wo-btn green" id="fleetBjDrawBtn">Hit (Draw 3)</button>
           <button class="wo-btn amber" id="fleetBjBankBtn">Stand</button>
           <button class="wo-btn gray" id="fleetBjExitBtn">Back to Compound</button>
@@ -5934,8 +6025,6 @@ function openFleetBlackjack(options) {
   `;
   document.body.appendChild(overlay);
 
-  const dealerCardsEl = document.getElementById('fleetBjDealerCards');
-  const dealerTotalEl = document.getElementById('fleetBjDealerTotal');
   const handsWrap = document.getElementById('fleetBjHands');
   const poolWrap = document.getElementById('fleetBjPoolWrap');
   const poolEl = document.getElementById('fleetBjPool');
@@ -5945,33 +6034,35 @@ function openFleetBlackjack(options) {
   const exitBtn = document.getElementById('fleetBjExitBtn');
 
   let selectedPoolIdx = null;
-  function cardHTML(c) { return `<div class="card big ${suitColorClass(c.color, c.suit)}"><div>${rankLabel(c.rank)}</div><div>${c.suit}</div></div>`; }
-  function cardBackHTML() { return `<div class="card back big"></div>`; }
-
-  function renderDealer() {
-    const visibleCards = state.dealer.revealed ? state.dealer.cards : [state.dealer.cards[0]];
-    dealerCardsEl.innerHTML = visibleCards.map(cardHTML).join('') + (state.dealer.revealed ? '' : cardBackHTML());
-    if (state.dealer.revealed) {
-      const v = blackjackHandValue(state.dealer.cards);
-      dealerTotalEl.textContent = v.busted ? 'Bust' : String(v.total) + (v.soft ? ' (soft)' : '');
-      dealerTotalEl.className = 'fleetBjHandTotal ' + (v.busted ? 'bjBust' : '');
-    } else {
-      dealerTotalEl.textContent = 'Showing ' + rankLabel(state.dealer.cards[0].rank);
-      dealerTotalEl.className = 'fleetBjHandTotal';
-    }
-  }
+  function cardHTML(c) { return `<div class="card sm ${suitColorClass(c.color, c.suit)}"><div>${rankLabel(c.rank)}</div><div>${c.suit}</div></div>`; }
+  function cardBackHTML() { return `<div class="card back sm"></div>`; }
+  function dealerStatus(dh) { const v = blackjackHandValue(dh.cards); return { total: v.total, soft: v.soft, busted: v.busted, natural: dh.cards.length === 2 && v.total === 21 }; }
+  function renderDealer() { renderHands(); }
 
   function renderHands() {
     handsWrap.innerHTML = state.hands.map((hand, i) => {
       const st = handStatus(hand);
+      const dh = state.dealerHands[i];
       const canTarget = state.pool.length > 0 && selectedPoolIdx != null && canReceiveCard(hand);
-      const statusLabel = st.busted ? 'Bust' : st.natural ? 'Blackjack!' : st.total === 21 ? '21 - Locked' : hand.cards.length ? String(st.total) + (st.soft ? ' (soft)' : '') : 'Empty';
+      const statusLabel = st.busted ? 'Bust' : st.natural ? 'Blackjack!' : st.total === 21 ? '21 (locked)' : hand.cards.length ? String(st.total) + (st.soft ? ' (soft)' : '') : 'Empty';
       const statusClass = st.busted ? 'bjBust' : (st.natural || st.total === 21) ? 'bjLocked' : '';
+      let dealerCards, dealerLabel, dealerClass = '';
+      if (state.dealerRevealed) {
+        const ds = dealerStatus(dh);
+        dealerCards = dh.cards.map(cardHTML).join('');
+        dealerLabel = ds.busted ? 'Bust' : ds.natural ? 'Blackjack!' : String(ds.total);
+        dealerClass = ds.busted ? 'bjBust' : '';
+      } else {
+        dealerCards = cardHTML(dh.cards[0]) + cardBackHTML();
+        dealerLabel = 'Showing ' + rankLabel(dh.cards[0].rank);
+      }
       const resultLabel = hand.outcome ? `<div class="fleetBjHandOutcome ${hand.outcome}">${hand.outcome === 'win' ? 'Win' : hand.outcome === 'push' ? 'Push' : 'Lose'}</div>` : '';
       return `<div class="fleetBjHand ${st.busted ? 'busted' : ''} ${canTarget ? 'targetable' : ''}" data-bjhand="${i}">
         <div class="fleetBjHandReward">${hand.reward.label}</div>
-        <div class="fleetBjHandCards">${hand.cards.map(cardHTML).join('')}</div>
-        <div class="fleetBjHandTotal ${statusClass}">${statusLabel}</div>
+        <div class="bjLine"><span>Dealer</span><b class="${dealerClass}">${dealerLabel}</b></div>
+        <div class="fleetBjHandCards sm ${dh.cards.length > 3 ? 'many' : ''}">${dealerCards}</div>
+        <div class="bjLine you"><span>You</span><b class="${statusClass}">${statusLabel}</b></div>
+        <div class="fleetBjHandCards sm ${hand.cards.length > 3 ? 'many' : ''}">${hand.cards.map(cardHTML).join('')}</div>
         ${resultLabel}
       </div>`;
     }).join('');
@@ -5982,7 +6073,7 @@ function openFleetBlackjack(options) {
   function renderPool() {
     if (!state.pool.length) { poolWrap.style.display = 'none'; poolEl.innerHTML = ''; return; }
     poolWrap.style.display = '';
-    poolEl.innerHTML = state.pool.map((c, i) => `<div class="card big ${suitColorClass(c.color, c.suit)} ${selectedPoolIdx === i ? 'selected' : ''}" data-poolcard="${i}" style="cursor:pointer"><div>${rankLabel(c.rank)}</div><div>${c.suit}</div></div>`).join('');
+    poolEl.innerHTML = state.pool.map((c, i) => `<div class="card sm pick ${suitColorClass(c.color, c.suit)} ${selectedPoolIdx === i ? 'selected' : ''}" data-poolcard="${i}"><div>${rankLabel(c.rank)}</div><div>${c.suit}</div></div>`).join('');
     poolEl.querySelectorAll('[data-poolcard]').forEach(el => { el.onclick = () => { selectedPoolIdx = +el.dataset.poolcard; renderPool(); renderHands(); }; });
   }
   function updateControls() {
@@ -6051,50 +6142,54 @@ function openFleetBlackjack(options) {
       return;
     }
 
-    // Reveal the dealer's hidden card, then play a standard hit-to-17 dealer hand - but only if
-    // at least one player hand is still alive to beat it (no point risking a dealer bust reveal
-    // when every hand already busted itself out).
-    state.dealer.revealed = true;
-    if (anyStillStanding()) {
-      let dv = blackjackHandValue(state.dealer.cards);
-      while (dv.total < 17) { state.dealer.cards.push(drawCard()); dv = blackjackHandValue(state.dealer.cards); }
-    }
-    renderDealer();
-    const dealerFinal = blackjackHandValue(state.dealer.cards);
+    // Reveal every dealer hand's hidden card. Each dealer hand then plays a standard hit-to-17 -
+    // but only if the player hand facing it is still alive (no point drawing against a bust).
+    state.dealerRevealed = true;
+    state.hands.forEach((hand, i) => {
+      const dh = state.dealerHands[i];
+      if (handStatus(hand).busted || !hand.cards.length) return;
+      let dv = blackjackHandValue(dh.cards);
+      while (dv.total < 17) { dh.cards.push(drawCard()); dv = blackjackHandValue(dh.cards); }
+    });
 
-    for (const hand of state.hands) {
+    let dealerWins = 0;
+    state.hands.forEach((hand, i) => {
       const st = handStatus(hand);
-      if (st.busted || !hand.cards.length) { hand.outcome = 'lose'; continue; }
-      if (dealerFinal.busted || st.total > dealerFinal.total) hand.outcome = 'win';
-      else if (st.total < dealerFinal.total) hand.outcome = 'lose';
+      const ds = dealerStatus(state.dealerHands[i]);
+      if (st.busted || !hand.cards.length) hand.outcome = 'lose';
+      else if (ds.busted) hand.outcome = 'win';
+      // A real blackjack (21 on the first two cards) beats a dealer 21 built from more cards, and
+      // only ties a dealer blackjack. A plain 21 loses to a dealer blackjack.
+      else if (st.natural && !ds.natural) hand.outcome = 'win';
+      else if (ds.natural && !st.natural) hand.outcome = 'lose';
+      else if (st.total > ds.total) hand.outcome = 'win';
+      else if (st.total < ds.total) hand.outcome = 'lose';
       else hand.outcome = 'push';
+      if (hand.outcome === 'lose') dealerWins++;
       if (hand.outcome === 'win') {
         if (hand.reward.type === 'coins') haul.coins += hand.reward.amount;
         else if (hand.reward.type === 'gems') haul.gems += hand.reward.amount;
         else if (hand.reward.type === 'fuel') haul.fuel += hand.reward.amount;
       }
-    }
+    });
     renderHands();
     haul.lost = haul.coins === 0 && haul.gems === 0 && haul.fuel === 0;
-    const dealerLabel = dealerFinal.busted ? 'Dealer busts!' : `Dealer stands on ${dealerFinal.total}.`;
-    message.textContent = `${dealerLabel} ${haul.lost ? 'Nothing banked.' : `Banked: ${formatBjHaul(haul)}`}`;
+    const wins = state.hands.filter(h => h.outcome === 'win').length;
+    const dealerLabel = `You won ${wins} of ${state.hands.length} hands.`;
+    message.textContent = '';
     playSfx(haul.lost ? 'lose' : 'open');
     showResultPopup(haul, dealerLabel, haul.lost ? 'No hand beat the dealer. Nothing banked.' : `You won ${formatBjHaul(haul)}.`);
   }
-  // Final hands stay on screen. The popup sits at the bottom so the hands and dealer stay visible, and
+  // Final hands stay on screen. The result sits right under the hands (not floating over them), and
   // the round only closes when the player clicks Collect.
   function showResultPopup(haul, headline, detail) {
-    if (document.getElementById('fleetBjResultPop')) return;
-    const pop = document.createElement('div');
-    pop.id = 'fleetBjResultPop';
-    pop.style.cssText = 'position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:10001;width:min(440px,92vw);background:var(--panel,#10202a);border:2px solid ' + (haul.lost ? 'var(--red,#e0524d)' : 'var(--green,#2fd18b)') + ';border-radius:12px;padding:14px 16px;text-align:center;box-shadow:0 8px 30px rgba(0,0,0,.55)';
-    pop.innerHTML = `
-      <div style="font-size:13px;color:var(--dim)">${headline}</div>
-      <div style="font-size:20px;font-weight:700;margin:4px 0 10px">${haul.lost ? 'Better luck next hand' : 'You won!'}</div>
-      <div style="font-size:15px;margin-bottom:12px">${detail}</div>
-      <button class="wo-btn ${haul.lost ? 'gray' : 'green'}" id="fleetBjCollectBtn">${haul.lost ? 'Close' : 'Collect'}</button>`;
-    overlay.appendChild(pop);
-    document.getElementById('fleetBjCollectBtn').onclick = () => { pop.remove(); overlay.remove(); onComplete(haul); };
+    const box = document.getElementById('fleetBjResult');
+    if (!box || document.getElementById('fleetBjCollectBtn')) return;
+    box.innerHTML = `<div class="fleetResultBox ${haul.lost ? 'lose' : 'win'}">
+      <div style="font-size:12px;color:var(--dim)">${headline}</div>
+      <div style="font-size:15px;font-weight:700;margin:2px 0 8px">${detail}</div>
+      <button class="wo-btn ${haul.lost ? 'gray' : 'green'}" id="fleetBjCollectBtn">${haul.lost ? 'Close' : 'Collect'}</button></div>`;
+    document.getElementById('fleetBjCollectBtn').onclick = () => { overlay.remove(); onComplete(haul); };
   }
 
   drawBtn.onclick = startDraw;
@@ -6141,7 +6236,15 @@ function applyPokerHaul(haul) {
   if (haul.gems) { RUN.gems = Math.min(RUN.maxGems, RUN.gems + haul.gems); parts.push(`${haul.gems} gem${haul.gems > 1 ? 's' : ''}`); }
   if (haul.fuel) { RUN.fuel = Math.min(RUN.maxFuel, RUN.fuel + haul.fuel); parts.push(`${haul.fuel} fuel`); }
   if (haul.itemIds && haul.itemIds.length) {
-    for (const id of haul.itemIds) { if (ITEMS[id]) { RUN.hero.items.push(id); parts.push(`${ITEMS[id].name} added to your Fleet`); } }
+    for (const id of haul.itemIds) {
+      if (!ITEMS[id]) continue;
+      // Prize items can no longer push you past your Item capacity (that is how a run ended up at 5/4).
+      // With no open slot, the item pays out its sell value in coins instead.
+      if (!ITEMS[id].weightless && equippedItemCount(RUN.hero) >= RUN.itemCap) {
+        const coinsBack = Math.floor((ITEMS[id].cost || 40) / 2);
+        RUN.chips += coinsBack; parts.push(`no open Item slot, so ${ITEMS[id].name} paid ${coinsBack} coins instead`);
+      } else { RUN.hero.items.push(id); parts.push(`${ITEMS[id].name} added to your Fleet`); }
+    }
   }
   RUN.lastNotice = parts.length ? `Poker haul banked: ${parts.join(', ')}.` : 'Poker: no matches won this round.';
   saveRun();
@@ -6178,21 +6281,24 @@ function openFleetPoker(options) {
   overlay.className = 'map-popup-overlay';
   overlay.style.paddingTop = '20px';
   overlay.innerHTML = `
-    <div class="wo wide" style="max-width:900px;width:100%">
+    <div class="wo wide" style="max-width:900px;width:100%;overflow:clip">
       <div class="wo-stripe"></div>
-      <div class="wo-body">
+      <div class="wo-body fleetGame">
         <h1 style="margin:2px 0 0;text-align:center">Fleet <em>Poker</em></h1>
-        <div class="note" style="margin-top:2px;text-align:center">Hold'em, with 3 hole cards instead of 2. Build three hands from nine cards - once a card is placed, it's locked in for good.</div>
-        <div id="fleetPokerMessage" style="min-height:22px;text-align:center;font-size:13px;color:var(--dim)"></div>
-        <div id="fleetPokerCommunity" style="display:none"></div>
-        <div id="fleetPokerHands" class="fleetPokerHands"></div>
-        <div id="fleetPokerPoolWrap" class="fleetMiniPoolWrap" style="display:none">
-          <div class="note" style="text-align:center;margin:8px 0 4px">Click a card, then click a hand to place it.</div>
+        <div class="note fleetGameNote" style="text-align:center">Hold'em with 3 hole cards. Build three hands from nine cards. Once a card is placed, it's locked in.</div>
+        <div id="fleetPokerMessage" style="min-height:18px;text-align:center;font-size:13px;color:var(--dim)"></div>
+        <div id="fleetPokerPoolWrap" class="fleetTray">
+          <div class="note" id="fleetPokerTrayNote" style="text-align:center;margin:0 0 4px"></div>
           <div id="fleetPokerPool" style="display:flex;justify-content:center;gap:8px"></div>
-        </div>
-        <div id="fleetPokerControls" style="display:flex;justify-content:center;gap:10px;padding-top:14px;flex-wrap:wrap">
           <button class="wo-btn green" id="fleetPokerDealBtn">Deal 3</button>
-          <button class="wo-btn amber" id="fleetPokerRevealBtn" style="display:none">Reveal the Flop</button>
+        </div>
+        <div id="fleetPokerCommunity" class="fleetPokerBoard" style="display:none">
+          <div class="note" id="fleetPokerBoardLabel" style="text-align:center;margin:0 0 3px"></div>
+          <div class="fleetPokerHandCards sm" id="fleetPokerBoardCards" style="justify-content:center"></div>
+          <button class="wo-btn amber" id="fleetPokerRevealBtn" style="display:none;margin-top:6px">Reveal the Flop</button>
+        </div>
+        <div id="fleetPokerHands" class="fleetPokerHands fleetTwoOne"></div>
+        <div id="fleetPokerControls" style="display:flex;justify-content:center;gap:10px;padding-top:10px;flex-wrap:wrap">
           <button class="wo-btn gray" id="fleetPokerExitBtn">Back to Compound</button>
         </div>
       </div>
@@ -6204,6 +6310,9 @@ function openFleetPoker(options) {
   const poolWrap = document.getElementById('fleetPokerPoolWrap');
   const poolEl = document.getElementById('fleetPokerPool');
   const communityWrap = document.getElementById('fleetPokerCommunity');
+  const boardLabelEl = document.getElementById('fleetPokerBoardLabel');
+  const boardCardsEl = document.getElementById('fleetPokerBoardCards');
+  const trayNote = document.getElementById('fleetPokerTrayNote');
   const message = document.getElementById('fleetPokerMessage');
   const controlsWrap = document.getElementById('fleetPokerControls');
   const dealBtn = document.getElementById('fleetPokerDealBtn');
@@ -6211,45 +6320,64 @@ function openFleetPoker(options) {
   const exitBtn = document.getElementById('fleetPokerExitBtn');
 
   let selectedPoolIdx = null;
-  function cardHTML(c) { return `<div class="card big xl ${suitColorClass(c.color, c.suit)}"><div>${rankLabel(c.rank)}</div><div>${c.suit}</div></div>`; }
-  function cardBackHTML() { return `<div class="card back big xl"></div>`; }
-  function rewardLabelFor(reward) { return reward.type === 'item' ? `🚚 ${reward.label}` : reward.label; }
-
-  // The computer's hole cards are face-up for the whole build phase (dealing, flop, turn) so the player
-  // knows what they're up against, then flip face-down once the river is out (all five community cards
-  // showing) and stay hidden until the final showdown reveals them.
-  function computerRowHTML(i) {
-    if (!state.allPlaced) return '';
-    const hide = state.community.length >= FLEET_POKER_CONFIG.communityCount;
-    const cards = state.computerHands[i].cards;
-    return `<div class="fleetPokerCompRow"><div class="note" style="margin:6px 0 2px">Computer${hide ? '' : ' (face up until the river)'}</div>
-      <div class="fleetPokerHandCards" style="justify-content:center">${cards.map(c => hide ? '<div class="card back mini"></div>' : `<div class="card mini ${suitColorClass(c.color, c.suit)}"><div>${rankLabel(c.rank)}</div><div>${c.suit}</div></div>`).join('')}</div></div>`;
+  function cardHTML(c) { return `<div class="card sm ${suitColorClass(c.color, c.suit)}"><div>${rankLabel(c.rank)}</div><div>${c.suit}</div></div>`; }
+  function cardBackHTML() { return `<div class="card back sm"></div>`; }
+  // Item rewards get the same dotted underline as other tap-for-info text, and tapping one pops up the real item card.
+  // An item prize is grayed out, with a note, when you have no open Item slot to keep it in.
+  function noSlotFor(reward) { const it = ITEMS[reward.itemId]; return !!it && !it.weightless && equippedItemCount(RUN.hero) >= RUN.itemCap; }
+  function rewardLabelFor(reward) {
+    if (reward.type !== 'item') return reward.label;
+    const blocked = noSlotFor(reward);
+    return `🚚 <span class="hoverTip" data-pkitem="${reward.itemId}" ${blocked ? 'style="opacity:.5"' : ''}>${reward.label}</span>${blocked ? '<div style="font-size:10px;font-weight:600;color:var(--dim);line-height:1.2">No open Item slot. Add a slot to keep it.</div>' : ''}`;
   }
+  function showItemPreview(id) {
+    const item = ITEMS[id]; if (!item) return;
+    const pop = document.createElement('div');
+    pop.style.cssText = 'position:fixed;inset:0;z-index:10050;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;cursor:pointer';
+    pop.innerHTML = `<div style="zoom:1.6;background:var(--white);border-radius:10px;padding:6px">${renderStandardItemCard(item, {})}</div><div style="color:#fff;font-size:13px">Tap anywhere to close</div>`;
+    pop.onclick = () => pop.remove();
+    document.body.appendChild(pop);
+  }
+
+  // The computer's hole cards show face up from the moment all nine of yours are placed, and stay up through the showdown.
+  function laneLine(label, right, cls) { return `<div class="bjLine ${cls || ''}"><span>${label}</span><b>${right || ''}</b></div>`; }
   function renderHands() {
     handsWrap.innerHTML = state.playerHands.map((hand, i) => {
       const full = hand.cards.length >= FLEET_POKER_CONFIG.cardsPerHand;
       const canTarget = state.pool.length > 0 && selectedPoolIdx != null && !full;
-      const placeholders = Array.from({ length: FLEET_POKER_CONFIG.cardsPerHand - hand.cards.length }).map(() => '<div class="card back big xl"></div>').join('');
+      const placeholders = Array.from({ length: FLEET_POKER_CONFIG.cardsPerHand - hand.cards.length }).map(() => cardBackHTML()).join('');
+      const showdown = !!hand.outcome;
+      const compHTML = state.allPlaced ? `${laneLine('Computer', showdown ? hand.cBest.label : '', 'you')}
+        <div class="fleetPokerHandCards sm">${state.computerHands[i].cards.map(cardHTML).join('')}</div>` : '';
+      const outcomeHTML = showdown ? `<div class="fleetPokerOutcome ${hand.outcome}">${hand.outcome === 'win' ? `Win: ${rewardLabelFor(hand.reward)}` : hand.outcome === 'lose' ? 'Lose' : 'Push'}</div>` : '';
       return `<div class="fleetPokerHand ${full ? 'full' : ''} ${canTarget ? 'targetable' : ''}" data-pkhand="${i}">
         <div class="fleetPokerHandReward">${rewardLabelFor(hand.reward)}</div>
-        <div class="fleetPokerHandCards">${hand.cards.map(cardHTML).join('')}${placeholders}</div>
-        ${computerRowHTML(i)}
+        ${state.allPlaced ? laneLine('You', showdown ? hand.pBest.label : '') : ''}
+        <div class="fleetPokerHandCards sm">${hand.cards.map(cardHTML).join('')}${placeholders}</div>
+        ${compHTML}
+        ${outcomeHTML}
       </div>`;
     }).join('');
+    handsWrap.querySelectorAll('[data-pkitem]').forEach(el => { el.onclick = (e) => { e.stopPropagation(); showItemPreview(el.dataset.pkitem); }; });
     handsWrap.querySelectorAll('[data-pkhand]').forEach(el => {
       el.onclick = () => { if (selectedPoolIdx == null) return; placeCard(+el.dataset.pkhand); };
     });
   }
   function renderPool() {
-    if (!state.pool.length) { poolWrap.style.display = 'none'; poolEl.innerHTML = ''; return; }
-    poolWrap.style.display = '';
-    poolEl.innerHTML = state.pool.map((c, i) => `<div class="card big xl ${suitColorClass(c.color, c.suit)} ${selectedPoolIdx === i ? 'selected' : ''}" data-poolcard="${i}" style="cursor:pointer"><div>${rankLabel(c.rank)}</div><div>${c.suit}</div></div>`).join('');
+    poolEl.innerHTML = state.pool.map((c, i) => `<div class="card sm pick ${suitColorClass(c.color, c.suit)} ${selectedPoolIdx === i ? 'selected' : ''}" data-poolcard="${i}"><div>${rankLabel(c.rank)}</div><div>${c.suit}</div></div>`).join('');
     poolEl.querySelectorAll('[data-poolcard]').forEach(el => { el.onclick = () => { selectedPoolIdx = +el.dataset.poolcard; renderPool(); renderHands(); }; });
   }
+  // The tray at the top holds whatever you are placing: the Deal button when it's time for the next
+  // cards, or the three dealt cards while you place them. It keeps the same height either way so
+  // the hands below never jump around.
   function updateControls() {
     const dealing = state.pool.length > 0;
-    dealBtn.style.display = (dealing || state.dealsUsed >= FLEET_POKER_CONFIG.deals) ? 'none' : '';
-    exitBtn.style.display = dealing ? 'none' : '';
+    const dealsLeft = state.dealsUsed < FLEET_POKER_CONFIG.deals;
+    poolWrap.style.display = state.allPlaced ? 'none' : '';
+    dealBtn.style.display = (!dealing && dealsLeft) ? '' : 'none';
+    poolEl.style.display = dealing ? 'flex' : 'none';
+    trayNote.textContent = dealing ? 'Tap a card, then tap a hand to place it.' : (dealsLeft ? `Round ${state.dealsUsed + 1} of ${FLEET_POKER_CONFIG.deals}` : '');
+    exitBtn.style.display = (dealing || state.allPlaced) ? 'none' : '';
   }
 
   function placeCard(handIdx) {
@@ -6258,11 +6386,12 @@ function openFleetPoker(options) {
     const card = state.pool.splice(selectedPoolIdx, 1)[0];
     hand.cards.push(card);
     selectedPoolIdx = null;
-    renderPool(); renderHands(); updateControls();
+    renderPool(); renderHands();
     if (!state.pool.length) {
-      if (state.dealsUsed >= FLEET_POKER_CONFIG.deals) startReveal();
+      if (state.dealsUsed >= FLEET_POKER_CONFIG.deals) { updateControls(); startReveal(); return; }
       else message.textContent = 'Deal the next 3 cards when ready.';
     }
+    updateControls();
   }
   function startDeal() {
     if (state.pool.length || state.dealsUsed >= FLEET_POKER_CONFIG.deals) return;
@@ -6280,12 +6409,12 @@ function openFleetPoker(options) {
     for (let i = 0; i < FLEET_POKER_CONFIG.communityCount; i++) slots.push(state.community[i] ? cardHTML(state.community[i]) : cardBackHTML());
     return slots.join('');
   }
+  // One row of five small cards with the Reveal button right under it. It sticks to the top of the
+  // screen so the board is always visible while you read the hands below.
   function renderCommunityStrip(label) {
     communityWrap.style.display = '';
-    communityWrap.innerHTML = `
-      <div class="note" style="text-align:center;margin:6px 0 4px">${label}</div>
-      <div class="fleetPokerHandCards" style="justify-content:center">${communityCardsHTML()}</div>
-    `;
+    boardLabelEl.textContent = label;
+    boardCardsEl.innerHTML = communityCardsHTML();
   }
   // Community board reveal is now player-paced: the deal/placement controls hide once all hole
   // cards are placed, and a single "Reveal" button steps through flop -> turn -> river -> showdown.
@@ -6294,11 +6423,9 @@ function openFleetPoker(options) {
   // the next card lands, instead of everything flashing up at once.
   let revealStage = 0;
   function startReveal() {
-    poolWrap.style.display = 'none';
-    dealBtn.style.display = 'none';
-    exitBtn.style.display = 'none';
     revealStage = 0;
     state.allPlaced = true;
+    updateControls();
     renderHands();
     renderCommunityStrip('Hole cards locked in.');
     message.textContent = 'Ready when you are.';
@@ -6311,17 +6438,17 @@ function openFleetPoker(options) {
     if (revealStage === 0) {
       state.community.push(drawCard(), drawCard(), drawCard());
       renderCommunityStrip('Flop'); renderHands(); playSfx('open');
-      message.textContent = 'The flop is down.';
+      message.textContent = '';
       revealStage = 1; revealBtn.textContent = 'Reveal the Turn'; revealBtn.disabled = false;
     } else if (revealStage === 1) {
       state.community.push(drawCard());
       renderCommunityStrip('Turn'); renderHands(); playSfx('open');
-      message.textContent = 'The turn is down.';
+      message.textContent = '';
       revealStage = 2; revealBtn.textContent = 'Reveal the River'; revealBtn.disabled = false;
     } else if (revealStage === 2) {
       state.community.push(drawCard());
       renderCommunityStrip('River'); renderHands(); playSfx('open');
-      message.textContent = 'The river is down.';
+      message.textContent = '';
       revealStage = 3; revealBtn.textContent = 'Show Hands';
       revealBtn.disabled = false;
     } else {
@@ -6353,29 +6480,11 @@ function openFleetPoker(options) {
     });
     message.textContent = '';
     renderCommunityStrip('Community Cards');
-    handsWrap.innerHTML = state.playerHands.map((hand, i) => {
-      const cHand = state.computerHands[i];
-      return `<div class="fleetPokerShowdownRow">
-        <div class="wo-eyebrow" style="text-align:center">Hand ${i + 1} - ${rewardLabelFor(hand.reward)}</div>
-        <div class="fleetPokerMatchup">
-          <div class="fleetPokerMatchSide">
-            <div class="note">Your Hole Cards</div>
-            <div class="fleetPokerHandCards">${hand.cards.map(cardHTML).join('')}</div>
-            <div class="fleetPokerTierLabel">${hand.pBest.label}</div>
-          </div>
-          <div class="fleetPokerVs">vs</div>
-          <div class="fleetPokerMatchSide">
-            <div class="note">Computer</div>
-            <div class="fleetPokerHandCards">${cHand.cards.map(cardHTML).join('')}</div>
-            <div class="fleetPokerTierLabel">${hand.cBest.label}</div>
-          </div>
-        </div>
-        <div class="fleetPokerOutcome ${hand.outcome}">${hand.outcome === 'win' ? `You win - ${rewardLabelFor(hand.reward)}` : hand.outcome === 'lose' ? 'You lose' : 'Push'}</div>
-      </div>`;
-    }).join('');
+    renderHands();
     playSfx(state.playerHands.some(h => h.outcome === 'win') ? 'open' : 'lose');
     controlsWrap.style.display = '';
     controlsWrap.innerHTML = `<button class="wo-btn amber" id="fleetPokerFinishBtn" style="width:100%">Collect Winnings</button>`;
+    communityWrap.scrollIntoView({ block: 'nearest' });
     document.getElementById('fleetPokerFinishBtn').onclick = finishPoker;
   }
   function finishPoker() {
@@ -6442,7 +6551,15 @@ function applyAuctionHaul(haul) {
   if (haul.gems) { RUN.gems = Math.min(RUN.maxGems, RUN.gems + haul.gems); parts.push(`${haul.gems} gem${haul.gems > 1 ? 's' : ''}`); }
   if (haul.fuel) { RUN.fuel = Math.min(RUN.maxFuel, RUN.fuel + haul.fuel); parts.push(`${haul.fuel} fuel`); }
   if (haul.itemIds && haul.itemIds.length) {
-    for (const id of haul.itemIds) { if (ITEMS[id]) { RUN.hero.items.push(id); parts.push(`${ITEMS[id].name} added to your Fleet`); } }
+    for (const id of haul.itemIds) {
+      if (!ITEMS[id]) continue;
+      // Prize items can no longer push you past your Item capacity (that is how a run ended up at 5/4).
+      // With no open slot, the item pays out its sell value in coins instead.
+      if (!ITEMS[id].weightless && equippedItemCount(RUN.hero) >= RUN.itemCap) {
+        const coinsBack = Math.floor((ITEMS[id].cost || 40) / 2);
+        RUN.chips += coinsBack; parts.push(`no open Item slot, so ${ITEMS[id].name} paid ${coinsBack} coins instead`);
+      } else { RUN.hero.items.push(id); parts.push(`${ITEMS[id].name} added to your Fleet`); }
+    }
   }
   // The Fleet Auction now shows its own full results screen (contents/outcome per lot, coins spent
   // vs. coins won) before returning here, so this top-bar notice only needs to be a short recap -
@@ -7100,7 +7217,27 @@ function detonateOpponentItemBurn(key) {
   if (BATTLE.opponent.hpNow <= 0) { winBattle(); return; }
   render(battleScreen());
 }
-function chooseCurseTarget(key) {
+function targetVerb(type) { return type === 'ice' ? 'Freeze' : type === 'burn' ? 'Burn' : type === 'curse' ? 'Curse' : 'Hex'; }
+function targetEligibleKeys(type) {
+  return (BATTLE.opponent.items || []).map((id, i) => `${id}_${i}`).filter(key => {
+    const it = ITEMS[key.replace(/_\d+$/, '')];
+    if (!it || it.kind === 'storage' || it.followUp) return false;
+    if (type === 'ice' && BATTLE.opponentItemFrozen && BATTLE.opponentItemFrozen[key]) return false;
+    return true;
+  });
+}
+function scrollToOpponentItems() {
+  if (!isPhonePortrait()) return;
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    const el = document.querySelector('#battle-viewport .opponentSide');
+    if (!el) return;
+    const hdr = document.querySelector('.currencyHeader');
+    const strip = document.querySelector('#battle-viewport .duelSide.you');
+    const top = (hdr ? hdr.getBoundingClientRect().height : 0) + (strip ? strip.getBoundingClientRect().height : 0) + 8;
+    window.scrollTo(0, Math.max(0, window.scrollY + el.getBoundingClientRect().top - top));
+  }));
+}
+function chooseCurseTarget(key, quiet) {
   if (!BATTLE.pendingTarget || BATTLE.pendingTarget.type !== 'curse') return;
   const { amount, itemName } = BATTLE.pendingTarget;
   BATTLE.pendingTarget = null;
@@ -7112,10 +7249,11 @@ function chooseCurseTarget(key) {
   // (see applyOpponentItemCurse) - if that finishes the opponent off, the battle needs to
   // end here the same way the end-of-turn curse detonation does, instead of rendering a
   // battle screen against an opponent already at 0 HP.
+  if (quiet) return;
   if (BATTLE.opponent.hpNow <= 0) { winBattle(); return; }
   render(battleScreen());
 }
-function chooseBurnTarget(key) {
+function chooseBurnTarget(key, quiet) {
   if (!BATTLE.pendingTarget || BATTLE.pendingTarget.type !== 'burn') return;
   const { amount, itemName } = BATTLE.pendingTarget;
   BATTLE.pendingTarget = null;
@@ -7123,9 +7261,9 @@ function chooseBurnTarget(key) {
   const name = ITEMS[key.replace(/_\d+$/, '')]?.name || 'Item';
   battleLog(`${itemName} ignites ${BATTLE.opponent.name}'s ${name} for ${BATTLE.opponentItemBurns[key]} burn. The burn grows by ${BATTLE.opponentItemBurnStep[key]} each turn. Detonate it now or let it build. If they fire it, they take the burn damage.`);
   saveRun();
-  render(battleScreen());
+  if (!quiet) render(battleScreen());
 }
-function chooseHexTarget(key) {
+function chooseHexTarget(key, quiet) {
   if (!BATTLE.pendingTarget || BATTLE.pendingTarget.type !== 'hex') return;
   const { itemName } = BATTLE.pendingTarget;
   BATTLE.pendingTarget = null;
@@ -7135,9 +7273,9 @@ function chooseHexTarget(key) {
   const name = ITEMS[key.replace(/_\d+$/, '')]?.name || 'Item';
   battleLog(`${itemName} hexes ${BATTLE.opponent.name}'s ${name}${stacks > 1 ? ` (now stacked ${stacks}x)` : ''} - the next time they fire it, you pull ${stacks > 1 ? `${stacks} of the cards` : 'one of the cards'} they use straight into your hand.`);
   saveRun();
-  render(battleScreen());
+  if (!quiet) render(battleScreen());
 }
-function chooseIceTarget(key) {
+function chooseIceTarget(key, quiet) {
   if (!BATTLE.pendingTarget || BATTLE.pendingTarget.type !== 'ice') return;
   const { itemName, threshold } = BATTLE.pendingTarget;
   BATTLE.pendingTarget = null;
@@ -7147,7 +7285,7 @@ function chooseIceTarget(key) {
   battleLog(`${itemName} freezes ${BATTLE.opponent.name}'s ${name} solid - it'll thaw out on its own over their next few turns.`);
   playSfx('freeze');
   saveRun();
-  render(battleScreen());
+  if (!quiet) render(battleScreen());
 }
 function cancelPendingTarget() {
   BATTLE.pendingTarget = null;
@@ -7276,6 +7414,24 @@ function scoutOpponent() {
   battleLog(`Scouted the ${BATTLE.opponent.name}.`);
   saveRun(); render(battleScreen());
 }
+// Cards the opponent would use for its next attack with an Item that can fire (not frozen). The opponent keeps
+// these back and spends everything else on thawing frozen Items first.
+function opponentPlannedAttackCards(maxCards) {
+  let burnPick = null;
+  const items = BATTLE.opponent.items || [];
+  for (let slotPos = 0; slotPos < items.length; slotPos++) {
+    const item = ITEMS[items[slotPos]];
+    if (!item || item.followUp) continue;
+    const key = `${items[slotPos]}_${slotPos}`;
+    if (BATTLE.opponentItemFrozen && BATTLE.opponentItemFrozen[key]) continue;
+    const itemCap = effectiveMaxCards(item) ?? maxCards;
+    const best = findOpponentCombo(BATTLE.oppPool, item.condition, itemCap);
+    const cond = best ? checkCondition(item.condition, best.cards) : { met: false };
+    if (BATTLE.opponentItemBurns && BATTLE.opponentItemBurns[key]) { if (!burnPick && cond.met) burnPick = best; continue; }
+    if (cond.met && best && opponentAttackIsValid(item, best, BATTLE.oppPool, itemCap)) return best.cards;
+  }
+  return burnPick ? burnPick.cards : [];
+}
 function drawWithGem() {
   if (RUN.gems < 1) return;
   if (BATTLE.hand.length >= RUN.handSize) { battleLog('Hand is full - no room to draw with a gem right now.'); render(battleScreen()); return; }
@@ -7378,6 +7534,27 @@ if (idxs.some(i => BATTLE.usedThisTurn.has(i))) {
     battleLog(`${item.name} - ${condResult.label || 'requirement unmet'}.`);
     render(battleScreen());
     return;
+  }
+  // Freeze, burn, curse and hex need a target. The first press enters target mode without spending anything;
+  // the player picks one of the opponent's Items on the battle screen, then presses the same button again to confirm.
+  let chosenTargetKey = null;
+  {
+    const preKind = effectiveKind(item, index);
+    if (['ice', 'burn', 'curse', 'hex'].includes(preKind)) {
+      const elig = targetEligibleKeys(preKind);
+      if (elig.length) {
+        const T = BATTLE.targeting;
+        const same = !!(T && T.slotKey === slotKey);
+        if (same && T.targetKey && elig.includes(T.targetKey)) { chosenTargetKey = T.targetKey; BATTLE.targeting = null; }
+        else {
+          BATTLE.targeting = { slotKey, itemId, index, type: preKind, itemName: item.name, targetKey: (same && elig.includes(T.targetKey)) ? T.targetKey : null };
+          saveRun();
+          render(battleScreen());
+          scrollToOpponentItems();
+          return;
+        }
+      }
+    }
   }
   if (item.hpCost) {
     // Some Items run on your own health. You cannot fire one if it would take you to 0.
@@ -7549,6 +7726,13 @@ if (idxs.some(i => BATTLE.usedThisTurn.has(i))) {
     battleLog(`${item.name} - Discarded ${cardsStr}, drew ${drawn.map(c=>rankLabel(c.rank)+c.suit).join(' ') || 'no cards'}.`);
     resortHandAndRelink(RUN.handSortMode);
   }
+  if (chosenTargetKey && BATTLE.pendingTarget) {
+    const pt = BATTLE.pendingTarget.type;
+    if (pt === 'burn') chooseBurnTarget(chosenTargetKey, true);
+    else if (pt === 'hex') chooseHexTarget(chosenTargetKey, true);
+    else if (pt === 'ice') chooseIceTarget(chosenTargetKey, true);
+    else if (pt === 'curse') chooseCurseTarget(chosenTargetKey, true);
+  }
   saveRun();
   if (BATTLE.opponent.hpNow <= 0) {
     winBattle();
@@ -7661,6 +7845,7 @@ function opponentAttackIsValid(attack, best, pool, cap) {
   return true;
 }
 function endTurn() {
+  BATTLE.targeting = null;
   BATTLE.stagedFireCards = [];
   // Cards discarded THIS turn go into recentDiscard, not straight into the reshuffle-eligible
   // discard pile - they only become eligible for reshuffleSharedDeck() once a full extra turn has
@@ -7756,17 +7941,33 @@ function endTurn() {
 
   let opponentLandedHit = false;
   if (BATTLE.opponentItemFrozen && Object.keys(BATTLE.opponentItemFrozen).length) {
-    const thawFeed = Math.max(6, Math.round((BATTLE.opponent.drawRate || 2) * AVG_CARD_VALUE));
+    // The opponent thaws a frozen Item by actually feeding it cards from its pool, the same way the player does.
+    // It keeps the cards its best attack with an un-frozen Item needs, and spends the spare cards on the ice first.
+    // A frozen Item that finishes thawing here can fire later this same turn with whatever cards are left.
+    const planned = opponentPlannedAttackCards(opponentMaxCards(BATTLE.opponent));
     Object.keys(BATTLE.opponentItemFrozen).forEach(key => {
       const frozen = BATTLE.opponentItemFrozen[key];
-      frozen.progress += thawFeed;
-      const remaining = Math.max(0, frozen.threshold - frozen.progress);
       const name = ITEMS[key.replace(/_\d+$/, '')]?.name || 'frozen item';
+      const spare = BATTLE.oppPool.filter(c => !cardIncludes(planned, c)).sort((x, y) => cardValue(y.rank) - cardValue(x.rank));
+      const fed = [];
+      for (const c of spare) {
+        if (frozen.progress >= frozen.threshold) break;
+        frozen.progress += cardValue(c.rank);
+        fed.push(c);
+      }
+      if (fed.length) {
+        BATTLE.recentDiscard.push(...fed);
+        BATTLE.oppPool = BATTLE.oppPool.filter(c => !cardIncludes(fed, c));
+      }
+      const fedText = fed.map(c => `${rankLabel(c.rank)}${c.suit}`).join(' ');
+      const remaining = Math.max(0, frozen.threshold - frozen.progress);
       if (remaining <= 0) {
         delete BATTLE.opponentItemFrozen[key];
-        battleLog(`${BATTLE.opponent.name}'s ${name} thaws out.`);
+        battleLog(`${BATTLE.opponent.name} feeds [${fedText}] into its frozen ${name} and it thaws out.`);
+      } else if (fed.length) {
+        battleLog(`${BATTLE.opponent.name} feeds [${fedText}] into its frozen ${name}. ${remaining} more needed to thaw.`);
       } else {
-        battleLog(`${BATTLE.opponent.name}'s ${name} is still frozen - ${remaining} more to thaw.`);
+        battleLog(`${BATTLE.opponent.name}'s ${name} is still frozen, and it has no spare cards to thaw it with. ${remaining} more needed.`);
       }
     });
   }
@@ -8624,7 +8825,7 @@ function battleScreen() {
       })()}
       <div>
         <div style="margin-top:4px">
-          ${ready && (usesLeft > 0 || isChargingUnlockItem || frozenState) && cooldownLeft <= 0 ? `<span class="attackChip ${eKind==='defense' ? 'defendChip' : ''}" data-attack="${slotKey}" style="font-size:10px; padding:3px 6px">${frozenState ? 'Feed Cards ▶' : item.unlockThreshold != null ? (isChargingUnlockItem ? 'Deposit Card(s) ▶' : 'Draw ▶') : eKind==='defense' ? 'Defend ▶' : (item.flatAmount==null && (item.baseMult ?? 1)===0 && (item.drawAmount || item.drawUsesCardCount)) ? 'Draw ▶' : 'Attack ▶'}</span>` : ''}
+          ${ready && (usesLeft > 0 || isChargingUnlockItem || frozenState) && cooldownLeft <= 0 ? `<span class="attackChip ${eKind==='defense' ? 'defendChip' : ''}" data-attack="${slotKey}" style="font-size:10px; padding:3px 6px">${(BATTLE.targeting && BATTLE.targeting.slotKey === slotKey) ? (BATTLE.targeting.targetKey ? targetVerb(BATTLE.targeting.type) + ' ▶' : 'Pick a target') : frozenState ? 'Feed Cards ▶' : item.unlockThreshold != null ? (isChargingUnlockItem ? 'Deposit Card(s) ▶' : 'Draw ▶') : eKind==='defense' ? 'Defend ▶' : (item.flatAmount==null && (item.baseMult ?? 1)===0 && (item.drawAmount || item.drawUsesCardCount)) ? 'Draw ▶' : 'Attack ▶'}</span>` : ''}
         </div>
       </div>
       </div>
@@ -8686,7 +8887,7 @@ function battleScreen() {
               ${BATTLE.opponentItemCurses && Object.keys(BATTLE.opponentItemCurses).length ? `<span class="status curseStatus hoverTip" data-title="${Object.entries(BATTLE.opponentItemCurses).map(([k,v])=>`${ITEMS[k.replace(/_\d+$/,'')]?.name||'Item'}: ${v} if not fired`).join(' | ')}">${ICON.curse} ${Object.keys(BATTLE.opponentItemCurses).length} Item${Object.keys(BATTLE.opponentItemCurses).length>1?'s':''} cursed</span>` : ''}
               ${BATTLE.opponentItemBurns && Object.keys(BATTLE.opponentItemBurns).length ? `<span class="status burnStatus hoverTip" data-title="${Object.entries(BATTLE.opponentItemBurns).map(([k,v])=>`${ITEMS[k.replace(/_\d+$/,'')]?.name||'Item'}: ${v} (+${(BATTLE.opponentItemBurnStep&&BATTLE.opponentItemBurnStep[k])||1} each turn)`).join(' | ')}">${ICON.fire} ${Object.keys(BATTLE.opponentItemBurns).length} Item${Object.keys(BATTLE.opponentItemBurns).length>1?'s':''} burned</span>` : ''}
               ${BATTLE.opponentItemHexes && Object.keys(BATTLE.opponentItemHexes).length ? `<span class="status hoverTip" style="color:var(--hex)" data-title="${Object.entries(BATTLE.opponentItemHexes).map(([k,v])=>`${ITEMS[k.replace(/_\d+$/,'')]?.name||'Item'}: steals ${v} card${v>1?'s':''} when fired`).join(' | ')}">${ICON.hex} ${Object.keys(BATTLE.opponentItemHexes).length} Item${Object.keys(BATTLE.opponentItemHexes).length>1?'s':''} hexed</span>` : ''}
-              ${BATTLE.opponentItemFrozen && Object.keys(BATTLE.opponentItemFrozen).length ? `<span class="status hoverTip" style="color:var(--ice)" data-title="${Object.entries(BATTLE.opponentItemFrozen).map(([k,v])=>`${ITEMS[k.replace(/_\d+$/,'')]?.name||'Item'}: ${Math.max(0,v.threshold-v.progress)} to thaw`).join(' | ')}">${ICON.ice} ${Object.keys(BATTLE.opponentItemFrozen).length} Item${Object.keys(BATTLE.opponentItemFrozen).length>1?'s':''} frozen</span>` : ''}
+              
             </div>
           </div>
         </div>
@@ -8708,11 +8909,11 @@ function battleScreen() {
         </div>` : ''}
         <div class="playerActionGrid">
           <button class="wo-btn gray" id="sortToggleBtn" style="padding:6px 3px;font-size:10px;flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Sort: ${(RUN.handSortMode || 'value') === 'value' ? 'Value' : 'Suit'}</button>
-          ${(() => { const sp = VEHICLE_SPECIALS[RUN.hero.heroId]; if (!sp) return ''; if (sp.type === 'revive') return `<button class="wo-btn amber hoverTip abilityBtn" id="vehicleSpecialBtn" style="padding:6px 3px;font-size:10px;flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" data-title="${sp.desc}" disabled>${sp.name}: ${RUN.reviveUsed ? 'Used' : 'Ready'}</button>`; const minNeed = sp.energyCost ?? sp.energyPerUnit; return `<button class="wo-btn amber hoverTip abilityBtn" id="vehicleSpecialBtn" style="padding:6px 3px;font-size:10px;flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" data-title="${sp.desc}" ${RUN.energy < minNeed ? 'disabled' : ''}>${sp.name} = ${minNeed} ${ICON.energy}</button>`; })()}
-          <button class="wo-btn purple" id="gemDrawBtn" style="padding:6px 3px;font-size:10px;flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" ${(RUN.gems < 1 || BATTLE.hand.length >= RUN.handSize) ? 'disabled' : ''}>Draw = ${GEM_DRAW_COST} ${ICON.gem}</button>
+          ${(() => { const sp = VEHICLE_SPECIALS[RUN.hero.heroId]; if (!sp) return ''; if (sp.type === 'revive') return `<div class="abilityWrap"><button class="wo-btn amber hoverTip abilityBtn" id="vehicleSpecialBtn" style="padding:6px 3px;font-size:10px;flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" data-title="${sp.desc}" disabled>${sp.name}: ${RUN.reviveUsed ? 'Used' : 'Ready'}</button><button class="wo-btn gray abilityInfoBtn" id="abilityInfoBtn" aria-label="What this ability does">i</button></div>`; const minNeed = sp.energyCost ?? sp.energyPerUnit; return `<div class="abilityWrap"><button class="wo-btn amber hoverTip abilityBtn" id="vehicleSpecialBtn" style="padding:6px 3px;font-size:10px;flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" data-title="${sp.desc}" ${RUN.energy < minNeed ? 'disabled' : ''}>${sp.name} = ${minNeed} ${ICON.energy}</button><button class="wo-btn gray abilityInfoBtn" id="abilityInfoBtn" aria-label="What this ability does">i</button></div>`; })()}
+          <button class="wo-btn purple" id="gemDrawBtn" style="padding:6px 3px;font-size:10px;flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" ${(RUN.gems < 1 || BATTLE.hand.length >= RUN.handSize) ? 'disabled' : ''} ${BATTLE.hand.length >= RUN.handSize ? 'data-title="Your hand is full (' + BATTLE.hand.length + '/' + RUN.handSize + '). Play or discard a card to make room."' : ''}>${BATTLE.hand.length >= RUN.handSize && RUN.gems >= 1 ? 'Hand full' : `Draw = ${GEM_DRAW_COST} ${ICON.gem}`}</button>
           <button class="wo-btn gray" id="discardSelectedBtn" style="padding:6px 3px;font-size:10px;flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" data-title="Fold selected cards face-down instead of playing them." ${!selectedIdx.length ? 'disabled' : ''}>Discard</button>
     </div>
-        
+        ${BATTLE.abilityInfoOpen && (VEHICLE_SPECIALS[RUN.hero.heroId] || {}).desc ? `<div class="note abilityInfoLine">${(VEHICLE_SPECIALS[RUN.hero.heroId] || {}).desc}</div>` : ''}
       </div>
       <div class="deckStack" style="flex-direction:column;align-items:center;gap:10px">
         <div style="display:flex;align-items:center;gap:4px;justify-content:center;flex-wrap:wrap">
@@ -8805,6 +9006,14 @@ function battleScreen() {
         </div>
       </div>
     </div>` : ''}
+    ${BATTLE.targeting ? (() => {
+      const T = BATTLE.targeting; const verb = targetVerb(T.type);
+      const tName = T.targetKey ? (ITEMS[T.targetKey.replace(/_\d+$/, '')]?.name || 'this item') : null;
+      return `<div class="targetBar"><div class="targetBarText">${tName ? `${verb} ${tName}?` : `Pick one of ${BATTLE.opponent.name}'s items to ${verb.toLowerCase()}`}</div>
+        <button class="wo-btn gray" id="cancelTargetingBtn" style="padding:8px 12px;font-size:12px">Cancel</button>
+        <button class="wo-btn ${T.type === 'ice' ? 'purple' : 'amber'}" id="confirmTargetingBtn" style="padding:8px 14px;font-size:12px" ${tName ? '' : 'disabled'}>${verb} &#9654;</button>
+      </div>`;
+    })() : ''}
     ${ART_ZOOM ? artZoomModalHTML() : ''}
   </div>`;
 }
@@ -9029,21 +9238,20 @@ function blacksmithScreen() {
     const cost = maxed ? 0 : itemTuneCost(item, lvl);
     const before = renderStandardItemCard(item, { level: lvl });
     const after = maxed ? before : renderStandardItemCard(item, { level: lvl + 1 });
-    return `<div class="shopcard">
-      <div style="display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:nowrap">
+    return `<div class="shopcard holoCard">
+      <div class="holoRow" style="display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:nowrap">
         <div>${before}</div>
-        <span style="font-size:20px;color:var(--dim)">➔</span>
-        <div style="display:flex;flex-direction:column;align-items:center;gap:3px;flex-shrink:0">
+        <div class="holoMid" style="display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0">
+          <span style="font-size:24px;color:var(--amber);line-height:1">➔</span>
           ${maxed ? `<span class="wo-btn gray" style="padding:8px 12px;font-size:13px;opacity:0.7">Maxed</span>` : `<button class="wo-btn amber" data-bonusup="${id}" style="padding:6px 14px;font-size:14px;font-weight:800" ${RUN.chips < cost ? 'disabled' : ''}>Level Up</button>`}
-          ${maxed ? '' : `<span class="price" style="font-size:11px">${cost} coins</span>`}
+          ${maxed ? '' : `<span class="price" style="font-size:12px;white-space:nowrap">${cost} coins</span>`}
           ${lvl > 0 ? `<button class="wo-btn gray" data-bonusdown="${id}" style="padding:3px 8px;font-size:10px;margin-top:2px">Refund</button>` : ''}
         </div>
-        <span style="font-size:20px;color:var(--dim)">➔</span>
         <div>${after}</div>
       </div>
     </div>`;
   }).filter(Boolean).join('');
-  return `${noticeHTML()}
+  return `<div id="blacksmith-viewport">${noticeHTML()}
     <div class="wo">
       <div class="wo-stripe"></div>
       <div class="wo-body">
@@ -9058,7 +9266,7 @@ function blacksmithScreen() {
         <div style="font-weight:800;font-size:15px;text-align:center;margin:18px 0 8px">Item Tuning</div>
         <div class="panel" style="max-width:500px;margin:0 auto">${equippedChecklist || '<div class="note">No items with a Bonus Level track equipped.</div>'}</div>
       </div>
-    </div>
+    </div></div>
   `;
 }
 function treasureScreen(found) {
@@ -9309,9 +9517,9 @@ function upgradeScreen() {
 * OVERDRIVE BAY                                                            *
 ****************************************************************************/
 function overdriveBayScreen() {
-  const holoCompareBlock = (beforeHTML, afterHTML, cost, cta) => `<div style="display:flex;align-items:center;gap:12px;justify-content:center;width:100%;margin:10px 0">
+  const holoCompareBlock = (beforeHTML, afterHTML, cost, cta) => `<div class="holoRow" style="display:flex;align-items:center;gap:12px;justify-content:center;width:100%;margin:10px 0">
       <div style="flex:0 0 auto">${beforeHTML}</div>
-      <div style="display:flex;flex:0 0 auto;flex-direction:column;align-items:center;justify-content:center;gap:6px">
+      <div class="holoMid" style="display:flex;flex:0 0 auto;flex-direction:column;align-items:center;justify-content:center;gap:6px">
         <span style="font-size:26px;color:var(--amber);line-height:1">➔</span>
         ${cta}
         <span class="price" style="white-space:nowrap">${cost} coins</span>
@@ -9332,7 +9540,7 @@ function overdriveBayScreen() {
       RUN.itemUsesLevels[id] = usesLvl;
     }
     const cta = usesMaxed ? `<span class="note">Maxed</span>` : `<button class="wo-btn amber" data-usesup="${id}" style="padding:6px 10px;font-size:12px;white-space:nowrap" ${RUN.chips < usesCost ? 'disabled' : ''}>+1 Use Per Turn</button>`;
-    return `<div class="shopcard" style="padding:14px 16px">
+    return `<div class="shopcard holoCard" style="padding:14px 16px">
       ${holoCompareBlock(before, after, usesMaxed ? '—' : usesCost, cta)}
       ${usesLvl > 0 ? `<div style="text-align:center"><button class="wo-btn gray" data-usesdown="${id}" style="padding:6px 10px;font-size:12px">Refund</button></div>` : ''}
     </div>`;
@@ -9359,28 +9567,27 @@ function chopShopScreen(returnTo) {
     const original = renderStandardItemCard(item, {});
     const convertCost = itemKindConvertCost();
 
+    // One row per conversion, same shape as the Overdrive Bay and Tuning Garage: original card, an arrow
+    // above the button with the coin price under it, then the converted card. Two cards per row so it fits a phone.
     let convertBlockHTML;
     if (alreadyModified) {
       convertBlockHTML = `<div class="note" style="text-align:center;width:100%">Already modified to <b>${current}</b>. No further modification this run.</div>`;
     } else {
-      const previewCols = ['poison','burn','curse'].map(k => {
+      convertBlockHTML = ['poison','burn','curse'].map(k => {
         const previewCard = renderStandardItemCard(item, { kindOverride: k });
-        return `<div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:0 0 auto">
-          ${previewCard}
-          <button class="wo-btn ${k==='poison'?'green':k==='burn'?'red':'purple'}" data-kindconvert="${itemId}" data-item-index="${index}" data-kindto="${k}" style="padding:6px 10px;font-size:11px" ${RUN.chips<convertCost?'disabled':''}>Convert to ${k[0].toUpperCase()+k.slice(1)}</button>
-          <span class="price" style="font-size:13px">${convertCost} coins</span>
+        return `<div class="holoRow" style="display:flex;align-items:center;justify-content:center;gap:12px;margin:8px 0">
+          <div style="flex:0 0 auto">${original}</div>
+          <div class="holoMid" style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:0 0 auto">
+            <span style="font-size:24px;color:var(--amber);line-height:1">➔</span>
+            <button class="wo-btn ${k==='poison'?'green':k==='burn'?'red':'purple'}" data-kindconvert="${itemId}" data-item-index="${index}" data-kindto="${k}" style="padding:6px 10px;font-size:12px" ${RUN.chips<convertCost?'disabled':''}>Convert to ${k[0].toUpperCase()+k.slice(1)}</button>
+            <span class="price" style="font-size:12px;white-space:nowrap">${convertCost} coins</span>
+          </div>
+          <div style="flex:0 0 auto">${previewCard}</div>
         </div>`;
       }).join('');
-      convertBlockHTML = `<div style="display:flex;gap:8px;flex-wrap:nowrap">${previewCols}</div>`;
     }
 
-    return `<div class="shopcard">
-      <div style="display:flex;align-items:flex-start;gap:12px;justify-content:flex-start;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;margin:8px 0;padding-bottom:4px">
-        ${original}
-        <span style="font-size:20px;color:var(--dim);flex:0 0 auto;align-self:center">➔</span>
-        ${convertBlockHTML}
-      </div>
-    </div>`;
+    return `<div class="shopcard holoCard">${convertBlockHTML}</div>`;
   }).join('');
   const utilityRows = RUN.hero.items.map((id,i) => {
     if (id === 'drawstone') {
@@ -9592,17 +9799,29 @@ const UPDATE_LOG = [
       'Pick Your Vehicle now shows a Perk card as well as the ability card.',
     ],
     'Item cards': [
+      'Freeze, Burn, Curse and Hex now stay on the battle screen with no popup. Press Attack, tap one of the opponent\'s Items, then press the same button, which now reads Freeze, Burn, Curse or Hex, to lock it in. Cancel keeps your cards, so you can look over their Items first.',
       'Your starting Item cards no longer pay out less than the sum of their cards, unless they are poison.',
       'New Items: Full Pallet, Roof Rack, Hose Slam and a set of new vehicle Items. Some can fire several times a turn, and some cost HP or heal you when fired.',
     ],
     Opponents: [
+      'Frozen opponent Items now thaw the way yours do. The opponent feeds spare cards into the ice, keeps the cards its best attack needs, and the battle log shows which cards it used. A frozen Item cannot fire until it has thawed.',
       'Opponents no longer hex your Items for now. Their old hex Items hit like normal attacks instead.',
       'Bosses have less health than before, and the World 3 and World 4 bosses no longer freeze your Items.',
+    ],
+    Misc: [
+      'Fleet Plinko: Game Over spots now move to new places on every drop instead of growing out from the center. The pegs are packed much tighter so a chip keeps bouncing all the way down, and the walls between the bottom slots now sit directly under pegs so a chip cannot get stuck.',
+      'Fleet Blackjack: the dealer now plays three hands, one facing each of yours, with one card showing on each. Your hands pay out on their own, so a strong dealer hand will not take all three. A true blackjack now beats a dealer 21 made with more cards. Rewards are bigger, and your two hands sit on top with the third centered below so everything fits without scrolling.',
+      'Fleet Poker: two hands on top and one centered below, with the cards you are placing at the top. Tap an Item prize to see its real card. The computer\'s cards stay face up once yours are placed, the five board cards sit in one row with the Reveal button right under them, and the row stays pinned to the top if you scroll.',
+      'Fleet Compound Dungeon: the three battles are compact rows so the page fits without scrolling, the Battle button is on top, and the win screen is shorter with a red Cash Out button.',
+      'Prize Items from Poker or the Auction can no longer push you past your Item slots. If you have no open slot, the prize shows as grayed out and pays coins instead.',
     ],
     'Match game': [
       'The Matching Game board shrinks to fit a phone held upright, so all the cards show on one screen. Pair Rewards now show real cards instead of text suits.',
     ],
     Visual: [
+      'Overdrive Bay, Tuning Garage, Chop Shop and the Run Dashboard now fit on a phone. Item cards sit side by side with the button between them, the Dashboard shows three Items across, and Chop Shop uses the same layout as the others. The blank gap above page titles is gone on every page, and the Back and Upgrades buttons share one line. Back on the Run Dashboard returns you to the page you came from.',
+      'The battle screen has a little less space around your cards, and the frozen note under the opponent\'s health is gone since its Item card already shows it. The gem Draw button now says Hand full when your hand has no room.',
+      'A small i button beside your vehicle ability explains what it does without using it. The magnifying glass is gone from the battle pictures, but you can still tap a picture to enlarge it, and the enlarged picture now closes with a tap anywhere or the bigger X.',
       'Pictures now fit their boxes on every screen, with the whole subject shown instead of being clipped. Logi Bear, NayNay and others are fixed, and the battle screen fits better on phones.',
       'On a phone held upright, the battle screen opens scrolled to your cards. Names stay on one line so the health bars line up, and a slim bar with both sides\' health and effects stays pinned at the top while you scroll. The pictures sit above it. Sort, Draw, Discard and your ability share one row. End Turn, the deck and a small Reveal a card button sit between the two hands, and the opponent\'s cards start on the right. Item cards now sit three across, and the top bar shows just icons and numbers during battle. The opponent\'s cards now follow your Sort, so its own Sort button is gone.',
       'Map icons are noticeably bigger and their pictures fill the circle more, so you can tell what each stop is at a glance.',
@@ -9770,12 +9989,14 @@ function fitDuelNames() {
   });
 }
 function battleLayoutPass() {
-  if (!document.getElementById('battle-viewport')) return;
+  // Runs on every screen (not just battles) so the page content always starts right under the fixed
+  // resource bar, with no leftover blank gap above the title. With no bar on screen, --curH is 0.
   const hdr = document.querySelector('.currencyHeader');
-  const setH = () => { if (hdr) document.documentElement.style.setProperty('--curH', Math.ceil(hdr.getBoundingClientRect().height) + 'px'); };
+  const setH = () => { document.documentElement.style.setProperty('--curH', (hdr ? Math.ceil(hdr.getBoundingClientRect().height) : 0) + 'px'); };
   setH();
-  if (hdr && window.ResizeObserver) { if (BATTLE_HDR_OBSERVER) BATTLE_HDR_OBSERVER.disconnect(); BATTLE_HDR_OBSERVER = new ResizeObserver(setH); BATTLE_HDR_OBSERVER.observe(hdr); }
-  fitDuelNames();
+  if (BATTLE_HDR_OBSERVER) { BATTLE_HDR_OBSERVER.disconnect(); BATTLE_HDR_OBSERVER = null; }
+  if (hdr && window.ResizeObserver) { BATTLE_HDR_OBSERVER = new ResizeObserver(setH); BATTLE_HDR_OBSERVER.observe(hdr); }
+  if (document.getElementById('battle-viewport')) fitDuelNames();
 }
 function scrollBattleToBoard() {
   if (!isPhonePortrait()) return;
@@ -9788,8 +10009,11 @@ function scrollBattleToBoard() {
   }));
 }
 window.addEventListener('resize', () => { if (document.getElementById('battle-viewport')) battleLayoutPass(); });
+// Remembers the last real screen so the Run Dashboard's Back button can return to it instead of the home page.
+let LAST_SCREEN_HTML = null;
 function render(html) {
   const app = document.getElementById('app');
+  if (!String(html).includes('id="leaveRunSummaryBtn"')) LAST_SCREEN_HTML = html;
   // Every click that calls render() (a card, a match tile, an item slot...) replaces the whole
   // #app subtree, which destroys whatever element currently has focus - the button just clicked,
   // almost always. Losing a focused element mid-interaction makes some browsers (especially on
@@ -9879,7 +10103,7 @@ function render(html) {
     render(battleScreen());
   });
   const artZoomCloseBtn = document.getElementById('artZoomCloseBtn'); if (artZoomCloseBtn) artZoomCloseBtn.onclick = () => { ART_ZOOM = null; render(battleScreen()); };
-  const artZoomOverlay = document.getElementById('artZoomOverlay'); if (artZoomOverlay) artZoomOverlay.onclick = (e) => { if (e.target === artZoomOverlay) { ART_ZOOM = null; render(battleScreen()); } };
+  const artZoomOverlay = document.getElementById('artZoomOverlay'); if (artZoomOverlay) artZoomOverlay.onclick = () => { ART_ZOOM = null; render(battleScreen()); };
   const discardSelectedBtn = document.getElementById('discardSelectedBtn'); if (discardSelectedBtn) discardSelectedBtn.onclick = markSelectedForDiscard;
   app.querySelectorAll('[data-unstage]').forEach(el => el.onclick = (e) => { e.stopPropagation(); unmarkDiscard(+el.dataset.unstage); });
 
@@ -10417,15 +10641,19 @@ function render(html) {
   const battleLogEl = document.getElementById('battleLogEl'); if (battleLogEl) battleLogEl.scrollTop = battleLogEl.scrollHeight;
   const devPanelBtn = document.getElementById('devPanelBtn'); if (devPanelBtn) devPanelBtn.onclick = () => { app.insertAdjacentHTML('beforeend', devPanel()); bindDev(); };
   const openRunSummaryBtn = document.getElementById('openRunSummaryBtn'); if (openRunSummaryBtn) openRunSummaryBtn.onclick = () => render(runSummaryScreen());
-  const leaveRunSummaryBtn = document.getElementById('leaveRunSummaryBtn'); if (leaveRunSummaryBtn) leaveRunSummaryBtn.onclick = () => render(IN_BATTLE ? battleScreen() : metaScreen());
+  const leaveRunSummaryBtn = document.getElementById('leaveRunSummaryBtn'); if (leaveRunSummaryBtn) leaveRunSummaryBtn.onclick = () => render(IN_BATTLE ? battleScreen() : (RUN && LAST_SCREEN_HTML) ? LAST_SCREEN_HTML : metaScreen());
   app.querySelectorAll('[data-targetkey]').forEach(el => el.onclick = () => {
     const k = el.dataset.targetkey;
+    if (BATTLE.targeting) { BATTLE.targeting.targetKey = (BATTLE.targeting.targetKey === k) ? null : k; saveRun(); render(battleScreen()); return; }
     if (!BATTLE.pendingTarget) return;
     if (BATTLE.pendingTarget.type === 'burn') chooseBurnTarget(k);
     else if (BATTLE.pendingTarget.type === 'hex') chooseHexTarget(k);
     else if (BATTLE.pendingTarget.type === 'ice') chooseIceTarget(k);
     else chooseCurseTarget(k);
   });
+  const cancelTargetingBtn = document.getElementById('cancelTargetingBtn'); if (cancelTargetingBtn) cancelTargetingBtn.onclick = () => { BATTLE.targeting = null; saveRun(); render(battleScreen()); scrollBattleToBoard(); };
+  const confirmTargetingBtn = document.getElementById('confirmTargetingBtn'); if (confirmTargetingBtn) confirmTargetingBtn.onclick = () => { const T = BATTLE.targeting; if (!T || !T.targetKey) return; executePlayerAttack(T.itemId, T.index); scrollBattleToBoard(); };
+  const abilityInfoBtn = document.getElementById('abilityInfoBtn'); if (abilityInfoBtn) abilityInfoBtn.onclick = (e) => { e.stopPropagation(); BATTLE.abilityInfoOpen = !BATTLE.abilityInfoOpen; render(battleScreen()); };
   const cancelTargetBtn = document.getElementById('cancelPendingTargetBtn'); if (cancelTargetBtn) cancelTargetBtn.onclick = () => cancelPendingTarget();
   const claimVictoryBtn = document.getElementById('claimVictoryBtn'); if (claimVictoryBtn) claimVictoryBtn.onclick = () => endRun(true);
   bindDev();
@@ -10472,7 +10700,7 @@ function runDashboardItemCardHTML(id, index) {
   const utilLv = utilityLevel(id); if (utilLv) tags.push(`Utility Lv ${utilLv}`);
   const kindOverride = RUN.itemKindOverride && (RUN.itemKindOverride[`${id}_${index}`] || RUN.itemKindOverride[id]);
   if (kindOverride) tags.push(`Converted: ${kindOverride}`);
-  return `<div class="dealerCardPanel panel" style="width:141px;min-width:141px;max-width:141px;display:flex;flex-direction:column;align-items:center;padding:8px;box-sizing:border-box">
+  return `<div class="dealerCardPanel dashItemPanel panel" style="width:141px;min-width:141px;max-width:141px;display:flex;flex-direction:column;align-items:center;padding:8px;box-sizing:border-box">
     ${renderStandardItemCard(item, {})}
     ${tags.length ? `<div class="note" style="margin-top:6px;font-size:10px;text-align:center">${tags.join(' · ')}</div>` : ''}
   </div>`;
@@ -10491,7 +10719,7 @@ function runSummaryScreen() {
   // themselves at all, just their tuning levels as plain text.
   const statBarHTML = `<div class="panel" style="display:flex;flex-wrap:wrap;gap:14px;justify-content:center;padding:10px">${statRows.map(([label, value]) => `<div style="text-align:center"><div class="note" style="margin:0;font-size:10.5px">${label}</div><div style="font-weight:800;font-size:14px">${value}</div></div>`).join('')}</div>`;
   const itemCardsHTML = RUN.hero.items.length
-    ? `<div class="popupItemRow" style="justify-content:center;margin-top:10px">${RUN.hero.items.map((id, i) => runDashboardItemCardHTML(id, i)).join('')}</div>`
+    ? `<div class="popupItemRow dashItemRow" style="justify-content:center;margin-top:10px">${RUN.hero.items.map((id, i) => runDashboardItemCardHTML(id, i)).join('')}</div>`
     : `<div class="note" style="margin-top:10px">No Items equipped.</div>`;
   return `<div class="wo"><div class="wo-stripe"></div><div class="wo-body"><h1>Run <em>Dashboard</em></h1>${currencyBar()}
     ${statBarHTML}

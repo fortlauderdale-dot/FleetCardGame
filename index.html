@@ -60,7 +60,7 @@
   .worldCompleteWo .wo-stripe{background:linear-gradient(90deg,#f5c451 0%,#f2a93f 50%,#f5c451 100%)}
   .worldCompleteTitle{font-size:34px;margin:6px 0 0;line-height:1.05}
   .worldCompleteBanner{display:inline-block;margin-top:6px;font-size:22px;font-weight:900;letter-spacing:.08em;color:#7a5200;background:linear-gradient(180deg,#ffe9a8,#f5c451);padding:4px 22px;border-radius:6px;box-shadow:0 2px 0 rgba(0,0,0,0.15)}
-  .worldCompleteImg{display:block;width:100%;max-height:220px;object-fit:cover;border-radius:8px;margin-top:14px;box-shadow:0 0 0 2px rgba(0,0,0,0.08)}
+  .worldCompleteImg{display:block;width:100%;max-width:480px;aspect-ratio:3/2;height:auto;object-fit:contain;border-radius:8px;margin:14px auto 0;box-shadow:0 0 0 2px rgba(0,0,0,0.08)}
   .wo{background:var(--white);color:var(--ink);border:3px solid var(--blue-dark);border-radius:12px;box-shadow:0 0 20px rgba(31,182,166,0.25),6px 6px 0 #1a2038;padding:0;margin:16px 0;overflow:hidden}
   .wo-stripe{height:10px;background:linear-gradient(90deg,#2b3350 0%,#3d4a72 50%,#1fb6a6 100%)}
   .wo-body{padding:20px 22px 24px}
@@ -139,7 +139,8 @@
   .vsMark{font-family:var(--mono);font-weight:800;color:var(--dim);font-size:13px}
   .bigicon{font-size:30px;line-height:1}
   .duelBoard{display:grid;grid-template-columns:1fr 90px 1fr;gap:8px;align-items:start}
-  @media (max-width:700px){ .duelBoard{grid-template-columns:1fr} .duelHead{grid-template-columns:1fr 1fr} .vsMark{display:none} }
+  @media (max-width:700px){ .duelBoard{grid-template-columns:1fr} .duelHead{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px} .vsMark{display:none} }
+  @media (max-width:480px){ .duelSide{gap:5px} .duelSide .artZoomTrigger .vart{width:58px !important;height:58px !important} .duelSide h3{font-size:15px} }
   .deckStack{text-align:center;padding-top:20px;display:flex;flex-direction:column;align-items:center;gap:10px;width:100%;box-sizing:border-box}.deckStack .card.back{cursor:default;pointer-events:none}
   .deckStack .card.back::after{content:none}
   .wo-btn.red{background:var(--red);border-color:#a83236}
@@ -326,7 +327,9 @@
   @media (max-width:600px){.shopGrid{grid-template-columns:1fr}}
   .pickcard{border:2px solid var(--blue-light);background:var(--bg);border-radius:10px;padding:16px;width:160px;text-align:center}
   .pickrow{border:2px solid var(--blue-dark);background:var(--bg);border-radius:10px;position:relative}
-  .pickrow.locked{opacity:.55}
+  .pickrow.locked{opacity:.8}
+  .pickrow.locked .lockedPortrait .vart{filter:brightness(.55) saturate(.6)}
+  .pickrow.locked .pickItemRow.lockedNote{width:auto;flex:1}
   .pickLeftCol{position:absolute;top:0;left:0;width:170px;display:flex;flex-direction:column;align-items:center}
   .pickLeftCol .pname{text-align:center;margin:0 0 4px;white-space:normal}
   .chooseBtnWrap{display:flex;justify-content:center;margin-bottom:6px}
@@ -386,7 +389,9 @@
   .stopArtBig{flex:1 1 auto;width:auto;max-width:none;display:flex;align-items:center;justify-content:center}
   .stopArtBig .vart{width:100% !important;height:100% !important;font-size:70px !important}
   .stopArtBig .vart span{font-size:70px !important}
-  .stopArtBig .vart img{width:100%;height:100%;object-fit:cover;border-radius:8px}
+  .stopArtBig{overflow:hidden;border-radius:8px}
+  .stopArtBig .vart{overflow:hidden}
+  .stopArtBig .vart img{width:100%;height:100%;object-fit:contain;border-radius:8px}
   .stopArtStats{width:100%;min-width:0;display:flex;flex-direction:column;gap:3px}
   .stopStatLine{display:flex;justify-content:flex-start;gap:8px;font-weight:700;font-size:12px;color:var(--ink);padding:2px 0;border-bottom:1px solid rgba(255,255,255,0.08)}
   .stopStatLabel{color:var(--dim);min-width:64px}
@@ -472,8 +477,13 @@
     .pickPortrait{width:110px;height:110px;flex:0 0 110px}
     .pickPortrait .vart{font-size:44px !important}
     .pickPortrait .vart span{font-size:44px !important}
-    .pickLeftCol{width:110px}
-    .pickItemRow{margin-left:118px}
+    .pickrow{min-height:0 !important}
+    .pickLeftCol{position:static;width:100%;flex-direction:row;flex-wrap:nowrap;align-items:center;gap:10px;margin-bottom:8px}
+    .pickLeftCol .pickPortrait{order:1;width:88px;height:88px;flex:0 0 88px}
+    .pickLeftCol .pname{order:2;flex:1;text-align:left;margin:0}
+    .pickLeftCol .chooseBtnWrap{order:3}
+    .pickItemRow{margin-left:0;justify-content:center;gap:6px}
+    .pickItemRow .itemCard,.pickItemRow .abilityCard{flex:0 0 calc(50% - 3px);width:calc(50% - 3px)}
     .stopArtRow{flex-direction:column !important}
     .sdLeftCol{flex:none !important;width:100% !important}
     .stopArtBig{width:100% !important;height:200px !important;flex:none !important}
@@ -746,6 +756,7 @@ function findOpponentCombo(pool, cond, cap) {
 function damageFor(cards, mult) { return Math.round(cards.reduce((a, c) => a + cardValue(c.rank) + (c.bonus || 0), 0) * mult); }
 
 function formatRewardParts(reward, labels = { coins: 'coins', gems: 'gems', fuel: 'fuel', points: 'Career Points' }) {
+  if (typeof usesCoinTravel === 'function' && usesCoinTravel() && reward.fuel) reward = { ...reward, coins: (reward.coins || 0) + reward.fuel * FUEL_COIN_VALUE, fuel: 0 };
   return Object.entries(labels)
     .filter(([key]) => reward[key])
     .map(([key, label]) => `+${reward[key]} ${label}`)
@@ -1440,7 +1451,7 @@ function itemUsesCap(item, usesLevel) { return item.usesPerTurn + (item.usesPerT
 /* ========== ITEM CATALOG ========== */
 function equippedItemCount(hero) { return (hero.items || []).filter(id => !ITEMS[id]?.weightless).length; }
 const ITEMS = {
-  card_draw: { id: 'card_draw', name: 'Fast Pit Stop', cost: 45, maxCards: 2, usesPerTurn: 1, condition: { type: 'pokerTier', tier: 1 }, baseMult: 1, drawAmount: 2, drawPerLevel: 1, levelCap: 3, note: `Needs a Pair. Attack for ${SIGMA_TIP} of cards played, then draw 2 additional cards.` },
+  card_draw: { id: 'card_draw', name: 'Fast Pit Stop', cost: 60, maxCards: 3, usesPerTurn: 1, condition: { type: 'any' }, baseMult: 1, drawAmount: 2, drawPerLevel: 1, levelCap: 3, note: `Needs any card, up to 3. Attack for ${SIGMA_TIP} of cards played, then draw 2 additional cards.` },
  pair_draw: { id: 'pair_draw', name: 'Hit & Run', cost: 45, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'pokerTier', tier: 1 }, baseMult: 1,
     drawAmount: 2, drawPerLevel: 0,
@@ -1493,10 +1504,10 @@ const ITEMS = {
   chain_starter: { id: 'chain_starter', name: 'Jump Start', cost: 65, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1, minRow: 2,
     condition: { type: 'straightLen', len: 3 }, baseMult: straightMult(3),
     note: `Needs a 3-card ${kw('Straight')} (example: 6, 7, 8). ${SIGMA_TIP} +45% damage.` },
-  drawstone: { id: 'drawstone', name: 'Tow Cable', cost: 45, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
-    condition: { type: 'sumThreshold', min: 7 }, baseMult: 0,
+  drawstone: { id: 'drawstone', name: 'Tow Cable', cost: 60, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+    condition: { type: 'sumThreshold', min: 7 }, baseMult: 1,
     drawAmount: 2, drawPerLevel: 0,
-    note: `Cards played must add up to 7+. Draws 2 cards immediately.` },
+    note: `Cards played must add up to 7+. Hits for ${SIGMA_TIP} of the cards played, then draws 2 cards immediately.` },
   impound_release: { id: 'impound_release', name: 'Impound Release', cost: 155, maxCards: 5, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'any' }, baseMult: 0, kind: 'unlock', unlockThreshold: 45,
     note: `Deals no damage. Playing cards through it counts down from 45 to 0 (based on the cards' value). Once fully charged, playing cards through it instead draws you 4 fresh cards, once per turn, for the rest of this battle - it never re-locks. Charge resets at the start of your next battle.` },
@@ -1504,42 +1515,129 @@ const ITEMS = {
     condition: { type: 'pokerTier', tier: 0 }, baseMult: 1,
     bonus: { condition: { type: 'pokerTier', tier: 1 }, base: 0.5, perLevel: 0.25, maxLevel: 2 },
     note: 'Up to 2 cards. A Pair adds a bonus that grows the more you tune it.' },
-  taylor_sift: { id: 'taylor_sift', name: 'Taylor Sift', cost: 20, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1,
-    condition: { type: 'any' }, baseMult: 0.9,
-    note: `Needs any card, up to 2. Rakes the sifter through for ${SIGMA_TIP} × 0.9 damage - simple and steady, just like combing the beach.` },
-  sand_trap: { id: 'sand_trap', name: 'Sand Trap', cost: 40, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
-    condition: { type: 'any' }, baseMult: 0.75, kind: 'defense',
-    note: `Needs any card, up to 3. Blocks damage equal to ${SIGMA_TIP} × 0.75 - bogs the attack down like tires stuck in loose sand.` },
-  pallet_drop: { id: 'pallet_drop', name: 'Pallet Drop', cost: 30, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1,
-    condition: { type: 'sumThreshold', min: 8 }, flatAmount: 16, flatAmountPerLevel: 4,
-    note: `Cards played must add up to ${SIGMA_TIP}8+. Drops a loaded pallet for a flat 16 damage.` },
-  overhead_lift: { id: 'overhead_lift', name: 'Overhead Lift', cost: 35, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1,
-    condition: { type: 'pokerTier', tier: 1 }, baseMult: 0.6,
+  taylor_sift: { id: 'taylor_sift', name: 'Taylor Sift', cost: 35, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+    condition: { type: 'any' }, baseMult: 1,
+    note: `Needs any card, up to 3. Rakes the sifter through for ${SIGMA_TIP} damage - simple and steady, just like combing the beach.` },
+  sand_trap: { id: 'sand_trap', name: 'Sand Trap', cost: 55, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+    condition: { type: 'any' }, baseMult: 1.25, kind: 'defense',
+    note: `Needs any card, up to 3. Blocks damage equal to ${SIGMA_TIP} × 1.25 - bogs the attack down like tires stuck in loose sand.` },
+  pallet_drop: { id: 'pallet_drop', name: 'Pallet Drop', cost: 40, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+    condition: { type: 'sumThreshold', min: 8 }, flatAmount: 20, flatAmountPerLevel: 4,
+    note: `Cards played must add up to ${SIGMA_TIP}8+. Drops a loaded pallet for a flat 20 damage.` },
+  full_pallet: { id: 'full_pallet', name: 'Full Pallet', cost: 90, maxCards: 5, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+    condition: { type: 'exactCount', count: 5 }, baseMult: 1,
+    note: `Needs exactly 5 cards. Stacks a full pallet and drops it for ${SIGMA_TIP} of all five cards. Draw up to a full five first.` },
+  roof_rack: { id: 'roof_rack', name: 'Roof Rack', cost: 70, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+    condition: { type: 'any' }, baseMult: 1,
+    note: `Needs any card, up to 4. Slings everything strapped to the roof for ${SIGMA_TIP} damage.` },
+  hose_slam: { id: 'hose_slam', name: 'Hose Slam', cost: 40, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+    condition: { type: 'any' }, baseMult: 1,
+    note: `Needs any card, up to 3. Whips the fuel hose around for ${SIGMA_TIP} damage.` },
+  overhead_lift: { id: 'overhead_lift', name: 'Overhead Lift', cost: 40, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+    condition: { type: 'pokerTier', tier: 1 }, baseMult: 1,
     drawAmount: 1, drawPerLevel: 0,
-    note: `Needs a Pair. Modest hit for ${SIGMA_TIP} × 0.6, then hoists up 1 extra card.` },
-  donut_toss: { id: 'donut_toss', name: 'Donut Toss', cost: 70, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1,
-    condition: { type: 'pokerTier', tier: 1 }, baseMult: 1.3,
-    note: `Needs a Pair. Chucks a box of donuts for ${SIGMA_TIP} × 1.3 damage - messy, but it works.` },
-  backdraft_blast: { id: 'backdraft_blast', name: 'Backdraft Blast', cost: 70, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+    note: `Needs a Pair. Hits for ${SIGMA_TIP}, then hoists up 1 extra card.` },
+  donut_toss: { id: 'donut_toss', name: 'Donut Toss', cost: 80, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+    condition: { type: 'pokerTier', tier: 1 }, baseMult: 1.5,
+    note: `Needs a Pair. Chucks a box of donuts for ${SIGMA_TIP} × 1.5 damage - messy, but it works.` },
+  hot_pursuit: { id: 'hot_pursuit', name: 'Hot Pursuit', cost: 110, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+    condition: { type: 'any' }, baseMult: 1.8, hpCost: 8,
+    note: `Needs any cards, up to 4. Floors it for ${SIGMA_TIP} × 1.8 damage, but the chase costs you 8 health every time you fire it.` },
+  donut_break: { id: 'donut_break', name: 'Donut Break', cost: 70, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+    condition: { type: 'any' }, baseMult: 1, healAmount: 12,
+    note: `Needs any cards, up to 2. Tosses a donut for ${SIGMA_TIP} damage and you heal 12 health. Pays for Hot Pursuit.` },
+  mower_trim: { id: 'mower_trim', name: 'Trim the Edges', cost: 35, maxCards: 2, usesPerTurn: 2, usesPerTurnPerLevel: 1,
+    condition: { type: 'any' }, baseMult: 1,
+    note: `Needs any card, up to 2. Trims for ${SIGMA_TIP} damage, and the mower can do it twice a turn.` },
+  grass_catcher: { id: 'grass_catcher', name: 'Grass Catcher', cost: 40, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+    condition: { type: 'any' }, baseMult: 1, kind: 'defense',
+    note: `Needs any card, up to 3. Catches the clippings and blocks damage equal to ${SIGMA_TIP}.` },
+  stretcher_run: { id: 'stretcher_run', name: 'Stretcher Run', cost: 60, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+    condition: { type: 'any' }, baseMult: 1, healAmount: 6,
+    note: `Needs any card, up to 3. Rushes in for ${SIGMA_TIP} damage and you heal 6 health.` },
+  sand_dash: { id: 'sand_dash', name: 'Sand Dash', cost: 45, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+    condition: { type: 'any' }, baseMult: 1.3,
+    note: `Needs any card, up to 2. Kicks up sand for ${SIGMA_TIP} × 1.3 damage.` },
+  wheelie_strike: { id: 'wheelie_strike', name: 'Wheelie Strike', cost: 50, maxCards: 1, usesPerTurn: 2, usesPerTurnPerLevel: 1,
+    condition: { type: 'any' }, baseMult: 1.5,
+    note: `Needs exactly 1 card. Pops a wheelie for ${SIGMA_TIP} × 1.5 damage, and can go twice a turn.` },
+  traffic_stop: { id: 'traffic_stop', name: 'Traffic Stop', cost: 55, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+    condition: { type: 'pokerTier', tier: 1 }, baseMult: 1.6,
+    note: `Needs a Pair. Pulls them over for ${SIGMA_TIP} × 1.6 damage.` },
+  bucket_jab: { id: 'bucket_jab', name: 'Bucket Jab', cost: 40, maxCards: 2, usesPerTurn: 2, usesPerTurnPerLevel: 1,
+    condition: { type: 'any' }, baseMult: 1,
+    note: `Needs any card, up to 2. Jabs with the bucket for ${SIGMA_TIP} damage, twice a turn.` },
+  push_back: { id: 'push_back', name: 'Push Back', cost: 45, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+    condition: { type: 'any' }, baseMult: 1.2, kind: 'defense',
+    note: `Needs any card, up to 3. Shoves the attack away and blocks damage equal to ${SIGMA_TIP} × 1.2.` },
+  bucket_scoop: { id: 'bucket_scoop', name: 'Bucket Scoop', cost: 60, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+    condition: { type: 'any' }, baseMult: 1, drawAmount: 1, drawPerLevel: 0,
+    note: `Needs any card, up to 3. Scoops for ${SIGMA_TIP} damage, then digs up 1 extra card.` },
+  hydraulic_slam: { id: 'hydraulic_slam', name: 'Hydraulic Slam', cost: 70, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+    condition: { type: 'pokerTier', tier: 1 }, baseMult: 2,
+    note: `Needs a Pair. Slams the arm down for ${SIGMA_TIP} × 2 damage.` },
+  heavy_load: { id: 'heavy_load', name: 'Heavy Load', cost: 70, maxCards: 5, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+    condition: { type: 'any' }, baseMult: 1,
+    note: `Needs any card, up to 5. Drops the whole bed for ${SIGMA_TIP} damage.` },
+  gravel_drop: { id: 'gravel_drop', name: 'Gravel Drop', cost: 50, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+    condition: { type: 'any' }, baseMult: 1.3,
+    note: `Needs any card, up to 2. Spills gravel for ${SIGMA_TIP} × 1.3 damage.` },
+  compactor: { id: 'compactor', name: 'Compactor', cost: 60, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+    condition: { type: 'any' }, baseMult: 1.1, kind: 'defense',
+    note: `Needs any card, up to 4. Crushes the incoming hit and blocks damage equal to ${SIGMA_TIP} × 1.1.` },
+  dumpster_dive: { id: 'dumpster_dive', name: 'Dumpster Dive', cost: 55, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+    condition: { type: 'any' }, baseMult: 1, drawAmount: 2, drawPerLevel: 0,
+    note: `Needs any card, up to 2. Hits for ${SIGMA_TIP} damage, then digs up 2 extra cards.` },
+  pressure_washer: { id: 'pressure_washer', name: 'Pressure Washer', cost: 85, maxCards: 2, usesPerTurn: 3, usesPerTurnPerLevel: 1,
+    condition: { type: 'any' }, baseMult: 1.4,
+    note: `Needs any card, up to 2. Blasts for ${SIGMA_TIP} × 1.4 damage, and can fire 3 times a turn.` },
+  soap_spray: { id: 'soap_spray', name: 'Soap Spray', cost: 60, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+    condition: { type: 'any' }, baseMult: 1, kind: 'poison',
+    note: `Needs any card, up to 3. A slippery coat of poison for ${SIGMA_TIP}.` },
+  grapple_haul: { id: 'grapple_haul', name: 'Grapple Haul', cost: 75, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+    condition: { type: 'sumThreshold', min: 14 }, baseMult: 1.4, drawAmount: 1, drawPerLevel: 0,
+    note: `Needs cards totaling 14+. Hauls for ${SIGMA_TIP} × 1.4 damage, then reels in 1 extra card.` },
+  claw_drop: { id: 'claw_drop', name: 'Claw Drop', cost: 65, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+    condition: { type: 'exactCount', count: 2 }, flatAmount: 28,
+    note: `Needs exactly 2 cards. Drops the claw for a flat 28 damage.` },
+  surfboard_smack: { id: 'surfboard_smack', name: 'Surfboard Smack', cost: 70, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+    condition: { type: 'sumThreshold', min: 12 }, baseMult: 1.6,
+    note: `Needs cards totaling 12+. Swings the board for ${SIGMA_TIP} × 1.6 damage.` },
+  life_ring: { id: 'life_ring', name: 'Life Ring', cost: 70, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+    condition: { type: 'any' }, baseMult: 1.3, kind: 'defense', healAmount: 6,
+    note: `Needs any card, up to 3. Blocks damage equal to ${SIGMA_TIP} × 1.3 and you heal 6 health.` },
+  flood_wake: { id: 'flood_wake', name: 'Floodwater Wake', cost: 85, maxCards: 5, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+    condition: { type: 'any' }, baseMult: 1.2,
+    note: `Needs any card, up to 5. A wall of water for ${SIGMA_TIP} × 1.2 damage.` },
+  rescue_boat: { id: 'rescue_boat', name: 'Rescue Boat', cost: 80, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+    condition: { type: 'any' }, baseMult: 1.5, kind: 'defense',
+    note: `Needs any card, up to 4. Floats you clear and blocks damage equal to ${SIGMA_TIP} × 1.5.` },
+  defibrillator: { id: 'defibrillator', name: 'Defibrillator', cost: 100, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+    condition: { type: 'any' }, baseMult: 2.4, hpCost: 10,
+    note: `Needs any card, up to 3. Shocks for ${SIGMA_TIP} × 2.4 damage, but costs you 10 health every time you fire it.` },
+  adrenaline_drip: { id: 'adrenaline_drip', name: 'Adrenaline Drip', cost: 70, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+    condition: { type: 'any' }, baseMult: 1, healAmount: 18,
+    note: `Needs any card, up to 2. Hits for ${SIGMA_TIP} damage and you heal 18 health. Pays for the Defibrillator.` },
+  backdraft_blast: { id: 'backdraft_blast', name: 'Backdraft Blast', cost: 80, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'pokerTier', tier: 1 }, baseMult: 1, kind: 'burn',
     note: `Needs a Pair. Burn damage for ${SIGMA_TIP} - it's not supposed to start fires, but here we are.` },
-  full_pressure_hose: { id: 'full_pressure_hose', name: 'Full-Pressure Hose', cost: 60, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
-    condition: { type: 'sumThreshold', min: 15 }, flatAmount: 26, flatAmountPerLevel: 5,
-    note: `Cards played must add up to ${SIGMA_TIP}15+. Blasts for a flat 26 damage at full pressure.` },
-  afff_foam_cannon: { id: 'afff_foam_cannon', name: 'AFFF Foam Cannon', cost: 80, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
-    condition: { type: 'any' }, baseMult: 1, kind: 'defense',
-    note: `Needs any cards, up to 4. Blankets the fight in firefighting foam, blocking damage equal to ${SIGMA_TIP} - built for jet fuel fires, so it smothers just about anything.` },
+  full_pressure_hose: { id: 'full_pressure_hose', name: 'Full-Pressure Hose', cost: 70, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+    condition: { type: 'sumThreshold', min: 10 }, flatAmount: 34, flatAmountPerLevel: 5,
+    note: `Cards played must add up to ${SIGMA_TIP}10+. Blasts for a flat 34 damage at full pressure.` },
+  afff_foam_cannon: { id: 'afff_foam_cannon', name: 'AFFF Foam Cannon', cost: 95, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+    condition: { type: 'any' }, baseMult: 1.15, kind: 'defense',
+    note: `Needs any cards, up to 4. Blankets the fight in firefighting foam, blocking damage equal to ${SIGMA_TIP} × 1.15 - built for jet fuel fires, so it smothers just about anything.` },
   rapid_intervention: { id: 'rapid_intervention', name: 'Rapid Intervention', cost: 70, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'straightLen', len: 2 }, baseMult: straightMult(2),
     bonus: { base: 0.3, perLevel: 0.15, maxLevel: 3 },
     note: `Needs a 2-card straight. First truck on scene hits hard and keeps improving with upgrades.` },
-  door_breach_ram: { id: 'door_breach_ram', name: 'Door Breach Ram', cost: 90, maxCards: 1, usesPerTurn: 1, usesPerTurnPerLevel: 1,
-    condition: { type: 'any', exactCount: 1 }, flatAmount: 34, flatAmountPerLevel: 6,
-    note: `Needs exactly 1 card. Rams the front-mounted breaching tool through for a flat 34 damage - built to take doors off their hinges.` },
-  grappler_hook: { id: 'grappler_hook', name: 'Grappler Hook', cost: 85, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
-    condition: { type: 'pokerTier', tier: 2 }, baseMult: 1.6,
+  door_breach_ram: { id: 'door_breach_ram', name: 'Door Breach Ram', cost: 100, maxCards: 1, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+    condition: { type: 'any', exactCount: 1 }, flatAmount: 40, flatAmountPerLevel: 6,
+    note: `Needs exactly 1 card. Rams the front-mounted breaching tool through for a flat 40 damage - built to take doors off their hinges.` },
+  grappler_hook: { id: 'grappler_hook', name: 'Grappler Hook', cost: 95, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+    condition: { type: 'pokerTier', tier: 2 }, baseMult: 1.8,
     drawAmount: 1, drawPerLevel: 0,
-    note: `Needs Two Pair. Hooks and hauls for ${SIGMA_TIP} × 1.6 damage, then reels in 1 extra card.` },
+    note: `Needs Two Pair. Hooks and hauls for ${SIGMA_TIP} × 1.8 damage, then reels in 1 extra card.` },
   opp_pair_curse: { id: 'opp_pair_curse', name: 'Repo Notice', maxCards: 2, usesPerTurn: 1,
     condition: { type: 'pokerTier', tier: 1 }, baseMult: 1,
     note: 'Needs a Pair. A plain, reliable poke.' },
@@ -1715,7 +1813,7 @@ const ITEMS = {
     condition: { type: 'colorCount', color: 'blk', count: 4, exactCount: 4 }, flatAmount: 0, opponentEffect: 'earlyEscape',
     note: 'Needs exactly 4 Black cards. Instantly ends the fight - you clear the stop, but it flees with your fuel, costing you 3 Fuel.' },
   triple_threat: { id: 'triple_threat', name: 'Multi-Car Pileup', cost: 70, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
-    condition: { type: 'pokerTier', tier: 3, exactTier: true }, baseMult: 2.2,
+    condition: { type: 'pokerTier', tier: 3, exactTier: true }, baseMult: 2.8,
     bonus: { base: 0, perLevel: 0.3, maxLevel: 3 },
     note: 'Needs Three of a Kind. A big hit that tunes even further with upgrades.' },
   bike_dash: { id: 'bike_dash', name: 'Bike Lane Dash', cost: 30, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1,
@@ -1728,12 +1826,12 @@ const ITEMS = {
     condition: { type: 'suitCount', suit: '♦', count: 1 }, baseMult: 1,
     bonus: { base: 0.25, perLevel: 0.2, maxLevel: 3, condition: { type: 'suitCount', suit: '♦', count: 3 } },
     note: `Needs at least 1 Diamond among your played cards. ${SIGMA_TIP} for damage, plus 25% more if you play 3 or more Diamonds.` },
-  starter_red_tap: { id: 'starter_red_tap', name: 'Brake Light Tap', cost: 20, sellValue: 10, maxCards: 3, usesPerTurn: 1,
-    condition: { type: 'colorCount', color: 'red', count: 2 }, baseMult: 0.5,
-    note: `Needs 2+ ${kw('Red')} cards among your played cards. A light hit, but easy to set up.` },
-  starter_black_tap: { id: 'starter_black_tap', name: 'Black Top Tap', cost: 20, sellValue: 10, maxCards: 3, usesPerTurn: 1,
-    condition: { type: 'colorCount', color: 'blk', count: 2 }, baseMult: 0.5,
-    note: `Needs 2+ ${kw('Black')} cards among your played cards. A light hit, but easy to set up.` },
+  starter_red_tap: { id: 'starter_red_tap', name: 'Brake Light Tap', cost: 45, sellValue: 22, maxCards: 5, usesPerTurn: 1,
+    condition: { type: 'colorCount', color: 'red', count: 2 }, baseMult: 1,
+    note: `Needs 2+ ${kw('Red')} cards among your played cards, up to 5. ${SIGMA_TIP} damage and easy to set up.` },
+  starter_black_tap: { id: 'starter_black_tap', name: 'Black Top Tap', cost: 45, sellValue: 22, maxCards: 5, usesPerTurn: 1,
+    condition: { type: 'colorCount', color: 'blk', count: 2 }, baseMult: 1,
+    note: `Needs 2+ ${kw('Black')} cards among your played cards, up to 5. ${SIGMA_TIP} damage and easy to set up.` },
   spade_tandem: { id: 'spade_tandem', name: 'Spade Tandem', cost: 50, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'suitCount', suit: '♠', count: 2 }, baseMult: 1.2,
     bonus: { base: 0, perLevel: 0.2, maxLevel: 3 },
@@ -1785,9 +1883,9 @@ const ITEMS = {
     condition: { type: 'suitCount', suit: '♦', count: 1 }, flatAmount: 10,
     drawAmount: 1, drawPerLevel: 1, levelCap: 3,
     note: `Needs a Diamond. Flat 10 damage, then draws 1 card immediately (draws 1 more per upgrade).` },
-  guard_rail: { id: 'guard_rail', name: 'Guard Rail', cost: 45, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
-    condition: { type: 'any' }, baseMult: 0.8, kind: 'defense',
-    note: `Needs any card. Blocks damage equal to ${SIGMA_TIP} of the cards played × 0.8.` },
+  guard_rail: { id: 'guard_rail', name: 'Guard Rail', cost: 55, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+    condition: { type: 'any' }, baseMult: 1, kind: 'defense',
+    note: `Needs any card, up to 3. Blocks damage equal to ${SIGMA_TIP} of the cards played.` },
   spare_tire: { id: 'spare_tire', name: 'Spare Tire', cost: 65, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'colorCount', color: 'blk', count: 2 }, baseMult: 1.1, kind: 'defense',
     note: `Needs 2+ ${kw('Black')} cards. Blocks damage equal to ${SIGMA_TIP} of the cards played × 1.1.` },
@@ -1795,10 +1893,10 @@ const ITEMS = {
     condition: { type: 'any' }, baseMult: 0.5, kind: 'poison',
     bonus: { base: 0, perLevel: 0.15, maxLevel: 3 },
     note: 'Up to 3 cards. Poison equal to half your total card value.' },
-  toxic_flood: { id: 'toxic_flood', name: 'Toxic Flood', cost: 100, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,
-    condition: { type: 'any' }, baseMult: 0.75, kind: 'poison',
+  toxic_flood: { id: 'toxic_flood', name: 'Toxic Flood', cost: 120, maxCards: 5, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+    condition: { type: 'any' }, baseMult: 1, kind: 'poison',
     bonus: { base: 0, perLevel: 0.2, maxLevel: 3 },
-    note: 'Up to 4 cards. Poison equal to 75% of your total card value.' },
+    note: 'Up to 5 cards. Poison equal to 100% of your total card value.' },
   torch_burn: { id: 'torch_burn', name: 'Smoldering Engine', cost: 100, maxCards: 2, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'pokerTier', tier: 1 }, baseMult: 1, kind: 'burn',
     note: 'Needs a Pair. Sets one of their Items on fire. The burn grows every turn until you detonate it, or until they fire that Item and take the burn themselves. Burns can stack.' },
@@ -2536,34 +2634,128 @@ const ITEMS = {
    items climb as you move down this list, so there's always a reason to unlock the next one) ========== */
 const HEROES = {
   sidebyside:   { id: 'sidebyside',   name: 'Golf Cart',       icon: '🛺', image: 'Vehicles/golf-cart.png', starterItems: ['fender_bender','guard_rail'] },
-  admin:        { id: 'admin',        name: 'Admin Vehicle',   icon: '🚗', image: 'Vehicles/admin-vehicle.png', starterItems: ['fender_bender','diamond_draw'] },
+  admin:        { id: 'admin',        name: 'Admin Vehicle',   icon: '🚗', image: 'Vehicles/admin-vehicle.png', starterItems: ['fender_bender','diamond_draw'],
+    travelCoinCost: 5, startBonusCoins: 20,
+    perk: 'No fuel tank. Every stop costs 5 coins instead of fuel, and fuel rewards pay out as coins (5 coins per fuel). Starts with 20 extra coins.' },
   beachtractor: { id: 'beachtractor', name: 'Beach Tractor',   icon: '🚜', image: 'Vehicles/beach-tractor.png', starterItems: ['taylor_sift','sand_trap'] },
   interstate:   { id: 'interstate',   name: 'Work Truck',    icon: '🏁', image: 'Vehicles/work-truck.png', starterItems: ['card_draw','diamond_run'] },
-  forklift:     { id: 'forklift',     name: 'Forklift',        icon: '🏗️', image: 'Vehicles/forklift.png', starterItems: ['pallet_drop','overhead_lift'] },
-  convoy:       { id: 'convoy',       name: 'Large SUV',       icon: '🚙', image: 'Vehicles/large-suv.png', starterItems: ['fender_bender','triple_threat'] },
+  forklift:     { id: 'forklift',     name: 'Forklift',        icon: '🏗️', image: 'Vehicles/forklift.png', starterItems: ['pallet_drop','full_pallet'] },
+  convoy:       { id: 'convoy',       name: 'Large SUV',       icon: '🚙', image: 'Vehicles/large-suv.png', starterItems: ['roof_rack','triple_threat'] },
   towtruck:     { id: 'towtruck',     name: 'Tow Truck',       icon: '🚨', image: 'Vehicles/tow-truck.png', starterItems: ['drawstone','starter_black_tap'] },
-  tanker:       { id: 'tanker',       name: 'Fuel Tanker',     icon: '⛽', image: 'Vehicles/fuel-tanker.png', starterItems: ['fender_bender','toxic_flood'] },
-  crownvic:     { id: 'crownvic',     name: 'Crown Vic',       icon: '🚔', image: 'Vehicles/crown-vic.png', starterItems: ['donut_toss','starter_black_tap'] },
+  tanker:       { id: 'tanker',       name: 'Fuel Tanker',     icon: '⛽', image: 'Vehicles/fuel-tanker.png', starterItems: ['hose_slam','toxic_flood'] },
+  crownvic:     { id: 'crownvic',     name: 'Crown Vic',       icon: '🚔', image: 'Vehicles/crown-vic.png', starterItems: ['hot_pursuit','donut_break'] },
   firetruck:    { id: 'firetruck',    name: 'Fire Truck',      icon: '🚒', image: 'Vehicles/fire-truck.png', starterItems: ['backdraft_blast','full_pressure_hose'] },
   arff:         { id: 'arff',         name: 'ARFF',            icon: '🧯', image: 'Vehicles/arff.png', starterItems: ['afff_foam_cannon','starter_red_tap'] },
   bearcat:      { id: 'bearcat',      name: 'BearCat',         icon: '🛡️', image: 'Vehicles/bearcat.png', starterItems: ['door_breach_ram','grappler_hook'] },
+  // ---- Expansion vehicles ----
+  mower:        { id: 'mower',        name: 'Riding Mower',    icon: '🌿', image: 'Vehicles/riding-mower.png', starterItems: ['mower_trim','grass_catcher'] },
+  beachatv:     { id: 'beachatv',     name: 'Beach Rescue ATV', icon: '🏖️', image: 'Vehicles/beach-rescue-atv.png', starterItems: ['stretcher_run','sand_dash'] },
+  harley:       { id: 'harley',       name: 'Police Motorcycle', icon: '🏍️', image: 'Vehicles/police-motorcycle.png', starterItems: ['wheelie_strike','traffic_stop'] },
+  bobcat:       { id: 'bobcat',       name: 'Skid Steer',      icon: '🛠️', image: 'Vehicles/skid-steer.png', starterItems: ['bucket_jab','push_back'] },
+  backhoe:      { id: 'backhoe',      name: 'Backhoe',         icon: '⛏️', image: 'Vehicles/backhoe.png', starterItems: ['bucket_scoop','hydraulic_slam'] },
+  dumptruck:    { id: 'dumptruck',    name: 'Dump Truck',      icon: '🚛', image: 'Vehicles/dump-truck.png', starterItems: ['heavy_load','gravel_drop'] },
+  garbagetruck: { id: 'garbagetruck', name: 'Garbage Truck',   icon: '♻️', image: 'Vehicles/garbage-truck.png', starterItems: ['compactor','dumpster_dive'] },
+  washer:       { id: 'washer',       name: 'Pressure Washer Truck', icon: '🚿', image: 'Vehicles/pressure-washer-truck.png', starterItems: ['pressure_washer','soap_spray'] },
+  grapple:      { id: 'grapple',      name: 'Grapple Truck',   icon: '🪝', image: 'Vehicles/grapple-truck.png', starterItems: ['grapple_haul','claw_drop'] },
+  oceanrescue:  { id: 'oceanrescue',  name: 'Ocean Rescue Truck', icon: '🏄', image: 'Vehicles/ocean-rescue-truck.png', starterItems: ['surfboard_smack','life_ring'] },
+  highwater:    { id: 'highwater',    name: 'High Water Rescue Truck', icon: '🌊', image: 'Vehicles/high-water-truck.png', starterItems: ['flood_wake','rescue_boat'] },
+  ambulance:    { id: 'ambulance',    name: 'Ambulance',       icon: '🚑', image: 'Vehicles/ambulance.png', starterItems: ['defibrillator','adrenaline_drip'] },
 };
 const VEHICLE_SPECIALS = {
-  sidebyside:   { name: 'Quick Shield', type: 'shield', energyPerUnit: 4, amountPerUnit: 20, desc: 'Spend Energy for armor - every 4 Energy grants +20 armor. Spend as much as you have at once.' },
-  admin:        { name: 'Roadside Patch', type: 'heal', energyPerUnit: 5, amountPerUnit: 15, desc: 'Spend Energy to heal - every 5 Energy restores 15 health. Spend as much as you have at once.' },
-  beachtractor: { name: 'Berm Push', type: 'shield', energyPerUnit: 5, amountPerUnit: 20, desc: 'Spend Energy to push up a sand berm for armor - every 5 Energy grants +20 armor. Spend as much as you have at once.' },
-  interstate:   { name: 'Evasive Maneuver', type: 'dodge', energyCost: 6, chance: 0.5, desc: 'Spend 6 Energy for a 50% chance to dodge the opponent\'s next attack entirely.' },
-  forklift:     { name: 'Pallet Shield', type: 'shield', energyPerUnit: 4, amountPerUnit: 22, desc: 'Spend Energy to raise a loaded pallet for armor - every 4 Energy grants +22 armor. Spend as much as you have at once.' },
-  convoy:       { name: 'Brace for Impact', type: 'shield', energyPerUnit: 3, amountPerUnit: 20, desc: 'Spend Energy for armor - every 3 Energy grants +20 armor. Spend as much as you have at once.' },
-  towtruck:     { name: 'Winch Pull', type: 'draw', energyPerUnit: 5, amountPerUnit: 1, desc: 'Spend Energy to draw cards - every 5 Energy draws 1 card. Spend as much as you have at once.' },
-  tanker:       { name: 'Siphon Reserve', type: 'refuel', energyCost: 8, amountPerUnit: 10, desc: 'Spend 8 Energy to refill 10 Fuel.' },
-  crownvic:     { name: 'Code 3 Evade', type: 'dodge', energyCost: 6, chance: 0.55, desc: 'Spend 6 Energy for a 55% chance to dodge the opponent\'s next attack entirely.' },
-  firetruck:    { name: 'Emergency Response', type: 'heal', energyPerUnit: 5, amountPerUnit: 20, desc: 'Spend Energy to heal - every 5 Energy restores 20 health. Spend as much as you have at once.' },
-  arff:         { name: 'Foam Reserve', type: 'refuel', energyCost: 8, amountPerUnit: 12, desc: 'Spend 8 Energy to refill 12 Fuel.' },
-  bearcat:      { name: 'Armor Plating', type: 'shield', energyPerUnit: 3, amountPerUnit: 25, desc: 'Spend Energy for armor - every 3 Energy grants +25 armor. Spend as much as you have at once.' },
+  sidebyside:   { name: 'Quick Shield', type: 'shield', energyPerUnit: 4, amountPerUnit: 20, desc: 'Spend 4 Energy for +20 armor. Use it as many times as you have Energy.' },
+  admin:        { name: 'Expense Report', type: 'coins', energyPerUnit: 6, amountPerUnit: 8, desc: 'Spend 6 Energy to file expenses and get 8 coins back. Use it as many times as you have Energy. Helps pay for your 5 coin stops.' },
+  beachtractor: { name: 'Sift the Sand', type: 'reroll', energyPerUnit: 4, amountPerUnit: 0, desc: 'Spend 4 Energy to throw your whole hand back and draw the same number of fresh cards. Use it as many times as you have Energy to dig for the hand you need.' },
+  interstate:   { name: 'Overtime', type: 'overtime', energyCost: 8, desc: 'Spend 8 Energy to put in overtime. Every Item you own can fire one extra time this turn. Save your cards for a big double turn.' },
+  forklift:     { name: 'Reach Truck', type: 'draw', energyPerUnit: 3, amountPerUnit: 1, desc: 'Spend 3 Energy to draw 1 card. Use it as many times as you have Energy to fill up the 5 cards Full Pallet needs.' },
+  convoy:       { name: 'Limp Home', type: 'revive', amountPerUnit: 50, desc: 'Once per run. When you would be defeated, you can choose to get back up with half your health and every effect cleared. It never happens on its own, so you decide.' },
+  towtruck:     { name: 'Salvage Run', type: 'gem', energyPerUnit: 6, amountPerUnit: 1, desc: 'Spend 6 Energy to salvage 1 gem. Use it as many times as you have Energy. Gems draw extra cards in battle.' },
+  tanker:       { name: 'Hose Down', type: 'cleanse', energyPerUnit: 5, amountPerUnit: 0, desc: 'Spend 5 Energy to wash every effect off your Items. Removes freezes, burns, curses and hexes from your Item cards and clears any poison on you.' },
+  crownvic:     { name: 'Code 3 Evade', type: 'dodge', energyCost: 5, chance: 0.6, desc: 'Spend 5 Energy for a 60% chance to dodge the opponent\'s next attack entirely.' },
+  firetruck:    { name: 'Emergency Response', type: 'heal', energyPerUnit: 5, amountPerUnit: 25, desc: 'Spend 5 Energy to heal 25 health. Use it as many times as you have Energy.' },
+  arff:         { name: 'Foam Blanket', type: 'cleanse', energyPerUnit: 6, amountPerUnit: 35, desc: 'Spend 6 Energy to smother every effect on you and gain +35 armor. Removes freezes, burns, curses and hexes from your Item cards and clears any poison on you.' },
+  bearcat:      { name: 'Armor Plating', type: 'shield', energyPerUnit: 3, amountPerUnit: 30, desc: 'Spend 3 Energy for +30 armor. Use it as many times as you have Energy.' },
+  mower:        { name: 'Lawn Job', type: 'coins', energyPerUnit: 5, amountPerUnit: 6, desc: 'Spend 5 Energy to mow a side job for 6 coins. Use it as many times as you have Energy.' },
+  beachatv:     { name: 'Beach Rescue', type: 'heal', energyPerUnit: 4, amountPerUnit: 12, desc: 'Spend 4 Energy to patch yourself up for 12 health. Use it as many times as you have Energy.' },
+  harley:       { name: 'Weave', type: 'dodge', energyCost: 3, chance: 0.6, desc: 'Spend 3 Energy for a 60% chance to weave around the opponent\'s next attack entirely.' },
+  bobcat:       { name: 'Skid Turn', type: 'weaken', energyCost: 4, amountPerUnit: 50, desc: 'Spend 4 Energy to spin out of the way. The opponent\'s attacks hit 50% softer until your next turn.' },
+  backhoe:      { name: 'Hydraulic Charge', type: 'charge', energyPerUnit: 5, amountPerUnit: 2, desc: 'Spend 5 Energy to charge the hydraulics. Your next attack deals double damage.' },
+  dumptruck:    { name: 'Dump Load', type: 'dump', energyPerUnit: 5, amountPerUnit: 0.9, desc: 'Spend 5 Energy to dump your whole hand on the opponent. You deal 90% of the total value of the cards you threw away, so a full hand is a big hit.' },
+  garbagetruck: { name: 'Compact and Collect', type: 'reroll', energyPerUnit: 4, amountPerUnit: 0, armor: 10, desc: 'Spend 4 Energy to crush your hand and draw the same number of fresh cards. You also gain +10 armor.' },
+  washer:       { name: 'Rinse', type: 'cleanse', energyPerUnit: 4, amountPerUnit: 0, desc: 'Spend 4 Energy to wash every effect off your Items. Removes freezes, burns, curses and hexes from your Item cards and clears any poison on you.' },
+  grapple:      { name: 'Grapple Scout', type: 'scout', energyPerUnit: 3, amountPerUnit: 1, desc: 'Spend 3 Energy to hook the opponent\'s hand and flip every card in it face up, and pull 1 extra card into your own hand.' },
+  oceanrescue:  { name: 'Lifeguard Save', type: 'heal', energyPerUnit: 5, amountPerUnit: 20, cleanse: true, desc: 'Spend 5 Energy to heal 20 health and wash every effect off you and your Items.' },
+  highwater:    { name: 'Raise the Water', type: 'weaken', energyCost: 6, amountPerUnit: 70, desc: 'Spend 6 Energy to flood the road. The opponent\'s attacks hit 70% softer until your next turn.' },
+  ambulance:    { name: 'Emergency Care', type: 'heal', energyPerUnit: 5, amountPerUnit: 35, desc: 'Spend 5 Energy to heal 35 health. Use it as many times as you have Energy to keep paying for the Defibrillator.' },
+
 };
+// Everything that can be sitting on you or your Items: freezes, burns, curses, hexes and poison.
+function playerHasEffects() {
+  const b = BATTLE; if (!b) return false;
+  return !!(Object.keys(b.itemFrozen || {}).length || Object.keys(b.itemBurns || {}).length || Object.keys(b.itemCurses || {}).length
+    || Object.keys(b.itemHexes || {}).length || (b.playerPoison || []).length);
+}
+function clearPlayerEffects() {
+  const b = BATTLE, out = [];
+  if (Object.keys(b.itemFrozen || {}).length) { out.push('freezes'); b.itemFrozen = {}; }
+  if (Object.keys(b.itemBurns || {}).length) { out.push('burns'); b.itemBurns = {}; b.itemBurnStep = {}; b.itemBurnFresh = {}; }
+  if (Object.keys(b.itemCurses || {}).length) { out.push('curses'); b.itemCurses = {}; }
+  if (Object.keys(b.itemHexes || {}).length) { out.push('hexes'); b.itemHexes = {}; b.pendingHexSteal = []; }
+  if ((b.playerPoison || []).length) { out.push('poison'); b.playerPoison = []; }
+  return out;
+}
+// Head-start perks. startEnergy fills the Energy bar when the run begins, so abilities work in the first fights.
+// battleArmor is free armor you begin every fight with.
+const HERO_PERKS = {
+  admin:        { startEnergy: 6 },
+  beachtractor: { startEnergy: 4, battleArmor: 15 },
+  interstate:   { startEnergy: 8, battleArmor: 10 },
+  forklift:     { startEnergy: 9, battleArmor: 12 },
+  convoy:       { battleArmor: 20 },
+  towtruck:     { startEnergy: 6, battleArmor: 10 },
+  tanker:       { startEnergy: 5, battleArmor: 10 },
+  crownvic:     { startEnergy: 5 },
+  firetruck:    { startEnergy: 5 },
+  arff:         { startEnergy: 10, battleArmor: 45 },
+  bearcat:      { battleArmor: 15 },
+  mower:        { startEnergy: 5, battleArmor: 10 },
+  beachatv:     { startEnergy: 3 },
+  harley:       { startEnergy: 6 },
+  bobcat:       { startEnergy: 4, battleArmor: 10 },
+  backhoe:      { startEnergy: 5 },
+  dumptruck:    { startEnergy: 6, battleArmor: 15 },
+  garbagetruck: { startEnergy: 4, battleArmor: 15 },
+  washer:       { startEnergy: 8, battleArmor: 15 },
+  grapple:      { startEnergy: 6 },
+  oceanrescue:  { startEnergy: 5, battleArmor: 10 },
+  highwater:    { startEnergy: 6, battleArmor: 20 },
+  ambulance:    { startEnergy: 10 },
+};
+function heroPerkLine(id) {
+  const k = HERO_PERKS[id]; if (!k) return '';
+  const parts = [];
+  if (k.battleArmor) parts.push(`Start every fight with ${k.battleArmor} armor.`);
+  if (k.startEnergy) parts.push(`Start the run with ${k.startEnergy} Energy.`);
+  return parts.join(' ');
+}
+// One-time revive (Large SUV). Asks first, only once per run, and only if the player says yes.
+function offerRevive() {
+  const sp = RUN && RUN.hero ? VEHICLE_SPECIALS[RUN.hero.heroId] : null;
+  if (!sp || sp.type !== 'revive' || RUN.reviveUsed || !IN_BATTLE || !BATTLE) return false;
+  const hp = Math.max(1, Math.round(RUN.maxHealth * sp.amountPerUnit / 100));
+  const ok = window.confirm(`You have been defeated. Use ${sp.name} to get back up with ${hp} health? You can only do this once per run.`);
+  if (!ok) return false;
+  RUN.reviveUsed = true;
+  RUN.health = hp;
+  clearPlayerEffects();
+  BATTLE.dodgeChance = 0;
+  battleLog(`${sp.name}! You get back up with ${hp} health and every effect cleared.`);
+  playSfx('heal'); flashScreen('heal');
+  saveRun();
+  return true;
+}
 function useVehicleSpecial() {
   if (!IN_BATTLE || !BATTLE) return;
+  if ((VEHICLE_SPECIALS[RUN.hero.heroId] || {}).type === 'revive') return;
   const special = VEHICLE_SPECIALS[RUN.hero.heroId];
   if (!special) return;
   if (special.type === 'dodge') {
@@ -2571,6 +2763,20 @@ function useVehicleSpecial() {
     RUN.energy -= special.energyCost;
     BATTLE.dodgeChance = special.chance;
     battleLog(`${special.name}! ${Math.round(special.chance * 100)}% chance to dodge the opponent's next attack.`);
+    playSfx('shield'); flashScreen('shield');
+  } else if (special.type === 'weaken') {
+    if (RUN.energy < special.energyCost) { battleLog(`Not enough Energy for ${special.name} (needs ${special.energyCost}).`); render(battleScreen()); return; }
+    if (BATTLE.weaken) { battleLog(`${special.name} is already active, so no Energy was spent.`); render(battleScreen()); return; }
+    RUN.energy -= special.energyCost;
+    BATTLE.weaken = special.amountPerUnit / 100;
+    battleLog(`${special.name}! The opponent's next attacks hit ${special.amountPerUnit}% softer.`);
+    playSfx('shield'); flashScreen('shield');
+  } else if (special.type === 'overtime') {
+    if (RUN.energy < special.energyCost) { battleLog(`Not enough Energy for ${special.name} (needs ${special.energyCost}).`); render(battleScreen()); return; }
+    if (BATTLE.overtime) { battleLog(`${special.name} is already running this turn, so no Energy was spent.`); render(battleScreen()); return; }
+    RUN.energy -= special.energyCost;
+    BATTLE.overtime = true;
+    battleLog(`${special.name}! Every Item can fire one extra time this turn.`);
     playSfx('shield'); flashScreen('shield');
   } else if (special.type === 'refuel') {
     if (RUN.energy < special.energyCost) { battleLog(`Not enough Energy for ${special.name} (needs ${special.energyCost}).`); render(battleScreen()); return; }
@@ -2583,6 +2789,15 @@ function useVehicleSpecial() {
     const cost = special.energyPerUnit;
     const amount = special.amountPerUnit;
     if (RUN.energy < cost) { battleLog(`Not enough Energy for ${special.name} (needs ${cost} per use).`); render(battleScreen()); return; }
+    // Don't spend Energy on something that would do nothing.
+    if (special.type === 'gem' && RUN.gems >= RUN.maxGems) { battleLog(`${special.name}: your gems are already full (${RUN.gems}/${RUN.maxGems}), so no Energy was spent.`); render(battleScreen()); return; }
+    if (special.type === 'draw' && BATTLE.hand.length >= RUN.handSize) { battleLog(`${special.name}: your hand is already full, so no Energy was spent.`); render(battleScreen()); return; }
+    if (special.type === 'charge' && BATTLE.charge) { battleLog(`${special.name} is already charged, so no Energy was spent.`); render(battleScreen()); return; }
+    if (special.type === 'dump' && !BATTLE.hand.length) { battleLog(`${special.name}: your hand is empty, so no Energy was spent.`); render(battleScreen()); return; }
+    if (special.type === 'scout' && !BATTLE.oppPool.some(c => !c.revealed) && BATTLE.hand.length >= RUN.handSize) { battleLog(`${special.name}: nothing hidden to see, so no Energy was spent.`); render(battleScreen()); return; }
+    if (special.type === 'cleanse' && !playerHasEffects()) { battleLog(`${special.name}: nothing to clean off, so no Energy was spent.`); render(battleScreen()); return; }
+    if (special.type === 'reroll' && !BATTLE.hand.length) { battleLog(`${special.name}: your hand is empty, so no Energy was spent.`); render(battleScreen()); return; }
+    if (special.type === 'heal' && RUN.health >= RUN.maxHealth) { battleLog(`${special.name}: your health is already full, so no Energy was spent.`); render(battleScreen()); return; }
     RUN.energy -= cost;
     if (special.type === 'shield') {
       BATTLE.playerArmor += amount;
@@ -2591,8 +2806,53 @@ function useVehicleSpecial() {
     } else if (special.type === 'heal') {
       const before = RUN.health;
       RUN.health = Math.min(RUN.maxHealth, RUN.health + amount);
-      battleLog(`${special.name}! Spent ${cost} Energy to heal ${RUN.health - before} health.`);
+      const cleared = special.cleanse ? clearPlayerEffects() : [];
+      battleLog(`${special.name}! Spent ${cost} Energy to heal ${RUN.health - before} health${cleared.length ? ` and clear ${cleared.join(', ')}` : ''}.`);
       playSfx('heal'); flashScreen('heal');
+    } else if (special.type === 'charge') {
+      BATTLE.charge = amount;
+      battleLog(`${special.name}! Your next attack deals ${amount}x damage.`);
+      playSfx('shield'); flashScreen('shield');
+    } else if (special.type === 'scout') {
+      BATTLE.oppPool.forEach(c => { c.revealed = true; });
+      let hooked = 0;
+      if (amount && BATTLE.hand.length < RUN.handSize) { const before = BATTLE.hand.length; drawCards(amount, false); hooked = BATTLE.hand.length - before; resortHandAndRelink(RUN.handSortMode); }
+      battleLog(`${special.name}! Every card in ${BATTLE.opponent.name}'s hand is now face up${hooked ? ` and you hook ${hooked} card${hooked === 1 ? '' : 's'} for your own hand` : ''}.`);
+      playSfx('shield'); flashScreen('shield');
+    } else if (special.type === 'dump') {
+      const total = BATTLE.hand.reduce((a, c) => a + cardValue(c.rank), 0);
+      const dmg = Math.round(total * amount);
+      BATTLE.discard.push(...BATTLE.hand);
+      BATTLE.hand = []; BATTLE.slots = {}; BATTLE.usedThisTurn = new Set(); selectedIdx = [];
+      let toApply = dmg, absorbed = 0;
+      if (BATTLE.opponent.armor > 0) { absorbed = Math.min(BATTLE.opponent.armor, toApply); BATTLE.opponent.armor -= absorbed; toApply -= absorbed; }
+      BATTLE.opponent.hpNow = Math.max(0, BATTLE.opponent.hpNow - toApply);
+      battleLog(`${special.name}! Spent ${cost} Energy to dump your whole hand (${total} total) for ${dmg} damage${absorbed ? ` (${absorbed} blocked by their armor)` : ''}.`);
+      playSfx('shield'); flashScreen('hit-opponent');
+      if (BATTLE.opponent.hpNow <= 0) { saveRun(); winBattle(); return; }
+    } else if (special.type === 'cleanse') {
+      const removed = clearPlayerEffects();
+      if (amount) BATTLE.playerArmor += amount;
+      battleLog(`${special.name}! Spent ${cost} Energy to clear ${removed.join(', ')}${amount ? ` and gain +${amount} armor` : ''}.`);
+      playSfx('heal'); flashScreen('heal');
+    } else if (special.type === 'reroll') {
+      const n = BATTLE.hand.length;
+      BATTLE.discard.push(...BATTLE.hand);
+      BATTLE.hand = []; BATTLE.slots = {}; BATTLE.usedThisTurn = new Set(); selectedIdx = [];
+      drawCards(n);
+      resortHandAndRelink(RUN.handSortMode);
+      if (special.armor) BATTLE.playerArmor += special.armor;
+      battleLog(`${special.name}! Spent ${cost} Energy to throw back your hand and draw ${n} fresh card${n === 1 ? '' : 's'}${special.armor ? ` and gain +${special.armor} armor` : ''}.`);
+      playSfx('shield'); flashScreen('shield');
+    } else if (special.type === 'coins') {
+      RUN.chips += amount;
+      battleLog(`${special.name}! Spent ${cost} Energy to get ${amount} coins back.`);
+      playSfx('buy'); flashScreen('heal');
+    } else if (special.type === 'gem') {
+      const beforeGems = RUN.gems;
+      RUN.gems = Math.min(RUN.maxGems, RUN.gems + amount);
+      battleLog(`${special.name}! Spent ${cost} Energy to salvage ${RUN.gems - beforeGems} gem${RUN.gems - beforeGems === 1 ? '' : 's'}.`);
+      playSfx('shield'); flashScreen('shield');
     } else if (special.type === 'draw') {
       drawCards(amount);
       resortHandAndRelink(RUN.handSortMode);
@@ -2604,6 +2864,7 @@ function useVehicleSpecial() {
   render(battleScreen());
 }
 function applyDodgeIfActive(oppDmg) {
+  if (BATTLE.weaken) oppDmg = Math.round(oppDmg * (1 - BATTLE.weaken));
   if (!BATTLE.dodgeChance) return oppDmg;
   const chance = BATTLE.dodgeChance;
   BATTLE.dodgeChance = 0;
@@ -2615,7 +2876,7 @@ function applyDodgeIfActive(oppDmg) {
   }
   return oppDmg;
 }
-const STARTERS = ['sidebyside', 'admin', 'beachtractor', 'interstate', 'forklift', 'convoy', 'towtruck', 'tanker', 'crownvic', 'firetruck', 'arff', 'bearcat'];
+const STARTERS = ['sidebyside', 'admin', 'mower', 'beachatv', 'harley', 'beachtractor', 'interstate', 'bobcat', 'forklift', 'convoy', 'backhoe', 'towtruck', 'tanker', 'dumptruck', 'garbagetruck', 'crownvic', 'washer', 'grapple', 'firetruck', 'oceanrescue', 'arff', 'highwater', 'bearcat', 'ambulance'];
 function heroItemCardPreviewHTML(itemId) {
   const item = ITEMS[itemId];
   if (!item) return '';
@@ -2704,46 +2965,95 @@ function heroAbilityCardHTML(heroId) {
   // Short on-card blurb (the full description stays available on hover) so this card is never taller
   // than a real item card, no matter how wordy the vehicle's ability description is.
   const shortDesc = sp.type === 'shield' ? `Every ${sp.energyPerUnit} Energy: +${sp.amountPerUnit} armor.`
-    : sp.type === 'heal' ? `Every ${sp.energyPerUnit} Energy: heal ${sp.amountPerUnit}.`
+    : sp.type === 'heal' ? `Every ${sp.energyPerUnit} Energy: heal ${sp.amountPerUnit}${sp.cleanse ? ' and clear effects' : ''}.`
     : sp.type === 'draw' ? `Every ${sp.energyPerUnit} Energy: draw ${sp.amountPerUnit} card${sp.amountPerUnit === 1 ? '' : 's'}.`
+    : sp.type === 'coins' ? `Every ${sp.energyPerUnit} Energy: +${sp.amountPerUnit} coins.`
+    : sp.type === 'gem' ? `Every ${sp.energyPerUnit} Energy: +${sp.amountPerUnit} gem${sp.amountPerUnit === 1 ? '' : 's'}.`
     : sp.type === 'dodge' ? `${Math.round(sp.chance * 100)}% chance to dodge the next attack.`
+    : sp.type === 'overtime' ? `Every Item fires one extra time this turn.`
     : sp.type === 'refuel' ? `Refill ${sp.amountPerUnit} Fuel.`
+    : sp.type === 'cleanse' ? `Every ${sp.energyPerUnit} Energy: remove all effects${sp.amountPerUnit ? `, +${sp.amountPerUnit} armor` : ''}.`
+    : sp.type === 'charge' ? `Every ${sp.energyPerUnit} Energy: your next attack deals ${sp.amountPerUnit}x.`
+    : sp.type === 'weaken' ? `Opponent's next attacks hit ${sp.amountPerUnit}% softer.`
+    : sp.type === 'dump' ? `Discard your hand and deal ${Math.round(sp.amountPerUnit * 100)}% of its total as damage.`
+    : sp.type === 'scout' ? `Show the opponent's hand and draw ${sp.amountPerUnit || 0} card.`
+    : sp.type === 'revive' ? `Get back up with ${sp.amountPerUnit}% health when defeated.`
+    : sp.type === 'reroll' ? `Every ${sp.energyPerUnit} Energy: redraw your hand${sp.armor ? `, +${sp.armor} armor` : ''}.`
     : sp.desc;
   const tip = String(sp.desc).replace(/"/g, '&quot;');
   return `<div class="abilityCard" data-title="${tip}">
     <div class="abilityTag">Ability</div>
     <div class="abilityName">${sp.name}</div>
-    <div class="abilityCost">${ICON.energy} ${cost} Energy</div>
+    <div class="abilityCost">${sp.type === 'revive' ? 'Once per run' : `${ICON.energy} ${cost} Energy`}</div>
     <div class="abilityDesc">${shortDesc}</div>
   </div>`;
 }
+function heroPerkCardHTML(heroId) {
+  const h = HEROES[heroId];
+  if (h && !h.travelCoinCost && HERO_PERKS[heroId]) {
+    const line = heroPerkLine(heroId);
+    return `<div class="abilityCard" data-title="${line}">
+    <div class="abilityTag">Perk</div>
+    <div class="abilityName">Head Start</div>
+    <div class="abilityCost">${HERO_PERKS[heroId].battleArmor ? ICON.shield || '' : ''} ${HERO_PERKS[heroId].battleArmor ? HERO_PERKS[heroId].battleArmor + ' armor' : HERO_PERKS[heroId].startEnergy + ' Energy'}</div>
+    <div class="abilityDesc">${line}</div>
+  </div>`;
+  }
+  if (!h || !h.travelCoinCost) return '';
+  const tip = String(h.perk || '').replace(/"/g, '&quot;');
+  return `<div class="abilityCard" data-title="${tip}">
+    <div class="abilityTag">Perk</div>
+    <div class="abilityName">Pay As You Go</div>
+    <div class="abilityCost">${ICON.coin} ${h.travelCoinCost} per stop</div>
+    <div class="abilityDesc">No fuel tank. Fuel rewards pay out as coins. +${h.startBonusCoins || 0} starting coins.</div>
+  </div>`;
+}
+// How each vehicle unlocks. One place to change them: type 'world' = beat that world, 'perfect' = Perfect Wins in total,
+// 'elite' = Elites beaten in total, 'cp' = Career Points earned in total (lifetime, not what you have left to spend).
+const STARTER_UNLOCKS = {
+  beachtractor: { type: 'world', n: 1 },
+  towtruck:     { type: 'world', n: 2 },
+  crownvic:     { type: 'world', n: 3 },
+  firetruck:    { type: 'world', n: 4 },
+  arff:         { type: 'world', n: 5 },
+  bearcat:      { type: 'world', n: 6 },
+  ambulance:    { type: 'world', n: 7 },
+  highwater:    { type: 'world', n: 8 },
+  washer:       { type: 'perfect', n: 100 },
+  garbagetruck: { type: 'elite', n: 25 },
+  mower:        { type: 'cp', n: 150 },
+  bobcat:       { type: 'cp', n: 400 },
+  harley:       { type: 'cp', n: 800 },
+  backhoe:      { type: 'cp', n: 1300 },
+  forklift:     { type: 'cp', n: 1900 },
+  dumptruck:    { type: 'cp', n: 2600 },
+  grapple:      { type: 'cp', n: 3400 },
+  tanker:       { type: 'cp', n: 4400 },
+  interstate:   { type: 'cp', n: 5600 },
+  convoy:       { type: 'cp', n: 7000 },
+  beachatv:     { type: 'cp', n: 8500 },
+  oceanrescue:  { type: 'cp', n: 10000 },
+};
+function starterUnlockProgress(id) {
+  const u = STARTER_UNLOCKS[id]; if (!u) return null;
+  if (u.type === 'world') return { have: (META.bestWorld || 1) > u.n || !!META['world' + u.n + 'Cleared'] ? u.n : 0, need: u.n };
+  if (u.type === 'perfect') return { have: META.perfectWins || 0, need: u.n };
+  if (u.type === 'elite') return { have: META.elitesBeaten || 0, need: u.n };
+  return { have: META.lifetimePoints || 0, need: u.n };
+}
 function isStarterUnlocked(id) {
   if (id === 'sidebyside' || id === 'admin') return true;
-  if (id === 'beachtractor') return (META.bestWorld || 1) >= 2 || !!META.world2Cleared;
-  if (id === 'interstate') return META.lifetimePoints >= 150;
-  if (id === 'forklift') return (META.bestWorld || 1) >= 3 || !!META.world3Cleared;
-  if (id === 'convoy') return META.bestRun >= ROWS + 1;
-  if (id === 'towtruck') return !!META.world2Cleared;
-  if (id === 'tanker') return (META.runsPlayed || 0) >= 5;
-  if (id === 'crownvic') return !!META.world3Cleared;
-  if (id === 'firetruck') return !!META.world4Cleared;
-  if (id === 'arff') return !!META.world5Cleared;
-  if (id === 'bearcat') return !!META.world6Cleared;
-  return false;
+  const pr = starterUnlockProgress(id);
+  return !!pr && pr.have >= pr.need;
 }
 function starterLockNote(id) {
-  if (id === 'beachtractor') return `Unlocks after beating the World 1 boss`;
-  if (id === 'interstate') return `Unlocks at 150 lifetime Career Points (${Math.min(META.lifetimePoints, 150)}/150)`;
-  if (id === 'forklift') return `Unlocks after beating World 2`;
-  if (id === 'convoy') return `Unlocks after clearing a full route`;
-  if (id === 'towtruck') return `Unlocks after beating World 2`;
-  if (id === 'tanker') return `Unlocks after completing 5 runs (${Math.min(META.runsPlayed || 0, 5)}/5)`;
-  if (id === 'crownvic') return `Unlocks after beating World 3`;
-  if (id === 'firetruck') return `Unlocks after beating World 4`;
-  if (id === 'arff') return `Unlocks after beating World 5`;
-  if (id === 'bearcat') return `Unlocks after beating World 6`;
-  if (id === 'comingsoon1' || id === 'comingsoon2') return `Coming soon`;
-  return '';
+  const u = STARTER_UNLOCKS[id], pr = starterUnlockProgress(id);
+  if (!u) return id === 'comingsoon1' || id === 'comingsoon2' ? 'Coming soon' : '';
+  if (u.type === 'world') return u.n === 8 ? 'Unlocks after beating World 8' : `Unlocks after beating World ${u.n}`;
+  const shown = `${Math.min(pr.have, pr.need)}/${pr.need}`;
+  if (u.type === 'perfect') return `Unlocks after ${u.n} Perfect Wins (${shown})`;
+  if (u.type === 'elite') return `Unlocks after beating ${u.n} Elites (${shown})`;
+  return `Unlocks at ${u.n} Career Points earned in total (${shown})`;
 }
 
 /****************************************************************************
@@ -3496,7 +3806,19 @@ const WORLD_8_POOLS = {
 };
 
 const WORLD_POOLS_BY_WORLD = { 1: WORLD_1_POOLS, 2: WORLD_2_POOLS, 3: WORLD_3_POOLS, 4: WORLD_4_POOLS, 5: WORLD_5_POOLS, 6: WORLD_6_POOLS, 7: WORLD_7_POOLS, 8: WORLD_8_POOLS };
-/* ============================================================================
+
+// Opponents no longer hex your Items for now (hex is still being tested). Any hex Item an opponent
+// carries (no shop price) is turned into a plain attack with the same condition and damage, keeping
+// its id so saved runs still load. Items you can buy in the Dealership are not touched.
+const OPPONENT_HEX_ENABLED = false;
+if (!OPPONENT_HEX_ENABLED) {
+  Object.values(ITEMS).forEach(it => {
+    if (it && it.kind === 'hex' && !(it.cost > 0)) {
+      delete it.kind;
+      if (it.note) { const m = it.note.match(/^[^.]*\./); if (m) it.note = m[0]; }
+    }
+  });
+}/* ============================================================================
    DIFFICULTY SETTINGS  (this is the block to edit when you want to tweak the game)
    ----------------------------------------------------------------------------
    Every dial that controls how hard the game is lives in DIFFICULTY_DEFAULTS below.
@@ -3986,13 +4308,11 @@ const DIFF_PATCH = {
   },
   "parking_enforcer": {
    "add": [
-    "lab_congestion_tow",
     "lab_congestion_gridlock"
    ]
   },
   "drawbridge": {
    "add": [
-    "lab_bridge_lockdown",
     "lab_bridge_toll"
    ]
   },
@@ -4075,7 +4395,7 @@ function diffTuneOpponent(scaled, base, row, kind) {
   { const fade = DIFF.hpEarlyFade >= 99 ? 1 : Math.max(0, 1 - (RUN.world - 1) / Math.max(1, DIFF.hpEarlyFade - 1));
     const flat = (kind === 'boss' ? DIFF.hpBonusBoss : kind === 'elite' ? DIFF.hpBonusElite : DIFF.hpBonusRegular) * fade;
     const ramp = kind === 'boss' ? 0 : DIFF.hpRowRamp * Math.min(1, Math.max(0, row) / 19);
-    const perWorld = DIFF.hpPerWorld * Math.max(0, RUN.world - 1);
+    const perWorld = kind === 'boss' ? 0 : DIFF.hpPerWorld * Math.max(0, RUN.world - 1);   // bosses already scale with the world multiplier, so they skip this extra bonus
     scaled.hp = Math.max(1, Math.round(scaled.hp * (1 + (flat + ramp + perWorld) / 100))); }
   const rec = diffRec(base.id, RUN.world);
   if (!rec) return scaled;
@@ -4335,6 +4655,12 @@ function diffStartRun() {
 diffApplyGlobals();
 /* ===================== end Difficulty System ===================== */
 
+// Hex is still being tested, so it is kept rare for now. These two numbers are the dials to turn it back up:
+// the share of hex opponents that make it into a world's regular pool each map, and the odds a Dealership
+// visit is allowed to stock hex items at all. Elites and bosses are not affected.
+const HEX_REGULAR_KEEP = 0.35;
+const HEX_SHOP_CHANCE = 0.25;
+function opponentHasHex(o) { return (o.items || []).some(id => ITEMS[id] && ITEMS[id].kind === 'hex'); }
 function generateMap() {
   const nodes = [], edges = [];
   const castleRow = 10;
@@ -4344,7 +4670,8 @@ function generateMap() {
   const castleCol = 0;
   const worldMultiplier = RUN.worldMultiplier || 1.0;
   const highwayPools = WORLD_POOLS_BY_WORLD[RUN.world] || WORLD_1_POOLS;
-  const highwayRegularQueue = shuffle([...highwayPools.regulars]);
+  const regularPool = highwayPools.regulars.filter(o => !opponentHasHex(o) || Math.random() < HEX_REGULAR_KEEP);
+  const highwayRegularQueue = shuffle([...regularPool]);
   const eggQueue = shuffle([...EASTER_EGG_OPPONENTS]);
   const diffUse = {}, diffRecent = [];
   const world1BonusEggs = RUN.world === 1 ? WORLD_1_BONUS_EGGS.map(o => ({ o, used: false })) : [];
@@ -4356,8 +4683,8 @@ function generateMap() {
       if (!eggQueue.length) eggQueue.push(...shuffle([...EASTER_EGG_OPPONENTS]));
       return eggQueue.pop();
     }
-    if (DIFF.pacing && row != null) return diffPickRegular(highwayPools.regulars, row, diffUse, diffRecent);
-    if (!highwayRegularQueue.length) highwayRegularQueue.push(...shuffle([...highwayPools.regulars]));
+    if (DIFF.pacing && row != null) return diffPickRegular(regularPool, row, diffUse, diffRecent);
+    if (!highwayRegularQueue.length) highwayRegularQueue.push(...shuffle([...regularPool]));
     return highwayRegularQueue.pop();
   }
   // Highway opponents ramp up smoothly across the world instead of sitting flat and then hitting
@@ -4557,6 +4884,33 @@ let selectedIdx = [];
 // each one individually. See startDragSweep/updateDragSweep/finishDragSweep.
 let dragSweep = null;
 const FUEL_COST_PER_MOVE = 1;
+// Coin-powered vehicles (the Admin Vehicle) have no fuel tank. Every stop costs coins instead, and anything
+// that would hand out fuel pays out coins at this rate instead.
+const FUEL_COIN_VALUE = 5;
+function runHeroDef() { return (typeof RUN !== 'undefined' && RUN && RUN.hero && HEROES[RUN.hero.heroId]) || null; }
+function coinTravelCost() { const h = runHeroDef(); return (h && h.travelCoinCost) || 0; }
+function usesCoinTravel() { return coinTravelCost() > 0; }
+// Gives fuel, or the coin equivalent to a coin-powered vehicle. Returns what was actually gained.
+function addFuel(n) {
+  if (!n) return 0;
+  if (usesCoinTravel()) { const c = n * FUEL_COIN_VALUE; RUN.chips += c; return c; }
+  const before = RUN.fuel; RUN.fuel = Math.min(RUN.maxFuel, RUN.fuel + n); return RUN.fuel - before;
+}
+// Takes fuel away (or the coin equivalent). Returns { took, unit }.
+function takeFuel(n) {
+  if (usesCoinTravel()) { const took = Math.min(RUN.chips, n * FUEL_COIN_VALUE); RUN.chips -= took; return { took, unit: 'coins' }; }
+  const took = Math.min(RUN.fuel, n); RUN.fuel -= took; return { took, unit: 'fuel' };
+}
+// Mini-game prizes that say "Fuel" become coin prizes for a coin-powered vehicle, so the board shows what you actually get.
+function coinifyReward(r) {
+  if (!r || r.type !== 'fuel' || !usesCoinTravel()) return r;
+  const amt = r.amount * FUEL_COIN_VALUE;
+  return { ...r, type: 'coins', amount: amt, label: `+${amt} Coins` };
+}
+function fuelChipHTML(n, plus = false) {
+  if (usesCoinTravel()) return `<div class="cur chip" data-title="Paid out as coins, since this vehicle has no fuel tank.">${ICON.coin} ${plus ? '+' : ''}${n * FUEL_COIN_VALUE}${plus ? ' coins' : ''}</div>`;
+  return `<div class="cur fuel">${ICON.fuel} ${plus ? '+' : ''}${n}${plus ? ' fuel' : ''}</div>`;
+}
 const GEM_DRAW_COST = 1;
 const FUEL_HESTORE_COST = 1;
 const FUEL_HEAL_AMOUNT = 10;
@@ -4593,9 +4947,9 @@ function initRunWithStarter(id) {
     path: [],
     health: 100 + L.hp * 15, 
     maxHealth: 100 + L.hp * 15,
-    chips: 40 + L.chips * 8, 
-    fuel: Math.min(20 + (L.fuelCap||0)*5, 10 + (L.fuel||0)), 
-    energy: 0,
+    chips: 40 + L.chips * 8 + (baseHero.startBonusCoins || 0), 
+    fuel: baseHero.travelCoinCost ? 0 : Math.min(20 + (L.fuelCap||0)*5, 10 + (L.fuel||0)), 
+    energy: Math.min(20, (HERO_PERKS[id] || {}).startEnergy || 0),
     hero: { heroId: id, items: [...baseHero.starterItems] },
     // Every item card has real shop value now, starter items included - a starter item should be
     // able to show back up in the Dealership for a second copy, even while the run's first copy is
@@ -4607,7 +4961,7 @@ function initRunWithStarter(id) {
     drawPerTurn: Math.max(1, 2 + (L.draw || 0)), 
     gems: 3, 
     maxGems: 10 + (L.gemCap||0)*2, 
-    maxFuel: 20 + (L.fuelCap||0)*5, 
+    maxFuel: baseHero.travelCoinCost ? 0 : 20 + (L.fuelCap||0)*5, 
     maxEnergy: 20 + (L.energyCap||0)*5,
     scoreThisRun: 0, 
     lastNotice: null, 
@@ -4648,6 +5002,17 @@ function availableNextNodes() {
   return RUN.map.edges.filter(e => e.fromRow === RUN.currentRow && e.fromCol === RUN.currentCol).map(e => ({ row: e.toRow, col: e.toCol }));
 }
 function payTravelCost() {
+  const coinCost = coinTravelCost();
+  if (coinCost) {
+    // Coin-powered vehicle: each stop costs coins. If you cannot pay, it is the same as running out of fuel.
+    RUN.energy = Math.min(RUN.maxEnergy, RUN.energy + ENERGY_PER_MOVE);
+    RUN.innSleeps = 0;
+    if (RUN.chips >= coinCost) { RUN.chips -= coinCost; return; }
+    const coinPenalty = Math.max(0, 10 - (META.levels.fuelpen || 0) * 2);
+    RUN.health = Math.max(1, RUN.health - coinPenalty);
+    RUN.lastNotice = coinPenalty > 0 ? `You couldn't pay the ${coinCost} coin trip! Pushing your fleet manually to the next stop cost you ${coinPenalty} HP.` : `You couldn't pay the ${coinCost} coin trip! Your Fuel Efficiency training kept the walk from costing you any health this time.`;
+    return;
+  }
   RUN.fuel -= FUEL_COST_PER_MOVE;
   RUN.energy = Math.min(RUN.maxEnergy, RUN.energy + ENERGY_PER_MOVE);
   RUN.innSleeps = 0; 
@@ -4790,9 +5155,9 @@ function castleDungeonScreen(message='') {
       ${message ? `<div class="panel"><div class="note">${message}</div></div>` : ''}
       <div class="note" style="color:var(--red);font-weight:700;margin-bottom:8px;text-align:center;font-size:13px">Leaving locks the dungeon for this world only - you can try again in a later world.</div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
-        <div class="shopcard" style="text-align:center${RUN.castleState?.firstDone ? ';opacity:0.55' : ''}"><h3>Battle 1</h3><div class="note" style="margin:0 0 4px;font-weight:700">Moderate</div><div class="currencies" style="justify-content:center"><div class="cur chip">${ICON.coin} 45</div><div class="cur gem">${ICON.gem} 1</div><div class="cur fuel">${ICON.fuel} 1</div><div class="cur energy">${ICON.energy} 2</div></div></div>
-        <div class="shopcard" style="text-align:center${RUN.castleState?.secondDone ? ';opacity:0.55' : ''}"><h3>Battle 2</h3><div class="note" style="margin:0 0 4px;font-weight:700">Hard</div><div class="currencies" style="justify-content:center"><div class="cur chip">${ICON.coin} 100</div><div class="cur gem">${ICON.gem} 2</div><div class="cur fuel">${ICON.fuel} 2</div><div class="cur energy">${ICON.energy} 4</div></div></div>
-        <div class="shopcard" style="text-align:center${RUN.castleState?.thirdDone ? ';opacity:0.55' : ''}"><h3>Battle 3</h3><div class="note" style="margin:0 0 4px;font-weight:700">Extreme</div><div class="currencies" style="justify-content:center"><div class="cur chip">${ICON.coin} 160</div><div class="cur gem">${ICON.gem} 4</div><div class="cur fuel">${ICON.fuel} 4</div><div class="cur energy">${ICON.energy} 8</div></div><div class="note" style="margin-top:4px">+ Item Card</div></div>
+        <div class="shopcard" style="text-align:center${RUN.castleState?.firstDone ? ';opacity:0.55' : ''}"><h3>Battle 1</h3><div class="note" style="margin:0 0 4px;font-weight:700">Moderate</div><div class="currencies" style="justify-content:center"><div class="cur chip">${ICON.coin} 45</div><div class="cur gem">${ICON.gem} 1</div>${fuelChipHTML(1)}<div class="cur energy">${ICON.energy} 2</div></div></div>
+        <div class="shopcard" style="text-align:center${RUN.castleState?.secondDone ? ';opacity:0.55' : ''}"><h3>Battle 2</h3><div class="note" style="margin:0 0 4px;font-weight:700">Hard</div><div class="currencies" style="justify-content:center"><div class="cur chip">${ICON.coin} 100</div><div class="cur gem">${ICON.gem} 2</div>${fuelChipHTML(2)}<div class="cur energy">${ICON.energy} 4</div></div></div>
+        <div class="shopcard" style="text-align:center${RUN.castleState?.thirdDone ? ';opacity:0.55' : ''}"><h3>Battle 3</h3><div class="note" style="margin:0 0 4px;font-weight:700">Extreme</div><div class="currencies" style="justify-content:center"><div class="cur chip">${ICON.coin} 160</div><div class="cur gem">${ICON.gem} 4</div>${fuelChipHTML(4)}<div class="cur energy">${ICON.energy} 8</div></div><div class="note" style="margin-top:4px">+ Item Card</div></div>
       </div>
       ${locked ? `<div class="note" style="margin-top:8px">Dungeon closed for this world. You cashed out after Battle ${RUN.castleState?.secondDone ? 2 : 1}.</div>` : !RUN.castleState?.firstDone ? `
       <div class="shopcard"><button class="wo-btn amber" id="castleBattle1Btn" style="width:100%">Battle 1</button></div>` : RUN.castleState?.thirdDone ? `<div class="note" style="margin-top:8px">Dungeon cleared for this world.</div>` : ''}
@@ -4843,10 +5208,10 @@ function castleInnScreen(message='') {
       </div>
       ${message ? `<div class="panel"><div class="note">${message}</div></div>` : ''}
       <div>
-        <div class="shopcard bodyShopRow">
+        ${usesCoinTravel() ? '' : `        <div class="shopcard bodyShopRow">
           <h3>Refuel</h3>
           <button class="wo-btn bodyShopBtn hoverTip" id="castleFuelBtn" data-title="Fuel gets more expensive the more you buy here in one world. Next unit costs ${fuelQuote.nextPrice} coins. The price resets in the next world." ${fuelPurchase <= 0 ? 'disabled' : ''}>+${fuelPurchase} Fuel${fuelCost ? ` = ${fuelCost} coins` : ''}</button>
-        </div>
+        </div>`}
         <div class="shopcard bodyShopRow">
           <h3>Dent Repair</h3>
           <button class="wo-btn bodyShopBtn" id="castleRestBtn" ${RUN.health >= RUN.maxHealth ? 'disabled' : ''}>+30 Health${sleepCost ? ` = ${sleepCost} coins` : ''}</button>
@@ -5156,7 +5521,7 @@ function openFleetPlinko(options) {
   function slotsForRound(round) {
     const lossCount = activeLossCount(round);
     const lossIdx = new Set(FLEET_PLINKO_CONFIG.lossSlotOrder.slice(0, lossCount));
-    return FLEET_PLINKO_CONFIG.rewardTemplates.map((tpl, i) => lossIdx.has(i) ? { id: `loss_${i}`, label: 'Game Over', type: 'loss', amount: 0 } : tpl);
+    return FLEET_PLINKO_CONFIG.rewardTemplates.map((tpl, i) => lossIdx.has(i) ? { id: `loss_${i}`, label: 'Game Over', type: 'loss', amount: 0 } : coinifyReward(tpl));
   }
   function formatHaul() {
     const parts = [];
@@ -5432,8 +5797,8 @@ function weightedBlackjackReward() {
   const slots = FLEET_BLACKJACK_CONFIG.rewardSlots;
   let totalWeight = 0; for (const s of slots) totalWeight += Math.max(0, s.weight || 0);
   let roll = Math.random() * totalWeight;
-  for (const s of slots) { roll -= Math.max(0, s.weight || 0); if (roll <= 0) return s; }
-  return slots[slots.length - 1];
+  for (const s of slots) { roll -= Math.max(0, s.weight || 0); if (roll <= 0) return coinifyReward(s); }
+  return coinifyReward(slots[slots.length - 1]);
 }
 function applyBlackjackHaul(haul) {
   if (!RUN) return;
@@ -5711,7 +6076,7 @@ function pokerHandRewards() {
     { type: 'fuel', amount: 2, label: '+2 Fuel' },
     { type: 'fuel', amount: 3, label: '+3 Fuel' },
   ]);
-  return shuffle([{ type: 'item', itemId: item.id, label: item.name }, currencyOptions[0], currencyOptions[1]]);
+  return shuffle([{ type: 'item', itemId: item.id, label: item.name }, currencyOptions[0], currencyOptions[1]]).map(coinifyReward);
 }
 function applyPokerHaul(haul) {
   if (!RUN) return;
@@ -6010,7 +6375,7 @@ function auctionLotPool() {
     { type: 'fuel', amount: 5, label: '+5 Fuel', value: 40 },
   ]);
   const itemLot = { type: 'item', itemId: item.id, label: item.name, value: item.cost || 50 };
-  return shuffle([itemLot, currencyOptions[0], currencyOptions[1]]);
+  return shuffle([itemLot, currencyOptions[0], currencyOptions[1]]).map(coinifyReward);
 }
 // Opening bids start low (about a fifth of the lot's value) so there is room to actually win a deal.
 function startingBidFor(lot) { return Math.max(5, Math.round((lot.value * 0.2 + Math.random() * 8) / 5) * 5); }
@@ -6394,7 +6759,7 @@ function rollTreasure(big=false) {
   const mult = big ? 2 : 1;
   const choices = [
     { kind:'coins', label:'Coins', amount:(20 + Math.floor(Math.random()*31))*mult, icon: ICON.coin },
-    { kind:'fuel', label:'Fuel', amount:1*mult, icon: ICON.fuel },
+    usesCoinTravel() ? { kind:'coins', label:'Travel Budget', amount:FUEL_COIN_VALUE*mult, icon: ICON.coin } : { kind:'fuel', label:'Fuel', amount:1*mult, icon: ICON.fuel },
     { kind:'gems', label:'Gems', amount:(1 + Math.floor(Math.random()*2))*mult, icon: ICON.gem },
     { kind:'energy', label:'Energy', amount:(5 + Math.floor(Math.random()*6))*mult, icon: ICON.energy },
     { kind:'points', label:'Career Points', amount:(6 + Math.floor(Math.random()*10))*mult, icon: ICON.star }
@@ -6452,7 +6817,7 @@ function startBattle(opponentDef, row, col, castleStage=0) {
     opponent: { ...oppDef, hpNow: oppDef.hp, poisonStacks: [], armor: oppDef.startArmor || 0, countdown: oppDef.special?.type === 'countdownStrike' ? oppDef.special.threshold : undefined }, row, col, castleStage,
     deck: shuffle(freshDeck()), discard: [],
     hand: [], oppPool: [], usedThisTurn: new Set(), scoutedThisTurn: false, abilityUsedThisTurn: false, opponentStunned: false, itemCooldowns: {},
-    playerArmor: 0, turn: 1, slots: {}, turnDiscard: [], turnSpentDiscard: [], recentDiscard: [], logLines: [], turnStartedAt: Date.now(),
+    playerArmor: (HERO_PERKS[RUN.hero.heroId] || {}).battleArmor || 0, turn: 1, slots: {}, turnDiscard: [], turnSpentDiscard: [], recentDiscard: [], logLines: [], turnStartedAt: Date.now(),
     playerHandPurgeActive: false, stagedFireCards: [],
   };
   BATTLE.lightningRoll = rollLightningMultiplier(); BATTLE.diffStartHealth = RUN.health; BATTLE.diffLogged = false;
@@ -6792,7 +7157,7 @@ function assignSelectedTo(slotKey) {
   // the card's own grayed-out rendering uses (see isDepletedThisTurn in renderStandardItemCard's
   // caller). Without this, cards could sit in an already-used item's slot doing nothing useful
   // except sheltering themselves from other effects until end of turn returned them to hand.
-  const usesCap = itemUsesCap(item, itemUsesLevel(itemId));
+  const usesCap = itemUsesCap(item, itemUsesLevel(itemId)) + (BATTLE && BATTLE.overtime ? 1 : 0);
   const isChargingUnlockItem = item.unlockThreshold != null && !(BATTLE.itemUnlocked && BATTLE.itemUnlocked[slotKey]);
   const usesLeft = usesCap - ((BATTLE.itemUses && BATTLE.itemUses[slotKey]) || 0);
   const isDepletedThisTurn = !isChargingUnlockItem && usesCap !== Infinity && usesLeft <= 0;
@@ -6877,7 +7242,7 @@ function executePlayerAttack(itemId, index) {
 
   if (itemId === 'impound_release' && BATTLE.itemUnlocked?.[slotKey] && !idxs.length) {
     BATTLE.itemUses = BATTLE.itemUses || {};
-    const cap = itemUsesCap(item, itemUsesLevel(itemId));
+    const cap = itemUsesCap(item, itemUsesLevel(itemId)) + (BATTLE && BATTLE.overtime ? 1 : 0);
     if ((BATTLE.itemUses[slotKey] || 0) < cap) {
       const drawn = [];
       for (let i = 0; i < 4; i++) { const before = BATTLE.hand.length; drawCards(1, true); if (BATTLE.hand.length > before) drawn.push(BATTLE.hand[BATTLE.hand.length - 1]); }
@@ -6924,7 +7289,7 @@ function executePlayerAttack(itemId, index) {
 const isChargingUnlockItem = item.unlockThreshold != null && !(BATTLE.itemUnlocked && BATTLE.itemUnlocked[slotKey]);
   BATTLE.itemUses = BATTLE.itemUses || {};
   const level = itemLevel(itemId);
-  const cap = itemUsesCap(item, itemUsesLevel(itemId));
+  const cap = itemUsesCap(item, itemUsesLevel(itemId)) + (BATTLE.overtime ? 1 : 0);
   if (!isChargingUnlockItem && (BATTLE.itemUses[slotKey] || 0) >= cap) {
     battleLog(`${item.name} has already fired ${cap} time${cap > 1 ? 's' : ''} this turn.`);
     render(battleScreen());
@@ -6959,11 +7324,22 @@ if (idxs.some(i => BATTLE.usedThisTurn.has(i))) {
     render(battleScreen());
     return;
   }
+  if (item.hpCost) {
+    // Some Items run on your own health. You cannot fire one if it would take you to 0.
+    if (RUN.health <= item.hpCost) { battleLog(`${item.name} costs ${item.hpCost} health to fire, and you do not have enough left.`); render(battleScreen()); return; }
+    RUN.health -= item.hpCost;
+    battleLog(`${item.name} costs you ${item.hpCost} health. Health: ${RUN.health}/${RUN.maxHealth}.`);
+    playSfx('hurt'); showDamagePopup(item.hpCost, item.name);
+  }
   BATTLE.stagedFireCards = BATTLE.stagedFireCards || [];
   cards.forEach(c => { if (c && !cardIncludes(BATTLE.stagedFireCards, c)) BATTLE.stagedFireCards.push(c); });
   const lightningRoll = item.kind === 'lightning' ? diffLightningRoll() : null;
   if (item.kind === 'lightning') diffRerollLightning('You');
-  const { amount, breakdown } = computeItemAmount(item, cards, level, condResult, false, lightningRoll);
+  let { amount, breakdown } = computeItemAmount(item, cards, level, condResult, false, lightningRoll);
+  if (BATTLE.charge && effectiveKind(item, index) !== 'defense') {
+    amount = Math.round(amount * BATTLE.charge); breakdown = `${breakdown} × ${BATTLE.charge} charged`; BATTLE.charge = 0;
+    battleLog(`${(VEHICLE_SPECIALS[RUN.hero.heroId] || {}).name || 'Your charge'} pays off.`);
+  }
   const eKind = effectiveKind(item, index);
   const cardsStr = cards.map(c => `${rankLabel(c.rank)}${c.suit}`).join(' ');
  if (item.unlockThreshold != null) {
@@ -7090,6 +7466,12 @@ if (idxs.some(i => BATTLE.usedThisTurn.has(i))) {
     }
   }
   BATTLE.itemUses[slotKey] = (BATTLE.itemUses[slotKey] || 0) + 1;
+  if (item.healAmount) {
+    const beforeHp = RUN.health;
+    RUN.health = Math.min(RUN.maxHealth, RUN.health + item.healAmount);
+    if (RUN.health > beforeHp) battleLog(`${item.name} heals you for ${RUN.health - beforeHp}. Health: ${RUN.health}/${RUN.maxHealth}.`);
+    playSfx('heal');
+  }
   if (item.cooldown != null) {
     BATTLE.itemCooldowns = BATTLE.itemCooldowns || {};
     BATTLE.itemCooldowns[slotKey] = item.cooldown;
@@ -7123,7 +7505,7 @@ if (idxs.some(i => BATTLE.usedThisTurn.has(i))) {
     battleLog(`${item.name} was burning. The attack still lands, but the burn hits you for ${selfBurn}, which skips your armor. Health: ${RUN.health}/${RUN.maxHealth}.`);
     playSfx('hurt'); flashScreen('hurt'); showDamagePopup(selfBurn, 'Burn');
     saveRun();
-    if (RUN.health <= 0) { IN_BATTLE = false; clearBattleSave(); playSfx('lose'); render(nodeResultScreen(false, { lastHit: BATTLE.lastHit })); return; }
+    if (RUN.health <= 0 && !offerRevive()) { IN_BATTLE = false; clearBattleSave(); playSfx('lose'); render(nodeResultScreen(false, { lastHit: BATTLE.lastHit })); return; }
   }
   render(battleScreen());
   } finally {
@@ -7200,7 +7582,7 @@ function resolveOpponentAttackEffect(attack, oppDmg) {
     return ` Reinforces itself with ${amt} armor (${BATTLE.opponent.armor} total).`;
   }
   if (attack.effect === 'stealFuel') {
-    const n=Math.min(RUN.fuel,1); RUN.fuel-=n; return n?` Stole ${n} fuel.`:' Tried to steal fuel, but you had none.';
+    const t=takeFuel(1); return t.took?` Stole ${t.took} ${t.unit}.`:` Tried to steal ${t.unit==='coins'?'coins':'fuel'}, but you had none.`;
   }
   if (attack.effect === 'draw') {
     const drawn = drawOpponentPoolCards(1);
@@ -7292,6 +7674,7 @@ function endTurn() {
   }
   BATTLE.usedThisTurn = new Set();
   BATTLE.itemUses = {};
+  BATTLE.overtime = false;
   BATTLE.lightningRolls = {};
   if (BATTLE.itemCooldowns) {
     Object.keys(BATTLE.itemCooldowns).forEach(key => {
@@ -7396,8 +7779,8 @@ function endTurn() {
         if (!itemPick) break;
         const { item, best, cond, key } = itemPick;
         if (item.opponentEffect === 'earlyEscape') {
-          RUN.fuel = Math.max(0, RUN.fuel - 3);
-          battleLog(`${BATTLE.opponent.name} used ${item.name}${cond.label ? ` with ${cond.label}` : ''} and bolts for the exit! The fleet clears the stop, but the fuel tank drops by 3 (${RUN.fuel}/${RUN.maxFuel}).`);
+          const escapeRes = takeFuel(3);
+          battleLog(`${BATTLE.opponent.name} used ${item.name}${cond.label ? ` with ${cond.label}` : ''} and bolts for the exit! The fleet clears the stop, but ${escapeRes.unit === 'coins' ? `it takes ${escapeRes.took} coins` : `the fuel tank drops by 3 (${RUN.fuel}/${RUN.maxFuel})`}.`);
           winBattle();
           return;
         }
@@ -7468,10 +7851,9 @@ function endTurn() {
         } else if (spec?.type === 'redSteal') {
           const redCount = best.cards.filter(c => c.color === 'red').length;
           if (redCount >= (spec.redThreshold ?? 3)) {
-            const fuelStolen = Math.min(RUN.fuel, spec.fuelSteal ?? 1);
-            RUN.fuel -= fuelStolen;
+            const stealRes = takeFuel(spec.fuelSteal ?? 1); const fuelStolen = stealRes.took;
             drawOpponentPoolCards(spec.extraDraw ?? 1);
-            specialLog = ` It steals ${fuelStolen} fuel and draws an extra card!`;
+            specialLog = ` It steals ${fuelStolen} ${stealRes.unit} and draws an extra card!`;
           }
         }
         const dmgPhrase = armorBlocked > 0
@@ -7550,10 +7932,9 @@ function endTurn() {
       } else if (spec?.type === 'redSteal') {
         const redCount = best.cards.filter(c => c.color === 'red').length;
         if (redCount >= (spec.redThreshold ?? 3)) {
-          const fuelStolen = Math.min(RUN.fuel, spec.fuelSteal ?? 1);
-          RUN.fuel -= fuelStolen;
+          const stealRes = takeFuel(spec.fuelSteal ?? 1); const fuelStolen = stealRes.took;
           drawOpponentPoolCards(spec.extraDraw ?? 1);
-          specialLog = ` It steals ${fuelStolen} fuel and draws an extra card!`;
+          specialLog = ` It steals ${fuelStolen} ${stealRes.unit} and draws an extra card!`;
         }
       }
       const dmgPhrase = armorBlocked > 0
@@ -7609,7 +7990,7 @@ function endTurn() {
   }
 
   diffTickPlayerDots();
-  if (RUN.health <= 0) { IN_BATTLE = false; clearBattleSave(); playSfx('lose'); render(nodeResultScreen(false, { lastHit: BATTLE.lastHit })); return; }
+  if (RUN.health <= 0 && !offerRevive()) { IN_BATTLE = false; clearBattleSave(); playSfx('lose'); render(nodeResultScreen(false, { lastHit: BATTLE.lastHit })); return; }
 
   if (BATTLE.playerHandPurgeActive) {
     const stashedIdxs = new Set();
@@ -7633,6 +8014,7 @@ function endTurn() {
   BATTLE.oppPool.forEach(c => { c.revealed = true; });
 
   BATTLE.turn++;
+  BATTLE.weaken = 0;
   drawCards(RUN.drawPerTurn);
   resortHandAndRelink(RUN.handSortMode);
 
@@ -7674,7 +8056,7 @@ function winBattle(outlast) {
       : { coins: 160, gems: 4, fuel: 4, energy: 8 };
     RUN.chips += reward.coins;
     RUN.gems = Math.min(RUN.maxGems, RUN.gems + reward.gems);
-    RUN.fuel = Math.min(RUN.maxFuel, RUN.fuel + reward.fuel);
+    addFuel(reward.fuel);
     RUN.energy = Math.min(RUN.maxEnergy, RUN.energy + reward.energy);
     if (!RUN.castleState) RUN.castleState = {};
     if (stage === 1) { RUN.castleState.firstDone = true; }
@@ -7721,14 +8103,14 @@ function winBattle(outlast) {
   // Career Points are otherwise a flat end-of-run bonus now, but a Perfect Kill is a
   // skill-gated moment worth a small nod on its own, same as the fuel it grants.
   const pointsReward = exactKillBonus ? PERFECT_KILL_CP : 0;
-  RUN.chips += chipReward; RUN.gems = Math.min(RUN.maxGems, RUN.gems + gemReward); RUN.fuel = Math.min(RUN.maxFuel, RUN.fuel + fuelReward);
+  RUN.chips += chipReward; RUN.gems = Math.min(RUN.maxGems, RUN.gems + gemReward); addFuel(fuelReward);
   if (pointsReward) {
     earnPoints(pointsReward);
     RUN.careerPointsFromPerfectKills = (RUN.careerPointsFromPerfectKills || 0) + pointsReward;
     RUN.perfectKillsThisRun = (RUN.perfectKillsThisRun || 0) + 1;
   }
   battleLog(outlast ? `You outlasted the ${BATTLE.opponent.name}!` : `${BATTLE.opponent.name} is done for!`);
-  if (exactKillBonus) battleLog(`Perfect Win Bonus: +15 coins, +1 gem, +${PERFECT_KILL_CP} Career Points${fuelReward ? ', +1 fuel' : ''}!`);
+  if (exactKillBonus) battleLog(`Perfect Win Bonus: +15 coins, +1 gem, +${PERFECT_KILL_CP} Career Points${fuelReward ? (usesCoinTravel() ? `, +${FUEL_COIN_VALUE} coins` : ', +1 fuel') : ''}!`);
   battleLog(formatRewardParts({ coins: chipReward, gems: gemReward, fuel: fuelReward }) + '.');
   if (BATTLE.row === RUN.bossRow) { RUN.pendingWorldWin = true; }
   if (!BATTLE.castleStage) {
@@ -7759,7 +8141,7 @@ function currencyBar(extraHTML = '') {
     <div class="cur health" data-title="Your health. Runs out and the run ends.">${ICON.heart} ${RUN.health}/${RUN.maxHealth}</div>
     <div class="cur chip" data-title="Coins are used to buy vehicles and pay for certain services.">${ICON.coin} ${RUN.chips} Coins</div>
     <div class="cur gem" data-title="Gems let you draw extra cards during a battle.">${ICON.gem} ${RUN.gems}/${RUN.maxGems} Gems</div>
-    <div class="cur fuel" data-title="Fuel is spent when you travel to another stop.">${ICON.fuel} ${RUN.fuel}/${RUN.maxFuel} Fuel</div>
+    ${usesCoinTravel() ? `<div class="cur chip" data-title="This vehicle has no fuel tank. Every stop you travel to costs ${coinTravelCost()} coins. If you cannot pay, it costs you health, the same as running out of fuel.">${ICON.coin} ${coinTravelCost()} per stop</div>` : `<div class="cur fuel" data-title="Fuel is spent when you travel to another stop.">${ICON.fuel} ${RUN.fuel}/${RUN.maxFuel} Fuel</div>`}
     <div class="cur energy" data-title="Energy powers vehicle abilities.">${ICON.energy} ${RUN.energy}/${RUN.maxEnergy} Energy</div>
     <div class="cur pts" data-title="Career Points carry over between playthroughs and only buy Permanent Upgrades.">${ICON.star} ${META.points} Career Points</div>
     <div style="margin-left:auto;display:flex;gap:6px">${META.devModeActive ? `<button class="wo-btn gray" id="devPanelBtn" style="padding:3px 7px;font-size:10px">[🛠️ DEV]</button>` : ''}<button class="wo-btn purple" id="openRunSummaryBtn" style="padding:3px 7px;font-size:10px">Run Dashboard</button></div>
@@ -7879,7 +8261,7 @@ function nodePopupScreen(r, c) {
       <div class="cur chip">${ICON.coin} +15 coins</div>
       <div class="cur gem">${ICON.gem} +1 gem</div>
       <div class="cur pts">${ICON.star} +${PERFECT_KILL_CP} Career Points</div>
-      <div class="cur fuel">${ICON.fuel} +1 fuel</div>
+      ${fuelChipHTML(1, true)}
     </div>` : '';
   return `<div class="map-popup-overlay">
     <div class="wo${info.bigArt ? ' wide' : ''}" style="width:100%${info.accent ? `;border-color:${info.accent}` : ''}">
@@ -8113,7 +8495,7 @@ function battleScreen() {
     }
     const eKind = effectiveKind(item, index);
     const effectWord = eKind === 'defense' ? 'armor' : eKind === 'poison' ? 'poison' : eKind === 'burn' ? 'burn' : eKind === 'curse' ? 'curse' : 'dmg';
-    const cap = itemUsesCap(item, itemUsesLevel(itemId));
+    const cap = itemUsesCap(item, itemUsesLevel(itemId)) + (BATTLE && BATTLE.overtime ? 1 : 0);
     const usesLeft = cap - ((BATTLE.itemUses && BATTLE.itemUses[slotKey]) || 0);
     
     const isChargingUnlockItem = item.unlockThreshold != null && !(BATTLE.itemUnlocked && BATTLE.itemUnlocked[slotKey]);
@@ -8223,7 +8605,7 @@ function battleScreen() {
               ${BATTLE.itemHexes && Object.keys(BATTLE.itemHexes).length ? `<span class="status hoverTip" style="color:var(--hex);font-weight:800;font-size:13px" data-title="One or more of your Items is hexed - firing it will feed a card to the opponent."><span class="vart" style="width:12px;height:12px;font-size:12px">${ICON.hex}</span> ${Object.keys(BATTLE.itemHexes).length} Item${Object.keys(BATTLE.itemHexes).length > 1 ? 's' : ''} hexed</span>` : ''}
               ${BATTLE.itemFrozen && Object.keys(BATTLE.itemFrozen).length ? `<span class="status hoverTip" style="color:var(--ice);font-weight:800;font-size:13px" data-title="One or more of your Items is frozen - drop cards into it to thaw it."><span class="vart" style="width:12px;height:12px;font-size:12px">${ICON.ice}</span> ${Object.keys(BATTLE.itemFrozen).length} Item${Object.keys(BATTLE.itemFrozen).length > 1 ? 's' : ''} frozen</span>` : ''}
             </div>
-            <button class="wo-btn green" id="fuelHealBtn" data-title="Fuel also gets you across the map - spending it here means less for travel." style="padding:6px 10px;font-size:11px;white-space:nowrap" ${RUN.fuel < FUEL_HESTORE_COST || RUN.health >= RUN.maxHealth ? 'disabled' : ''}>Heal ${FUEL_HEAL_AMOUNT} = ${FUEL_HESTORE_COST} ${ICON.fuel}</button>
+            <button class="wo-btn green" id="fuelHealBtn" data-title="${usesCoinTravel() ? 'Coins also pay for every stop on the map - spending them here means less for travel.' : 'Fuel also gets you across the map - spending it here means less for travel.'}" style="padding:6px 10px;font-size:11px;white-space:nowrap" ${(usesCoinTravel() ? RUN.chips < FUEL_HESTORE_COST * FUEL_COIN_VALUE : RUN.fuel < FUEL_HESTORE_COST) || RUN.health >= RUN.maxHealth ? 'disabled' : ''}>Heal ${FUEL_HEAL_AMOUNT} = ${usesCoinTravel() ? `${FUEL_HESTORE_COST * FUEL_COIN_VALUE} ${ICON.coin}` : `${FUEL_HESTORE_COST} ${ICON.fuel}`}</button>
           </div>
         </div>
       </div>
@@ -8265,7 +8647,7 @@ function battleScreen() {
         </div>` : ''}
         <div class="playerActionGrid">
           <button class="wo-btn gray" id="sortToggleBtn" style="padding:6px 3px;font-size:10px;flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Sort: ${(RUN.handSortMode || 'value') === 'value' ? 'Value' : 'Suit'}</button>
-          ${(() => { const sp = VEHICLE_SPECIALS[RUN.hero.heroId]; if (!sp) return ''; const minNeed = sp.energyCost ?? sp.energyPerUnit; return `<button class="wo-btn amber hoverTip" id="vehicleSpecialBtn" style="padding:6px 3px;font-size:10px;flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" data-title="${sp.desc}" ${RUN.energy < minNeed ? 'disabled' : ''}>${sp.name} = ${minNeed} ${ICON.energy}</button>`; })()}
+          ${(() => { const sp = VEHICLE_SPECIALS[RUN.hero.heroId]; if (!sp) return ''; if (sp.type === 'revive') return `<button class="wo-btn amber hoverTip" id="vehicleSpecialBtn" style="padding:6px 3px;font-size:10px;flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" data-title="${sp.desc}" disabled>${sp.name}: ${RUN.reviveUsed ? 'Used' : 'Ready'}</button>`; const minNeed = sp.energyCost ?? sp.energyPerUnit; return `<button class="wo-btn amber hoverTip" id="vehicleSpecialBtn" style="padding:6px 3px;font-size:10px;flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" data-title="${sp.desc}" ${RUN.energy < minNeed ? 'disabled' : ''}>${sp.name} = ${minNeed} ${ICON.energy}</button>`; })()}
           <button class="wo-btn purple" id="gemDrawBtn" style="padding:6px 3px;font-size:10px;flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" ${(RUN.gems < 1 || BATTLE.hand.length >= RUN.handSize) ? 'disabled' : ''}>Draw = ${GEM_DRAW_COST} ${ICON.gem}</button>
           <button class="wo-btn gray" id="discardSelectedBtn" style="padding:6px 3px;font-size:10px;flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" data-title="Fold selected cards face-down instead of playing them." ${!selectedIdx.length ? 'disabled' : ''}>Discard</button>
     </div>
@@ -8357,8 +8739,8 @@ function battleScreen() {
       <div class="wo" style="max-width:420px">
         <div class="wo-stripe"></div>
         <div class="wo-body" style="text-align:center">
-          <h1>Spending <em>Fuel</em></h1>
-          <div class="wo-sub" style="margin:10px 0">Fuel also gets your vehicle across the map. Healing with it here means less fuel left for travel, so spend it carefully.</div>
+          <h1>Spending <em>${usesCoinTravel() ? 'Coins' : 'Fuel'}</em></h1>
+          <div class="wo-sub" style="margin:10px 0">${usesCoinTravel() ? 'Coins also pay for every stop on the map. Healing with them here means less left for travel, so spend them carefully.' : 'Fuel also gets your vehicle across the map. Healing with it here means less fuel left for travel, so spend it carefully.'}</div>
           <button class="wo-btn amber" id="fuelHealWarningOkBtn" style="width:100%;margin-top:8px">Got It</button>
         </div>
       </div>
@@ -8385,7 +8767,7 @@ function nodeResultScreen(won, rewards) {
       <div class="cur chip">${ICON.coin} +15 coins</div>
       <div class="cur gem">${ICON.gem} +1 gem</div>
       <div class="cur pts">${ICON.star} +${PERFECT_KILL_CP} Career Points</div>
-      ${rewards.perfectFuel ? `<div class="cur fuel">${ICON.fuel} +1 fuel</div>` : ''}
+      ${rewards.perfectFuel ? fuelChipHTML(1, true) : ''}
     </div>` : ''}
   ` : `<div class="wo-sub">Your health ran out${rewards.lastHit ? ` after taking ${rewards.lastHit.amount} damage from ${rewards.lastHit.source}` : ''}. Run ends here.</div>`;
   return `
@@ -8408,7 +8790,8 @@ function pickShopStock() {
   const SUIT_INFERNO_IDS = ['spade_inferno', 'heart_inferno', 'club_inferno', 'diamond_inferno'];
   const ownedIds = new Set(RUN.hero?.items || []);
   const starterIds = new Set(RUN.starterItemIds || []);
-  const pool = Object.values(ITEMS).filter(it => it.cost > 0 && (it.minRow == null || it.minRow <= row)
+  const allowHexItems = Math.random() < HEX_SHOP_CHANCE;
+  const pool = Object.values(ITEMS).filter(it => it.cost > 0 && (it.minRow == null || it.minRow <= row) && (it.kind !== 'hex' || allowHexItems)
     && (!ownedIds.has(it.id) || starterIds.has(it.id))
     && (it.kind !== 'storage' || it.id === 'supply_bag' || SUIT_STASH_IDS.includes(it.id)));
   const defensePool = pool.filter(it => it.kind === 'defense');
@@ -8524,10 +8907,10 @@ function garageScreen(message='') {
           <div class="note" style="margin-top:6px">Single-use per visit.</div>
         </div>
 
-        <div class="shopcard">
+        ${usesCoinTravel() ? '' : `        <div class="shopcard">
           <h3>Fuel Dispenser</h3>
           <button class="wo-btn amber hoverTip" id="stationFuelBtn" data-title="Fuel gets more expensive the more you buy here in one world. The price resets in the next world." ${RUN.chips < bodyShopFuelUnitPrice(stationFuelBought()) || RUN.fuel >= RUN.maxFuel ? 'disabled' : ''}>1 Fuel = ${bodyShopFuelUnitPrice(stationFuelBought())} Coins</button>
-        </div>
+        </div>`}
       </div>
     </div>
   </div>`;
@@ -8620,7 +9003,7 @@ function blacksmithScreen() {
 }
 function treasureScreen(found) {
   if (found.choice) {
-    const fuelRatio = RUN.fuel / RUN.maxFuel, gemRatio = RUN.gems / RUN.maxGems, energyRatio = RUN.energy / RUN.maxEnergy;
+    const fuelRatio = usesCoinTravel() ? 2 : RUN.fuel / RUN.maxFuel, gemRatio = RUN.gems / RUN.maxGems, energyRatio = RUN.energy / RUN.maxEnergy;
     const safeKind = fuelRatio <= gemRatio ? 'fuel' : 'gems';
     const safeLabel = safeKind === 'fuel' ? '+4 Fuel' : '+2 Gems';
     const siphonKind = [['fuel', fuelRatio], ['gems', gemRatio], ['energy', energyRatio]].sort((a, b) => a[1] - b[1])[0][0];
@@ -8776,16 +9159,18 @@ function starterSelectScreen() {
     const hero = HEROES[id];
     const unlocked = isStarterUnlocked(id);
     if (!unlocked) {
-      return `<div class="pickrow locked" style="display:flex;align-items:center;gap:14px;padding:14px;margin-bottom:10px">
-        <div style="width:44px;text-align:center;flex-shrink:0"><span class="vart" style="width:36px;height:36px;font-size:36px">${ICON.lock}</span></div>
-        <div style="flex:1">
+      return `<div class="pickrow locked" style="padding:10px;margin-bottom:8px">
+        <div class="pickLeftCol">
           <div class="pname">${hero.name}</div>
-          <div class="ptag">${starterLockNote(id)}</div>
+          <div class="pickPortrait lockedPortrait" data-hero="${hero.id}">${art(hero, 140)}</div>
+        </div>
+        <div class="pickItemRow lockedNote" style="align-items:center;min-height:100px">
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 4px"><span class="vart" style="width:28px;height:28px;font-size:28px;flex:0 0 28px">${ICON.lock}</span><div class="ptag" style="margin:0">${starterLockNote(id)}</div></div>
         </div>
       </div>`;
     }
     const itemCards = (hero.starterItems || []).map(heroItemCardPreviewHTML).join('');
-    const abilityCard = heroAbilityCardHTML(id);
+    const abilityCard = heroPerkCardHTML(id) + heroAbilityCardHTML(id);
     return `<div class="pickrow" style="padding:10px;margin-bottom:8px">
       <div class="pickLeftCol">
         <div class="pname">${hero.name}</div>
@@ -9136,6 +9521,31 @@ const UPDATE_LOG = [
       'The rest stop is now called Service Station everywhere.',
     ],
   } },
+  { date: '2026-10-05', categories: {
+    Vehicles: [
+      'Starting vehicles were reworked so each one you unlock feels stronger or plays differently than the one before it. Each has a new set of starting Items, an ability and a head start perk.',
+      'Twelve new vehicles: Riding Mower, Beach Rescue ATV, Police Motorcycle, Skid Steer, Backhoe, Dump Truck, Garbage Truck, Pressure Washer Truck, Grapple Truck, Ocean Rescue Truck, High Water Rescue Truck and Ambulance. Each has its own way to play.',
+      'Vehicles unlock more slowly now. Beating each world unlocks one, 100 Perfect Wins and 25 Elites unlock one each, and the rest unlock as you earn Career Points in total.',
+      'The Admin vehicle has no fuel. You pay 5 coins to move to each stop, and if you cannot pay you lose 10 HP, like running out of fuel. It starts with 20 extra coins, and fuel you would find is turned into coins.',
+      'New abilities: redraw your hand, wash every effect off your Items, double your next attack, fire every Item an extra time, dump your hand for damage, soften the opponent\'s next hits, show the opponent\'s hand, and a once-per-run revive that you choose to use.',
+      'Some vehicles run on health. Hot Pursuit and Defibrillator cost HP to fire, and Donut Break, Adrenaline Drip and the healing abilities pay it back.',
+      'Pick Your Vehicle now shows a Perk card as well as the ability card.',
+    ],
+    'Item cards': [
+      'Your starting Item cards no longer pay out less than the sum of their cards, unless they are poison.',
+      'New Items: Full Pallet, Roof Rack, Hose Slam and a set of new vehicle Items. Some can fire several times a turn, and some cost HP or heal you when fired.',
+    ],
+    Opponents: [
+      'Opponents no longer hex your Items for now. Their old hex Items hit like normal attacks instead.',
+      'Bosses have less health than before, and the World 3 and World 4 bosses no longer freeze your Items.',
+    ],
+    Visual: [
+      'Pictures now fit their boxes on every screen, with the whole subject shown instead of being clipped. Logi Bear, NayNay and others are fixed, and the battle screen fits better on phones.',
+    ],
+    Map: [
+      'Hex Items show up much less often in the Dealership for now.',
+    ],
+  } },
 ];
 function updateLogHTML() {
   return `
@@ -9207,6 +9617,68 @@ let MAP_SCROLL_X = 0;
 // after every render() and sets the picture's height inline to match. Called on every render since
 // only a small fraction of screens have a .stopArtRow at all, so the querySelectorAll is cheap when
 // there's nothing to do.
+/* Auto-fit art: every opponent, vehicle and node picture is a transparent PNG with its own amount of empty margin
+   (and a few are portrait instead of landscape). Instead of cropping with "cover", each picture is shown whole
+   ("contain"), then its visible subject is measured once from the alpha channel and scaled up and centered so it
+   fills its box without any part of it leaving the box. Round map badges use a circle instead of a rectangle.
+   If the browser blocks reading pixels (opening the file straight from disk), pictures just stay fully visible
+   at the plain contain size. Hand-tuned vehicle picker portraits are left alone. */
+const ART_BOUNDS_CACHE = new Map();
+function artSubjectBounds(img) {
+  const key = img.currentSrc || img.src;
+  if (ART_BOUNDS_CACHE.has(key)) return ART_BOUNDS_CACHE.get(key);
+  let b = null;
+  try {
+    const iw = img.naturalWidth, ih = img.naturalHeight;
+    if (iw && ih) {
+      const sc = 96 / Math.max(iw, ih);
+      const cw = Math.max(1, Math.round(iw * sc)), ch = Math.max(1, Math.round(ih * sc));
+      const cv = document.createElement('canvas'); cv.width = cw; cv.height = ch;
+      const cx = cv.getContext('2d', { willReadFrequently: true });
+      cx.drawImage(img, 0, 0, cw, ch);
+      const d = cx.getImageData(0, 0, cw, ch).data;
+      let x0 = cw, y0 = ch, x1 = -1, y1 = -1;
+      for (let y = 0; y < ch; y++) for (let x = 0; x < cw; x++) {
+        if (d[(y * cw + x) * 4 + 3] > 24) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+      }
+      if (x1 >= x0 && y1 >= y0) b = { l: Math.max(0, x0 - 1) / cw, t: Math.max(0, y0 - 1) / ch, r: Math.min(cw, x1 + 2) / cw, b: Math.min(ch, y1 + 2) / ch };
+    }
+  } catch (e) { b = null; }
+  ART_BOUNDS_CACHE.set(key, b);
+  return b;
+}
+function fitArtImg(img) {
+  if (!img || !img.naturalWidth || img.closest('.pickPortrait')) return;
+  const W = img.clientWidth, H = img.clientHeight;
+  if (W < 36 || H < 36) return;
+  const b = artSubjectBounds(img);
+  if (!b) return;
+  const iw = img.naturalWidth, ih = img.naturalHeight;
+  const sc = Math.min(W / iw, H / ih);
+  const offX = (W - iw * sc) / 2, offY = (H - ih * sc) / 2;
+  const sx0 = offX + b.l * iw * sc, sx1 = offX + b.r * iw * sc, sy0 = offY + b.t * ih * sc, sy1 = offY + b.b * ih * sc;
+  const sw = sx1 - sx0, sh = sy1 - sy0;
+  if (sw < 2 || sh < 2) return;
+  const node = img.closest('.mapnode');
+  let k;
+  if (node) {
+    const R = Math.min(node.clientWidth, node.clientHeight) / 2 - 3;
+    k = Math.min(3, Math.max(0.5, (R * 0.96) / (0.5 * Math.hypot(sw, sh))));
+  } else {
+    k = Math.min(2.4, Math.max(1, Math.min(0.97 * W / sw, 0.97 * H / sh)));
+  }
+  const tx = -k * ((sx0 + sx1) / 2 - W / 2), ty = -k * ((sy0 + sy1) / 2 - H / 2);
+  img.style.transformOrigin = '50% 50%';
+  img.style.transform = `translate(${tx.toFixed(1)}px, ${ty.toFixed(1)}px) scale(${k.toFixed(3)})`;
+}
+function fitAllArt(root) {
+  (root || document).querySelectorAll('.vart > img').forEach(img => {
+    if (img.complete && img.naturalWidth) fitArtImg(img);
+    else if (!img.__fitHooked) { img.__fitHooked = true; img.addEventListener('load', () => fitArtImg(img), { once: true }); }
+  });
+}
+let __artResizeTimer = null;
+window.addEventListener('resize', () => { clearTimeout(__artResizeTimer); __artResizeTimer = setTimeout(() => fitAllArt(document.getElementById('app')), 120); });
 function syncStopArtHeights(root) {
   root.querySelectorAll('.stopArtRow').forEach(row => {
     const leftCol = row.querySelector(':scope > .sdLeftCol');
@@ -9214,7 +9686,7 @@ function syncStopArtHeights(root) {
     if (!leftCol || !art) return;
     const set = () => { const h = leftCol.getBoundingClientRect().height; if (h > 0) art.style.height = h + 'px'; };
     set();
-    requestAnimationFrame(set); // catch layout that settles a frame late (e.g. web-font swap)
+    requestAnimationFrame(() => { set(); fitAllArt(row); }); // catch layout that settles a frame late (e.g. web-font swap)
   });
 }
 function render(html) {
@@ -9235,6 +9707,8 @@ function render(html) {
   
   if (mw && !GARAGE_POPUP && !TREASURE_POPUP) { mw.scrollLeft = MAP_SCROLL_X; mw.onscroll = () => { MAP_SCROLL_X = mw.scrollLeft; }; if (RUN && mw.querySelector('.mapnode-wrap')) { requestAnimationFrame(()=>{ const row = Math.max(0,RUN.currentRow); const colW = 118; const target = Math.max(0, row*colW - mw.clientWidth*0.15); mw.scrollLeft = target; MAP_SCROLL_X = target; }); } }
   syncStopArtHeights(app);
+  fitAllArt(app);
+  requestAnimationFrame(() => fitAllArt(app));
   if (window.__combatTrainingStep && typeof window.renderCombatTrainingStep === 'function') window.renderCombatTrainingStep(window.__combatTrainingStep);
   placeMatchPopup();
   if (!IN_BATTLE) { const hu = document.getElementById('headsUpModal'); if (hu) hu.remove(); }
@@ -9276,11 +9750,13 @@ function render(html) {
   const scoutBtn = document.getElementById('scoutBtn'); if (scoutBtn) scoutBtn.onclick = scoutOpponent;
   const gemDrawBtn = document.getElementById('gemDrawBtn'); if (gemDrawBtn) gemDrawBtn.onclick = drawWithGem;
   const performFuelHeal = () => {
-    const fuelCost=FUEL_HESTORE_COST;
+    const coinHeal = usesCoinTravel();
+    const fuelCost = coinHeal ? FUEL_HESTORE_COST * FUEL_COIN_VALUE : FUEL_HESTORE_COST;
     const healAmount=FUEL_HEAL_AMOUNT+(BATTLE.opponent.fuelHealModifier||OPPONENT_FUEL_HEAL_MODIFIER_DEFAULT);
-    if (RUN.fuel < fuelCost || RUN.health >= RUN.maxHealth) return;
-    RUN.fuel -= fuelCost; RUN.health = Math.min(RUN.maxHealth, RUN.health + healAmount);
-    battleLog(`Used ${FUEL_HESTORE_COST} fuel for +${healAmount} health. Health: ${RUN.health}/${RUN.maxHealth}, Fuel: ${RUN.fuel}/${RUN.maxFuel}.`);
+    if ((coinHeal ? RUN.chips : RUN.fuel) < fuelCost || RUN.health >= RUN.maxHealth) return;
+    if (coinHeal) RUN.chips -= fuelCost; else RUN.fuel -= fuelCost;
+    RUN.health = Math.min(RUN.maxHealth, RUN.health + healAmount);
+    battleLog(coinHeal ? `Spent ${fuelCost} coins for +${healAmount} health. Health: ${RUN.health}/${RUN.maxHealth}, Coins: ${RUN.chips}.` : `Used ${FUEL_HESTORE_COST} fuel for +${healAmount} health. Health: ${RUN.health}/${RUN.maxHealth}, Fuel: ${RUN.fuel}/${RUN.maxFuel}.`);
     saveRun(); render(battleScreen());
   };
   const fuelHealBtn = document.getElementById('fuelHealBtn'); if (fuelHealBtn) fuelHealBtn.onclick = () => {
@@ -9686,14 +10162,14 @@ function render(html) {
           const reward = MATCH_SUIT_REWARDS[ga] || {};
           RUN.chips += reward.coins || 0;
           RUN.gems = Math.min(RUN.maxGems, RUN.gems + (reward.gems || 0));
-          RUN.fuel = Math.min(RUN.maxFuel, RUN.fuel + (reward.fuel || 0));
+          addFuel(reward.fuel || 0);
           RUN.health = Math.min(RUN.maxHealth, RUN.health + (reward.health || 0));
           RUN.energy = Math.min(RUN.maxEnergy, RUN.energy + (reward.energy || 0));
           if (reward.points) { earnPoints(reward.points); RUN.careerPointsFromMatchGame = (RUN.careerPointsFromMatchGame || 0) + reward.points; }
           st.visitTally = st.visitTally || {};
-          st.visitTally.coins = (st.visitTally.coins || 0) + (reward.coins || 0);
+          st.visitTally.coins = (st.visitTally.coins || 0) + (reward.coins || 0) + (usesCoinTravel() ? (reward.fuel || 0) * FUEL_COIN_VALUE : 0);
           st.visitTally.gems = (st.visitTally.gems || 0) + (reward.gems || 0);
-          st.visitTally.fuel = (st.visitTally.fuel || 0) + (reward.fuel || 0);
+          st.visitTally.fuel = (st.visitTally.fuel || 0) + (usesCoinTravel() ? 0 : (reward.fuel || 0));
           st.visitTally.health = (st.visitTally.health || 0) + (reward.health || 0);
           st.visitTally.energy = (st.visitTally.energy || 0) + (reward.energy || 0);
           st.visitTally.points = (st.visitTally.points || 0) + (reward.points || 0);
@@ -9821,7 +10297,7 @@ function render(html) {
   const startRunBtn = document.getElementById('startRunBtn'); if (startRunBtn) startRunBtn.onclick = () => { clearRunSave(); render(starterSelectScreen()); };
   const continueRunBtn = document.getElementById('continueRunBtn'); if (continueRunBtn) continueRunBtn.onclick = () => { RUN = loadRunSave(); 
   RUN.maxGems=10+(META.levels.gemCap||0)*2; 
-  RUN.maxFuel=20+(META.levels.fuelCap||0)*5; RUN.maxEnergy=20+(META.levels.energyCap||0)*5; 
+  RUN.maxFuel=usesCoinTravel()?0:20+(META.levels.fuelCap||0)*5; RUN.maxEnergy=20+(META.levels.energyCap||0)*5; 
   RUN.handSize=7+(META.levels.handCap||0)*2; 
   RUN.itemCap=Math.max(RUN.itemCap||0, Math.min(MAX_ITEM_CAP, 3+(META.levels.garage||0))); 
   RUN.runUpgrades=RUN.runUpgrades||{itemSlots:0,drawPerTurn:0,sightRange:0,gemDraw:0,health:0}; 

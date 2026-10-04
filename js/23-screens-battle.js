@@ -973,7 +973,7 @@ function nodeResultScreen(won, rewards) {
       <div class="wo-stripe"></div>
       <div class="wo-body" style="text-align:center">
         ${won && rewards.exactKillBonus ? '' : `<div class="wo-eyebrow">${won ? 'Battle Won' : 'Battle Lost'}</div>`}
-        <h1>${won ? (rewards.exactKillBonus ? 'Perfect <em>Win</em>' : 'Nice <em>Work</em>') : 'Fleet <em>Beaten</em>'}</h1>
+        <h1>${won ? (rewards.exactKillBonus ? 'Perfect <em>Win!</em>' : 'Nice <em>Work</em>') : 'Fleet <em>Beaten</em>'}</h1>
         ${rewardsHTML}
         ${
           won

@@ -435,7 +435,7 @@ body {
   align-items: center;
   gap: 8px;
   margin: 0 0 12px;
-  padding: 10px 6px 10px 14px;
+  padding: 12px 6px 12px 36px;
   background: #f5c451;
   border: 2px solid #c99a1f;
   border-radius: 8px;
@@ -444,12 +444,13 @@ body {
 .homeTipText {
   flex: 1;
   min-width: 0;
-  font-size: 13px;
+  text-align: center;
+  font-size: 15px;
   line-height: 1.3;
   color: #2a2100;
 }
 .homeTipText b {
-  font-size: 15px;
+  font-size: 18px;
   font-weight: 800;
 }
 .homeTipArrow {
@@ -572,11 +573,11 @@ body {
 }
 
 .homeHeader { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 0 12px; }
-.wo .homeTitle { margin: 0; flex: 1 1 0; display: flex; justify-content: center; line-height: 0.95; font-size: 40px; position: relative; z-index: 1; }
+.wo .homeTitle { margin: 0; flex: 1 1 0; display: flex; justify-content: center; line-height: 0.95; font-size: 46px; position: relative; z-index: 1; }
 .homeTitleTop { display: block; }
 .homeTitleBottom { display: block; margin-left: 22px; font-style: normal; }
 .homeHero { display: block; flex: 0 0 66%; min-width: 0; width: 66%; height: auto; border: 0; margin: -16px -14px -14px 0; }
 .homeShoutouts { max-width: 480px; margin: 10px auto 8px; text-align: center; font-size: 13px; line-height: 1.5; opacity: 0.9; color: var(--dim); }
-.homeFooter { margin-bottom: -12px; }
+.homeFooter { margin-bottom: -9px; }
 .homeTitleInner { display: flex; flex-direction: column; }
 .homeBtn, .homeNameInput { font-size: 19px; }

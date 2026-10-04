@@ -88,7 +88,7 @@ function homeTipBannerHTML() {
   if (META.hideHomeTip || !homeScreenPlatform()) return '';
   return (
     `<div class="homeTipBanner" id="homeTipShowBtn" role="button"><div class="homeTipText"><b>Playing on ` +
-    `mobile?</b><br>Click here to improve gameplay</div><span class="homeTipArrow">&rsaquo;</span>` +
+    `mobile?</b><br>Click here to improve gameplay</div>` +
     `<button class="homeTipClose" id="homeTipHideBtn" aria-label="Hide this tip">&times;</button></div>`
   );
 }

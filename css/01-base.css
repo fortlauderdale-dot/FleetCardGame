@@ -543,10 +543,11 @@ body {
   line-height: 1.1;
 }
 .homeMadeByLabel {
-  font-size: 12px;
+  font-size: 10px;
   color: var(--dim);
 }
 .homeMadeByName {
+  padding-left: 6px;
   font-size: 20px;
   font-weight: 800;
   color: #fff;

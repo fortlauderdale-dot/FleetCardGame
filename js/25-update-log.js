@@ -386,6 +386,7 @@ const UPDATE_LOG = [
       'Item cards and the battle log no longer use exclamation marks, like Bonus +50% if Pair.',
     ],
     Visual: [
+      'A Perfect Win now just says Perfect Win at the top, without the Battle Won line above it.',
       'The Dealership now shows its Item cards three across on phones.',
     ],
     Misc: [

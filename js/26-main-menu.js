@@ -143,8 +143,6 @@ function metaScreen() {
             <div class="note" style="margin:0;font-size:13px;opacity:0.9">🏆 Haley was first to beat World 2!</div>
           </div>
         </div>
-        ${homeStatsHTML()}
-        ${homeTipBannerHTML()}
         <div class="homeRunRow">
           <input id="playerNameInput" class="homeNameInput" type="text" maxlength="18" placeholder="Your name" ` +
     `value="${(META.playerName || '').replace(/"/g, '&quot;')}">
@@ -156,6 +154,8 @@ function metaScreen() {
         </div>
         ${hasSave ? `<button class="wo-btn gray homeBtn" id="startRunBtn">New Run (overwrites save)</button>` : ''}
         <button class="wo-btn amber homeBtn" id="viewUpgradesBtn">Career Point Upgrades (${META.points})</button>
+        ${homeStatsHTML()}
+        ${homeTipBannerHTML()}
         ${
           META.devModeActive
             ? `<button class="wo-btn gray" style="width:100%;margin-top:10px;` +

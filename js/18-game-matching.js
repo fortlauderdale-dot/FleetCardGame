@@ -89,7 +89,7 @@ function castleMatchScreen() {
     <div class="wo wide matchBoardWrap"${MATCH_POPUP ? ' style="pointer-events:none"' : ''}>
       <div class="wo-stripe"></div>
       <div class="wo-body">
-        <h1>Matching Game</h1>
+        <h1>Fleet Matching Game</h1>
         <div class="wo-sub" style="color:#f5c451">Attempts Left: ${st.matchGuesses}</div>
         <div class="matchGrid" style="display:grid; grid-template-columns:repeat(6, minmax(0,` +
     `1fr)); gap:8px; max-width:490px; margin:0 auto">

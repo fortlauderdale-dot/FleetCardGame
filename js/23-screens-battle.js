@@ -1476,7 +1476,7 @@ function runEndScreen(won, bonus, bonusWorld, cleared) {
           ${statRow(`Perfect Kills (${RUN.perfectKillsThisRun || 0})`, `+${perfectCP}`)}
           ${statRow(`Elite Kills (${RUN.elitesBeatenThisRun || 0})`, `+${eliteCP}`)}
           ${statRow('Treasure &amp; Chests', `+${treasureCP}`)}
-          ${statRow('Carnival Matching Game', `+${matchCP}`)}
+          ${statRow('Fleet Matching Game', `+${matchCP}`)}
         </div>
         <div style="font-weight:800;font-size:15px;margin:16px 0 4px;text-align:center">Items Used This Run</div>
         ${itemListHTML}

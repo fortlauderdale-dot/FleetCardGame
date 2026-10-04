@@ -747,20 +747,30 @@ html:has(#map-viewport) {
   }
 }
 .castleMenu {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin: 14px auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 10px auto;
   max-width: 440px;
+}
+.castleBtnWide {
+  grid-column: 1 / -1;
+}
+.castleBtn.castleBtn-exit {
+  background: #ffc44d;
+  color: #12163a;
+  border-color: #ffc44d;
+  font-weight: 800;
 }
 .castleBtn {
   display: block;
   width: 100%;
   text-align: center;
-  padding: 16px;
+  padding: 12px 6px;
   font-family: var(--disp);
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
+  white-space: nowrap;
   color: #4a2f14;
   background: linear-gradient(180deg, #ecd6ab, #d8b077);
   border: 2px solid #8a5a2b;

@@ -391,6 +391,9 @@ const UPDATE_LOG = [
       'Match game prizes now use the same colors, icons and font as the resource bar at the top, for pairs and for the end of visit total.',
     ],
     Visual: [
+      'The Fleet Compound menu now fits on one screen on a phone, with two places side by side.',
+      'The match game is now called Fleet Matching Game everywhere, so it fits on one line.',
+      'New Home Screen icon on iPhone: the Fleet Compound garage instead of a plain F. Delete and re-add the Home Screen icon to see it.',
       'A Perfect Win now shows only Perfect Win! at the top, without the Battle Won line above it.',
       'The Dealership now shows its Item cards three across on phones.',
     ],

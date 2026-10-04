@@ -616,6 +616,13 @@ const CASTLE_THIRD = {
   items: ['opp_castle_poke_t3', 'fender_bender'],
 };
 let DUNGEON_WIN_POPUP = null;
+// One Fleet Compound menu button. Places you can only visit once per world show a check mark after you use them.
+function castleMenuBtnHTML(id, label, used = false, extraClass = '') {
+  return (
+    `<button class="castleBtn ${extraClass}" id="${id}" ${used ? 'disabled' : ''}>` +
+    `${used ? '&#10003; ' : ''}${label}</button>`
+  );
+}
 function castleMenuScreen(message = '') {
   return (
     `${noticeHTML()}
@@ -625,31 +632,18 @@ function castleMenuScreen(message = '') {
       ${currencyBar()}
       ${message ? `<div class="panel"><div class="note">${message}</div></div>` : ''}
       <div class="castleMenu">
-        <button class="castleBtn castleBtn-exit" id="leaveCastleBtn" style="background:#ffc44d;` +
-    `color:#12163a;border-color:#ffc44d;font-weight:800">Back to World Map</button>
-        <button class="castleBtn" ` +
-    `id="castleDungeonNavBtn" ${RUN.castleState?.dungeonLocked ? 'disabled' : ''}>${
-      RUN.castleState?.dungeonLocked ? 'Dungeon Cleared' : 'Visit the Fleet Compound ' + 'Dungeon'
-    }</button>
-        <button class="castleBtn" ` +
-    `id="castleWizardNavBtn" ${RUN.castleState?.matchPlayed ? 'disabled' : ''}>${
-      RUN.castleState?.matchPlayed ? 'Matching Game Played' : 'Visit the Fleet Carnival Matching ' + 'Game'
-    }</button>
-        <button class="castleBtn" ` +
-    `id="castlePlinkoNavBtn" ${RUN.castleState?.plinkoPlayed ? 'disabled' : ''}>${
-      RUN.castleState?.plinkoPlayed ? 'Plinko Board Played' : 'Visit the Fleet Plinko ' + 'Board'
-    }</button>
-        <button class="castleBtn" ` +
-    `id="castleBlackjackNavBtn" ${RUN.castleState?.blackjackPlayed ? 'disabled' : ''}>${RUN.castleState?.blackjackPlayed ? 'Blackjack Played' : 'Visit Fleet Blackjack'}</button>
-        <button class="castleBtn" ` +
-    `id="castlePokerNavBtn" ${RUN.castleState?.pokerPlayed ? 'disabled' : ''}>${RUN.castleState?.pokerPlayed ? 'Poker Played' : 'Visit Fleet Poker'}</button>
-        <button class="castleBtn" ` +
-    `id="castleAuctionNavBtn" ${RUN.castleState?.auctionPlayed ? 'disabled' : ''}>${RUN.castleState?.auctionPlayed ? 'Auction Played' : 'Visit the Fleet Auction'}</button>
-        <button class="castleBtn" id="castleBlacksmithNavBtn">Visit the Tuning Garage</button>
-        <button class="castleBtn" id="castleChopShopNavBtn">Visit the Chop Shop</button>
-        <button class="castleBtn" id="castleOverdriveNavBtn">Visit the Overdrive Bay</button>
-        <button class="castleBtn" id="castleShopNavBtn">Visit the Dealership</button>
-        <button class="castleBtn" id="castleInnNavBtn">Visit the Body Shop</button>
+        <button class="castleBtn castleBtn-exit castleBtnWide" id="leaveCastleBtn">Back to World Map</button>
+        ${castleMenuBtnHTML('castleWizardNavBtn', 'Fleet Matching Game', RUN.castleState?.matchPlayed, 'castleBtnWide')}
+        ${castleMenuBtnHTML('castleDungeonNavBtn', 'Compound Dungeon', RUN.castleState?.dungeonLocked)}
+        ${castleMenuBtnHTML('castlePlinkoNavBtn', 'Fleet Plinko', RUN.castleState?.plinkoPlayed)}
+        ${castleMenuBtnHTML('castleBlackjackNavBtn', 'Fleet Blackjack', RUN.castleState?.blackjackPlayed)}
+        ${castleMenuBtnHTML('castlePokerNavBtn', 'Fleet Poker', RUN.castleState?.pokerPlayed)}
+        ${castleMenuBtnHTML('castleAuctionNavBtn', 'Fleet Auction', RUN.castleState?.auctionPlayed)}
+        ${castleMenuBtnHTML('castleBlacksmithNavBtn', 'Tuning Garage')}
+        ${castleMenuBtnHTML('castleChopShopNavBtn', 'Chop Shop')}
+        ${castleMenuBtnHTML('castleOverdriveNavBtn', 'Overdrive Bay')}
+        ${castleMenuBtnHTML('castleShopNavBtn', 'Dealership')}
+        ${castleMenuBtnHTML('castleInnNavBtn', 'Body Shop')}
       </div>
     </div>
   </div>

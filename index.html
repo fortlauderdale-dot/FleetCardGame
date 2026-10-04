@@ -119,9 +119,11 @@
     .matchGrid{max-width:520px !important}
     .matchGrid .card.mini{height:76px;font-size:15px}
   }
-  .matchGrid .card.mini.matchTile{width:75px;height:100px;max-width:75px;max-height:100px;margin:0 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;box-sizing:border-box}
+  .matchGrid .card.mini.matchTile{width:100%;height:auto;aspect-ratio:3/4;max-width:75px;max-height:100px;min-width:0;padding:0;margin:0 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;box-sizing:border-box}
   .matchGrid .card.mini.matchTile:not(.back){background:#ffffff !important;color:#1a1a2e}
-  .matchGrid .card.mini.matchTile:not(.back) div:nth-child(2){font-size:46px !important;line-height:1;font-weight:800}
+  .matchGrid .card.mini.matchTile:not(.back) div:nth-child(2){font-size:min(46px,9.5vw) !important;line-height:1;font-weight:800}
+  .matchGrid .card.mini.matchTile .vart{width:min(68px,15vw) !important;height:min(68px,15vw) !important}
+  @media (max-width:600px){.matchGrid{gap:5px !important}.matchBoardWrap .wo-body{padding-left:10px;padding-right:10px}.matchGrid .card.mini.matchTile.back div:first-child{font-size:min(24px,6vw)}}
   .matchGrid .card.mini.matchTile.red:not(.back) div:nth-child(2){color:#c62828}
   .matchGrid .card.mini.matchTile:not(.back):not(.red) div:nth-child(2){color:#1a1a2e}
   .matchGrid .card.mini.matchTile.joker-outline-red:not(.back){outline:3px solid #ff8a80 !important;background:#c62828 !important}
@@ -288,7 +290,7 @@
   .tooltip{display:none;position:absolute;bottom:120%;left:50%;transform:translateX(-50%);z-index:90;
     background:#000000 !important;color:#ffffff !important;font-family:var(--mono);font-size:10.5px;line-height:1.5;
     padding:7px 10px;border-radius:6px;white-space:nowrap;z-index:5;box-shadow:0 0 8px rgba(31,182,166,0.4);border:1px solid #1fb6a6;text-align:left}
-  .mapnode{position:relative;width:48px;height:48px;border-radius:50%;overflow:hidden;
+  .mapnode{position:relative;width:74px;height:74px;border-radius:50%;overflow:hidden;
     font-size:19px;display:flex;align-items:center;justify-content:center;border:2px solid;background:var(--white)}
   /* Per-image map-node zoom: several AI-generated icons/opponent art have a lot of empty
      transparent margin baked into the square canvas, so the subject reads small inside the round
@@ -307,7 +309,7 @@
   .mapnode.current{background:var(--blue);border-color:var(--blue-dark);color:#fff;cursor:default;box-shadow:0 0 0 5px #4a5fc755;animation:herePulse 1.4s ease-in-out infinite}
   .mapnode.future .vart,.mapnode.farfuture .vart,.mapnode.done .vart{filter:grayscale(1)}
   @keyframes herePulse{0%,100%{box-shadow:0 0 0 4px #4a5fc755}50%{box-shadow:0 0 0 9px #4a5fc722}}
-  .mapnode.worldboss{width:80px;height:80px;font-size:32px;animation:world3BossGlow 1.3s ease-in-out infinite;border-color:#c81e1e}
+  .mapnode.worldboss{width:106px;height:106px;font-size:32px;animation:world3BossGlow 1.3s ease-in-out infinite;border-color:#c81e1e}
   @keyframes world3BossGlow{0%,100%{box-shadow:0 0 10px 4px rgba(220,20,20,0.55)}50%{box-shadow:0 0 26px 10px rgba(255,40,40,0.95)}}
   .mapnode.elitenode{border-color:#d9861f;box-shadow:0 0 0 5px rgba(217,134,31,0.28),0 0 14px rgba(217,134,31,0.55);animation:eliteNodeGlow 1.8s ease-in-out infinite}
   @keyframes eliteNodeGlow{0%,100%{box-shadow:0 0 0 5px rgba(217,134,31,0.28),0 0 12px rgba(217,134,31,0.5)}50%{box-shadow:0 0 0 8px rgba(217,134,31,0.4),0 0 20px rgba(217,134,31,0.8)}}
@@ -515,7 +517,7 @@
   .mapnode.type-treasure{background:#effbf1;border-color:#4cae68}
   .mapnode.type-rest{background:#fff9df;border-color:#d5b24a}
   .mapnode.type-blacksmith,.mapnode.type-chopshop{background:#fff8e9;border-color:#d99a30}
-  .mapnode.type-castle{background:#f2edff;border-color:#8a4fe0;width:92px;height:92px;font-size:44px;opacity:1;box-shadow:0 0 0 7px rgba(138,79,224,0.28),0 0 24px rgba(138,79,224,0.55);animation:castleGlow 2.4s ease-in-out infinite}
+  .mapnode.type-castle{background:#f2edff;border-color:#8a4fe0;width:120px;height:120px;font-size:52px;opacity:1;box-shadow:0 0 0 7px rgba(138,79,224,0.28),0 0 24px rgba(138,79,224,0.55);animation:castleGlow 2.4s ease-in-out infinite}
   @keyframes castleGlow{0%,100%{box-shadow:0 0 0 7px rgba(138,79,224,0.28),0 0 18px rgba(138,79,224,0.5)}50%{box-shadow:0 0 0 11px rgba(138,79,224,0.4),0 0 30px rgba(138,79,224,0.8)}}
   .mapnode-wrap.castlenode{z-index:20}
   .regionCaption{text-align:center;font-family:var(--disp);font-weight:700;font-size:14px;color:#1fb6a6;letter-spacing:0.02em;margin-top:8px}
@@ -6695,19 +6697,19 @@ function castleMatchScreen() {
       <div class="wo-body">
         <h1>Matching Game</h1>
         <div class="wo-sub" style="color:#f5c451">Attempts Left: ${st.matchGuesses}</div>
-        <div class="matchGrid" style="display:grid; grid-template-columns:repeat(6, 75px); gap:8px; max-width:490px; margin:0 auto">
+        <div class="matchGrid" style="display:grid; grid-template-columns:repeat(6, minmax(0,1fr)); gap:8px; max-width:490px; margin:0 auto">
           ${cards}
         </div>
         <div class="matchBottomGrid" style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:16px; align-items:start">
           <div class="panel" style="margin:0">
             <div class="hdr" style="margin-bottom:6px;justify-content:center">[ Pair Rewards ]</div>
-            <div class="pairRewardsGrid" style="display:grid; grid-template-columns:1fr 1fr; grid-template-rows:repeat(3,auto); gap:5px;font-size:12px">
-              <div>[♦] 20 coins</div>
-              <div>[♣] 1 gem</div>
-              <div>[♥] 20 health</div>
-              <div>[♠] 4 energy</div>
-              <div style="color:var(--red)">[Red Joker] 3 gems</div>
-              <div>[Black Joker] 25 Career Points</div>
+            <div class="pairRewardsGrid" style="display:grid; grid-template-columns:1fr 1fr; grid-template-rows:repeat(3,auto); gap:8px 4px;font-size:11px">
+              ${[['♦','20 coins','r'],['♣','1 gem','b'],['♥','20 health','r'],['♠','4 energy','b'],['RJ','3 gems','rj'],['BJ','25 Career Points','bj']].map(([g,t,k])=>{
+                const face = k==='rj' ? '<img src="Hazards/joker-red.png" alt="" style="width:100%;height:100%;object-fit:contain" onerror="this.outerHTML=\'🃏\'">' : k==='bj' ? '<img src="Hazards/joker-black.png" alt="" style="width:100%;height:100%;object-fit:contain" onerror="this.outerHTML=\'🃏\'">' : g;
+                const bg = k==='rj' ? 'background:#c62828;border:2px solid #ff8a80' : k==='bj' ? 'background:#26262e;border:2px solid #e8e8ee' : 'background:#fff;border:2px solid #0b0f19';
+                const col = k==='r' ? '#c62828' : '#1a1a2e';
+                return `<div style="display:flex;align-items:center;gap:5px;min-width:0"><span style="flex:none;width:26px;height:35px;border-radius:4px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;line-height:1;color:${col};${bg}">${face}</span><span style="min-width:0">${t}</span></div>`;
+              }).join('')}
             </div>
           </div>
           <div class="panel" style="margin:0;text-align:center">
@@ -8301,12 +8303,16 @@ function nodePopupScreen(r, c) {
 }
 function mapScreen() {
   const rows = RUN.map.nodes;
-  const colW = 118, rowY = [65, 165, 265];
+  const colW = 118;
+  // Taller map on a phone held upright so it fills more of the screen
+  const mapH = (window.innerHeight > window.innerWidth && window.innerWidth <= 700) ? Math.round(Math.min(620, Math.max(345, window.innerHeight * 0.64))) : 345;
+  const mapS = mapH / 345;
+  const rowY = [65, 165, 265].map(y => Math.round(y * mapS));
   const CASTLE_GAP = 65;
   const castleR = rows.findIndex(row => row.some(n => n && n.type === 'castle'));
   const colX = r => 25 + r*colW + colW/2 + (castleR < 0 ? 0 : r > castleR ? CASTLE_GAP*2 : r === castleR ? CASTLE_GAP : 0);
   const totalW = rows.length * colW + 50 + (castleR >= 0 ? CASTLE_GAP*2 : 0);
-  const totalH = 345;
+  const totalH = mapH;
   const avail = availableNextNodes();
   const visibleRange = 3 + META.levels.range + (RUN.runUpgrades?.sightRange || 0);
   let svgLines = '';
@@ -8349,8 +8355,8 @@ function mapScreen() {
       const showReal=isBoss||isDone||isAvail||withinSight||isCastle;
       const isWorldBossNode = isBoss;
       const cls=(isCurrent?'current':isDone?'done':isAvail?'avail':withinSight||isCastle?'future':'farfuture')+(isWorldBossNode?' worldboss':'')+(isElite?' elitenode':'');
-      const iconSize=isCastle&&showReal?60:isWorldBossNode&&showReal?46:30;
-      const battleIconSize=isWorldBossNode?78:52;
+      const iconSize=isCastle&&showReal?84:isWorldBossNode&&showReal?62:46;
+      const battleIconSize=isWorldBossNode?104:78;
       const icon=!showReal?`<span class="vart" style="width:30px;height:30px;font-size:30px">${ICON.fog}</span>`:(node.type==='battle'?art(node.opponent,battleIconSize):(NODE_ICON_FILE[node.type]?iconImg(NODE_ICON_FILE[node.type],NODE_ICON[node.type],iconSize):`<span class="vart" style="width:${iconSize}px;height:${iconSize}px;font-size:${iconSize}px">${NODE_ICON[node.type]}</span>`));
       const title=!showReal?'Unscouted':(node.type==='battle'?node.opponent.name:NODE_TITLE[node.type]);
       let tip;
@@ -9539,10 +9545,15 @@ const UPDATE_LOG = [
       'Opponents no longer hex your Items for now. Their old hex Items hit like normal attacks instead.',
       'Bosses have less health than before, and the World 3 and World 4 bosses no longer freeze your Items.',
     ],
+    'Match game': [
+      'The Matching Game board shrinks to fit a phone held upright, so all the cards show on one screen. Pair Rewards now show real cards instead of text suits.',
+    ],
     Visual: [
       'Pictures now fit their boxes on every screen, with the whole subject shown instead of being clipped. Logi Bear, NayNay and others are fixed, and the battle screen fits better on phones.',
+      'Map icons are noticeably bigger and their pictures fill the circle more, so you can tell what each stop is at a glance.',
     ],
     Map: [
+      'On a phone held upright the map is taller and fills more of the screen.',
       'Hex Items show up much less often in the Dealership for now.',
     ],
   } },
@@ -9663,7 +9674,10 @@ function fitArtImg(img) {
   let k;
   if (node) {
     const R = Math.min(node.clientWidth, node.clientHeight) / 2 - 3;
-    k = Math.min(3, Math.max(0.5, (R * 0.96) / (0.5 * Math.hypot(sw, sh))));
+    const kHyp = (R * 0.96) / (0.5 * Math.hypot(sw, sh));
+    const kSide = (R * 2 * 0.98) / Math.max(sw, sh);
+    // fill the circle edge to edge; only the empty corners of the subject's box get clipped
+    k = Math.min(3.2, Math.max(0.5, Math.min(kSide, kHyp * 1.28)));
   } else {
     k = Math.min(2.4, Math.max(1, Math.min(0.97 * W / sw, 0.97 * H / sh)));
   }

@@ -112,9 +112,10 @@ const UPGRADE_DEFS = [
   {
     id: 'fuelpen',
     label: 'Fuel Efficiency',
-    desc: 'Running out of fuel costs less health when it happens.',
+    desc: 'Running out of fuel costs 1 less health per level when it happens.',
     tier: 'low',
-    currentValue: (lvl) => `${Math.max(0, 10 - lvl * 2)} HP lost (was 10)`,
+    currentValue: (lvl) => `${Math.max(0, 10 - lvl)} HP lost (was 10)`,
+    baseCost: 30,
     unlock: { points: 600 },
   },
 ];
@@ -123,7 +124,7 @@ const MAX_LEVEL = 10;
 const UPGRADE_COST_MULT = 1.5;
 function upgradeCost(def, atLevel) {
   const t = UPGRADE_TIERS[def.tier] || UPGRADE_TIERS.medium;
-  return Math.round(t.baseCost * UPGRADE_COST_MULT * Math.pow(t.growth, atLevel));
+  return Math.round((def.baseCost || t.baseCost) * UPGRADE_COST_MULT * Math.pow(t.growth, atLevel));
 }
 // An upgrade unlocks once you have earned unlock.points lifetime Career Points (the total you have ever earned, not
 // what is left to spend), and, where one is listed, also met unlock.check (like reaching World 2).

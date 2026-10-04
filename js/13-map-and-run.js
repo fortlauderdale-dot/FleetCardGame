@@ -439,7 +439,7 @@ function payTravelCost() {
       RUN.chips -= coinCost;
       return;
     }
-    const coinPenalty = Math.max(0, 10 - (META.levels.fuelpen || 0) * 2);
+    const coinPenalty = Math.max(0, 10 - (META.levels.fuelpen || 0));
     RUN.health = Math.max(1, RUN.health - coinPenalty);
     RUN.lastNotice =
       coinPenalty > 0
@@ -454,7 +454,7 @@ function payTravelCost() {
   RUN.innSleeps = 0;
   if (RUN.fuel < 0) {
     RUN.fuel = 0;
-    const fuelPenalty = Math.max(0, 10 - (META.levels.fuelpen || 0) * 2);
+    const fuelPenalty = Math.max(0, 10 - (META.levels.fuelpen || 0));
     RUN.health = Math.max(1, RUN.health - fuelPenalty);
     RUN.lastNotice =
       fuelPenalty > 0

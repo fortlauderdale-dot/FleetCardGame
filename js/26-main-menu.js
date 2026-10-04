@@ -136,13 +136,8 @@ function metaScreen() {
     <div class="wo">
       <div class="wo-stripe"></div>
       <div class="wo-body">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
-          <h1 style="margin:0">Fleet <em>Duel</em></h1>
-          <div style="text-align:right">
-            <div class="note" style="margin:0;font-size:13px;opacity:0.9">🏆 JJ was first to beat World 1!</div>
-            <div class="note" style="margin:0;font-size:13px;opacity:0.9">🏆 Haley was first to beat World 2!</div>
-          </div>
-        </div>
+        <h1 style="margin:0 0 10px">Fleet <em>Duel</em></h1>
+        <div class="homeHero"><img src="Icons/node-fleet-compound.png" alt="The Fleet Compound"></div>
         <div class="homeRunRow">
           <input id="playerNameInput" class="homeNameInput" type="text" maxlength="18" placeholder="Your name" ` +
     `value="${(META.playerName || '').replace(/"/g, '&quot;')}">
@@ -185,6 +180,10 @@ function metaScreen() {
           <div class="homeFeedback">Feedback and bug reports are appreciated</div>
         </div>
       </div>
+    </div>
+    <div class="homeShoutouts">
+      <div>🏆 JJ was first to beat World 1!</div>
+      <div>🏆 Haley was first to beat World 2!</div>
     </div>
     ${updateLogHTML()}
     ${HOME_TIP_POPUP ? homeTipPopupHTML() : ''}

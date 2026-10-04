@@ -137,7 +137,7 @@ function metaScreen() {
       <div class="wo-stripe"></div>
       <div class="wo-body">
         <div class="homeHeader">
-          <div class="homeTitleCol"><h1 class="homeTitle"><span class="homeTitleInner" style="display:flex;flex-direction:column"><span class="homeTitleTop" style="display:block">Fleet</span><em class="homeTitleBottom" style="display:block;margin-left:22px;font-style:normal">Duel</em></span></h1><div class="homeCredit">Made by Drew</div></div>
+          <div class="homeTitleCol"><div class="homeTitleBlock"><h1 class="homeTitle"><span class="homeTitleInner" style="display:flex;flex-direction:column"><span class="homeTitleTop" style="display:block">Fleet</span><em class="homeTitleBottom" style="display:block;margin-left:22px;font-style:normal">Duel</em></span></h1><div class="homeCredit">Made by Drew</div></div></div>
           <img class="homeHero" src="Icons/node-fleet-compound.png" alt="The Fleet Compound">
         </div>
         <div class="homeRunRow">

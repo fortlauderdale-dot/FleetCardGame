@@ -1332,10 +1332,10 @@ function checkCondition(cond, cards) {
   else if (cond.type === 'exactCount') result = { met: cards.length === cond.count, label: `Exactly ${cond.count} card${cond.count === 1 ? '' : 's'}` };
   else if (cond.type === 'pokerTier') {
     const ev = evaluateHand(cards);
-    result = cond.exactTier ? { met: ev.tier === cond.tier, label: ev.label, mult: ev.mult } : { met: ev.tier >= cond.tier, label: ev.label, mult: ev.mult };
+    result = (cond.exactTier || cond.tier >= 1) ? { met: ev.tier === cond.tier, label: ev.label, mult: ev.mult } : { met: ev.tier >= cond.tier, label: ev.label, mult: ev.mult };
   }
   else if (cond.type === 'straightLen') {
-    const ok = cards.length === cond.len && isConsecutive(cards);
+    const ok = cards.length === cond.len && isConsecutive(cards) && !(cards.length >= 3 && new Set(cards.map(c => c.suit)).size === 1);
     result = { met: ok, label: `${cond.len}-Card Straight` };
   }
   else if (cond.type === 'suitCount') {
@@ -9807,6 +9807,7 @@ const UPDATE_LOG = [
       'Pick Your Vehicle now shows a Perk card as well as the ability card.',
     ],
     'Item cards': [
+      'Items that name a poker hand now fire on exactly that hand. A Pair Item no longer works with Three of a Kind, a Straight Item no longer works with a Straight Flush, and so on. A Flush of one suit that is also in a row counts as a Straight Flush.',
       'Freeze, Burn, Curse and Hex now stay on the battle screen with no popup. Press Attack, tap one of the opponent\'s Items, then press the same button, which now reads Freeze, Burn, Curse or Hex, to lock it in. Cancel keeps your cards, so you can look over their Items first.',
       'Your starting Item cards no longer pay out less than the sum of their cards, unless they are poison.',
       'New Items: Full Pallet, Roof Rack, Hose Slam and a set of new vehicle Items. Some can fire several times a turn, and some cost HP or heal you when fired.',
@@ -9901,6 +9902,7 @@ function metaScreen() {
           <textarea id="saveCodeBox" rows="3" placeholder="Save code" style="width:100%;box-sizing:border-box;padding:8px;border:2px solid #1fb6a6;border-radius:6px;background:#0b0f19;color:#fff;font-size:12px"></textarea>
           <div style="display:flex;gap:8px;margin-top:6px">
             <button class="wo-btn teal" id="saveCodeMakeBtn" style="flex:1;padding:8px 6px;font-size:12px">Make code</button>
+            <button class="wo-btn gray" id="saveCodePasteBtn" style="flex:1;padding:8px 6px;font-size:12px">Paste</button>
             <button class="wo-btn amber" id="saveCodeLoadBtn" style="flex:1;padding:8px 6px;font-size:12px">Load code</button>
           </div>
           <div class="note" id="saveCodeMsg" style="margin:6px 0 0"></div>
@@ -10652,12 +10654,21 @@ function render(html) {
         msg(copied ? 'Code made and copied. Paste it on the other one.' : 'Code made. Press and hold the box, choose Select All, then Copy.');
       } catch (e) { msg('Could not make a code.'); }
     };
-    document.getElementById('saveCodeLoadBtn').onclick = () => {
-      const raw = (saveCodeBox.value || '').trim();
-      if (!raw.startsWith('FD1:')) { msg('Paste a save code first. It starts with FD1:'); return; }
+    document.getElementById('saveCodePasteBtn').onclick = async () => {
+      try { const t = await navigator.clipboard.readText(); saveCodeBox.value = t; msg(t ? `Pasted ${t.length} characters.` + (t.includes('FD1:') ? ' Now tap Load code.' : ' That does not look like a save code.') : 'Nothing on the clipboard.'); }
+      catch (e) { msg('Your phone blocked the paste button. Press and hold in the box and choose Paste instead.'); }
+    };
+    saveCodeBox.addEventListener('input', () => { if (saveCodeBox.value) msg(`${saveCodeBox.value.length} characters in the box.`); });
+    const loadBtn = document.getElementById('saveCodeLoadBtn');
+    loadBtn.onclick = () => {
+      let raw = (saveCodeBox.value || '').replace(/\s+/g, '').replace(/[\u200B-\u200D\uFEFF]/g, '');
+      const mm = /FD1[:\uFF1A;]/i.exec(raw); const at = mm ? mm.index : -1;
+      if (at < 0) { msg(raw ? `The box has ${raw.length} characters, but I can't find FD1: in it. It starts with: ${raw.slice(0, 12)}` : 'The box is empty. Paste the code into it first, then tap Load code.'); return; }
+      raw = raw.slice(at + mm[0].length).replace(/-/g, '+').replace(/_/g, '/').replace(/[^A-Za-z0-9+/=]/g, '');
+      while (raw.length % 4) raw += '=';
       let pack;
-      try { pack = JSON.parse(decodeURIComponent(escape(atob(raw.slice(4))))); if (!pack || pack.v !== 1) throw 0; } catch (e) { msg('That code does not look right. Make a new one and try again.'); return; }
-      if (!loadArmed) { loadArmed = true; msg('This replaces the save on this device. Tap Load code again to confirm.'); return; }
+      try { pack = JSON.parse(decodeURIComponent(escape(atob(raw)))); if (!pack || pack.v !== 1) throw 0; } catch (e) { msg('That code looks cut off or changed. Make a new one, copy all of it, and try again.'); return; }
+      if (!loadArmed) { loadArmed = true; loadBtn.textContent = 'Tap to confirm'; msg('Code is good. This replaces the save on this device. Tap the button again to confirm.'); return; }
       try {
         if (pack.meta) localStorage.setItem(META_KEY, pack.meta);
         if (pack.run) localStorage.setItem(RUN_KEY, pack.run); else localStorage.removeItem(RUN_KEY);
@@ -10665,6 +10676,7 @@ function render(html) {
         msg('Loaded. Reloading...'); setTimeout(() => location.reload(), 400);
       } catch (e) { msg('Could not load the code.'); }
     };
+    saveCodeBox.addEventListener('input', () => { loadArmed = false; loadBtn.textContent = 'Load code'; });
   }
   const startRunBtn = document.getElementById('startRunBtn'); if (startRunBtn) startRunBtn.onclick = () => { clearRunSave(); render(starterSelectScreen()); };
   const continueRunBtn = document.getElementById('continueRunBtn'); if (continueRunBtn) continueRunBtn.onclick = () => { RUN = loadRunSave(); 

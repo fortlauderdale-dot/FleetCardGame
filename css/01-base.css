@@ -573,7 +573,7 @@ body {
 }
 
 .homeHeader { display: flex; align-items: center; justify-content: space-between; gap: 2px; margin: 0 0 12px; }
-.wo .homeTitle { margin: 0 0 0 6px; flex: 1 1 0; display: flex; justify-content: center; line-height: 0.95; font-size: 46px; position: relative; z-index: 1; }
+.wo .homeTitle { margin: 0; display: flex; justify-content: center; line-height: 0.95; font-size: 46px; position: relative; z-index: 1; }
 .homeTitleTop { display: block; }
 .homeTitleBottom { display: block; margin-left: 22px; font-style: normal; }
 .homeHero { display: block; flex: 0 0 66%; min-width: 0; width: 66%; height: auto; border: 0; margin: -16px -14px -14px 0; }
@@ -595,3 +595,7 @@ body {
 .homeFeedback { position: relative; top: -2px; }
 .homeNameInput { font-weight: 700; letter-spacing: 0.01em; }
 .homeBtn { height: 49px; padding-top: 0; padding-bottom: 0; }
+.homeTitleCol { flex: 1 1 0; min-width: 0; margin-left: 6px; display: flex; flex-direction: column; align-items: center; }
+.homeCredit { margin-top: 6px; font-size: 11px; color: var(--dim); opacity: 0.75; letter-spacing: 0.02em; }
+.homeFooter { justify-content: center; margin-bottom: -5px; }
+.homeFeedback { flex: 0 1 auto; text-align: center; top: 0; }

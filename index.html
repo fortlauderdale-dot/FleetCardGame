@@ -130,19 +130,20 @@
   .matchGrid .card.mini.matchTile.joker-outline-black:not(.back){outline:3px solid #e8e8ee !important;background:#26262e !important}
   .glitchWarningBanner{margin-top:10px;padding:6px 8px;border-radius:5px;background:rgba(229,72,77,0.12);border:1px solid var(--red);color:var(--red);font-weight:700;font-size:11px;text-align:center}
   .castleBtn-exit{order:-1}
-  .duelHead{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:flex-start}
-  .vsMark{align-self:center}
-  .duelSide{display:flex;align-items:center;gap:8px}
-  .duelSide .sideInfo{flex:1;min-width:0}
+  .duelHead{display:grid;grid-template-columns:auto minmax(0,1fr) auto minmax(0,1fr) auto;column-gap:8px;align-items:center}
+  .vsMark{align-self:center;margin:0 2px}
+  .duelArt{display:flex;align-items:center;justify-content:center}
+  .duelSide{min-width:0}
+  .duelSide .sideInfo{min-width:0}
   .duelSide h3{margin:0 0 6px;font-size:18px;color:var(--blue);min-height:22px;line-height:1.25;display:flex;align-items:flex-start;overflow:visible}
-  .duelSide.opp{flex-direction:row-reverse;text-align:right}
+  .duelSide.opp{text-align:right}
   .duelSide .bar-wrap{height:18px;width:100%}
   .duelSide .sideRow{min-height:34px}
   .vsMark{font-family:var(--mono);font-weight:800;color:var(--dim);font-size:13px}
   .bigicon{font-size:30px;line-height:1}
   .duelBoard{display:grid;grid-template-columns:1fr 90px 1fr;gap:8px;align-items:start}
-  @media (max-width:700px){ .duelBoard{grid-template-columns:1fr} .duelHead{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px} .vsMark{display:none} }
-  @media (max-width:480px){ .duelSide{gap:5px} .duelSide .artZoomTrigger .vart{width:58px !important;height:58px !important} .duelSide h3{font-size:15px} }
+  @media (max-width:700px){ .duelBoard{grid-template-columns:1fr} .duelHead{grid-template-columns:auto minmax(0,1fr) minmax(0,1fr) auto;column-gap:8px} .vsMark{display:none} }
+  @media (max-width:480px){ .duelHead{column-gap:5px} .duelArt .vart{width:58px !important;height:58px !important} .duelSide h3{font-size:15px} }
   .deckStack{text-align:center;padding-top:20px;display:flex;flex-direction:column;align-items:center;gap:10px;width:100%;box-sizing:border-box}.deckStack .card.back{cursor:default;pointer-events:none}
   .deckStack .card.back::after{content:none}
   .wo-btn.red{background:var(--red);border-color:#a83236}
@@ -555,6 +556,57 @@
     .playerActionGrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:4px}
     .duelBoard{grid-template-columns:1fr}
     .deckStack{order:2;padding-top:6px}
+  }
+  /* ===== Battle screen on a phone held upright: pictures on top, then a slim info strip that stays pinned while the page scrolls ===== */
+  @media (max-width:700px) and (orientation:portrait){
+    body{overflow-x:clip}
+    body:has(#battle-viewport) #app{padding-top:calc(var(--curH,92px) + 2px)}
+    #battle-viewport .currencyHeader{padding:6px 10px;gap:5px}
+    #battle-viewport .currencyHeader .curLbl{display:none}
+    #battle-viewport .currencyHeader .cur .vart{margin-right:5px}
+    #battle-viewport .currencyHeader .cur{padding:3px 6px}
+    #battle-viewport .currencyHeader .cur.chip,#battle-viewport .currencyHeader .cur.gem,#battle-viewport .currencyHeader .cur.fuel,#battle-viewport .currencyHeader .cur.energy{padding-left:14px}
+    #battle-viewport{display:flex;flex-wrap:wrap;align-content:flex-start}
+    #battle-viewport>*{flex:0 0 100%;min-width:0;order:10;box-sizing:border-box}
+    #battle-viewport>.duelHead{display:contents}
+    #battle-viewport>.duelHead>.duelArt{flex:0 0 50%;max-width:50%;order:1;padding:6px 0 8px;box-sizing:border-box}
+    #battle-viewport>.duelHead>.duelArt.opp{order:2}
+    .duelArt .vart{width:88px !important;height:88px !important}
+    #battle-viewport>.duelHead>.duelSide{flex:0 0 50%;max-width:50%;order:3;position:sticky;top:var(--curH,104px);z-index:40;box-sizing:border-box;background:#141a2e;padding:5px 8px 6px;border-top:1px solid rgba(31,182,166,.3);border-bottom:1px solid rgba(31,182,166,.3);text-align:left}
+    #battle-viewport>.duelHead>.duelSide.opp{order:4;border-left:1px solid rgba(31,182,166,.3)}
+    .duelSide .sideInfo{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:18px auto;align-items:center;column-gap:6px}
+    .duelSide h3{grid-column:1;grid-row:1;margin:0;min-height:0;height:18px;line-height:18px;font-size:13px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .duelSide.opp h3{grid-column:1/-1}
+    .duelSide .bar-wrap{grid-column:1/-1;grid-row:2;height:15px;margin-top:3px;border-radius:5px}
+    .duelSide .bar-text{font-size:11px}
+    .duelSide .sideRow{display:contents !important}
+    .duelSide .sideRow>*{grid-column:1/-1}
+    .duelSide .sideRow>div{display:flex;flex-wrap:wrap;gap:0 8px;justify-content:flex-start !important}
+    .duelSide .sideRow span,.duelSide .sideRow .status{font-size:10px !important;margin-top:3px}
+    .duelSide #fuelHealBtn{grid-column:2;grid-row:1;height:18px;box-sizing:border-box;margin:0;padding:0 5px !important;font-size:9.5px !important;line-height:16px}
+    .duelBoard{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:5px;margin-top:4px}
+    .duelBoard .panel{padding:8px;margin-bottom:0}
+    .duelBoard>.panel:first-child{padding-top:10px;padding-bottom:6px}
+    .duelBoard .handWorkspace>.hand{padding-top:0;padding-bottom:0}
+    .duelBoard .handCapacity{top:-10px;font-size:9px}
+    .duelBoard>.panel:first-child{grid-column:1/-1;grid-row:1}
+    .duelBoard>.oppPoolPanel{display:contents}
+    .oppPoolPanel>.hand{grid-column:1/-1;grid-row:3;justify-self:end;max-width:100%;justify-content:flex-end;background:rgba(21,27,45,.85);border:1px solid rgba(31,182,166,.3);border-radius:10px;padding:8px;box-sizing:border-box;min-height:54px}
+    .duelBoard>.deckStack{display:contents}
+    .deckStack>div{grid-column:2;grid-row:2;align-self:center;justify-self:center}
+    .deckStack #endTurnBtn{grid-column:1;grid-row:2;align-self:center;justify-self:start}
+    .deckStack .card.back{width:40px;height:54px}
+    .deckStack #endTurnBtn{width:auto !important;max-width:none !important;padding:12px 20px !important;margin-top:0 !important}
+    .oppPoolPanel>.scoutRow{grid-column:3;grid-row:2;align-self:center;justify-self:end}
+    #scoutBtn{padding:5px 9px !important;font-size:10px !important;line-height:1.2;white-space:normal;text-align:center}
+    #scoutBtn .revCost{display:block}
+    #battle-viewport .itemGrid{gap:8px}
+    #battle-viewport .itemGrid .itemCard{flex:0 0 calc(33.333% - 5.4px);width:calc(33.333% - 5.4px);min-width:0;max-width:none}
+    .duelMatchup .panel{padding:8px}
+    #battle-viewport .itemGrid .itemCard .hdr{font-size:11px;padding-right:8px;box-sizing:border-box}
+    .playerActionGrid{display:flex;gap:3px;margin-top:5px;justify-content:space-between}
+    .playerActionGrid .wo-btn{padding:5px 5px !important;font-size:10px !important;flex:0 0 auto !important;min-width:0}
+    .playerActionGrid .abilityBtn{flex:1 1 0 !important;padding:5px 2px !important;white-space:normal !important;line-height:1.1;font-size:9.5px !important}
   }
    #app h1:has(+ .currencyHeader){text-align:center !important;width:100% !important;margin-bottom:4px !important;} .combat-training-box{position:fixed !important;z-index:2000000 !important;width:280px !important;background:#12163a !important;border:2px dashed var(--amber) !important;box-shadow:0 0 20px rgba(31,182,166,0.45),4px 4px 0 #0b0f19 !important;padding:16px !important;border-radius:10px !important;text-align:left !important;white-space:normal !important;font-family:var(--disp) !important;}.combat-training-box .wo-eyebrow{color:var(--energy) !important;font-size:10px !important;font-weight:600;letter-spacing:0.05em !important;margin-bottom:4px !important;}.combat-training-box h3{font-size:16px !important;margin:0 0 6px 0 !important;color:#ffffff !important;}.combat-training-box p{font-size:12.5px !important;line-height:1.45 !important;color:var(--dim) !important;margin:0 0 12px 0 !important;}.combat-spotlight-focus{outline:9999px solid rgba(11,15,25,0.65) !important;z-index:1999999 !important;position:relative !important;box-shadow:0 0 15px 5px var(--energy) !important;pointer-events:auto !important;}
   /* ===== Fleet Plinko (Fleet Compound minigame) ===== */
@@ -6869,6 +6921,7 @@ function startBattle(opponentDef, row, col, castleStage=0) {
     hidden[(Math.random() * hidden.length) | 0].revealed = true;
   }
   render(battleScreen());
+  scrollBattleToBoard();
   if (!BATTLE.tutorialBattle) showBattleHeadsUp(BATTLE.opponent);
 }
 function stageTutorialBattle() {
@@ -8141,11 +8194,11 @@ function noticeHTML() {
 function currencyBar(extraHTML = '') {
   return `<div class="currencies currencyHeader">
     <div class="cur health" data-title="Your health. Runs out and the run ends.">${ICON.heart} ${RUN.health}/${RUN.maxHealth}</div>
-    <div class="cur chip" data-title="Coins are used to buy vehicles and pay for certain services.">${ICON.coin} ${RUN.chips} Coins</div>
-    <div class="cur gem" data-title="Gems let you draw extra cards during a battle.">${ICON.gem} ${RUN.gems}/${RUN.maxGems} Gems</div>
-    ${usesCoinTravel() ? `<div class="cur chip" data-title="This vehicle has no fuel tank. Every stop you travel to costs ${coinTravelCost()} coins. If you cannot pay, it costs you health, the same as running out of fuel.">${ICON.coin} ${coinTravelCost()} per stop</div>` : `<div class="cur fuel" data-title="Fuel is spent when you travel to another stop.">${ICON.fuel} ${RUN.fuel}/${RUN.maxFuel} Fuel</div>`}
-    <div class="cur energy" data-title="Energy powers vehicle abilities.">${ICON.energy} ${RUN.energy}/${RUN.maxEnergy} Energy</div>
-    <div class="cur pts" data-title="Career Points carry over between playthroughs and only buy Permanent Upgrades.">${ICON.star} ${META.points} Career Points</div>
+    <div class="cur chip" data-title="Coins are used to buy vehicles and pay for certain services.">${ICON.coin} ${RUN.chips} <span class="curLbl">Coins</span></div>
+    <div class="cur gem" data-title="Gems let you draw extra cards during a battle.">${ICON.gem} ${RUN.gems}/${RUN.maxGems} <span class="curLbl">Gems</span></div>
+    ${usesCoinTravel() ? `<div class="cur chip" data-title="This vehicle has no fuel tank. Every stop you travel to costs ${coinTravelCost()} coins. If you cannot pay, it costs you health, the same as running out of fuel.">${ICON.coin} ${coinTravelCost()} per stop</div>` : `<div class="cur fuel" data-title="Fuel is spent when you travel to another stop.">${ICON.fuel} ${RUN.fuel}/${RUN.maxFuel} <span class="curLbl">Fuel</span></div>`}
+    <div class="cur energy" data-title="Energy powers vehicle abilities.">${ICON.energy} ${RUN.energy}/${RUN.maxEnergy} <span class="curLbl">Energy</span></div>
+    <div class="cur pts" data-title="Career Points carry over between playthroughs and only buy Permanent Upgrades.">${ICON.star} ${META.points} <span class="curLbl">Career Points</span></div>
     <div style="margin-left:auto;display:flex;gap:6px">${META.devModeActive ? `<button class="wo-btn gray" id="devPanelBtn" style="padding:3px 7px;font-size:10px">[🛠️ DEV]</button>` : ''}<button class="wo-btn purple" id="openRunSummaryBtn" style="padding:3px 7px;font-size:10px">Run Dashboard</button></div>
     ${extraHTML}
   </div>`;
@@ -8439,7 +8492,7 @@ function battleScreen() {
 
   // The opponent's face-up cards can be sorted by value or suit, same as your hand. Face-down cards always sit at the end so sorting never gives away where they are.
   const oppSuitOrder = {'♠':0,'♥':1,'♦':2,'♣':3};
-  const oppSortMode = RUN.oppSortMode || 'value';
+  const oppSortMode = RUN.handSortMode || 'value';
   const oppUp = BATTLE.oppPool.filter(c => c.revealed).sort((a, b) => oppSortMode === 'suit' ? ((oppSuitOrder[a.suit] - oppSuitOrder[b.suit]) || (a.rank - b.rank)) : ((a.rank - b.rank) || (oppSuitOrder[a.suit] - oppSuitOrder[b.suit])));
   const oppDown = BATTLE.oppPool.filter(c => !c.revealed);
   const poolHTML = [...oppUp.map(c => `<div class="card ${suitColorClass(c.color, c.suit)}"><div>${rankLabel(c.rank)}</div><div>${c.suit}</div></div>`), ...oppDown.map(() => `<div class="card back"></div>`)].join('') || '<span class="note" style="margin:0">empty</span>';
@@ -8596,7 +8649,8 @@ function battleScreen() {
         <button class="wo-btn gray" id="forfeitRunBtn" style="padding:4px 9px;font-size:11px;white-space:nowrap;border-width:1px;box-shadow:none">Forfeit Run</button>
       </div>`)}</div>
     <div class="panel duelHead">
-      <div class="duelSide you"><div class="artZoomTrigger" data-artzoom="you">${art(HEROES[RUN.hero?.heroId] || PLAYER_ART, 72)}</div>
+      <div class="duelArt you"><div class="artZoomTrigger" data-artzoom="you">${art(HEROES[RUN.hero?.heroId] || PLAYER_ART, 72)}</div></div>
+      <div class="duelSide you">
         <div class="sideInfo">
           <h3 style="justify-content:flex-end"><span style="color:var(--blue)">${fleetLabel()}</span></h3>
           <div class="bar-wrap"><div class="bar-fill bar-health" style="width:${healthPct}%"></div><div class="bar-text">${RUN.health} / ${RUN.maxHealth}</div></div>
@@ -8616,7 +8670,7 @@ function battleScreen() {
         </div>
       </div>
       <div class="vsMark">vs</div>
-      <div class="duelSide opp"><div class="artZoomTrigger" data-artzoom="opp">${art(opp, 72)}</div>
+      <div class="duelSide opp">
         <div class="sideInfo">
           <h3 style="justify-content:flex-start;gap:6px;flex-wrap:nowrap"><span style="color:var(--red)">${opp.name}</span>${opp.boss ? ` <span class="hoverTip" style="color:var(--red);font-size:13px" data-title="This is a boss fight - taking too long on a turn costs extra health, so don't sit on it.">&#9201;</span>` : ''}
           </h3>
@@ -8637,6 +8691,7 @@ function battleScreen() {
           </div>
         </div>
       </div>
+      <div class="duelArt opp"><div class="artZoomTrigger" data-artzoom="opp">${art(opp, 72)}</div></div>
     </div>
     <div class="duelBoard">
       <div class="panel">
@@ -8653,7 +8708,7 @@ function battleScreen() {
         </div>` : ''}
         <div class="playerActionGrid">
           <button class="wo-btn gray" id="sortToggleBtn" style="padding:6px 3px;font-size:10px;flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Sort: ${(RUN.handSortMode || 'value') === 'value' ? 'Value' : 'Suit'}</button>
-          ${(() => { const sp = VEHICLE_SPECIALS[RUN.hero.heroId]; if (!sp) return ''; if (sp.type === 'revive') return `<button class="wo-btn amber hoverTip" id="vehicleSpecialBtn" style="padding:6px 3px;font-size:10px;flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" data-title="${sp.desc}" disabled>${sp.name}: ${RUN.reviveUsed ? 'Used' : 'Ready'}</button>`; const minNeed = sp.energyCost ?? sp.energyPerUnit; return `<button class="wo-btn amber hoverTip" id="vehicleSpecialBtn" style="padding:6px 3px;font-size:10px;flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" data-title="${sp.desc}" ${RUN.energy < minNeed ? 'disabled' : ''}>${sp.name} = ${minNeed} ${ICON.energy}</button>`; })()}
+          ${(() => { const sp = VEHICLE_SPECIALS[RUN.hero.heroId]; if (!sp) return ''; if (sp.type === 'revive') return `<button class="wo-btn amber hoverTip abilityBtn" id="vehicleSpecialBtn" style="padding:6px 3px;font-size:10px;flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" data-title="${sp.desc}" disabled>${sp.name}: ${RUN.reviveUsed ? 'Used' : 'Ready'}</button>`; const minNeed = sp.energyCost ?? sp.energyPerUnit; return `<button class="wo-btn amber hoverTip abilityBtn" id="vehicleSpecialBtn" style="padding:6px 3px;font-size:10px;flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" data-title="${sp.desc}" ${RUN.energy < minNeed ? 'disabled' : ''}>${sp.name} = ${minNeed} ${ICON.energy}</button>`; })()}
           <button class="wo-btn purple" id="gemDrawBtn" style="padding:6px 3px;font-size:10px;flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" ${(RUN.gems < 1 || BATTLE.hand.length >= RUN.handSize) ? 'disabled' : ''}>Draw = ${GEM_DRAW_COST} ${ICON.gem}</button>
           <button class="wo-btn gray" id="discardSelectedBtn" style="padding:6px 3px;font-size:10px;flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" data-title="Fold selected cards face-down instead of playing them." ${!selectedIdx.length ? 'disabled' : ''}>Discard</button>
     </div>
@@ -8667,11 +8722,10 @@ function battleScreen() {
         </div>
         <button class="wo-btn red" id="endTurnBtn" style="padding:14px 4px;font-size:13px;font-weight:800;width:100%;max-width:82px;box-sizing:border-box;margin-top:6px" ${BATTLE.pendingTarget ? 'disabled' : ''}>End Turn</button>
       </div>
-      <div class="panel">
+      <div class="panel oppPoolPanel">
         <div class="hand">${poolHTML}</div>
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-          <button class="wo-btn amber" id="scoutBtn" style="padding:8px 12px;font-size:12px" ${BATTLE.scoutedThisTurn || RUN.chips < 10 ? 'disabled' : ''}>Reveal a card = 10 ${ICON.coin}</button>
-          <button class="wo-btn gray" id="oppSortBtn" style="padding:8px 12px;font-size:12px">Sort: ${oppSortMode === 'value' ? 'Value' : 'Suit'}</button>
+        <div class="scoutRow" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <button class="wo-btn amber" id="scoutBtn" style="padding:8px 12px;font-size:12px" ${BATTLE.scoutedThisTurn || RUN.chips < 10 ? 'disabled' : ''}>Reveal a card <span class="revCost">= 10 ${ICON.coin}</span></button>
         </div>
       </div>
     </div>
@@ -9550,6 +9604,7 @@ const UPDATE_LOG = [
     ],
     Visual: [
       'Pictures now fit their boxes on every screen, with the whole subject shown instead of being clipped. Logi Bear, NayNay and others are fixed, and the battle screen fits better on phones.',
+      'On a phone held upright, the battle screen opens scrolled to your cards. Names stay on one line so the health bars line up, and a slim bar with both sides\' health and effects stays pinned at the top while you scroll. The pictures sit above it. Sort, Draw, Discard and your ability share one row. End Turn, the deck and a small Reveal a card button sit between the two hands, and the opponent\'s cards start on the right. Item cards now sit three across, and the top bar shows just icons and numbers during battle. The opponent\'s cards now follow your Sort, so its own Sort button is gone.',
       'Map icons are noticeably bigger and their pictures fill the circle more, so you can tell what each stop is at a glance.',
     ],
     Map: [
@@ -9703,6 +9758,36 @@ function syncStopArtHeights(root) {
     requestAnimationFrame(() => { set(); fitAllArt(row); }); // catch layout that settles a frame late (e.g. web-font swap)
   });
 }
+function isPhonePortrait() { return !!(window.matchMedia && window.matchMedia('(max-width:700px) and (orientation:portrait)').matches); }
+let BATTLE_HDR_OBSERVER = null;
+function fitDuelNames() {
+  const phone = isPhonePortrait();
+  document.querySelectorAll('#battle-viewport .duelSide h3').forEach(h => {
+    h.style.fontSize = '';
+    if (!phone) return;
+    let fs = parseFloat(getComputedStyle(h).fontSize) || 13;
+    while (h.scrollWidth > h.clientWidth && fs > 9) { fs -= 0.5; h.style.fontSize = fs + 'px'; }
+  });
+}
+function battleLayoutPass() {
+  if (!document.getElementById('battle-viewport')) return;
+  const hdr = document.querySelector('.currencyHeader');
+  const setH = () => { if (hdr) document.documentElement.style.setProperty('--curH', Math.ceil(hdr.getBoundingClientRect().height) + 'px'); };
+  setH();
+  if (hdr && window.ResizeObserver) { if (BATTLE_HDR_OBSERVER) BATTLE_HDR_OBSERVER.disconnect(); BATTLE_HDR_OBSERVER = new ResizeObserver(setH); BATTLE_HDR_OBSERVER.observe(hdr); }
+  fitDuelNames();
+}
+function scrollBattleToBoard() {
+  if (!isPhonePortrait()) return;
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    const strip = document.querySelector('#battle-viewport .duelSide.you');
+    if (!strip) return;
+    const hdr = document.querySelector('.currencyHeader');
+    const hh = hdr ? hdr.getBoundingClientRect().height : 0;
+    window.scrollTo(0, Math.max(0, window.scrollY + strip.getBoundingClientRect().top - hh));
+  }));
+}
+window.addEventListener('resize', () => { if (document.getElementById('battle-viewport')) battleLayoutPass(); });
 function render(html) {
   const app = document.getElementById('app');
   // Every click that calls render() (a card, a match tile, an item slot...) replaces the whole
@@ -9723,6 +9808,7 @@ function render(html) {
   syncStopArtHeights(app);
   fitAllArt(app);
   requestAnimationFrame(() => fitAllArt(app));
+  battleLayoutPass();
   if (window.__combatTrainingStep && typeof window.renderCombatTrainingStep === 'function') window.renderCombatTrainingStep(window.__combatTrainingStep);
   placeMatchPopup();
   if (!IN_BATTLE) { const hu = document.getElementById('headsUpModal'); if (hu) hu.remove(); }
@@ -9760,7 +9846,6 @@ function render(html) {
   app.querySelectorAll('[data-detonateitem]').forEach(el => el.onclick = (e) => { e.stopPropagation(); detonateOpponentItemBurn(el.dataset.detonateitem); });
   app.querySelectorAll('[data-detonate]').forEach(el => el.onclick = (e) => { e.stopPropagation(); detonateBurn(); });
   const sortToggleBtn = document.getElementById('sortToggleBtn'); if (sortToggleBtn) sortToggleBtn.onclick = toggleHandSort;
-  const oppSortBtn = document.getElementById('oppSortBtn'); if (oppSortBtn) oppSortBtn.onclick = () => { RUN.oppSortMode = (RUN.oppSortMode || 'value') === 'value' ? 'suit' : 'value'; saveRun(); render(battleScreen()); };
   const scoutBtn = document.getElementById('scoutBtn'); if (scoutBtn) scoutBtn.onclick = scoutOpponent;
   const gemDrawBtn = document.getElementById('gemDrawBtn'); if (gemDrawBtn) gemDrawBtn.onclick = drawWithGem;
   const performFuelHeal = () => {

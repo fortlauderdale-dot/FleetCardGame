@@ -217,8 +217,9 @@ function computeItemAmount(item, cards, level, condResult, isOpponent, lightning
   };
 }
 function computeItemAmountBase(item, cards, level, condResult, isOpponent) {
+  // An Item with noScaling always hits for exactly its listed number, whatever the difficulty or world.
   const worldMult = isOpponent
-    ? BATTLE && BATTLE.opponent && BATTLE.opponent.fixedNumbers
+    ? item.noScaling || (BATTLE && BATTLE.opponent && BATTLE.opponent.fixedNumbers)
       ? 1
       : (RUN.worldMultiplier || 1.0) * ((BATTLE && BATTLE.opponent && BATTLE.opponent.diffDmgScale) || 1)
     : 1;

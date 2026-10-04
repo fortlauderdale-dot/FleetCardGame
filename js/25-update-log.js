@@ -373,6 +373,7 @@ const UPDATE_LOG = [
         'fire several times a turn, and some cost HP or heal you when fired.'),
     ],
     Opponents: [
+      'Anchor Drag now always hits for its listed damage instead of being weakened by difficulty scaling.',
       ('Opponent Items that name a hand now fire on exactly that hand. Feral Beach Cat\'s Claw ' +
         'Skirmish needs Two Pair, so it no longer fires on a straight or a straight flush.'),
       'Opponents with draw on hit no longer show up before the Fleet Compound in World 1.',

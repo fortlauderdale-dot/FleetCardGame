@@ -972,7 +972,7 @@ const ITEMS = {
     condition: { type: 'colorCount', color: 'blk', count: 3 }, baseMult: 1.2,
     note: `Needs 3+ ${kw('Black')} cards. The rusted links finally give way all at once.` },
   w1_anchor_drag: { id: 'w1_anchor_drag', name: 'Anchor Drag', maxCards: 1, usesPerTurn: 1,
-    condition: { type: 'any', exactCount: 1 }, flatAmount: 8,
+    condition: { type: 'any', exactCount: 1 }, flatAmount: 8, noScaling: true,
     note: 'Needs exactly 1 card. Dead weight scrapes along the road.' },
   w1_shell_bump: { id: 'w1_shell_bump', name: 'Shell Bump', maxCards: 4, usesPerTurn: 1,
     condition: { type: 'allSuits' }, flatAmount: 26,

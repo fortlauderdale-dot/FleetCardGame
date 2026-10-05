@@ -51,6 +51,12 @@ const MUSIC_TRACKS = {
     artist: 'TideBlue',
     credit: 'Harbor Static by TideBlue (Pixabay)',
   },
+  8: {
+    src: 'music/world-8-city-vibe.mp3',
+    title: 'City Vibe',
+    artist: 'The_Mountain',
+    credit: 'City Vibe by The_Mountain (Pixabay)',
+  },
 };
 const MUSIC_FADE_SECONDS = 1.6;
 const MUSIC_PREF_KEY = 'fleetDuelMusic';

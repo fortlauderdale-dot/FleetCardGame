@@ -404,7 +404,7 @@ const UPDATE_LOG = [
       'The Dealership now shows its Item cards three across on phones.',
     ],
     Audio: [
-      ('Added background music for the Home Screen and Worlds 1, 2 and 4 to 7. Worlds without a track stay quiet. ' +
+      ('Added background music for the Home Screen and Worlds 1, 2 and 4 to 8. Worlds without a track stay quiet. ' +
         'The round music button in the corner turns music on or off, sets the volume and has a Test sound effect button.'),
     ],
     Misc: [

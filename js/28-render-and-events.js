@@ -328,7 +328,7 @@ function render(html) {
   const continueBtn = document.getElementById('continueBtn');
   if (continueBtn)
     continueBtn.onclick = () => {
-      const won = continueBtn.parentElement.querySelector('.wo-eyebrow').textContent.includes('Won');
+      const won = continueBtn.dataset.won === '1';
       if (won) {
         commitNode(BATTLE.row, BATTLE.col);
         if (RUN.pendingWorldWin) {

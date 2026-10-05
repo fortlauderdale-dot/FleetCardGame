@@ -977,7 +977,7 @@ function nodeResultScreen(won, rewards) {
         ${rewardsHTML}
         ${
           won
-            ? `<button class="wo-btn" id="continueBtn" style="width:100%;margin-top:12px">Continue</button>`
+            ? `<button class="wo-btn" id="continueBtn" data-won="1" style="width:100%;margin-top:12px">Continue</button>`
             : `<button class="wo-btn" id="continueBtn" style="width:100%">See Run Summary</button>`
         }
       </div>

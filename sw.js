@@ -1,7 +1,7 @@
 // Fleet Duel offline support. Saves the game page and every picture on the first visit,
 // so the game keeps working with no internet (a flight, for example).
 // Bump CACHE_VERSION whenever pictures or game files change so phones download the new ones.
-const CACHE_VERSION = 'fleet-duel-v5';
+const CACHE_VERSION = 'fleet-duel-v6';
 const GAME_FILES = [
   'manifest.webmanifest',
   'apple-touch-icon-v2.png',
@@ -310,7 +310,7 @@ self.addEventListener('fetch', (event) => {
   const isCode = /\.(js|css)(\?|$)/.test(event.request.url);
   if (isCode) {
     event.respondWith(
-      fetch(event.request)
+      fetch(event.request, { cache: 'no-cache' })
         .then((res) => {
           const copy = res.clone();
           caches.open(CACHE_VERSION).then((c) => c.put(event.request, copy));
@@ -323,7 +323,7 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     isPage
       ? // Pages: try the internet first so updates show up, use the saved copy when offline.
-        fetch(event.request)
+        fetch(event.request, { cache: 'no-cache' })
           .then((res) => {
             const copy = res.clone();
             caches.open(CACHE_VERSION).then((c) => c.put('./index.html', copy));

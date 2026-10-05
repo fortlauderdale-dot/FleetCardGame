@@ -403,6 +403,10 @@ const UPDATE_LOG = [
       'A Perfect Win now shows only Perfect Win! at the top, without the Battle Won line above it.',
       'The Dealership now shows its Item cards three across on phones.',
     ],
+    Audio: [
+      ('Added background music. World 2 has its first track, and worlds without a track stay quiet. ' +
+        'The round music button in the corner turns music on or off, sets the volume and has a Test sound effect button.'),
+    ],
     Misc: [
       'Fuel Efficiency now saves 1 HP per level instead of 2, and the first level costs 45 Career Points.',
       'Sound effects now play on iPhones even when the silent switch is on.',

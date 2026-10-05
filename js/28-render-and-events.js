@@ -97,6 +97,7 @@ function render(html) {
   window.scrollTo(scrollX, scrollY);
   requestAnimationFrame(() => window.scrollTo(scrollX, scrollY));
   if (IN_BATTLE) saveBattleState();
+  if (typeof musicSync === 'function') musicSync();
   const mw = app.querySelector('.mapwrap');
 
   if (mw && !GARAGE_POPUP && !TREASURE_POPUP) {

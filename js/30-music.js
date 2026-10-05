@@ -9,11 +9,47 @@
 // To add a track: put the MP3 in music/, add a line here, and add the file to sw.js (then bump CACHE_VERSION).
 // credit is shown on the Home Screen and in the music panel.
 const MUSIC_TRACKS = {
+  home: {
+    src: 'music/home-beach-music.mp3',
+    title: 'Beach Music',
+    artist: 'paulyudin',
+    credit: 'Beach Music by paulyudin (Pixabay)',
+  },
+  1: {
+    src: 'music/world-1-sunset.mp3',
+    title: 'Sunset',
+    artist: 'sergequadrado',
+    credit: 'Sunset by sergequadrado (Pixabay)',
+  },
   2: {
     src: 'music/world-2-backwoods-louisiana.mp3',
     title: 'Backwoods Louisiana',
     artist: 'lokenwarrior',
     credit: 'Backwoods Louisiana by lokenwarrior (Pixabay)',
+  },
+  4: {
+    src: 'music/world-4-tropical-lounge.mp3',
+    title: 'Tropical Lounge',
+    artist: 'The_Mountain',
+    credit: 'Tropical Lounge by The_Mountain (Pixabay)',
+  },
+  5: {
+    src: 'music/world-5-gritty-industrial.mp3',
+    title: 'Gritty Industrial Blues Rock',
+    artist: 'NickPanek',
+    credit: 'Gritty Industrial Blues Rock by NickPanek (Pixabay)',
+  },
+  6: {
+    src: 'music/world-6-lounge.mp3',
+    title: 'Lounge',
+    artist: 'Aurec',
+    credit: 'Lounge by Aurec (Pixabay)',
+  },
+  7: {
+    src: 'music/world-7-harbor-static.mp3',
+    title: 'Harbor Static',
+    artist: 'TideBlue',
+    credit: 'Harbor Static by TideBlue (Pixabay)',
   },
 };
 const MUSIC_FADE_SECONDS = 1.6;

@@ -371,7 +371,7 @@ const UPDATE_LOG = [
         'tap one of the opponent\'s Items, then press the same button, which now reads Freeze, Burn, ' +
         'Curse or Hex, to lock it in. Cancel keeps your cards, so you can look over their Items first.'),
       'Your starting Item cards no longer pay out less than the sum of their cards, unless they are poison.',
-      'Full-Pressure Hose and the other Items that need a card total no longer show a two line requirement on phones, so their cards match the height of the rest.',
+      'Items that need a card total now show it as \u03a310+ instead of a long sentence, so Full-Pressure Hose and similar cards match the height of the rest on phones.',
       ('New Items: Full Pallet, Roof Rack, Hose Slam and a set of new vehicle Items. Some can ' +
         'fire several times a turn, and some cost HP or heal you when fired.'),
     ],

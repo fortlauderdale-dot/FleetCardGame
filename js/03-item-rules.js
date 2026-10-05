@@ -167,7 +167,7 @@ function itemRequirementText(item) {
   else if (cond?.type === 'exactRank')
     specific = cond.requireAll ? `all ${rankLabel(cond.rank)}s` : `Any ${rankLabel(cond.rank)}`;
   else if (cond?.type === 'straightLen') specific = `${cond.len}-card ${kw('Straight')}`;
-  else if (cond?.type === 'sumThreshold') specific = `Total ${cond.min} or higher`;
+  else if (cond?.type === 'sumThreshold') specific = `${SIGMA_TIP}${cond.min}+`;
   else if (cond?.type === 'sumExact') specific = `${SIGMA_TIP} = ${cond.value} exactly`;
   else if (cond?.type === 'exactCount') specific = cond.count === 1 ? 'Any card' : `Any ${cond.count} cards`;
   else if (cond?.type === 'pokerTier' && cond.tier > 0)

@@ -405,6 +405,7 @@ const UPDATE_LOG = [
     ],
     Misc: [
       'Fuel Efficiency now saves 1 HP per level instead of 2, and the first level costs 45 Career Points.',
+      'Sound effects now play on iPhones even when the silent switch is on.',
       'The revive from Limp Home now asks with an in-game pop-up instead of a browser box.',
       ('The first battle of every run is now the same: Spring Breaker with 48 health and the same starting hand, ' +
         'so a Perfect Win is always possible on your second turn. New players get a hint for each step, and there is a ' +

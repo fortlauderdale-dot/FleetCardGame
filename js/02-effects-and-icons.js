@@ -8,6 +8,10 @@
 let AUDIO_CTX = null;
 function getAudioCtx() {
   if (AUDIO_CTX) return AUDIO_CTX;
+  // iPhones mute game sound when the ring/silent switch is on. This asks Safari to treat it like media instead.
+  try {
+    if (navigator.audioSession) navigator.audioSession.type = 'playback';
+  } catch (e) {}
   try {
     AUDIO_CTX = new (window.AudioContext || window.webkitAudioContext)();
   } catch (e) {

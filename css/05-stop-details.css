@@ -885,3 +885,23 @@ html:has(#map-viewport) {
     padding-top: 6px;
   }
 }
+/* Stop Details: Battle / Go and Close sit above the card, so they never end up far down the page. */
+.map-popup-overlay.popupBtnsTop {
+  padding-top: 36px;
+}
+.popupTopWrap {
+  width: 100%;
+  max-width: 400px;
+}
+.popupTopWrap.wide {
+  max-width: 720px;
+}
+.popupTopBtns {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.popupTopWrap .wo,
+.popupTopWrap .wo.wide {
+  max-width: none;
+}

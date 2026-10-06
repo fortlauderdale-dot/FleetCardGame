@@ -289,8 +289,21 @@ function nodePopupScreen(r, c) {
       ${fuelChipHTML(1, true)}
     </div>`
     : '';
+  const buttonsHTML = `<div class="popupTopBtns">
+          ${
+            isAvail
+              ? `<button class="wo-btn ${info.accent ? 'red' : 'amber'}" id="popupGoBtn" ` +
+                `style="flex:1">${info.actionLabel}</button>`
+              : isCurrent
+                ? `<button class="wo-btn amber" id="popupReenterBtn" ` + `style="flex:1">Go Back In</button>`
+                : ''
+          }
+          <button class="wo-btn gray" id="popupCloseBtn" style="flex:1">Close</button>
+        </div>`;
   return (
-    `<div class="map-popup-overlay">
+    `<div class="map-popup-overlay popupBtnsTop">
+    <div class="popupTopWrap${info.bigArt ? ' wide' : ''}">
+${buttonsHTML}
     <div class="wo${info.bigArt ? ' wide' : ''}" ` +
     `style="width:100%${info.accent ? `;border-color:${info.accent}` : ''}">
       <div class="wo-stripe" ${info.accent ? `style="background:${info.accent}"` : ''}></div>
@@ -342,18 +355,8 @@ function nodePopupScreen(r, c) {
         }
         ${info.extra || ''}
         ${rewardsHTML}
-        <div style="display:flex;gap:8px;margin-top:14px">
-          ${
-            isAvail
-              ? `<button class="wo-btn ${info.accent ? 'red' : 'amber'}" id="popupGoBtn" ` +
-                `style="flex:1">${info.actionLabel}</button>`
-              : isCurrent
-                ? `<button class="wo-btn amber" id="popupReenterBtn" ` + `style="flex:1">Go Back In</button>`
-                : ''
-          }
-          <button class="wo-btn gray" id="popupCloseBtn" style="flex:1">Close</button>
-        </div>
       </div>
+    </div>
     </div>
   </div>`
   );

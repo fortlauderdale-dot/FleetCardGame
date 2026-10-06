@@ -501,6 +501,7 @@ const UPDATE_LOG = [
       'The +armor per turn note now sits to the right of the opponent\'s name, so it no longer adds a line.',
       'Removed the boss turn timer. Bosses no longer punish slow turns and the clock beside their name is gone.',
       'Swamp Gas now starts its fight holding 6 cards and still draws 2 each turn, so its Two Pair attack is a real threat.',
+      'On every Item card the uses number moved to the bottom left corner, and the name is now centered across the whole card.',
       'Flat-damage Item cards no longer show a card limit, since extra cards add nothing. This covers Dockmaster Blowup, Compressor Blowout, Trap Snap, Constrict, Gas Leak, Major Gas Leak and Weld A Patch.',
     ],
     Map: [

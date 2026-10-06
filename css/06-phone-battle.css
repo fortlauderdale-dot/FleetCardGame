@@ -243,7 +243,6 @@
   }
   #battle-viewport .itemGrid .itemCard .hdr {
     font-size: 11px;
-    padding-right: 8px;
     box-sizing: border-box;
   }
   #battle-viewport .itemGrid .itemCard .hdr.hdrLong {

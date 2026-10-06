@@ -174,12 +174,11 @@ function itemRequirementText(item) {
   else if (cond?.type === 'allSuits') specific = `1 of each ${kw('Suit')}`;
   else if (cond?.type === 'cardIn') specific = describeCondition(cond);
   else if (cond?.type === 'parity') specific = `Up to ${max} ${parityWordHTML(cond.parity)} cards`;
-  else if (cond?.type === 'exactRank')
-    specific = cond.requireAll
-        ? `All ${rankLabel(cond.rank)}s`
-        : max > 1
-          ? `${/^(8|Ace)/.test(String(rankLabel(cond.rank))) ? 'An' : 'A'} ${rankLabel(cond.rank)} in up to ${max} cards`
-          : `Any ${rankLabel(cond.rank)}`;
+  else if (cond?.type === 'exactRank') {
+    const rk = String(rankLabel(cond.rank));
+    const aRank = `${/^(8|Ace)/.test(rk) ? 'An' : 'A'} ${rk}`;
+    specific = cond.requireAll ? `All ${rk}s` : max > 1 ? `${aRank} in up to ${max} cards` : aRank;
+  }
   else if (cond?.type === 'straightLen') specific = `${cond.len}-card ${kw('Straight')}`;
   else if (cond?.type === 'sumThreshold') specific = `${SIGMA_TIP}${cond.min}+`;
   else if (cond?.type === 'sumExact') specific = `${SIGMA_TIP} = ${cond.value}`;

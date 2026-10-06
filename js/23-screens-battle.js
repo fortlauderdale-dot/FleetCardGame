@@ -377,7 +377,7 @@ function battleScreen() {
                             ? `Freezes one of their Items solid. It stays frozen ` +
                               `until ${item.freezeThreshold} points of cards have been dropped into it.`
                             : "Freezes an Item solid so it can't fire until it thaws " + 'out on its own.'
-                        }">${item.freezeThreshold ? `Frozen: ${item.freezeThreshold} to ` + `thaw` : 'Freeze'}</span>`
+                        }">${item.freezeThreshold ? `Freeze ${item.freezeThreshold}` : 'Freeze'}</span>`
                       : eKind === 'lightning'
                         ? `<span class="effectTip" style="color:var(--lightning)" ` +
                           `data-tip="Lightning uses one shared roll between ${Math.round(LIGHTNING_MIN_ROLL * 100)}% and ` +

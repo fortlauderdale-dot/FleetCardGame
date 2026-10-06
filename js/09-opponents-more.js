@@ -58,7 +58,7 @@ function scaleMonsterForNewWorld(baseMonster, worldMultiplier, tier) {
 Object.assign(ITEMS, {
   w7_stack_collapse: {
     id: 'w7_stack_collapse', name: 'Stack Collapse', maxCards: 2, usesPerTurn: 1,
-    condition: {type: 'pokerTier', tier: 1}, baseMult: 2.18,
+    condition: {type: 'pokerTier', tier: 1}, baseMult: 2.2,
     note: 'Needs a Pair. Forty tons of shipping container lean your way.'
   },
   w7_crane_swing: {
@@ -69,12 +69,12 @@ Object.assign(ITEMS, {
   },
   w7_net_drop: {
     id: 'w7_net_drop', name: 'Sniff Out', maxCards: 3, usesPerTurn: 1,
-    condition: {type: 'colorCount', color: 'blk', count: 3}, baseMult: 1.76, kind: 'hex',
+    condition: {type: 'colorCount', color: 'blk', count: 3}, baseMult: 1.75, kind: 'hex',
     note: 'Needs 3 Black cards. Sniffs out a card and trots off with it. Hexes one of your Items.'
   },
   w7_fuel_fire: {
     id: 'w7_fuel_fire', name: 'Fuel Fire', maxCards: 2, usesPerTurn: 1, condition: {type: 'pokerTier', tier: 1},
-    baseMult: 1.06, kind: 'burn', note: 'Needs a Pair. One spark is all the puddle needed. Burns you.'
+    baseMult: 1.05, kind: 'burn', note: 'Needs a Pair. One spark is all the puddle needed. Burns you.'
   },
   w7_exhaust_cough: {
     id: 'w7_exhaust_cough', name: 'Exhaust Cough', maxCards: 2, usesPerTurn: 1,
@@ -83,7 +83,7 @@ Object.assign(ITEMS, {
   },
   w7_wake_slam: {
     id: 'w7_wake_slam', name: 'Wake Slam', maxCards: 3, usesPerTurn: 1, condition: {type: 'straightLen', len: 3},
-    baseMult: 3.56, note: 'Needs 3 cards in a row. Nobody on the pier saw it coming.'
+    baseMult: 3.55, note: 'Needs 3 cards in a row. Nobody on the pier saw it coming.'
   },
   w7_hold_inspection: {
     id: 'w7_hold_inspection', name: 'Hold For Inspection', maxCards: 2, usesPerTurn: 1,
@@ -96,7 +96,7 @@ Object.assign(ITEMS, {
   },
   w7_tug_shove: {
     id: 'w7_tug_shove', name: 'Tug Shove', maxCards: 2, usesPerTurn: 1, condition: {type: 'pokerTier', tier: 1},
-    baseMult: 1.96, note: 'Needs a Pair. Small boat, enormous engine.'
+    baseMult: 1.95, note: 'Needs a Pair. Small boat, enormous engine.'
   },
   w7_tug_horn: {
     id: 'w7_tug_horn', name: 'Air Horn', maxCards: 3, usesPerTurn: 1,
@@ -109,13 +109,13 @@ Object.assign(ITEMS, {
   },
   w7_radar_static: {
     id: 'w7_radar_static', name: 'Gangway Dash', maxCards: 2, usesPerTurn: 1, condition: {type: 'pokerTier', tier: 1},
-    baseMult: 4.56, kind: 'lightning',
+    baseMult: 4.55, kind: 'lightning',
     note: ('Needs a Pair. Sprints for the gangway with luggage flying. Damage is randomized by ' +
       'the shared Lightning roll.')
   },
   w7_cold_hold: {
     id: 'w7_cold_hold', name: 'Cold Hold', maxCards: 2, usesPerTurn: 1, condition: {type: 'pokerTier', tier: 1},
-    baseMult: 1.49, kind: 'ice', note: 'Needs a Pair. The hatch swings shut on your gear. Freezes one of your Items.'
+    baseMult: 1.5, kind: 'ice', note: 'Needs a Pair. The hatch swings shut on your gear. Freezes one of your Items.'
   },
   w7_hull_scrape: {
     id: 'w7_hull_scrape', name: 'Hull Scrape', maxCards: 3, usesPerTurn: 1,
@@ -138,11 +138,11 @@ Object.assign(ITEMS, {
   },
   w7_slick_flash: {
     id: 'w7_slick_flash', name: 'Slick Flash', maxCards: 2, usesPerTurn: 1, condition: {type: 'pokerTier', tier: 1},
-    baseMult: 1.21, kind: 'burn', note: 'Needs a Pair. The water itself catches. Burns you.'
+    baseMult: 1.2, kind: 'burn', note: 'Needs a Pair. The water itself catches. Burns you.'
   },
   w7_dock_lockdown: {
     id: 'w7_dock_lockdown', name: 'No Entry', maxCards: 2, usesPerTurn: 1, condition: {type: 'pokerTier', tier: 1},
-    baseMult: 1.87, kind: 'curse',
+    baseMult: 1.85, kind: 'curse',
     note: ('Needs a Pair. Folds his arms, blocks the gate and nothing works until he says so. ' +
       'Curses one of your Items.')
   },
@@ -198,7 +198,7 @@ Object.assign(ITEMS, {
   },
   w8_bin_spill: {
     id: 'w8_bin_spill', name: 'Bin Spill', maxCards: 2, usesPerTurn: 1, condition: {type: 'pokerTier', tier: 1},
-    baseMult: 2.28, note: 'Needs a Pair. Every bolt in the building, all at once.'
+    baseMult: 2.3, note: 'Needs a Pair. Every bolt in the building, all at once.'
   },
   w8_pump_flare: {
     id: 'w8_pump_flare', name: 'Pump Flare', maxCards: 2, usesPerTurn: 1, condition: {type: 'pokerTier', tier: 1},
@@ -206,12 +206,12 @@ Object.assign(ITEMS, {
   },
   w8_tire_roll: {
     id: 'w8_tire_roll', name: 'Tire Shine Slick', maxCards: 3, usesPerTurn: 1,
-    condition: {type: 'straightLen', len: 3}, baseMult: 3.84,
+    condition: {type: 'straightLen', len: 3}, baseMult: 3.85,
     note: 'Needs 3 cards in a row. Sprays tire shine across the lot and everything slides.'
   },
   w8_scanner_override: {
     id: 'w8_scanner_override', name: 'Audit Adjustment', maxCards: 3, usesPerTurn: 1,
-    condition: {type: 'colorCount', color: 'blk', count: 3}, baseMult: 2.16, kind: 'hex',
+    condition: {type: 'colorCount', color: 'blk', count: 3}, baseMult: 2.15, kind: 'hex',
     note: 'Needs 3 Black cards. Reviews your hand and adjusts a card out of it. Hexes one of your Items.'
   },
   w8_charger_arc: {
@@ -235,7 +235,7 @@ Object.assign(ITEMS, {
   },
   w8_po_reject: {
     id: 'w8_po_reject', name: 'Rejected', maxCards: 2, usesPerTurn: 1, condition: {type: 'pokerTier', tier: 1},
-    baseMult: 2.03, kind: 'curse', note: 'Needs a Pair. Missing a signature. Again. Curses one of your Items.'
+    baseMult: 2.05, kind: 'curse', note: 'Needs a Pair. Missing a signature. Again. Curses one of your Items.'
   },
   w8_cat_swipe: {
     id: 'w8_cat_swipe', name: 'Swipe', maxCards: 1, usesPerTurn: 1, condition: {type: 'any', exactCount: 1},

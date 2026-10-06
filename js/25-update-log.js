@@ -362,6 +362,10 @@ const UPDATE_LOG = [
       'Pick Your Vehicle now shows a Perk card as well as the ability card.',
     ],
     'Item cards': [
+      ('World 7 and 8 opponent multipliers are rounded to match the rest of the game (like \u00d72.2 instead of ' +
+        '\u00d72.18). Freeze cards now read "Freeze 14" instead of "Frozen: 14 to thaw". Charge cards all read ' +
+        '"Charges at 75, then Attack 65" or "Charges at 45, then Draw 4".'),
+      'Rapid Intervention no longer starts with a built-in +30% bonus. It only gets a bonus from tuning upgrades.',
       ('Requirement lines now match what each Item really accepts. Black Top Blitz reads "2-3 Black cards" ' +
         'instead of "2+", and the same fix applies to every Red, Black and suit Item that takes a range of cards.'),
       ('Opponent Items that were the same card with only a different name now share one card, so ' +

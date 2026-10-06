@@ -284,7 +284,7 @@ const ITEMS = {
   rapid_intervention: {
     id: 'rapid_intervention', name: 'Rapid Intervention', cost: 70, maxCards: 2, usesPerTurn: 1,
     usesPerTurnPerLevel: 1, condition: { type: 'straightLen', len: 2 }, baseMult: straightMult(2),
-    bonus: { base: 0.3, perLevel: 0.15, maxLevel: 3 },
+    bonus: { base: 0, perLevel: 0.15, maxLevel: 3 },
     note: `Needs a 2-card straight. First truck on scene hits hard and keeps improving with upgrades.`
   },
   door_breach_ram: {

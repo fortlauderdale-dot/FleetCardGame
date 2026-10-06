@@ -143,7 +143,7 @@ function renderStandardItemCard(item, opts = {}) {
                       ? `Freezes one of their Items solid. It stays frozen ` +
                         `until ${item.freezeThreshold} points of cards have been dropped into it.`
                       : "Freezes an Item solid so it can't fire until it thaws " + 'out on its own.'
-                  }">${item.freezeThreshold ? `Frozen: ${item.freezeThreshold} to ` + `thaw` : 'Freeze'}</span>`
+                  }">${item.freezeThreshold ? `Freeze ${item.freezeThreshold}` : 'Freeze'}</span>`
                 : eKind === 'lightning'
                   ? `<span class="effectTip" style="color:var(--lightning)" ` +
                     `data-tip="Lightning uses one shared roll between ${Math.round(LIGHTNING_MIN_ROLL * 100)}% and ` +
@@ -159,10 +159,10 @@ function renderStandardItemCard(item, opts = {}) {
         `class="hoverTip" data-title="Play cards through it to count down a ${effUnlockThreshold}-point ` +
         `charge (based on the cards' value, no damage dealt). Once charged, it draws 4 cards each use, ` +
         `once per turn, for the rest of that battle. Charge resets every new battle.">Charges ` +
-        `at ${effUnlockThreshold}${item.id === 'impound_release' ? ', then Draw 4' : ''}</span></div>`
+        `at ${effUnlockThreshold}${item.id === 'impound_release' ? ', then Draw 4' : item.flatAmount ? `, then Attack ${item.flatAmount}` : ''}</span></div>`
       : '';
   const staticKindLine =
-    footerHTML == null ? `<div class="note" style="margin:0">${formatKindAmount(item, kindTag, opponentFlatShown(item, scaleOpp))}</div>` : '';
+    footerHTML == null && item.unlockThreshold == null ? `<div class="note" style="margin:0">${formatKindAmount(item, kindTag, opponentFlatShown(item, scaleOpp))}</div>` : '';
   const cardHTML = cards
     .map((c, i) => {
       const handIdx = opts.idxs ? opts.idxs[i] : i;

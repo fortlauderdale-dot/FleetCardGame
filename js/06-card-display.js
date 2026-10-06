@@ -79,7 +79,7 @@ function renderStandardItemCard(item, opts = {}) {
           : ''
       }
       <div class="itemCard-sec">
-        <div class="hdr" style="font-weight:600">${item.name}</div>
+        <div class="${itemNameClass(item.name)}" style="font-weight:600">${item.name}</div>
         ${weightlessTag ? `<div class="note" style="margin:2px 0">${weightlessTag}</div>` : ''}
         <div class="note" style="font-size:11px">${stashHoldsLineHTML(item)}</div>
       </div>
@@ -183,7 +183,7 @@ function renderStandardItemCard(item, opts = {}) {
     `kind-${eKind} ${ready ? 'ready' : ''} ${cursedAmt ? 'cursed' : ''} ${frozenState ? 'frozenLock' : ''} ${burnTargetKey ? 'burnTargetable' : ''} ${pickKey ? 'targetPickable' : ''} ${picked ? 'targetPicked' : ''} ${burnedAmt ? 'burned' : ''} ${burnedDetonateKey && burnedAmt ? 'burnedOpp' : ''}"${dragAttrs}>
     ${usesBadge}
     <div class="itemCard-sec">
-      <div class="hdr" ` +
+      <div class="${itemNameClass(item.name)}" ` +
     `style="font-weight:600">${item.name}${
       cursedAmt
         ? ` <span class="vart" style="width:12px;height:12px;` +
@@ -247,7 +247,7 @@ function heroAbilityCardHTML(heroId) {
                         : sp.type === 'weaken'
                           ? `Opponent's next attacks hit ${sp.amountPerUnit}% softer.`
                           : sp.type === 'dump'
-                            ? `Discard your hand and deal ${Math.round(sp.amountPerUnit * 100)}% of its total as damage.`
+                            ? `Discard your hand and deal ${Math.round(sp.amountPerUnit * 100)}% of its Σ as damage.`
                             : sp.type === 'scout'
                               ? `Show the opponent's hand and draw ${sp.amountPerUnit || 0} card.`
                               : sp.type === 'revive'

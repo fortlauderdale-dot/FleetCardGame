@@ -246,6 +246,9 @@
     padding-right: 8px;
     box-sizing: border-box;
   }
+  #battle-viewport .itemGrid .itemCard .hdr.hdrLong {
+    font-size: 10px;
+  }
   .playerActionGrid {
     display: flex;
     gap: 3px;

@@ -1696,20 +1696,19 @@ const DIFF_TABLE = {
 };
 const DIFF_PATCH = {
   items: {
-    lab_lifeguard_scan: {
-      id: 'lab_lifeguard_scan',
-      name: 'Scan The Water',
+    lab_mainframe_hex: {
+      id: 'lab_mainframe_hex',
+      name: 'Data Siphon',
       maxCards: 3,
       usesPerTurn: 1,
       condition: {
         type: 'colorCount',
-        color: 'red',
+        color: 'blk',
         count: 3,
       },
-      baseMult: 0,
-      drawAmount: 2,
-      drawPerLevel: 0,
-      note: 'Needs 3 Red cards. Sweeps the beach with binoculars. Draws 2 cards for its next attack.',
+      baseMult: 1.1,
+      kind: 'hex',
+      note: 'Needs 3 Black cards. Pulls your records out of your hands. Hexes one of your Items.',
     },
     lab_frigate_skim: {
       id: 'lab_frigate_skim',
@@ -1738,45 +1737,6 @@ const DIFF_PATCH = {
       drawPerLevel: 0,
       note: 'Needs 3 Black cards. The swarm swells and closes ranks. Draws 1 card for its next attack.',
     },
-    lab_gator_lunge: {
-      id: 'lab_gator_lunge',
-      name: 'Lunge',
-      maxCards: 1,
-      usesPerTurn: 1,
-      condition: {
-        type: 'any',
-        exactCount: 1,
-      },
-      flatAmount: 10,
-      note: 'Needs exactly 1 card. Bursts out of the reeds.',
-    },
-    lab_moccasin_coil: {
-      id: 'lab_moccasin_coil',
-      name: 'Coil And Strike',
-      maxCards: 1,
-      usesPerTurn: 1,
-      condition: {
-        type: 'any',
-        exactCount: 1,
-      },
-      flatAmount: 8,
-      note: 'Needs exactly 1 card. Coils up and snaps out.',
-    },
-    lab_mosquito_feast: {
-      id: 'lab_mosquito_feast',
-      name: 'Feeding Frenzy',
-      maxCards: 3,
-      usesPerTurn: 1,
-      condition: {
-        type: 'colorCount',
-        color: 'red',
-        count: 3,
-      },
-      baseMult: 0,
-      drawAmount: 2,
-      drawPerLevel: 0,
-      note: 'Needs 3 Red cards. One bite and the whole cloud gets excited. Draws 2 cards for its next attack.',
-    },
     lab_enforcer_stopwork: {
       id: 'lab_enforcer_stopwork',
       name: 'Stop Work Order',
@@ -1789,20 +1749,6 @@ const DIFF_PATCH = {
       baseMult: 0.8,
       kind: 'ice',
       note: 'Needs a Pair. Slaps a notice on your gear. Freezes one of your Items.',
-    },
-    lab_mainframe_hex: {
-      id: 'lab_mainframe_hex',
-      name: 'Data Siphon',
-      maxCards: 3,
-      usesPerTurn: 1,
-      condition: {
-        type: 'colorCount',
-        color: 'blk',
-        count: 3,
-      },
-      baseMult: 1.1,
-      kind: 'hex',
-      note: 'Needs 3 Black cards. Pulls your records out of your hands. Hexes one of your Items.',
     },
     lab_mainframe_reboot: {
       id: 'lab_mainframe_reboot',
@@ -1817,87 +1763,6 @@ const DIFF_PATCH = {
       drawAmount: 1,
       drawPerLevel: 0,
       note: 'Needs cards totaling 10+. Restarts and reloads. Draws 1 card for its next attack.',
-    },
-    lab_marine_boarding: {
-      id: 'lab_marine_boarding',
-      name: 'Boarding Inspection',
-      maxCards: 2,
-      usesPerTurn: 1,
-      condition: {
-        type: 'pokerTier',
-        tier: 1,
-      },
-      baseMult: 0.8,
-      kind: 'ice',
-      note: 'Needs a Pair. Locks down a piece of your gear. Freezes one of your Items.',
-    },
-    lab_pump_prime: {
-      id: 'lab_pump_prime',
-      name: 'Prime The Pump',
-      maxCards: 3,
-      usesPerTurn: 1,
-      condition: {
-        type: 'sumThreshold',
-        min: 8,
-      },
-      baseMult: 0,
-      drawAmount: 1,
-      drawPerLevel: 0,
-      note: 'Needs cards totaling 8+. Sucks in more water. Draws 1 card for its next attack.',
-    },
-    lab_pump_spray: {
-      id: 'lab_pump_spray',
-      name: 'Spray',
-      maxCards: 1,
-      usesPerTurn: 1,
-      condition: {
-        type: 'any',
-        exactCount: 1,
-      },
-      flatAmount: 9,
-      note: 'Needs exactly 1 card. A hard jet from the outflow.',
-    },
-    lab_cryo_frostbite: {
-      id: 'lab_cryo_frostbite',
-      name: 'Frostbite',
-      maxCards: 2,
-      usesPerTurn: 1,
-      condition: {
-        type: 'pokerTier',
-        tier: 1,
-      },
-      baseMult: 0.9,
-      kind: 'curse',
-      note: 'Needs a Pair. Cold that settles in and stays. Curses one of your Items.',
-    },
-    lab_ai_reboot: {
-      id: 'lab_ai_reboot',
-      name: 'Inventory Sweep',
-      maxCards: 3,
-      usesPerTurn: 1,
-      condition: {
-        type: 'colorCount',
-        color: 'red',
-        count: 3,
-      },
-      baseMult: 0,
-      drawAmount: 2,
-      drawPerLevel: 0,
-      note: 'Needs 3 Red cards. Scans every shelf again. Draws 2 cards for its next attack.',
-    },
-    lab_thief_pickpocket: {
-      id: 'lab_thief_pickpocket',
-      name: 'Sleight Of Hand',
-      maxCards: 2,
-      usesPerTurn: 1,
-      condition: {
-        type: 'pokerTier',
-        tier: 1,
-      },
-      baseMult: 0,
-      utilityEffect: 'discardHand',
-      discardCount: 1,
-      note: 'Needs a Pair. Lifts a card right out of your hand. Knocks 1 card out of your hand.',
     },
     lab_wave_undertow: {
       id: 'lab_wave_undertow',
@@ -1915,34 +1780,6 @@ const DIFF_PATCH = {
       note:
         'Needs 3 Black cards. Big Al blows a thick cloud of cigar smoke in your face. Draws ' +
         '2 cards for its next attack.',
-    },
-    lab_matriarch_brood: {
-      id: 'lab_matriarch_brood',
-      name: 'Call The Brood',
-      maxCards: 3,
-      usesPerTurn: 1,
-      condition: {
-        type: 'colorCount',
-        color: 'red',
-        count: 3,
-      },
-      baseMult: 0,
-      drawAmount: 2,
-      drawPerLevel: 0,
-      note: 'Needs 3 Red cards. Hatchlings pour out of the mud. Draws 2 cards for its next attack.',
-    },
-    lab_matriarch_lash: {
-      id: 'lab_matriarch_lash',
-      name: 'Tail Lash',
-      maxCards: 2,
-      usesPerTurn: 1,
-      condition: {
-        type: 'pokerTier',
-        tier: 1,
-      },
-      baseMult: 1.1,
-      kind: 'curse',
-      note: 'Needs a Pair. A heavy sweep that leaves you rattled. Curses one of your Items.',
     },
     lab_congestion_tow: {
       id: 'lab_congestion_tow',
@@ -1984,19 +1821,6 @@ const DIFF_PATCH = {
       kind: 'ice',
       note: 'Needs cards totaling 15+. The gates come down and nothing moves. Freezes one of your Items.',
     },
-    lab_bridge_toll: {
-      id: 'lab_bridge_toll',
-      name: 'Toll Collector',
-      maxCards: 2,
-      usesPerTurn: 1,
-      condition: {
-        type: 'pokerTier',
-        tier: 1,
-      },
-      baseMult: 1.1,
-      kind: 'curse',
-      note: 'Needs a Pair. Pay now or pay more later. Curses one of your Items.',
-    },
     lab_chiller_frostbite: {
       id: 'lab_chiller_frostbite',
       name: 'Deep Frostbite',
@@ -2009,21 +1833,6 @@ const DIFF_PATCH = {
       baseMult: 1.2,
       kind: 'curse',
       note: 'Needs a Pair. The cold leaves a mark on the whole fleet. Curses one of your Items.',
-    },
-    lab_chiller_vent: {
-      id: 'lab_chiller_vent',
-      name: 'Vent Cycle',
-      maxCards: 3,
-      usesPerTurn: 1,
-      condition: {
-        type: 'colorCount',
-        color: 'blk',
-        count: 3,
-      },
-      baseMult: 0,
-      drawAmount: 2,
-      drawPerLevel: 0,
-      note: 'Needs 3 Black cards. Cycles the compressors for another run. Draws 2 cards for its next attack.',
     },
     lab_squall_gust: {
       id: 'lab_squall_gust',
@@ -2039,21 +1848,6 @@ const DIFF_PATCH = {
       note:
         'Needs exactly 1 card. A single crack out of a clear sky. Damage is randomized by ' +
         'the shared Lightning roll.',
-    },
-    lab_squall_eye: {
-      id: 'lab_squall_eye',
-      name: 'Eye Of The Storm',
-      maxCards: 3,
-      usesPerTurn: 1,
-      condition: {
-        type: 'colorCount',
-        color: 'red',
-        count: 3,
-      },
-      baseMult: 0,
-      drawAmount: 2,
-      drawPerLevel: 0,
-      note: 'Needs 3 Red cards. A calm spot where the next front builds. Draws 2 cards for its next attack.',
     },
   },
   opponents: {

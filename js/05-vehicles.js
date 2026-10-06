@@ -186,8 +186,8 @@ const VEHICLE_SPECIALS = {
   },
   dumptruck:    {
     name: 'Dump Load', type: 'dump', energyPerUnit: 5, amountPerUnit: 0.9,
-    desc: ('Spend 5 Energy to dump your whole hand on the opponent. You deal 90% of the total ' +
-      'value of the cards you threw away, so a full hand is a big hit.')
+    desc: ('Spend 5 Energy to dump your whole hand on the opponent. You deal 90% of the Σ ' +
+      'of the cards you threw away, so a full hand is a big hit.')
   },
   garbagetruck: {
     name: 'Compact and Collect', type: 'reroll', energyPerUnit: 4, amountPerUnit: 0, armor: 10,

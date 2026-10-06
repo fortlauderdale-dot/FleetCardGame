@@ -98,18 +98,18 @@ function itemBonusLineHTML(item, level) {
 }
 function describeCondition(cond) {
   if (!cond || cond.type === 'any') return 'Any cards';
-  if (cond.type === 'exactCount') return `exactly ${cond.count} cards`;
+  if (cond.type === 'exactCount') return `Any ${cond.count} cards`;
   if (cond.type === 'pokerTier') return cond.tier === 0 ? 'Any card' : TIERS[cond.tier];
-  if (cond.type === 'straightLen') return `a ${cond.len}-card straight`;
+  if (cond.type === 'straightLen') return `${cond.len}-card Straight`;
   if (cond.type === 'suitCount') return `${cond.count}+ ${cond.suit}`;
   if (cond.type === 'colorCount') return `${cond.count}+ ${cond.color === 'red' ? 'Red' : 'Black'} cards`;
-  if (cond.type === 'allSuits') return 'one of each suit';
+  if (cond.type === 'allSuits') return '1 of each Suit';
   if (cond.type === 'cardIn') return cond.cards.map((c) => rankSuitMiniCardHTML(c.rank, c.suit)).join(' or ');
   if (cond.type === 'parity')
-    return cond.mode === 'all' ? `all ${cond.parity}` : `${cond.count}+ ${cond.parity} ` + `cards`;
-  if (cond.type === 'exactRank') return cond.requireAll ? `all ${rankLabel(cond.rank)}s` : `a ${rankLabel(cond.rank)}`;
+    return cond.mode === 'all' ? `All ${cond.parity}` : `${cond.count}+ ${cond.parity} ` + `cards`;
+  if (cond.type === 'exactRank') return cond.requireAll ? `All ${rankLabel(cond.rank)}s` : `Any ${rankLabel(cond.rank)}`;
   if (cond.type === 'sumThreshold') return `${SIGMA_TIP}${cond.min}+`;
-  if (cond.type === 'sumExact') return `${SIGMA_TIP} = ${cond.value} exactly`;
+  if (cond.type === 'sumExact') return `${SIGMA_TIP} = ${cond.value}`;
   return '';
 }
 
@@ -145,8 +145,12 @@ function parityWordHTML(parity) {
   const tip = even ? 'Even Cards: 2, 4, 6, 8, 10 and Queen.' : 'Odd Cards: Ace, 3, 5, 7, 9, Jack and King.';
   return `<span class="hoverTip parityWord" data-title="${tip}">${even ? 'Even' : 'Odd'}</span>`;
 }
+// Long Item names drop one font size on the card so they stay on two lines and every card keeps the same height.
+function itemNameClass(name) {
+  return String(name || '').length > 20 ? 'hdr hdrLong' : 'hdr';
+}
 function itemRequirementText(item) {
-  if (item.followUp) return "Only if the Item to its left didn't fire";
+  if (item.followUp) return "Only if left Item didn't fire";
   const max = effectiveMaxCards(item);
   let cond = item.condition;
   if (item.id === 'drawstone' && cond?.type === 'sumThreshold')
@@ -158,17 +162,17 @@ function itemRequirementText(item) {
         ? max > 1
           ? `1-${max} ${suitMicroCardHTML(cond.suit)} ` + `cards`
           : `Any ${suitMicroCardHTML(cond.suit)}`
-        : `At least ${cond.count} ${suitMicroCardHTML(cond.suit)}`;
+        : `${cond.count}+ ${suitMicroCardHTML(cond.suit)}`;
   else if (cond?.type === 'colorCount')
     specific = `${cond.count}+ ${kw(cond.color === 'red' ? 'Red' : 'Black')} ` + `cards`;
-  else if (cond?.type === 'allSuits') specific = `one of each ${kw('Suit')}`;
+  else if (cond?.type === 'allSuits') specific = `1 of each ${kw('Suit')}`;
   else if (cond?.type === 'cardIn') specific = describeCondition(cond);
   else if (cond?.type === 'parity') specific = `Up to ${max} ${parityWordHTML(cond.parity)} cards`;
   else if (cond?.type === 'exactRank')
-    specific = cond.requireAll ? `all ${rankLabel(cond.rank)}s` : `Any ${rankLabel(cond.rank)}`;
+    specific = cond.requireAll ? `All ${rankLabel(cond.rank)}s` : `Any ${rankLabel(cond.rank)}`;
   else if (cond?.type === 'straightLen') specific = `${cond.len}-card ${kw('Straight')}`;
   else if (cond?.type === 'sumThreshold') specific = `${SIGMA_TIP}${cond.min}+`;
-  else if (cond?.type === 'sumExact') specific = `${SIGMA_TIP} = ${cond.value} exactly`;
+  else if (cond?.type === 'sumExact') specific = `${SIGMA_TIP} = ${cond.value}`;
   else if (cond?.type === 'exactCount') specific = cond.count === 1 ? 'Any card' : `Any ${cond.count} cards`;
   else if (cond?.type === 'pokerTier' && cond.tier > 0)
     specific = cond.tier === 5 ? kw('Flush') : cond.tier === 4 ? kw('Straight') : TIERS[cond.tier];

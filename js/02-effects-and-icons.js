@@ -548,7 +548,7 @@ function opponentAttackBoxHTML(opp, showStatus) {
         bonusLine = a.minTurn ? `Kicks in on its own from turn ${a.minTurn} onward` : `Kicks in on its own`;
         damageLine = `Attack ${a.autoFire.damage}`;
       } else if (a.sumThreshold) {
-        bonusLine = `Card(s) need to total ${a.sumThreshold.min} or higher`;
+        bonusLine = `${SIGMA_TIP}${a.sumThreshold.min}+`;
         damageLine = `Attack ${a.sumThreshold.damage}`;
       } else if (a.fewCardsThreshold) {
         bonusLine =
@@ -599,7 +599,7 @@ function opponentAttackBoxHTML(opp, showStatus) {
         `<div class="itemCard ${kindClass(effect)}" style="cursor:default">
       <div class="usesBadge hoverTip" data-title="Attacks per turn">${swings === Infinity ? '∞' : swings}</div>
       <div class="itemCard-sec">
-        <div class="hdr">${name}</div>
+        <div class="${itemNameClass(name)}">${name}</div>
         <div class="itemReqLine">${capLine}</div>
       </div>
       <div class="itemDivider"></div>

@@ -20,6 +20,7 @@ Each file starts with a dark boxed title. Search for `██` to jump between se
 | 09-opponents-more | Map route builder, opponent scaling, World 7 and 8 opponents |
 | 10-difficulty-settings | Difficulty dials (the numbers to tweak) |
 | 11-difficulty-table | Threat table data (very large, rarely edited by hand) |
+| 11b-shared-items | Opponent Items that are the same card with a different name (shared card plus names) |
 | 12-difficulty-engine | Code that tunes opponents from the table, difficulty screen |
 | 13-map-and-run | Picking stop types for a world, run state, travel, stop handling |
 | 14 to 18 | Fleet Plinko, Blackjack, Poker, Auction, Matching Game |

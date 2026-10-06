@@ -161,7 +161,7 @@ function battleScreen() {
         <div class="usesBadge hoverTip" data-title="Cards currently ` +
           `held">${idxs.length}/${effectiveMaxCards(item)}</div>
         <div class="itemCard-sec">
-          <div class="hdr" style="font-weight:600">${item.name}</div>
+          <div class="${itemNameClass(item.name)}" style="font-weight:600">${item.name}</div>
           ${
             item.weightless
               ? `<div class="note" style="margin:2px 0"><span class="effectTip" ` +
@@ -290,7 +290,7 @@ function battleScreen() {
           : `<div class="usesBadge hoverTip" data-title="Uses left this ` + `turn">${usesBadgeText}</div>`
       }
       <div class="itemCard-sec">
-        <div class="hdr" ` +
+        <div class="${itemNameClass(item.name)}" ` +
         `style="font-weight:600">${item.name}${
           cursedAmt
             ? ` <span class="vart" style="width:12px;height:12px;` +
@@ -393,7 +393,7 @@ function battleScreen() {
               ? '<span class="hoverTip" data-title="Charged for the ' +
                 'rest of this battle - playing cards through it now draws 4, once per turn.">Charged: Draw 4/turn</span>'
               : `<span class="hoverTip" data-title="Locked: This card ` +
-                `cannot trigger actions until you drop cards into it to fulfill the listed point total.">` +
+                `cannot trigger actions until you drop cards into it to fulfill the listed Σ.">` +
                 `Locked</span>: ${Math.max(0, effUnlockThreshold - ((BATTLE.itemUnlockProgress && BATTLE.itemUnlockProgress[slotKey]) || 0))} ` +
                 `to charge`
             : '';

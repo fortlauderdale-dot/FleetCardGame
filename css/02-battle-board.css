@@ -761,9 +761,9 @@ body:has(.targetBar) #app {
 #dealer-viewport .emptyItemSlot {
   border: 2px dashed rgba(31, 182, 166, 0.3);
   width: 125px;
-  height: 150px;
-  min-height: 150px;
-  max-height: 150px;
+  height: 156px;
+  min-height: 156px;
+  max-height: 156px;
   box-sizing: border-box;
   display: flex;
   align-items: flex-start;
@@ -819,7 +819,7 @@ body:has(.targetBar) #app {
   width: 125px;
   min-width: 125px;
   max-width: 125px;
-  min-height: 150px;
+  min-height: 156px;
   height: auto;
   display: flex;
   flex-direction: column;
@@ -838,7 +838,7 @@ body:has(.targetBar) #app {
   width: 125px;
   min-width: 125px;
   max-width: 125px;
-  min-height: 150px;
+  min-height: 156px;
   height: auto;
   box-sizing: border-box;
   display: flex;
@@ -872,8 +872,8 @@ body:has(.targetBar) #app {
   justify-content: center;
 }
 .itemCard-cards-sec {
-  flex: 0 0 auto;
-  min-height: 46px;
+  flex: 1 1 auto;
+  min-height: 20px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -898,6 +898,9 @@ body:has(.targetBar) #app {
 }
 .itemCard.ready {
   border-color: var(--green) !important;
+}
+.itemCard .hdr.hdrLong {
+  font-size: 10px;
 }
 .itemCard .hdr {
   width: 100%;
@@ -933,7 +936,7 @@ body:has(.targetBar) #app {
   color: #f0f3f8;
 }
 .itemBonusLine {
-  font-size: 10.5px;
+  font-size: 9.5px;
   color: #f5c451;
   margin: 0;
   line-height: 1.2;

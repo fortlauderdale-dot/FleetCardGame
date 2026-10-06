@@ -119,22 +119,22 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 48px;
-  border-radius: 4px;
+  width: 22px;
+  height: 28px;
+  border-radius: 3px;
   background: #ffffff;
   color: #12163a;
   font-weight: 800;
   line-height: 1.1;
   vertical-align: middle;
-  margin: 2px 3px;
+  margin: 0 3px;
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.2);
 }
 .reqMiniCard div:first-child {
-  font-size: 14px;
+  font-size: 11px;
 }
 .reqMiniCard div:last-child {
-  font-size: 18px;
+  font-size: 14px;
 }
 .reqMiniCard.red {
   color: #e5484d;
@@ -313,4 +313,11 @@
   box-shadow: 0 0 8px rgba(31, 182, 166, 0.4);
   border: 1px solid #1fb6a6;
   text-align: left;
+}
+/* Suit chips inside bonus lines are smaller so the line stays one row tall. */
+.itemBonusLine .suitMicroCard {
+  width: 12px;
+  height: 14px;
+  font-size: 10px;
+  vertical-align: -2px;
 }

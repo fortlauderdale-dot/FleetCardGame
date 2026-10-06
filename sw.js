@@ -1,7 +1,7 @@
 // Fleet Duel offline support. Saves the game page and every picture on the first visit,
 // so the game keeps working with no internet (a flight, for example).
 // Bump CACHE_VERSION whenever pictures or game files change so phones download the new ones.
-const CACHE_VERSION = 'fleet-duel-v13';
+const CACHE_VERSION = 'fleet-duel-v15';
 const GAME_FILES = [
   'manifest.webmanifest',
   'apple-touch-icon-v2.png',
@@ -27,6 +27,7 @@ const GAME_FILES = [
   'js/09-opponents-more.js',
   'js/10-difficulty-settings.js',
   'js/11-difficulty-table.js',
+  'js/11b-shared-items.js',
   'js/12-difficulty-engine.js',
   'js/13-map-and-run.js',
   'js/14-game-plinko.js',

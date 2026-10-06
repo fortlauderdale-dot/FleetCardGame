@@ -81,6 +81,7 @@ window.addEventListener('resize', () => {
 });
 // Remembers the last real screen so the Run Dashboard's Back button can return to it instead of the home page.
 let LAST_SCREEN_HTML = null;
+let LAST_SCREEN_SIG = null;
 function render(html) {
   const app = document.getElementById('app');
   if (!String(html).includes('id="leaveRunSummaryBtn"')) LAST_SCREEN_HTML = html;
@@ -91,11 +92,20 @@ function render(html) {
   // reads as the page randomly jumping every time something is tapped. Capturing and restoring the
   // scroll position around the DOM swap keeps the page exactly where it was. Both an immediate and
   // a next-frame restore are needed since that browser-driven scroll can land a frame late.
+  // Only the same screen drawing itself again keeps its scroll position. Moving to a different
+  // screen starts at the top, so the shift down that the battle screen needs does not carry over
+  // and leave other screens sitting awkwardly low.
   const scrollX = window.scrollX,
     scrollY = window.scrollY;
   app.innerHTML = `<div class="game-stage">${html}</div>`;
-  window.scrollTo(scrollX, scrollY);
-  requestAnimationFrame(() => window.scrollTo(scrollX, scrollY));
+  const firstEl = app.querySelector('.game-stage > *');
+  const screenSig = firstEl ? `${firstEl.id}|${firstEl.className}` : '';
+  const sameScreen = screenSig === LAST_SCREEN_SIG;
+  LAST_SCREEN_SIG = screenSig;
+  const keepX = sameScreen ? scrollX : 0,
+    keepY = sameScreen ? scrollY : 0;
+  window.scrollTo(keepX, keepY);
+  requestAnimationFrame(() => window.scrollTo(keepX, keepY));
   if (IN_BATTLE) saveBattleState();
   if (typeof musicSync === 'function') musicSync();
   const mw = app.querySelector('.mapwrap');

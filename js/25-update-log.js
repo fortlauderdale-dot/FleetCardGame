@@ -401,6 +401,7 @@ const UPDATE_LOG = [
       'Match game prizes now use the same colors, icons and font as the resource bar at the top, for pairs and for the end of visit total.',
     ],
     Visual: [
+      'Moving to a new screen now starts at the top. The shift down that the battle screen uses no longer carries over and leaves other screens sitting low.',
       'Home Screen polish: the page no longer scrolls on a phone when there is nothing more to see, the save-moving box sits at the very bottom on one line and can be closed with an X, the Fleet Compound picture sits to the right of a staggered Fleet Duel title, the first-to-beat shoutouts moved down above this log, Best Run and High Score share one size on one line each, the home screen tip is a bigger bright yellow banner you can tap anywhere on, the name box sits next to New Run at the same height with Career Point Upgrades below, and Made by Drew sits small under the title and the feedback line has the footer to itself.',
       'Home Screen cleanup: the Career Points note moved to a one time popup after your first win, the stats now show how far you got (World, name and stop) and your high score, and the Career Points count is on the upgrades button.',
       'The Welcome line is gone. The name box just says Your name.',

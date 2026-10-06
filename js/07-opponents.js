@@ -143,7 +143,7 @@ const WORLD_2_POOLS = {
     },
     {
       id: 'w2_swamp_gas', name: 'Swamp Gas', icon: '🌫️', image: 'Hazards/swamp-gas.png', hp: 50, minTier: 1,
-      drawRate: 2, items: ['w2_toxic_haze']
+      drawRate: 2, startHandSize: 6, items: ['w2_toxic_haze']
     },
     {
       id: 'w2_feral_hogs', name: 'Feral Hog', icon: '🐗', image: 'Hazards/feral-hog.png', hp: 62, minTier: 1,

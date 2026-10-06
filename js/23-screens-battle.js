@@ -558,13 +558,7 @@ function battleScreen() {
       <div class="duelSide opp">
         <div class="sideInfo">
           <h3 style="justify-content:flex-start;gap:6px;flex-wrap:nowrap"><span ` +
-    `style="color:var(--red)">${opp.name}</span>${
-      opp.boss
-        ? ` <span class="hoverTip" style="color:var(--red);` +
-          `font-size:13px" data-title="This is a boss fight - taking too long on a turn costs extra health,` +
-          ` so don't sit on it.">&#9201;</span>`
-        : ''
-    }
+    `style="color:var(--red)">${opp.name}</span>
     ${
       opp.armorRegen
         ? ` <span class="hoverTip" style="color:#5a9fe0;font-weight:800;font-size:11px;` +

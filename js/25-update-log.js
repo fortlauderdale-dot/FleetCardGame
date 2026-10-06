@@ -499,6 +499,8 @@ const UPDATE_LOG = [
       ('World 1 opponent health is no longer capped at 60 for everyone. The cap now grows with each stop on ' +
         'the map, and Elites and the boss get a higher cap, so fights get tougher as you go.'),
       'The +armor per turn note now sits to the right of the opponent\'s name, so it no longer adds a line.',
+      'Removed the boss turn timer. Bosses no longer punish slow turns and the clock beside their name is gone.',
+      'Swamp Gas now starts its fight holding 6 cards and still draws 2 each turn, so its Two Pair attack is a real threat.',
     ],
     Map: [
       'On a phone held upright the map is taller and fills more of the screen.',

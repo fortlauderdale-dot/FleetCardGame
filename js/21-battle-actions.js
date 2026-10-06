@@ -775,24 +775,6 @@ function endTurn() {
     BATTLE.discard.push(...BATTLE.recentDiscard);
     BATTLE.recentDiscard = [];
   }
-  if (BATTLE.opponent.boss && BATTLE.turnStartedAt) {
-    const elapsedSec = (Date.now() - BATTLE.turnStartedAt) / 1000;
-    const graceSec = 25;
-    if (elapsedSec > graceSec) {
-      const slowDmg = Math.min(20, Math.round((elapsedSec - graceSec) / 5) * 3);
-      if (slowDmg > 0) {
-        RUN.health = Math.max(0, RUN.health - slowDmg);
-        battleLog(
-          `Took too long this turn - ${BATTLE.opponent.name} punishes the hesitation ` +
-            `for ${slowDmg} damage! Health: ${RUN.health}/${RUN.maxHealth}.`
-        );
-        BATTLE.lastHit = { amount: slowDmg, source: `${BATTLE.opponent.name} (slow turn)` };
-        playSfx('hurt');
-        flashScreen('hurt');
-        showDamagePopup(slowDmg, 'Took too long this turn');
-      }
-    }
-  }
   if (BATTLE.itemCurses) {
     Object.entries(BATTLE.itemCurses).forEach(([slotKey, amount]) => {
       const itemId = slotKey.replace(/_\d+$/, '');

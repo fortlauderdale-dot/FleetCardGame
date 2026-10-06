@@ -80,7 +80,11 @@ function diffAddItems(scaled, base) {
   const add = DIFF_PATCH.opponents[base.id];
   if (!add) return;
   scaled.items = [...(scaled.items || base.items || [])];
-  add.add.forEach((id) => {
+  // addFirst puts an Item at the far left of the opponent's row, so a rare-to-hit Item is checked first.
+  (add.addFirst || []).slice().reverse().forEach((id) => {
+    if (!scaled.items.includes(id)) scaled.items.unshift(id);
+  });
+  (add.add || []).forEach((id) => {
     if (!scaled.items.includes(id)) scaled.items.push(id);
   });
 }
@@ -398,7 +402,7 @@ function diffReportHTML() {
         rec,
         items:
           (o.items || []).length +
-          (DIFF.moreItems && DIFF_PATCH.opponents[o.id] ? DIFF_PATCH.opponents[o.id].add.length : 0),
+          (DIFF.moreItems && DIFF_PATCH.opponents[o.id] ? DIFF_PATCH.opponents[o.id].add.length + (DIFF_PATCH.opponents[o.id].addFirst || []).length : 0),
       });
   };
   pools.regulars.forEach((o) => add(o, 'Regular'));

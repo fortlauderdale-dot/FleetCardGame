@@ -390,6 +390,7 @@ const UPDATE_LOG = [
         'fire several times a turn, and some cost HP or heal you when fired.'),
     ],
     Opponents: [
+      'Jellyfish Swarm: Bloom (3 Black cards) is now its far left Item and hits for 40 instead of drawing a card, since it is rare to land.',
       'Castle Guard and Castle Champion are now Compound Guard and Compound Champion, to match Compound Overlord.',
       'Anchor Drag now always hits for its listed damage instead of being weakened by difficulty scaling.',
       ('Opponent Items that name a hand now fire on exactly that hand. Feral Beach Cat\'s Claw ' +

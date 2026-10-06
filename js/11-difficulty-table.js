@@ -1733,9 +1733,8 @@ const DIFF_PATCH = {
         count: 3,
       },
       baseMult: 0,
-      drawAmount: 1,
-      drawPerLevel: 0,
-      note: 'Needs 3 Black cards. The swarm swells and closes ranks. Draws 1 card for its next attack.',
+      flatAmount: 40,
+      note: 'Needs 3 Black cards. The swarm swells and closes ranks, then strikes for 40.',
     },
     lab_enforcer_stopwork: {
       id: 'lab_enforcer_stopwork',
@@ -1858,7 +1857,8 @@ const DIFF_PATCH = {
       add: ['lab_frigate_skim'],
     },
     w1_jellyfish_swarm: {
-      add: ['lab_jelly_bloom'],
+      add: [],
+      addFirst: ['lab_jelly_bloom'],
     },
     w2_bull_gator: {
       add: ['lab_gator_lunge'],

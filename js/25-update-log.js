@@ -362,6 +362,8 @@ const UPDATE_LOG = [
       'Pick Your Vehicle now shows a Perk card as well as the ability card.',
     ],
     'Item cards': [
+      ('Surfboard Smack now needs \u03a318+ and hits for a flat 40 (it was \u03a312+ for \u00d71.6, which was too strong). ' +
+        'Total-based Items now show how many cards they accept, like "\u03a318+ (max 3 cards)".'),
       'Gas Leak now hits for the 35 its card promises, and Petty Siphon reads Steal 1 Fuel instead of Attack 0. Neither is used by an opponent yet.',
       ('Weld A Patch and Close The Gates now show the armor they add (Armor 15, Armor 47) instead of Armor 0. ' +
         'Early Escape Hatch now says Drive off, with a hover tip explaining the battle ends and the opponent keeps what it took.'),
@@ -426,6 +428,7 @@ const UPDATE_LOG = [
         'A world can have several songs. They play one after another and cycle, with a crossfade between them. Each world\'s music credit shows at the bottom of its map screen, and the music button shows the title and artist of the song playing.'),
     ],
     Misc: [
+      'Fleet Auction: after each lot, the lot shows who won it and how many coins they paid.',
       ('Fleet Auction: when you pay to inspect a lot, only you learn what it is. Each computer bidder now inspects about half the lots for itself, ' +
         'paying 10 coins from its own pool. Coins you bid are only spent if you win the lot.'),
       'Fuel Efficiency now saves 1 HP per level instead of 2, and the first level costs 45 Career Points.',

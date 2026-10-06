@@ -228,10 +228,10 @@ function openFleetAuction(options) {
         const contents = lot.revealed || lot.resolved ? rewardLabelFor(lot.reward) : '???';
         const status = lot.resolved
           ? lot.won
-            ? `Won for ${lot.currentBid} coins!`
+            ? `<b style="color:var(--green)">Winner: You</b><br>Paid ${lot.currentBid} coins`
             : lot.highBidder
-              ? `Went to ${bidderName(lot.highBidder)} ` + `for ${lot.currentBid} coins`
-              : 'Passed'
+              ? `<b style="color:var(--red)">Winner: ${bidderName(lot.highBidder)}</b><br>Paid ${lot.currentBid} coins`
+              : 'No winner, passed'
           : lot.highBidder
             ? `High bid: ${lot.currentBid} ` + `(${lot.highBidder === 'player' ? 'You' : bidderName(lot.highBidder)})`
             : `Starting bid: ${lot.startBid}`;

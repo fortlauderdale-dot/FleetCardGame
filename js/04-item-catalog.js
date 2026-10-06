@@ -238,8 +238,8 @@ const ITEMS = {
     note: `Needs exactly 2 cards. Drops the claw for a flat 28 damage.` },
   surfboard_smack: {
     id: 'surfboard_smack', name: 'Surfboard Smack', cost: 70, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
-    condition: { type: 'sumThreshold', min: 12 }, baseMult: 1.6,
-    note: `Needs cards totaling 12+. Swings the board for ${SIGMA_TIP} × 1.6 damage.`
+    condition: { type: 'sumThreshold', min: 18 }, flatAmount: 40, flatAmountPerLevel: 5,
+    note: `Needs cards totaling ${SIGMA_TIP}18+, up to 3 cards. Swings the board for a flat 40 damage.`
   },
   life_ring: { id: 'life_ring', name: 'Life Ring', cost: 70, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'any' }, baseMult: 1.3, kind: 'defense', healAmount: 6,

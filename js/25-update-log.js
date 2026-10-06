@@ -493,6 +493,8 @@ const UPDATE_LOG = [
         'own line directly under Difficulty, and the battle type tag sits beside the name.'),
       ('Run Upgrade, Forfeit Run and Run Dashboard are now the same size everywhere. Run Upgrade ' +
         'stays purple, Forfeit Run is red and Run Dashboard is gray.'),
+      ('Stop Details: Battle (or Go) and Close are back at the bottom, directly under the card. ' +
+        'The card now starts at the top of the screen so the buttons stay in view.'),
     ],
     Map: [
       'On a phone held upright the map is taller and fills more of the screen.',

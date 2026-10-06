@@ -885,9 +885,11 @@ html:has(#map-viewport) {
     padding-top: 6px;
   }
 }
-/* Stop Details: Battle / Go and Close sit above the card, so they never end up far down the page. */
+/* Stop Details: the card starts near the top of the screen and Battle / Go and Close sit right under it,
+   so the buttons are never pushed off the bottom edge. */
 .map-popup-overlay.popupBtnsTop {
-  padding-top: 36px;
+  padding-top: 12px;
+  padding-bottom: 24px;
 }
 .popupTopWrap {
   width: 100%;
@@ -899,7 +901,7 @@ html:has(#map-viewport) {
 .popupTopBtns {
   display: flex;
   gap: 8px;
-  margin-bottom: 8px;
+  margin-top: 8px;
 }
 .popupTopWrap .wo,
 .popupTopWrap .wo.wide {

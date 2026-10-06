@@ -291,7 +291,6 @@ function nodePopupScreen(r, c) {
   return (
     `<div class="map-popup-overlay popupBtnsTop">
     <div class="popupTopWrap${info.bigArt ? ' wide' : ''}">
-${buttonsHTML}
     <div class="wo${info.bigArt ? ' wide' : ''}" ` +
     `style="width:100%${info.accent ? `;border-color:${info.accent}` : ''}">
       <div class="wo-stripe" ${info.accent ? `style="background:${info.accent}"` : ''}></div>
@@ -344,6 +343,7 @@ ${buttonsHTML}
         ${rewardsHTML}
       </div>
     </div>
+${buttonsHTML}
     </div>
   </div>`
   );

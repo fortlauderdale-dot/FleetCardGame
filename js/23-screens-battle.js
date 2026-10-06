@@ -565,6 +565,13 @@ function battleScreen() {
           ` so don't sit on it.">&#9201;</span>`
         : ''
     }
+    ${
+      opp.armorRegen
+        ? ` <span class="hoverTip" style="color:#5a9fe0;font-weight:800;font-size:11px;` +
+          `white-space:nowrap;margin-left:auto" data-title="Regenerates ${opp.armorRegen} armor at the start of each of its ` +
+          `turns, with no limit.">+${opp.armorRegen} armor/turn</span>`
+        : ''
+    }
           </h3>
           <div class="bar-wrap"><div class="bar-fill bar-hp" style="width:${hpPct}%"></div><div ` +
     `class="bar-text">${opp.hpNow} / ${opp.hp}</div></div>
@@ -583,13 +590,6 @@ function battleScreen() {
                   : '<span></span>'
             }
             <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
-              ${
-                opp.armorRegen
-                  ? `<span class="hoverTip" style="color:#5a9fe0;font-weight:800;` +
-                    `font-size:13px" data-title="Regenerates ${opp.armorRegen} armor at the start of each of its ` +
-                    `turns, with no limit.">+${opp.armorRegen} armor each turn</span>`
-                  : ''
-              }
               ${
                 BATTLE.opponent.armor > 0
                   ? `<span class="status hoverTip" style="color:#5a7fa8;` +

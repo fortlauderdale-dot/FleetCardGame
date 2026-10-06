@@ -5,12 +5,16 @@
 // ██                                                                                ██
 // ████████████████████████████████████████████████████████████████████████████████████
 
-// World 1 is a soft-difficulty world: any non-castle fight there gets its HP capped and its curse items
+// World 1 is a soft-difficulty world: any non-castle fight there gets its HP capped (the cap grows by row) and its curse items
 // stripped before the fight starts. The same function previews a fight (Stop Details) and starts it
 // (startBattle), so the preview always matches the real fight.
-function effectiveOpponentDef(opponentDef, castleStage = 0) {
+function effectiveOpponentDef(opponentDef, castleStage = 0, row = 0) {
   if (RUN.world === 1 && castleStage === 0) {
-    const cappedHp = Math.min(opponentDef.hp, 60);
+    // The cap rises with each stop on the map: 40 on the first row, 80 at the Fleet Compound, 116 on the last
+    // row. Elites and the boss get 1.5x that, so they stay clearly tougher than regular fights.
+    const rowCap = 40 + 4 * Math.max(0, row || 0);
+    const isTough = opponentDef.boss || /\[Elite\]/.test(opponentDef.name || '');
+    const cappedHp = Math.min(opponentDef.hp, Math.round(isTough ? rowCap * 1.5 : rowCap));
     const cleanItems = (opponentDef.items || []).filter((id) => (ITEMS[id] && ITEMS[id].kind) !== 'curse');
     return { ...opponentDef, hp: cappedHp, items: cleanItems, curse: undefined };
   }
@@ -20,7 +24,7 @@ function startBattle(opponentDef, row, col, castleStage = 0) {
   primeAudioChannel();
   IN_BATTLE = true;
   const nodeDef = RUN.map?.nodes?.[row]?.[col];
-  let oppDef = effectiveOpponentDef(opponentDef, castleStage);
+  let oppDef = effectiveOpponentDef(opponentDef, castleStage, row);
   BATTLE = {
     opponent: {
       ...oppDef,

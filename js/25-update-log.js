@@ -496,6 +496,9 @@ const UPDATE_LOG = [
       ('Stop Details: Battle (or Go) and Close are back at the bottom, directly under the card. ' +
         'The card now starts at the top of the screen so the buttons stay in view.'),
       'The button on a Burn Item is now red with a soft red glow, so it is obvious when you are about to set someone on fire.',
+      ('World 1 opponent health is no longer capped at 60 for everyone. The cap now grows with each stop on ' +
+        'the map, and Elites and the boss get a higher cap, so fights get tougher as you go.'),
+      'The +armor per turn note now sits to the right of the opponent\'s name, so it no longer adds a line.',
     ],
     Map: [
       'On a phone held upright the map is taller and fills more of the screen.',

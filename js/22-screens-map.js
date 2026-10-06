@@ -84,7 +84,7 @@ function nodePopupContent(r, c) {
   if (node.type === 'battle') {
     // Preview the fight using the SAME stat adjustments startBattle actually applies (the World 1
     // HP cap and curse-item strip), so what's shown here always matches what you actually fight and win.
-    const o = effectiveOpponentDef(node.opponent);
+    const o = effectiveOpponentDef(node.opponent, 0, r);
     const isElite = /\[Elite\]/.test(o.name || '');
     const { chipReward, gemReward, fuelReward } = battleRewardsFor(o, r);
     const specialNote =
@@ -482,7 +482,7 @@ function mapScreen() {
       let tip;
       if (!showReal) tip = 'Move closer to scout this stop.';
       else if (node.type === 'battle') {
-        const o = effectiveOpponentDef(node.opponent);
+        const o = effectiveOpponentDef(node.opponent, 0, r);
         tip = `HP: ${o.hp}<br>Draws ${o.drawRate}/turn${o.boss ? '<br><b>World Boss</b>' : ''}${
           node.gridStorm ? '<br><b style="color:var(--red)">Grid Storm: purges ' + 'your hand at end of turn</b>' : ''
         }`;

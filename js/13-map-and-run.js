@@ -47,12 +47,14 @@ function generateMap() {
   // a sudden wall at the boss: row 0 is the world's base strength, and the last highway row before
   // the boss caps out at a flat +20% total. The boss's own multiplier below picks up right where
   // this ramp leaves off, so the boss reads as the natural next step, not a separate jump.
-  const WORLD_RAMP_TOTAL = 0.2;
+  // World 1 stays gentle (+20% across the world). From World 2 on, regulars climb +50% from the first row to the
+  // last, so fights keep building toward the boss instead of staying flat.
+  const WORLD_RAMP_TOTAL = RUN.world >= 2 ? 0.5 : 0.2;
   const lastHighwayRow = rowCounts.length - 1;
-  function scaleHighwayOpponent(base, row) {
+  function scaleHighwayOpponent(base, row, ramp = WORLD_RAMP_TOTAL) {
     const scaled = JSON.parse(JSON.stringify(base));
     const rampFrac = lastHighwayRow > 0 ? Math.min(1, row / lastHighwayRow) : 0;
-    scaled.hp = Math.round(base.hp * worldMultiplier * (1 + WORLD_RAMP_TOTAL * rampFrac));
+    scaled.hp = Math.round(base.hp * worldMultiplier * (1 + ramp * rampFrac));
     return scaled;
   }
   function makeOpponentForRow(row) {
@@ -144,12 +146,15 @@ function generateMap() {
   nodes.push([
     {
       type: 'battle',
-      opponent: diffTuneOpponent(
-        scaleMonsterForNewWorld(bossTemplate, worldMultiplier * (1 + WORLD_RAMP_TOTAL) * 1.15, 6),
-        bossTemplate,
-        20,
-        'boss'
-      ),
+      opponent: (() => {
+        // From World 2 on the boss has only modestly more health than an Elite. Its extra danger comes from
+        // its attacks, which hit 20% harder, and from its bigger hand and extra Items.
+        const bossHpMult = RUN.world >= 2 ? worldMultiplier * 1.3 : worldMultiplier * (1 + WORLD_RAMP_TOTAL) * 1.15;
+        const bossOpp = diffTuneOpponent(scaleMonsterForNewWorld(bossTemplate, bossHpMult, 6), bossTemplate, 20, 'boss');
+        if (RUN.world >= 2 && !bossTemplate.fixedNumbers)
+          bossOpp.diffDmgScale = +((bossOpp.diffDmgScale || 1) * 1.2).toFixed(3);
+        return bossOpp;
+      })(),
       lane: 1,
     },
   ]);
@@ -191,7 +196,7 @@ function generateMap() {
     if (nodes[eliteRow] && nodes[eliteRow].length) {
       const col = idx === 0 ? nodes[eliteRow].length - 1 : 0;
       const eliteBase = shuffledElites[idx % shuffledElites.length];
-      const eliteOpp = diffTuneOpponent(scaleHighwayOpponent(eliteBase, eliteRow), eliteBase, eliteRow, 'elite');
+      const eliteOpp = diffTuneOpponent(scaleHighwayOpponent(eliteBase, eliteRow, 0.2), eliteBase, eliteRow, 'elite');
       eliteOpp.name = `${eliteBase.name} [Elite]`;
       nodes[eliteRow][col] = { type: 'battle', opponent: eliteOpp, lane: nodes[eliteRow][col].lane };
     }

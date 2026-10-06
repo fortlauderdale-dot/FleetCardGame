@@ -458,7 +458,7 @@ function art(entity, px) {
 }
 const PLAYER_ART = { name: 'Your Fleet', icon: '🚚', image: 'Vehicles/work-truck.png' };
 function fleetLabel() {
-  return META.playerName ? `${META.playerName}'s Fleet` : 'Your Fleet';
+  return META.playerName || 'You';
 }
 function roadExitLabel() {
   return `Back to ${WORLD_NAMES[RUN && RUN.world] || WORLD_NAMES[1]}`;

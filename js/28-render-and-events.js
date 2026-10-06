@@ -65,6 +65,8 @@ function battleLayoutPass() {
   if (document.getElementById('battle-viewport')) fitDuelNames();
 }
 function scrollBattleToBoard() {
+  // The battle screen has no pictures above the board any more, so nothing needs to scroll down to it.
+  return;
   if (!isPhonePortrait()) return;
   requestAnimationFrame(() =>
     requestAnimationFrame(() => {

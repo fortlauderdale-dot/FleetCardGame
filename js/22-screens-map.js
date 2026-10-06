@@ -35,7 +35,7 @@ function currencyBar(extraHTML = '') {
     `abilities.">${ICON.energy} ${RUN.energy}/${RUN.maxEnergy} <span class="curLbl">Energy</span></div>
     <div class="cur pts" data-title="Career Points carry over between playthroughs and only buy ` +
     `Permanent Upgrades.">${ICON.star} ${META.points} <span class="curLbl">Career Points</span></div>
-    <div style="margin-left:auto;display:flex;` +
+    <div style="display:flex;` +
     `gap:6px">${
       META.devModeActive ? `<button class="wo-btn gray runBarBtn" id="devPanelBtn">` + `[🛠️ DEV]</button>` : ''
     }<button ` +
@@ -92,13 +92,10 @@ function nodePopupContent(r, c) {
         ? `<div class="note" style="margin-top:4px">Draws ` +
           `+${o.special.amount || 1} card${(o.special.amount || 1) > 1 ? 's' : ''} into its hand every time you ` +
           `land a direct hit on it.</div>`
-        : o.startPoolBonus
-          ? `<div class="note" style="margin-top:4px">Starts the fight ` +
-            `with ${o.startPoolBonus} extra card${o.startPoolBonus > 1 ? 's' : ''} already in hand.</div>`
-          : o.special?.type === 'lifesteal'
-            ? `<div class="note" style="margin-top:4px">` +
-              `Heals ${Math.round((o.special.pct || 0.5) * 100)}% of the damage its attacks deal.</div>`
-            : '';
+        : o.special?.type === 'lifesteal'
+          ? `<div class="note" style="margin-top:4px">` +
+            `Heals ${Math.round((o.special.pct || 0.5) * 100)}% of the damage its attacks deal.</div>`
+          : '';
     const headsUpNote = opponentHeadsUp(o)
       .map((n) => `<div class="note" style="margin-top:4px;color:#ffb0a8">` + `<b>Heads up:</b> ${n}</div>`)
       .join('');
@@ -125,7 +122,7 @@ function nodePopupContent(r, c) {
       bigArt: true,
       rewardsInline,
       titleTag: o.boss ? '<span class="stopBossTag">World Boss</span>' : '',
-      rows: [['HP', `${o.hp}${armorTag}`], ['Draws', `${o.drawRate}/turn`], ...diffDifficultyRow(o, diff)],
+      rows: [['HP', `${o.hp}${armorTag}`], ['Cards', `Starts with ${o.drawRate + (o.startPoolBonus || 0)}, draws ${o.drawRate}/turn`], ...diffDifficultyRow(o, diff)],
       itemsHTML: `<div class="popupItemRow">${opponentAttackBoxHTML(o)}</div>`,
       extra: `${specialNote}${headsUpNote}${
         o.boss
@@ -483,7 +480,7 @@ function mapScreen() {
       if (!showReal) tip = 'Move closer to scout this stop.';
       else if (node.type === 'battle') {
         const o = effectiveOpponentDef(node.opponent, 0, r);
-        tip = `HP: ${o.hp}<br>Draws ${o.drawRate}/turn${o.boss ? '<br><b>World Boss</b>' : ''}${
+        tip = `HP: ${o.hp}<br>Starts with ${o.drawRate + (o.startPoolBonus || 0)}, draws ${o.drawRate}/turn${o.boss ? '<br><b>World Boss</b>' : ''}${
           node.gridStorm ? '<br><b style="color:var(--red)">Grid Storm: purges ' + 'your hand at end of turn</b>' : ''
         }`;
       } else if (node.type === 'shop') tip = 'Dealership - buy and sell Items.';

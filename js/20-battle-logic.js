@@ -8,7 +8,39 @@
 // World 1 is a soft-difficulty world: any non-castle fight there gets its HP capped (the cap grows by row) and its curse items
 // stripped before the fight starts. The same function previews a fight (Stop Details) and starts it
 // (startBattle), so the preview always matches the real fight.
+// Most opponents used to start with 2 cards and draw 2 a turn, which made fights feel samey. Every opponent now gets a
+// hand profile picked from its id (so it is always the same for a given opponent): some start with a big hand and draw
+// slowly, some start modest and draw 3, and so on. Opponents that already set their own starting cards are left alone.
+// Each entry is [change to cards drawn per turn, extra cards held at the start].
+const HAND_MIX_REGULAR = [[0, 2], [0, 3], [0, 4], [1, 0], [1, 1], [-1, 5]];
+const HAND_MIX_HARD_HANDS = [[0, 2], [0, 3]];
+const HAND_MIX_ELITE = [[0, 2], [0, 3], [1, 1]];
+function opponentHandMix(def, castleStage, row) {
+  if (castleStage > 0 || def.startPoolBonus != null || def.startHandSize != null) return def;
+  const id = String(def.id || def.name || '');
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
+  const draw = def.drawRate || 2;
+  const isElite = /\[Elite\]/.test(def.name || '');
+  let delta = 0;
+  let bonus = 2;
+  if (def.boss) bonus = 2;
+  else {
+    const list = isElite ? HAND_MIX_ELITE : draw >= 3 ? HAND_MIX_HARD_HANDS : HAND_MIX_REGULAR;
+    [delta, bonus] = list[h % list.length];
+  }
+  // World 1 stays gentle early on: no faster draws before row 5, and the starting hand grows as the map goes on.
+  if (RUN.world === 1 && !def.boss) {
+    if (delta > 0 && (row || 0) < 5) {
+      delta = 0;
+      bonus = Math.max(bonus, 2);
+    }
+    bonus = Math.max(1, Math.min(bonus, 1 + Math.floor(Math.max(0, row || 0) / 2)));
+  }
+  return { ...def, drawRate: Math.max(1, draw + delta), startPoolBonus: bonus };
+}
 function effectiveOpponentDef(opponentDef, castleStage = 0, row = 0) {
+  let def = opponentDef;
   if (RUN.world === 1 && castleStage === 0) {
     // The cap rises with each stop on the map: 40 on the first row, 80 at the Fleet Compound, 116 on the last
     // row. Elites and the boss get 1.5x that, so they stay clearly tougher than regular fights.
@@ -16,9 +48,9 @@ function effectiveOpponentDef(opponentDef, castleStage = 0, row = 0) {
     const isTough = opponentDef.boss || /\[Elite\]/.test(opponentDef.name || '');
     const cappedHp = Math.min(opponentDef.hp, Math.round(isTough ? rowCap * 1.5 : rowCap));
     const cleanItems = (opponentDef.items || []).filter((id) => (ITEMS[id] && ITEMS[id].kind) !== 'curse');
-    return { ...opponentDef, hp: cappedHp, items: cleanItems, curse: undefined };
+    def = { ...opponentDef, hp: cappedHp, items: cleanItems, curse: undefined };
   }
-  return opponentDef;
+  return opponentHandMix(def, castleStage, row);
 }
 function startBattle(opponentDef, row, col, castleStage = 0) {
   primeAudioChannel();
@@ -113,8 +145,8 @@ function startBattle(opponentDef, row, col, castleStage = 0) {
   }
   if (row === 0 && col === 0 && !META.hasSeenTutorial && typeof window.renderCombatTrainingStep === 'function')
     setTimeout(() => window.renderCombatTrainingStep(1), 100);
-  if (opponentDef.startPoolBonus) {
-    drawOpponentPoolCards(opponentDef.startPoolBonus);
+  if (oppDef.startPoolBonus) {
+    drawOpponentPoolCards(oppDef.startPoolBonus);
   }
   for (let i = 0; i < 1 + META.levels.reveal; i++) {
     const hidden = BATTLE.oppPool.filter((c) => !c.revealed);

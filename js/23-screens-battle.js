@@ -215,7 +215,7 @@ function battleScreen() {
               : hypKind === 'poison'
                 ? 'poison'
                 : hypKind === 'burn'
-                  ? 'burn (1st turn)'
+                  ? 'burn'
                   : hypKind === 'curse'
                     ? 'curse'
                     : 'damage';
@@ -424,7 +424,7 @@ function battleScreen() {
         );
       })()}
       <div>
-        <div style="margin-top:4px">
+        <div class="itemChipRow">
           ${
             ready && (usesLeft > 0 || isChargingUnlockItem || frozenState) && cooldownLeft <= 0
               ? `<span class="attackChip ${eKind === 'defense' ? 'defendChip' : eKind === 'burn' ? 'burnChip' : ''}" ` +
@@ -468,8 +468,6 @@ function battleScreen() {
         <button class="wo-btn red runBarBtn" id="forfeitRunBtn">Forfeit Run</button>
       </div>`)}</div>
     <div class="panel duelHead">
-      <div class="duelArt you"><div class="artZoomTrigger" ` +
-    `data-artzoom="you">${art(HEROES[RUN.hero?.heroId] || PLAYER_ART, 72)}</div></div>
       <div class="duelSide you">
         <div class="sideInfo">
           <h3 style="justify-content:flex-end"><span style="color:var(--blue)">${fleetLabel()}</span></h3>
@@ -656,7 +654,6 @@ function battleScreen() {
           </div>
         </div>
       </div>
-      <div class="duelArt opp"><div class="artZoomTrigger" data-artzoom="opp">${art(opp, 72)}</div></div>
     </div>
     <div class="duelBoard">
       <div class="panel">

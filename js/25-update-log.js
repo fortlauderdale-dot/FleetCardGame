@@ -430,6 +430,8 @@ const UPDATE_LOG = [
         'A world can have several songs. They play one after another and cycle, with a crossfade between them. Each world\'s music credit shows at the bottom of its map screen, and the music button shows the title and artist of the song playing.'),
     ],
     Misc: [
+      ('Gem Draw now works any time your hand is under its max, and it can take you past the max. Cards sitting in Item slots no longer ' +
+        'count against it, which is why it said Hand full when you could see room. Item cards that deal flat damage no longer show their upgrade math.'),
       'Fleet Auction: after each lot, the lot shows who won it and how many coins they paid.',
       ('Fleet Auction: when you pay to inspect a lot, only you learn what it is. Each computer bidder now inspects about half the lots for itself, ' +
         'paying 10 coins from its own pool. Coins you bid are only spent if you win the lot.'),

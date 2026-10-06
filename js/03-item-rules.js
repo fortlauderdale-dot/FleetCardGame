@@ -285,7 +285,7 @@ function computeItemAmountBase(item, cards, level, condResult, isOpponent) {
     const amount = Math.round((item.flatAmount + (item.flatAmountPerLevel || 0) * level) * worldMult);
     return {
       amount,
-      breakdown: `flat ${item.flatAmount}${item.flatAmountPerLevel ? ` +${item.flatAmountPerLevel}/lv` : ''}`,
+      breakdown: `flat ${amount}`,
     };
   }
   let mult = item.baseMult ?? condResult.mult ?? 1;

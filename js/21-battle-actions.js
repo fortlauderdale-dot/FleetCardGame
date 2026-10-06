@@ -192,7 +192,8 @@ function opponentPlannedAttackCards(maxCards) {
 }
 function drawWithGem() {
   if (RUN.gems < 1) return;
-  if (BATTLE.hand.length >= RUN.handSize) {
+  // A gem draw works any time you are below your max hand, and it may take you past the max.
+  if (visibleHandCount() >= RUN.handSize) {
     battleLog('Hand is full - no room to draw with a gem right now.');
     render(battleScreen());
     return;
@@ -200,7 +201,7 @@ function drawWithGem() {
   RUN.gems -= 1;
   const n = 1 + META.levels.gem + Number(RUN.runUpgrades?.gemDraw || 0);
   const before = BATTLE.hand.length;
-  drawCards(n, false); // unlike an item's own draw power, a gem draw should never push the hand over max size
+  drawCards(n, true);
   const drawn = BATTLE.hand
     .slice(before)
     .map((c) => `${rankLabel(c.rank)}${c.suit}`)

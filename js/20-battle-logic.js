@@ -176,6 +176,13 @@ function reshuffleSharedDeck() {
   BATTLE.deck = shuffle([...BATTLE.deck, ...BATTLE.discard].filter((c) => !live.has(c.cid)));
   BATTLE.discard = [];
 }
+// Cards you can still see in your hand. Cards sitting in Item slots, staged to discard or already used this turn do not count.
+function visibleHandCount() {
+  const assigned = new Set(Object.values(BATTLE.slots || {}).flat());
+  return BATTLE.hand.filter(
+    (c, i) => !assigned.has(i) && !BATTLE.turnDiscard.includes(i) && !BATTLE.usedThisTurn.has(i)
+  ).length;
+}
 function drawCards(n, allowOverflow = false) {
   for (let i = 0; i < n; i++) {
     if (!allowOverflow && BATTLE.hand.length >= RUN.handSize) break;

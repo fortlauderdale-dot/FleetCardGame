@@ -674,7 +674,7 @@ function battleScreen() {
             : ''
         }
         <div class="handWorkspace"><div class="handCapacity hoverTip" data-title="Your Maximum ` +
-    `Hand Size. New cards cannot be drawn past this cap.">Max ${RUN.handSize}</div><div ` +
+    `Hand Size. Drawing stops at this cap, but a gem draw works while you are under it and can take you past it.">Max ${RUN.handSize}</div><div ` +
     `class="hand">${handHTML}</div></div>
         ${
           BATTLE.turnDiscard.length
@@ -722,16 +722,16 @@ function battleScreen() {
           })()}
           <button class="wo-btn purple" id="gemDrawBtn" style="padding:6px 3px;font-size:10px;` +
     `flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;` +
-    `text-overflow:ellipsis" ${RUN.gems < 1 || BATTLE.hand.length >= RUN.handSize ? 'disabled' : ''} ${
-      BATTLE.hand.length >= RUN.handSize
+    `text-overflow:ellipsis" ${RUN.gems < 1 || visibleHandCount() >= RUN.handSize ? 'disabled' : ''} ${
+      visibleHandCount() >= RUN.handSize
         ? 'data-title="Your hand is full ' +
           '(' +
-          BATTLE.hand.length +
+          visibleHandCount() +
           '/' +
           RUN.handSize +
           ('). Play or discard a card to make ' + 'room."')
         : ''
-    }>${BATTLE.hand.length >= RUN.handSize && RUN.gems >= 1 ? 'Hand full' : `Draw = ${GEM_DRAW_COST} ${ICON.gem}`}</button>
+    }>${visibleHandCount() >= RUN.handSize && RUN.gems >= 1 ? 'Hand full' : `Draw = ${GEM_DRAW_COST} ${ICON.gem}`}</button>
           <button class="wo-btn gray" id="discardSelectedBtn" style="padding:6px 3px;` +
     `font-size:10px;flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;` +
     `text-overflow:ellipsis" data-title="Fold selected cards face-down instead of playing ` +

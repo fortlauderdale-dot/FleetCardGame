@@ -98,7 +98,7 @@ function itemBonusLineHTML(item, level) {
 }
 function describeCondition(cond) {
   if (!cond || cond.type === 'any') return 'Any cards';
-  if (cond.type === 'exactCount') return `Any ${cond.count} cards`;
+  if (cond.type === 'exactCount') return `Exactly ${cond.count} cards`;
   if (cond.type === 'pokerTier') return cond.tier === 0 ? 'Any card' : TIERS[cond.tier];
   if (cond.type === 'straightLen') return `${cond.len}-card Straight`;
   if (cond.type === 'suitCount') return `${cond.count}+ ${cond.suit}`;
@@ -183,11 +183,11 @@ function itemRequirementText(item) {
   else if (cond?.type === 'straightLen') specific = `${cond.len}-card ${kw('Straight')}`;
   else if (cond?.type === 'sumThreshold') specific = `${SIGMA_TIP}${cond.min}+`;
   else if (cond?.type === 'sumExact') specific = `${SIGMA_TIP} = ${cond.value}`;
-  else if (cond?.type === 'exactCount') specific = cond.count === 1 ? 'Any card' : `Any ${cond.count} cards`;
+  else if (cond?.type === 'exactCount') specific = cond.count === 1 ? 'Any card' : `Exactly ${cond.count} cards`;
   else if (cond?.type === 'pokerTier' && cond.tier > 0)
     specific = cond.tier === 5 ? kw('Flush') : cond.tier === 4 ? kw('Straight') : TIERS[cond.tier];
   else if (cond?.type === 'any')
-    specific = cond.exactCount === 1 ? 'Any card' : cond.exactCount ? `Any ${cond.exactCount} ` + `cards` : '';
+    specific = cond.exactCount === 1 ? 'Any card' : cond.exactCount ? `Exactly ${cond.exactCount} ` + `cards` : '';
   if (
     cond?.exactCount != null &&
     cond?.type !== 'exactCount' &&

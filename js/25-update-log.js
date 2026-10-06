@@ -368,7 +368,7 @@ const UPDATE_LOG = [
         'they can no longer drift apart. Names and behavior are unchanged.'),
       'Every Item card is now the same size. Long names and tall requirement lines no longer stretch a card.',
       ('Item card wording is consistent: card totals always use \u03a3 (like \u03a310+), suit counts read ' +
-        '3+ like color counts, and "Any 2 cards" replaces "exactly 2 cards".'),
+        '3+ like color counts. Items that need an exact number of cards read "Exactly 2 cards".'),
       'Item cards with a multiplier now show the summation symbol too, like Attack \u03a3 \u00d72, so it is clear what is being multiplied.',
       'Opponent Item cards now show the damage they really do, so a card that says 8 hits for 8.',
       ('Items that name a poker hand now fire on exactly that hand. A Pair Item no longer works ' +

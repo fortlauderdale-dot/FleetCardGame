@@ -918,17 +918,10 @@ function battleScreen() {
         ? (() => {
             const T = BATTLE.targeting;
             const verb = targetVerb(T.type);
-            const tName = T.targetKey ? ITEMS[T.targetKey.replace(/_\d+$/, '')]?.name || 'this item' : null;
             return (
               `<div class="targetBar"><div ` +
-              `class="targetBarText">${
-                tName
-                  ? `${verb} ${tName}?`
-                  : `Pick one of ${BATTLE.opponent.name}'s items ` + `to ${verb.toLowerCase()}`
-              }</div>
+              `class="targetBarText">Tap one of ${BATTLE.opponent.name}'s items to ${verb.toLowerCase()}</div>
         <button class="wo-btn gray" id="cancelTargetingBtn" style="padding:8px 12px;font-size:12px">Cancel</button>
-        <button class="wo-btn ${T.type === 'ice' ? 'purple' : 'amber'}" ` +
-              `id="confirmTargetingBtn" style="padding:8px 14px;font-size:12px" ${tName ? '' : 'disabled'}>${verb} &#9654;</button>
       </div>`
             );
           })()

@@ -1393,9 +1393,11 @@ function render(html) {
       (el.onclick = () => {
         const k = el.dataset.targetkey;
         if (BATTLE.targeting) {
-          BATTLE.targeting.targetKey = BATTLE.targeting.targetKey === k ? null : k;
-          saveRun();
-          render(battleScreen());
+          // Tapping a pickable card does the action right away (Burn, Freeze, Curse or Hex).
+          const T = BATTLE.targeting;
+          T.targetKey = k;
+          executePlayerAttack(T.itemId, T.index);
+          scrollBattleToBoard();
           return;
         }
         if (!BATTLE.pendingTarget) return;

@@ -42,6 +42,12 @@ function renderStandardItemCard(item, opts = {}) {
             : ''
         }</div>`
       : '';
+  // While picking a target for Burn, Freeze, Curse or Hex, every pickable card shows the action over it. Tapping the card does it.
+  const pickOverlayHTML = pickKey
+    ? `<div class="pickActionOverlay"><span>${
+        typeof BATTLE !== 'undefined' && BATTLE && BATTLE.targeting ? targetVerb(BATTLE.targeting.type) : 'Select'
+      }</span></div>`
+    : '';
   const dragAttrs = pickKey
     ? ` data-targetkey="${pickKey}" data-title="Tap to select ${item.name}" style="cursor:pointer"`
     : burnTargetKey
@@ -102,7 +108,7 @@ function renderStandardItemCard(item, opts = {}) {
             `class="itemCard-sec">${footerHTML}</div></div>`
           : ''
       }
-      ${burnOverlayHTML}
+      ${burnOverlayHTML}${pickOverlayHTML}
     </div>`
     );
   }
@@ -213,7 +219,7 @@ function renderStandardItemCard(item, opts = {}) {
         ${footerHTML != null ? footerHTML : frozenState ? `<div class="note" style="margin:0">Frozen solid</div>` : `${staticKindLine}${unlockLine}`}
       </div>
     </div>
-    ${burnOverlayHTML}
+    ${burnOverlayHTML}${pickOverlayHTML}
   </div>`
   );
 }

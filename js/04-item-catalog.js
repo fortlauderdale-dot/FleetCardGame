@@ -272,8 +272,8 @@ const ITEMS = {
   },
   full_pressure_hose: {
     id: 'full_pressure_hose', name: 'Full-Pressure Hose', cost: 70, maxCards: 3, usesPerTurn: 1,
-    usesPerTurnPerLevel: 1, condition: { type: 'sumThreshold', min: 10 }, flatAmount: 12, flatAmountPerLevel: 3,
-    note: `Cards played must add up to ${SIGMA_TIP}10+. Blasts for a flat 12 damage at full pressure.`
+    usesPerTurnPerLevel: 1, condition: { type: 'sumThreshold', min: 10 }, flatAmount: 34, flatAmountPerLevel: 5,
+    note: `Cards played must add up to ${SIGMA_TIP}10+. Blasts for a flat 34 damage at full pressure.`
   },
   afff_foam_cannon: {
     id: 'afff_foam_cannon', name: 'AFFF Foam Cannon', cost: 95, maxCards: 4, usesPerTurn: 1, usesPerTurnPerLevel: 1,

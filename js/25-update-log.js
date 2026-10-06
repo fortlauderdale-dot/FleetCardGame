@@ -362,7 +362,7 @@ const UPDATE_LOG = [
       'Pick Your Vehicle now shows a Perk card as well as the ability card.',
     ],
     'Item cards': [
-      ('Total-based flat attacks were far too strong for how easy they are to hit, since even a Pair can not reach that high. They now hit about as hard as their total: Surfboard Smack is \u03a318+ for 20 (was \u03a312+ for \u00d71.6), Full-Pressure Hose is \u03a310+ for 12 (was 34), and Pallet Drop is \u03a38+ for 10 (was 20). ' +
+      ('Total-based flat attacks were far too strong for how easy they are to hit, since even a Pair can not reach that high. They now hit about as hard as their total: Surfboard Smack is \u03a318+ for 20 (was \u03a312+ for \u00d71.6), Pallet Drop is \u03a38+ for 10 (was 20). ' +
         'Total-based Items now show how many cards they accept, like "\u03a318+ (max 3 cards)".'),
       'Gas Leak now hits for the 35 its card promises, and Petty Siphon reads Steal 1 Fuel instead of Attack 0. Neither is used by an opponent yet.',
       ('Weld A Patch and Close The Gates now show the armor they add (Armor 15, Armor 47) instead of Armor 0. ' +

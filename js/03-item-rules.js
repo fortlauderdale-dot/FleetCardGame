@@ -160,6 +160,8 @@ function sumCardsNote(max) {
 function itemRequirementText(item) {
   if (item.followUp) return "Only if left Item didn't fire";
   const max = effectiveMaxCards(item);
+  // Flat-damage Items hit for the same amount no matter how many extra cards go in, so their card never shows a card cap.
+  const flatOnly = item.flatAmount != null && !(item.baseMult > 0);
   let cond = item.condition;
   if (item.id === 'drawstone' && cond?.type === 'sumThreshold')
     cond = { ...cond, min: Math.max(4, cond.min - utilityLevel('drawstone')) };
@@ -181,11 +183,11 @@ function itemRequirementText(item) {
   else if (cond?.type === 'exactRank') {
     const rk = String(rankLabel(cond.rank));
     const aRank = `${/^(8|Ace)/.test(rk) ? 'An' : 'A'} ${rk}`;
-    specific = cond.requireAll ? `All ${rk}s` : max > 1 ? `${aRank} in up to ${max} cards` : aRank;
+    specific = cond.requireAll ? `All ${rk}s` : max > 1 && !flatOnly ? `${aRank} in up to ${max} cards` : aRank;
   }
   else if (cond?.type === 'straightLen') specific = `${cond.len}-card ${kw('Straight')}`;
-  else if (cond?.type === 'sumThreshold') specific = `${SIGMA_TIP}${cond.min}+${item.flatAmount != null && !(item.baseMult > 0) ? '' : sumCardsNote(max)}`;
-  else if (cond?.type === 'sumExact') specific = `${SIGMA_TIP} = ${cond.value}${sumCardsNote(max)}`;
+  else if (cond?.type === 'sumThreshold') specific = `${SIGMA_TIP}${cond.min}+${flatOnly ? '' : sumCardsNote(max)}`;
+  else if (cond?.type === 'sumExact') specific = `${SIGMA_TIP} = ${cond.value}${flatOnly ? '' : sumCardsNote(max)}`;
   else if (cond?.type === 'exactCount') specific = cond.count === 1 ? 'Any card' : `Exactly ${cond.count} cards`;
   else if (cond?.type === 'pokerTier' && cond.tier > 0)
     specific = cond.tier === 5 ? kw('Flush') : cond.tier === 4 ? kw('Straight') : TIERS[cond.tier];
@@ -199,7 +201,7 @@ function itemRequirementText(item) {
     specific
   )
     specific = `${specific} (${cond.exactCount === 1 ? '1 card' : `${cond.exactCount} cards`})`;
-  const base = max === 1 ? 'Any card' : `Up to ${max} cards`;
+  const base = max === 1 || flatOnly ? 'Any card' : `Up to ${max} cards`;
   return specific || base;
 }
 // The flat number an opponent's Item really hits for, after world and difficulty scaling.

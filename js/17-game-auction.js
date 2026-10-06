@@ -5,12 +5,15 @@
 // ██                                                                                ██
 // ████████████████████████████████████████████████████████████████████████████████████
 // Three mystery lots, bid on one at a time against two computer bidders with different behavior. Pay a flat coin
-// fee to inspect a lot before bidding on it, or bid blind. Passing walks away from that lot for free at any point.
+// fee to inspect a lot before bidding on it, or bid blind. Each computer bidder inspects about half the lots for itself, paying 10 coins. Passing walks away from that lot for free at any point.
 // A lot resolves the moment no bidder wants to raise further - if that's you, it's yours for the current bid; if
 // it's a computer, it's gone. Opened with openFleetAuction({ onComplete(haul) }).
 
 const FLEET_AUCTION_CONFIG = {
   inspectCost: 5,
+  // Each computer bidder pays this from its own pool to inspect a lot, for itself only. Your inspection does not tell them anything.
+  botInspectCost: 10,
+  botInspectChance: 0.5,
   bidIncrement: 5,
   // Computer bidders never bid past a lot's real value (blind ranges sit well under it, revealed
   // ranges top out at exactly its value), so a lot can never cost the player more than it is
@@ -125,6 +128,9 @@ function openFleetAuction(options) {
           blind: roll(b.blindRange),
           revealed: roll(b.revealedRange),
           interested: Math.random() >= b.skipChance,
+          // Whether this bot will pay to inspect this lot, and whether it already has.
+          inspects: Math.random() < FLEET_AUCTION_CONFIG.botInspectChance,
+          paid: false,
         };
       }
       return {
@@ -273,12 +279,21 @@ function openFleetAuction(options) {
     renderLots();
     renderControls();
   }
+  let inspectNotes = [];
   function computerRespond(lot) {
     let best = null;
+    inspectNotes = [];
     for (const bidder of FLEET_AUCTION_CONFIG.bidders) {
       if (lot.highBidder === bidder.id) continue;
-      if (!lot.caps[bidder.id].interested) continue;
-      const cap = lot.revealed ? lot.caps[bidder.id].revealed : lot.caps[bidder.id].blind;
+      const bc = lot.caps[bidder.id];
+      if (!bc.interested) continue;
+      // A bot only knows what the lot is if it paid to inspect it itself. Your inspection does not count.
+      if (bc.inspects && !bc.paid && state.bidderChips[bidder.id] >= FLEET_AUCTION_CONFIG.botInspectCost) {
+        state.bidderChips[bidder.id] -= FLEET_AUCTION_CONFIG.botInspectCost;
+        bc.paid = true;
+        inspectNotes.push(`${bidder.name} paid ${FLEET_AUCTION_CONFIG.botInspectCost} coins to inspect the lot.`);
+      }
+      const cap = bc.paid ? bc.revealed : bc.blind;
       const nextBid = lot.currentBid + FLEET_AUCTION_CONFIG.bidIncrement;
       // A bidder also needs the coins in its own remaining pool to raise, not just to stay under its
       // willingness-to-pay cap.
@@ -303,11 +318,11 @@ function openFleetAuction(options) {
     playSfx('buy');
     const counter = computerRespond(lot);
     if (counter) {
-      message.textContent = `${counter.name} counters at ${lot.currentBid} coins.`;
+      message.textContent = `${counter.name} counters at ${lot.currentBid} coins.` + (inspectNotes.length ? ' ' + inspectNotes.join(' ') : '');
       renderLots();
       renderControls();
     } else {
-      message.textContent = `No other bidders. Lot ${state.lotIndex + 1} is yours for ${lot.currentBid} coins!`;
+      message.textContent = `No other bidders. Lot ${state.lotIndex + 1} is yours for ${lot.currentBid} coins!` + (inspectNotes.length ? ' ' + inspectNotes.join(' ') : '');
       winLot(lot);
     }
   }

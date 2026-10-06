@@ -426,6 +426,8 @@ const UPDATE_LOG = [
         'A world can have several songs. They play one after another and cycle, with a crossfade between them. Each world\'s music credit shows at the bottom of its map screen, and the music button shows the title and artist of the song playing.'),
     ],
     Misc: [
+      ('Fleet Auction: when you pay to inspect a lot, only you learn what it is. Each computer bidder now inspects about half the lots for itself, ' +
+        'paying 10 coins from its own pool. Coins you bid are only spent if you win the lot.'),
       'Fuel Efficiency now saves 1 HP per level instead of 2, and the first level costs 45 Career Points.',
       'Sound effects now play on iPhones even when the silent switch is on.',
       'The revive from Limp Home now asks with an in-game pop-up instead of a browser box.',

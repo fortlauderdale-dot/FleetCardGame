@@ -149,6 +149,10 @@ function parityWordHTML(parity) {
 function itemNameClass(name) {
   return String(name || '').length > 20 ? 'hdr hdrLong' : 'hdr';
 }
+// "2-3" when the Item takes a range of cards, just "3" when it takes exactly that many.
+function countRangeText(count, max) {
+  return max > count ? `${count}-${max}` : `${count}`;
+}
 function itemRequirementText(item) {
   if (item.followUp) return "Only if left Item didn't fire";
   const max = effectiveMaxCards(item);
@@ -160,16 +164,22 @@ function itemRequirementText(item) {
     specific =
       cond.count === 1
         ? max > 1
-          ? `1-${max} ${suitMicroCardHTML(cond.suit)} ` + `cards`
+          ? `1-${max} ${suitMicroCardHTML(cond.suit)}`
           : `Any ${suitMicroCardHTML(cond.suit)}`
-        : `${cond.count}+ ${suitMicroCardHTML(cond.suit)}`;
+        : `${countRangeText(cond.count, max)} ${suitMicroCardHTML(cond.suit)}`;
   else if (cond?.type === 'colorCount')
-    specific = `${cond.count}+ ${kw(cond.color === 'red' ? 'Red' : 'Black')} ` + `cards`;
+    specific = `${countRangeText(cond.count, max)} ${kw(cond.color === 'red' ? 'Red' : 'Black')} ` + `cards`;
+  else if (cond?.type === 'suitCountExact')
+    specific = cond.count === 0 ? `No ${suitMicroCardHTML(cond.suit)}` : `Exactly ${cond.count} ${suitMicroCardHTML(cond.suit)}`;
   else if (cond?.type === 'allSuits') specific = `1 of each ${kw('Suit')}`;
   else if (cond?.type === 'cardIn') specific = describeCondition(cond);
   else if (cond?.type === 'parity') specific = `Up to ${max} ${parityWordHTML(cond.parity)} cards`;
   else if (cond?.type === 'exactRank')
-    specific = cond.requireAll ? `All ${rankLabel(cond.rank)}s` : `Any ${rankLabel(cond.rank)}`;
+    specific = cond.requireAll
+        ? `All ${rankLabel(cond.rank)}s`
+        : max > 1
+          ? `${/^(8|Ace)/.test(String(rankLabel(cond.rank))) ? 'An' : 'A'} ${rankLabel(cond.rank)} in up to ${max} cards`
+          : `Any ${rankLabel(cond.rank)}`;
   else if (cond?.type === 'straightLen') specific = `${cond.len}-card ${kw('Straight')}`;
   else if (cond?.type === 'sumThreshold') specific = `${SIGMA_TIP}${cond.min}+`;
   else if (cond?.type === 'sumExact') specific = `${SIGMA_TIP} = ${cond.value}`;
@@ -178,9 +188,15 @@ function itemRequirementText(item) {
     specific = cond.tier === 5 ? kw('Flush') : cond.tier === 4 ? kw('Straight') : TIERS[cond.tier];
   else if (cond?.type === 'any')
     specific = cond.exactCount === 1 ? 'Any card' : cond.exactCount ? `Any ${cond.exactCount} ` + `cards` : '';
-  if (cond?.exactCount != null && cond?.type !== 'exactCount' && cond?.type !== 'any' && specific)
+  if (
+    cond?.exactCount != null &&
+    cond?.type !== 'exactCount' &&
+    cond?.type !== 'any' &&
+    !(cond?.count === cond.exactCount && (cond.type === 'colorCount' || cond.type === 'suitCount')) &&
+    specific
+  )
     specific = `${specific} (${cond.exactCount === 1 ? '1 card' : `${cond.exactCount} cards`})`;
-  const base = max === 1 ? '1 card' : `Up to ${max} cards`;
+  const base = max === 1 ? 'Any card' : `Up to ${max} cards`;
   return specific || base;
 }
 // The flat number an opponent's Item really hits for, after world and difficulty scaling.

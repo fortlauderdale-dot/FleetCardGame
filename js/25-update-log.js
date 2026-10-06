@@ -362,6 +362,8 @@ const UPDATE_LOG = [
       'Pick Your Vehicle now shows a Perk card as well as the ability card.',
     ],
     'Item cards': [
+      ('Requirement lines now match what each Item really accepts. Black Top Blitz reads "2-3 Black cards" ' +
+        'instead of "2+", and the same fix applies to every Red, Black and suit Item that takes a range of cards.'),
       ('Opponent Items that were the same card with only a different name now share one card, so ' +
         'they can no longer drift apart. Names and behavior are unchanged.'),
       'Every Item card is now the same size. Long names and tall requirement lines no longer stretch a card.',

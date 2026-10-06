@@ -143,9 +143,8 @@ function nodePopupContent(r, c) {
   if (node.type === 'shop')
     return {
       title: 'Dealership',
-      art: iconImg('node-dealership.png', ICON.cart, 64),
+      art: iconImg('node-dealership.png', '', 64),
       heroImg: 'Icons/node-dealership.png',
-      heroFallback: ICON.cart,
       rows: [],
       extra: '<div class="note">Buy a vehicle with ' + 'coins.</div>',
       actionLabel: 'Enter',
@@ -153,19 +152,17 @@ function nodePopupContent(r, c) {
   if (node.type === 'rest')
     return {
       title: 'Service Station',
-      art: iconImg('node-service-station.png', ICON.wrench, 64),
+      art: iconImg('node-service-station.png', '', 64),
       heroImg: 'Icons/node-service-station.png',
-      heroFallback: ICON.wrench,
       rows: [],
-      extra: '<div class="note">Restore 30 ' + 'health.</div>',
+      extra: '<div class="note">Restore 30 health or buy fuel.</div>',
       actionLabel: 'Go Here',
     };
   if (node.type === 'blacksmith')
     return {
       title: 'Tuning Garage',
-      art: iconImg('node-tuning-garage.png', ICON.hammer, 64),
+      art: iconImg('node-tuning-garage.png', '', 64),
       heroImg: 'Icons/node-tuning-garage.png',
-      heroFallback: ICON.hammer,
       rows: [],
       extra:
         '<div class="note">Spend coins to permanently boost a ' +
@@ -175,9 +172,8 @@ function nodePopupContent(r, c) {
   if (node.type === 'chopshop')
     return {
       title: 'Chop Shop',
-      art: iconImg('node-chop-shop.png', ICON.curse, 64),
+      art: iconImg('node-chop-shop.png', '', 64),
       heroImg: 'Icons/node-chop-shop.png',
-      heroFallback: ICON.curse,
       rows: [],
       extra:
         '<div class="note">Spend coins to convert an Item to ' + 'poison, burn, or curse, or add card slots.</div>',
@@ -186,9 +182,8 @@ function nodePopupContent(r, c) {
   if (node.type === 'overdrive')
     return {
       title: 'Overdrive Bay',
-      art: iconImg('node-overdrive-bay.png', ICON.energy, 64),
+      art: iconImg('node-overdrive-bay.png', '', 64),
       heroImg: 'Icons/node-overdrive-bay.png',
-      heroFallback: ICON.energy,
       rows: [],
       extra: '<div class="note">Spend coins to add uses per turn to ' + 'your equipped Items.</div>',
       actionLabel: 'Go Here',
@@ -196,9 +191,8 @@ function nodePopupContent(r, c) {
   if (node.type === 'treasure')
     return {
       title: node.big ? 'Big Supply Cache' : 'Supply Cache',
-      art: iconImg('node-supply-cache.png', ICON.gift, 64),
+      art: iconImg('node-supply-cache.png', '', 64),
       heroImg: 'Icons/node-supply-cache.png',
-      heroFallback: ICON.gift,
       rows: [],
       extra: `<div class="note">${
         node.big
@@ -213,7 +207,6 @@ function nodePopupContent(r, c) {
       title: 'Grid Anomaly',
       art: glyph(JOKER_MAP_ICON),
       heroImg: 'Hazards/joker-map.png',
-      heroFallback: '🃏',
       rows: [],
       centerTitle: true,
       extra:
@@ -224,9 +217,8 @@ function nodePopupContent(r, c) {
   if (node.type === 'plinko_hazard')
     return {
       title: 'Fleet Plinko',
-      art: iconImg('node-fleet-plinko.png', '🎯', 64),
+      art: iconImg('node-fleet-plinko.png', '', 64),
       heroImg: 'Icons/node-fleet-plinko.png',
-      heroFallback: '🎯',
       rows: [],
       extra: `<div class="note">A Plinko board found out on the ` + `road: drop chips for coins, fuel, or gems.</div>`,
       actionLabel: 'Go Here',
@@ -234,9 +226,8 @@ function nodePopupContent(r, c) {
   if (node.type === 'blackjack_hazard')
     return {
       title: 'Fleet Blackjack',
-      art: iconImg('node-fleet-blackjack.png', '♠️', 64),
+      art: iconImg('node-fleet-blackjack.png', '', 64),
       heroImg: 'Icons/node-fleet-blackjack.png',
-      heroFallback: '♠️',
       rows: [],
       extra: `<div class="note">A roadside Blackjack table: draw and ` + `Stand against the dealer for a haul.</div>`,
       actionLabel: 'Go Here',
@@ -244,9 +235,8 @@ function nodePopupContent(r, c) {
   if (node.type === 'poker_hazard')
     return {
       title: 'Fleet Poker',
-      art: iconImg('node-fleet-poker.png', '♣️', 64),
+      art: iconImg('node-fleet-poker.png', '', 64),
       heroImg: 'Icons/node-fleet-poker.png',
-      heroFallback: '♣️',
       rows: [],
       extra:
         `<div class="note">A roadside Hold'em table: build your ` + `best hands against the dealer for a haul.</div>`,
@@ -255,18 +245,16 @@ function nodePopupContent(r, c) {
   if (node.type === 'auction_hazard')
     return {
       title: 'Fleet Auction',
-      art: iconImg('node-fleet-auction.png', '🔨', 64),
+      art: iconImg('node-fleet-auction.png', '', 64),
       heroImg: 'Icons/node-fleet-auction.png',
-      heroFallback: '🔨',
       rows: [],
       extra: `<div class="note">A pop-up Fleet Auction: bid for ` + `coins, fuel, gems, or Items.</div>`,
       actionLabel: 'Go Here',
     };
   return {
     title: 'Fleet Compound',
-    art: iconImg('node-fleet-compound.png', ICON.castle, 64),
+    art: iconImg('node-fleet-compound.png', '', 64),
     heroImg: 'Icons/node-fleet-compound.png',
-    heroFallback: ICON.castle,
     rows: [],
     extra: '<div class="note">Battles, the Dealership, refueling, ' + 'a card match game, and more.</div>',
     actionLabel: 'Go Here',
@@ -340,8 +328,7 @@ ${buttonsHTML}
         </div>
         ${
           info.heroImg
-            ? `<div class="popupHeroArt"><img src="${info.heroImg}" alt="" ` +
-              `onerror="this.outerHTML='<div class=&quot;popupHeroFallback&quot;>${info.heroFallback || ''}</div>'"></div>`
+            ? `<div class="popupHeroArt"><img src="${info.heroImg}" alt=""></div>`
             : ''
         }
         ${
@@ -500,7 +487,7 @@ function mapScreen() {
           node.gridStorm ? '<br><b style="color:var(--red)">Grid Storm: purges ' + 'your hand at end of turn</b>' : ''
         }`;
       } else if (node.type === 'shop') tip = 'Dealership - buy and sell Items.';
-      else if (node.type === 'rest') tip = 'Restore 30 health.';
+      else if (node.type === 'rest') tip = 'Restore 30 health or buy fuel.';
       else if (node.type === 'blacksmith') tip = 'Spend coins to permanently boost a card, rank, or suit for this run.';
       else if (node.type === 'chopshop')
         tip = 'Spend coins to convert an Item to poison, burn, or ' + 'curse, or add card slots.';

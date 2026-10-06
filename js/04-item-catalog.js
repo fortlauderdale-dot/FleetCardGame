@@ -237,9 +237,9 @@ const ITEMS = {
     condition: { type: 'exactCount', count: 2 }, flatAmount: 28,
     note: `Needs exactly 2 cards. Drops the claw for a flat 28 damage.` },
   surfboard_smack: {
-    id: 'surfboard_smack', name: 'Surfboard Smack', cost: 70, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
+    id: 'surfboard_smack', name: 'Surfboard Smack', cost: 70, maxCards: 12, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'sumThreshold', min: 18 }, flatAmount: 20, flatAmountPerLevel: 4,
-    note: `Needs cards totaling ${SIGMA_TIP}18+, up to 3 cards. Swings the board for a flat 20 damage.`
+    note: `Needs cards totaling ${SIGMA_TIP}18+. Swings the board for a flat 20 damage.`
   },
   life_ring: { id: 'life_ring', name: 'Life Ring', cost: 70, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'any' }, baseMult: 1.3, kind: 'defense', healAmount: 6,
@@ -271,7 +271,7 @@ const ITEMS = {
     note: `Needs a Pair. Burn damage for ${SIGMA_TIP} - it's not supposed to start fires, but here we are.`
   },
   full_pressure_hose: {
-    id: 'full_pressure_hose', name: 'Full-Pressure Hose', cost: 70, maxCards: 3, usesPerTurn: 1,
+    id: 'full_pressure_hose', name: 'Full-Pressure Hose', cost: 70, maxCards: 12, usesPerTurn: 1,
     usesPerTurnPerLevel: 1, condition: { type: 'sumThreshold', min: 10 }, flatAmount: 34, flatAmountPerLevel: 5,
     note: `Cards played must add up to ${SIGMA_TIP}10+. Blasts for a flat 34 damage at full pressure.`
   },

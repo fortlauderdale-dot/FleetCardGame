@@ -411,6 +411,8 @@ const UPDATE_LOG = [
       'Match game prizes now use the same colors, icons and font as the resource bar at the top, for pairs and for the end of visit total.',
     ],
     Visual: [
+      ('Stop Details pictures for map stops (like Overdrive Bay) now show the full artwork with no emoji stand-in. The Service Station note now says you can heal or buy fuel.'),
+      ('Full-Pressure Hose and Surfboard Smack no longer have a card limit, since their damage is a flat number.'),
       'Burn, Freeze, Curse and Hex targeting: every Item you can pick now shows the action (like Burn) over the card, see-through so you can still read it. Tap the card to do it. The bottom button is gone.',
       'Stop Details: the Battle (or Go) and Close buttons now sit at the top of the popup, above the card, so you never scroll to reach them.',
       'Moving to a new screen now starts at the top. The shift down that the battle screen uses no longer carries over and leaves other screens sitting low.',

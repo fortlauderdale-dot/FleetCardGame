@@ -5,8 +5,9 @@
 // ██                                                                                ██
 // ████████████████████████████████████████████████████████████████████████████████████
 
-// One track per world (keys 1 to 8) plus 'home' for the Home Screen. A world with no entry stays quiet.
-// To add a track: put the MP3 in music/, add a line here, and add the file to sw.js (then bump CACHE_VERSION).
+// Tracks per world (keys 1 to 8) plus 'home' for the Home Screen. A world with no entry stays quiet.
+// A key holds one track, or a list of tracks in [ ] that play one after another and cycle (with a crossfade between songs).
+// To add a track: put the MP3 in music/, add it here, and add the file to sw.js (then bump CACHE_VERSION).
 // credit is shown on the Home Screen and in the music panel.
 const MUSIC_TRACKS = {
   home: {
@@ -82,7 +83,8 @@ function saveMusicPrefs() {
 }
 
 let MUSIC_MASTER = null; // gain node every track runs through (volume lives here)
-let MUSIC_NOW = null; // { key, src, gain } for the track that is playing or fading in
+let MUSIC_NOW = null; // { key, id, track, src, gain } for the track that is playing or fading in
+const MUSIC_NEXT = {}; // which song in a world's list plays next
 let MUSIC_WANT = null; // the track key the screen wants right now ('home', 1 to 8, or null)
 const MUSIC_BUFFERS = {}; // decoded tracks by key
 const MUSIC_LOADING = {}; // in-flight loads by key
@@ -99,11 +101,16 @@ function musicMaster() {
   return MUSIC_MASTER;
 }
 
-function musicLoad(key) {
+// A world's songs as a list, whether it was set up with one track or several.
+function musicList(key) {
+  const t = MUSIC_TRACKS[key];
+  return !t ? [] : Array.isArray(t) ? t : [t];
+}
+function musicLoad(id, track) {
+  const key = id;
   if (MUSIC_BUFFERS[key]) return Promise.resolve(MUSIC_BUFFERS[key]);
   if (MUSIC_LOADING[key]) return MUSIC_LOADING[key];
   const ctx = getAudioCtx();
-  const track = MUSIC_TRACKS[key];
   if (!ctx || !track) return Promise.resolve(null);
   MUSIC_LOADING[key] = fetch(track.src)
     .then((r) => {
@@ -133,11 +140,13 @@ function musicStopTrack(t, fade) {
   } catch (e) {}
 }
 
-// Plays the track for `key` (crossfading from whatever is playing) or fades to silence when there is none.
+// Plays the music for `key` (crossfading from whatever is playing) or fades to silence when there is none.
+// With several songs, the next one starts on its own a few seconds before the current one ends.
 function musicPlay(key) {
   MUSIC_WANT = key;
   setTimeout(musicRefreshPanel, 0);
-  if (!MUSIC_PREFS.on || !key || !MUSIC_TRACKS[key]) {
+  const list = key ? musicList(key) : [];
+  if (!MUSIC_PREFS.on || !list.length) {
     if (MUSIC_NOW) {
       musicStopTrack(MUSIC_NOW, MUSIC_FADE_SECONDS);
       MUSIC_NOW = null;
@@ -148,15 +157,26 @@ function musicPlay(key) {
   const ctx = getAudioCtx();
   const master = musicMaster();
   if (!ctx || !master) return;
-  musicLoad(key).then((buf) => {
+  if (MUSIC_NEXT[key] == null) MUSIC_NEXT[key] = Math.floor(Math.random() * list.length);
+  const index = MUSIC_NEXT[key] % list.length;
+  musicStartSong(key, index);
+}
+function musicStartSong(key, index) {
+  const list = musicList(key);
+  const track = list[index];
+  const ctx = getAudioCtx();
+  if (!track || !ctx) return;
+  const id = `${key}:${index}`;
+  const stale = () => MUSIC_WANT !== key || !MUSIC_PREFS.on || (MUSIC_NOW && MUSIC_NOW.id === id);
+  musicLoad(id, track).then((buf) => {
     // The screen may have changed while the file was loading.
-    if (!buf || MUSIC_WANT !== key || !MUSIC_PREFS.on || (MUSIC_NOW && MUSIC_NOW.key === key)) return;
+    if (!buf || stale()) return;
     const start = () => {
-      if (MUSIC_WANT !== key || !MUSIC_PREFS.on || (MUSIC_NOW && MUSIC_NOW.key === key)) return;
+      if (stale()) return;
       try {
         const src = ctx.createBufferSource();
         src.buffer = buf;
-        src.loop = true;
+        src.loop = list.length === 1;
         const gain = ctx.createGain();
         const now = ctx.currentTime;
         gain.gain.setValueAtTime(0, now);
@@ -165,13 +185,28 @@ function musicPlay(key) {
         gain.connect(musicMaster());
         src.start(now);
         if (MUSIC_NOW) musicStopTrack(MUSIC_NOW, MUSIC_FADE_SECONDS);
-        MUSIC_NOW = { key, src, gain };
+        const entry = { key, id, track, src, gain };
+        MUSIC_NOW = entry;
+        MUSIC_NEXT[key] = (index + 1) % list.length;
         musicRefreshPanel();
+        if (list.length > 1) musicWatchEnd(entry, now, buf.duration, key, index);
       } catch (e) {}
     };
     if (ctx.state === 'running') start();
     else ctx.resume().then(start).catch(() => {});
   });
+}
+// Starts the next song a few seconds before this one ends. Uses the audio clock, so it waits while the app is in the background.
+function musicWatchEnd(entry, startedAt, duration, key, index) {
+  const ctx = getAudioCtx();
+  if (!ctx) return;
+  const check = () => {
+    if (MUSIC_NOW !== entry) return;
+    const left = startedAt + duration - MUSIC_FADE_SECONDS - ctx.currentTime;
+    if (left > 0.25) return void setTimeout(check, Math.min(left, 5) * 1000);
+    musicStartSong(key, (index + 1) % musicList(key).length);
+  };
+  setTimeout(check, 1000);
 }
 
 // Called after every screen draw. Home Screen plays 'home', anything during a run plays that world's track.
@@ -187,26 +222,31 @@ function musicSync() {
 
 // What the panel shows for the track that belongs to the current screen (one track per world).
 function musicNowText() {
-  const key = MUSIC_NOW ? MUSIC_NOW.key : MUSIC_WANT;
-  const t = key ? MUSIC_TRACKS[key] : null;
+  const t = MUSIC_NOW ? MUSIC_NOW.track : null;
   return t ? `Now playing: ${t.title} by ${t.artist}` : 'No music for this screen yet';
 }
 function musicCreditText() {
   return Object.values(MUSIC_TRACKS)
+    .flatMap((t) => (Array.isArray(t) ? t : [t]))
     .map((t) => t.credit)
     .filter(Boolean)
     .join(' | ');
 }
 // The credit for a world's track shows at the bottom of that world's map screen.
+function musicCurrentCredit() {
+  const first = typeof RUN !== 'undefined' && RUN ? musicList(RUN.world)[0] : null;
+  const t = MUSIC_NOW && typeof RUN !== 'undefined' && RUN && MUSIC_NOW.key === RUN.world ? MUSIC_NOW.track : first;
+  return t && t.credit ? t.credit : '';
+}
 function musicShowMapCredit() {
   const caption = document.querySelector('#app .regionCaption');
   if (!caption || document.getElementById('musicCredit')) return;
-  const track = typeof RUN !== 'undefined' && RUN ? MUSIC_TRACKS[RUN.world] : null;
-  if (!track || !track.credit) return;
+  const track = musicCurrentCredit();
+  if (!track) return;
   const line = document.createElement('div');
   line.id = 'musicCredit';
   line.className = 'musicCredit';
-  line.textContent = 'Music: ' + track.credit;
+  line.textContent = 'Music: ' + track;
   caption.insertAdjacentElement('afterend', line);
 }
 
@@ -225,6 +265,8 @@ function musicRefreshPanel() {
   if (status) status.textContent = musicAudioStatus();
   const credit = document.getElementById('musicPanelCredit');
   if (credit) credit.textContent = musicNowText();
+  const mapCredit = document.getElementById('musicCredit');
+  if (mapCredit && musicCurrentCredit()) mapCredit.textContent = 'Music: ' + musicCurrentCredit();
 }
 function musicApplyPrefs() {
   saveMusicPrefs();

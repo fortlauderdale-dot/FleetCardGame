@@ -60,7 +60,7 @@ Each file starts with a dark boxed title. Search for `██` to jump between se
 - Battle screen look: 23-screens-battle, 02-battle-board.css, 06-phone-battle.css
 - Battle rules: 20-battle-logic, 21-battle-actions
 - Difficulty numbers: 10-difficulty-settings
-- New music track: music/ folder, MUSIC_TRACKS in 30-music, sw.js (file list and CACHE_VERSION), 25-update-log
+- New music track (a world can list several in [ ] and they cycle): music/ folder, MUSIC_TRACKS in 30-music, sw.js (file list and CACHE_VERSION), 25-update-log
 - Bonus games: the matching file in 14 to 18 and 07-minigames.css
 
 ## Offline play

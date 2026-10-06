@@ -153,7 +153,7 @@ function itemNameClass(name) {
 function countRangeText(count, max) {
   return max > count ? `${count}-${max}` : `${count}`;
 }
-// Total-based Items accept any number of cards up to their limit, so the card says what that limit is.
+// Total-based Items that multiply the total accept any number of cards up to their limit, so the card says what that limit is. Flat-damage ones do not need it, since extra cards add nothing.
 function sumCardsNote(max) {
   return max > 1 ? ` (max ${max} cards)` : '';
 }
@@ -184,7 +184,7 @@ function itemRequirementText(item) {
     specific = cond.requireAll ? `All ${rk}s` : max > 1 ? `${aRank} in up to ${max} cards` : aRank;
   }
   else if (cond?.type === 'straightLen') specific = `${cond.len}-card ${kw('Straight')}`;
-  else if (cond?.type === 'sumThreshold') specific = `${SIGMA_TIP}${cond.min}+${sumCardsNote(max)}`;
+  else if (cond?.type === 'sumThreshold') specific = `${SIGMA_TIP}${cond.min}+${item.flatAmount != null && !(item.baseMult > 0) ? '' : sumCardsNote(max)}`;
   else if (cond?.type === 'sumExact') specific = `${SIGMA_TIP} = ${cond.value}${sumCardsNote(max)}`;
   else if (cond?.type === 'exactCount') specific = cond.count === 1 ? 'Any card' : `Exactly ${cond.count} cards`;
   else if (cond?.type === 'pokerTier' && cond.tier > 0)

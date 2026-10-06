@@ -495,6 +495,7 @@ const UPDATE_LOG = [
         'stays purple, Forfeit Run is red and Run Dashboard is gray.'),
       ('Stop Details: Battle (or Go) and Close are back at the bottom, directly under the card. ' +
         'The card now starts at the top of the screen so the buttons stay in view.'),
+      'The button on a Burn Item is now red with a soft red glow, so it is obvious when you are about to set someone on fire.',
     ],
     Map: [
       'On a phone held upright the map is taller and fills more of the screen.',

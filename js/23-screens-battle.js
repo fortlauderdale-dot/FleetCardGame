@@ -427,7 +427,7 @@ function battleScreen() {
         <div style="margin-top:4px">
           ${
             ready && (usesLeft > 0 || isChargingUnlockItem || frozenState) && cooldownLeft <= 0
-              ? `<span class="attackChip ${eKind === 'defense' ? 'defendChip' : ''}" ` +
+              ? `<span class="attackChip ${eKind === 'defense' ? 'defendChip' : eKind === 'burn' ? 'burnChip' : ''}" ` +
                 `data-attack="${slotKey}" style="font-size:10px; padding:3px ` +
                 `6px">${BATTLE.targeting && BATTLE.targeting.slotKey === slotKey ? (BATTLE.targeting.targetKey ? targetVerb(BATTLE.targeting.type) + ' ▶' : 'Pick a target') : frozenState ? 'Feed Cards ▶' : item.unlockThreshold != null ? (isChargingUnlockItem ? 'Deposit Card(s) ▶' : 'Draw ▶') : eKind === 'defense' ? 'Defend ▶' : item.flatAmount == null && (item.baseMult ?? 1) === 0 && (item.drawAmount || item.drawUsesCardCount) ? 'Draw ▶' : 'Attack ▶'}</span>`
               : ''

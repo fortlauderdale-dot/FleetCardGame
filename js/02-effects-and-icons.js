@@ -485,7 +485,8 @@ function opponentAttackBoxHTML(opp, showStatus) {
           frozenState: frozenAmt || null,
           burnedAmt: burnedNow || null,
           burnedStep: burnedStepNow,
-          burnedDetonateKey: burnedNow ? key : null,
+          // No Detonate button while you are choosing a target, so tapping a burning Item adds to its burn instead.
+          burnedDetonateKey: burnedNow && !pendingBurn && !tgt ? key : null,
           burnTargetKey: isBurnTarget ? key : null,
           burnTargetAmount: isBurnTarget ? pendingBurn.amount : null,
           pickKey: tgtElig && tgtElig.has(key) ? key : null,

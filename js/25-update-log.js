@@ -503,6 +503,7 @@ const UPDATE_LOG = [
       ('The battle screen no longer shows the two pictures, so it opens right at the board and no longer scrolls on its own. Your name shows without the word Fleet. Run Dashboard now sits right beside Career Points. A card dropped into an Item no longer makes the Item taller, and a burn preview no longer says 1st turn.'),
       ('Opponents now come in a mix of starting hands and draw rates instead of almost all starting with 2 cards and drawing 2. Some start with a big hand and draw slowly, some draw 3 a turn, and Elites hold more. Stop Details shows how many cards each starts with and draws.'),
       'Swamp Gas now starts its fight holding 6 cards (it still draws 2 each turn).',
+      'Fixed Burn stacking. While you are picking a target, a burning Item no longer shows Detonate, so tapping it adds your new burn on top of the old one.',
       'On every Item card the uses number moved to the bottom left corner, and the name is now centered across the whole card.',
       'Flat-damage Item cards no longer show a card limit, since extra cards add nothing. This covers Dockmaster Blowup, Compressor Blowout, Trap Snap, Constrict, Gas Leak, Major Gas Leak and Weld A Patch.',
     ],

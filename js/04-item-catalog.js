@@ -392,7 +392,7 @@ const ITEMS = {
     condition: { type: 'pokerTier', tier: 1 }, baseMult: 1, opponentEffect: 'stealFuel',
     note: 'Needs a Pair. Hits you and siphons a bit of your fuel.' },
   opp_weld_patch: { id: 'opp_weld_patch', name: 'Weld A Patch', maxCards: 2, usesPerTurn: 1, kind: 'defense',
-    condition: { type: 'any' }, flatAmount: 0, opponentEffect: 'reinforceArmor',
+    condition: { type: 'any' }, flatAmount: 0, opponentEffect: 'reinforceArmor', reinforceAmount: 15,
     note: 'Needs any card. Deals no damage, but reinforces its own armor by 15.' },
   opp_tidal_slam: { id: 'opp_tidal_slam', name: 'Tidal Slam', maxCards: 4, usesPerTurn: 1,
     condition: { type: 'pokerTier', tier: 3 }, baseMult: 1, kind: 'burn',

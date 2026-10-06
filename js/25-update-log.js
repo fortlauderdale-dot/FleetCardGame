@@ -362,6 +362,8 @@ const UPDATE_LOG = [
       'Pick Your Vehicle now shows a Perk card as well as the ability card.',
     ],
     'Item cards': [
+      ('Weld A Patch and Close The Gates now show the armor they add (Armor 15, Armor 47) instead of Armor 0. ' +
+        'Early Escape Hatch now says Drive off, with a hover tip explaining the battle ends and the opponent keeps what it took.'),
       ('World 7 and 8 opponent multipliers are rounded to match the rest of the game (like \u00d72.2 instead of ' +
         '\u00d72.18). Freeze cards now read "Freeze 14" instead of "Frozen: 14 to thaw". Charge cards all read ' +
         '"Charges at 75, then Attack 65" or "Charges at 45, then Draw 4".'),

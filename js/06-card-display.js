@@ -162,7 +162,15 @@ function renderStandardItemCard(item, opts = {}) {
         `at ${effUnlockThreshold}${item.id === 'impound_release' ? ', then Draw 4' : item.flatAmount ? `, then Attack ${item.flatAmount}` : ''}</span></div>`
       : '';
   const staticKindLine =
-    footerHTML == null && item.unlockThreshold == null ? `<div class="note" style="margin:0">${formatKindAmount(item, kindTag, opponentFlatShown(item, scaleOpp))}</div>` : '';
+    footerHTML == null && item.unlockThreshold == null
+      ? `<div class="note" style="margin:0">${
+          item.opponentEffect === 'earlyEscape'
+            ? `<span class="hoverTip" data-title="Battle ends. The opponent keeps everything it took in battle.">Drive off</span>`
+            : item.opponentEffect === 'reinforceArmor'
+              ? formatKindAmount(item, kindTag, item.reinforceAmount || 15)
+              : formatKindAmount(item, kindTag, opponentFlatShown(item, scaleOpp))
+        }</div>`
+      : '';
   const cardHTML = cards
     .map((c, i) => {
       const handIdx = opts.idxs ? opts.idxs[i] : i;

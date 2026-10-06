@@ -407,7 +407,7 @@ const UPDATE_LOG = [
     Audio: [
       ('Added background music for the Home Screen and Worlds 1, 2 and 4 to 8. Worlds without a track stay quiet. ' +
         'The round music button in the corner turns music on or off, sets the volume and has a Test sound effect button. ' +
-        'Each world\'s music credit shows at the bottom of its map screen.'),
+        'Each world\'s music credit shows at the bottom of its map screen, and the music button shows the title and artist of the song playing.'),
     ],
     Misc: [
       'Fuel Efficiency now saves 1 HP per level instead of 2, and the first level costs 45 Career Points.',

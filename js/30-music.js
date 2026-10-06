@@ -130,6 +130,7 @@ function musicStopTrack(t, fade) {
 // Plays the track for `key` (crossfading from whatever is playing) or fades to silence when there is none.
 function musicPlay(key) {
   MUSIC_WANT = key;
+  setTimeout(musicRefreshPanel, 0);
   if (!MUSIC_PREFS.on || !key || !MUSIC_TRACKS[key]) {
     if (MUSIC_NOW) {
       musicStopTrack(MUSIC_NOW, MUSIC_FADE_SECONDS);
@@ -159,6 +160,7 @@ function musicPlay(key) {
         src.start(now);
         if (MUSIC_NOW) musicStopTrack(MUSIC_NOW, MUSIC_FADE_SECONDS);
         MUSIC_NOW = { key, src, gain };
+        musicRefreshPanel();
       } catch (e) {}
     };
     if (ctx.state === 'running') start();
@@ -177,6 +179,12 @@ function musicSync() {
   }
 }
 
+// What the panel shows for the track that belongs to the current screen (one track per world).
+function musicNowText() {
+  const key = MUSIC_NOW ? MUSIC_NOW.key : MUSIC_WANT;
+  const t = key ? MUSIC_TRACKS[key] : null;
+  return t ? `Now playing: ${t.title} by ${t.artist}` : 'No music for this screen yet';
+}
 function musicCreditText() {
   return Object.values(MUSIC_TRACKS)
     .map((t) => t.credit)
@@ -210,7 +218,7 @@ function musicRefreshPanel() {
   const status = document.getElementById('musicStatus');
   if (status) status.textContent = musicAudioStatus();
   const credit = document.getElementById('musicPanelCredit');
-  if (credit) credit.textContent = musicCreditText();
+  if (credit) credit.textContent = musicNowText();
 }
 function musicApplyPrefs() {
   saveMusicPrefs();

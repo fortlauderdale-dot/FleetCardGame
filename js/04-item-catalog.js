@@ -351,9 +351,8 @@ const ITEMS = {
     note: `Needs cards totaling ${SIGMA_TIP}25+. A massive flat hit.` },
   opp_gas_leak: {
     id: 'opp_gas_leak', name: 'Gas Leak', maxCards: 5, usesPerTurn: 1, condition: { type: 'any' }, baseMult: 0,
-    flatAmount: 0,
-    note: (`<span style="color:var(--purple)">Building pressure from drawn cards. Deals no ` +
-      `damage until it erupts for a flat 35, then resets.</span>`)
+    flatAmount: 35,
+    note: 'Needs any card. Hits for a flat 35.'
   },
   opp_major_gas_leak: {
     id: 'opp_major_gas_leak', name: 'Major Gas Leak', maxCards: 5, usesPerTurn: 1, condition: { type: 'any' },

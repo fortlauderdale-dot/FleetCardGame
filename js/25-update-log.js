@@ -362,6 +362,7 @@ const UPDATE_LOG = [
       'Pick Your Vehicle now shows a Perk card as well as the ability card.',
     ],
     'Item cards': [
+      'Gas Leak now hits for the 35 its card promises, and Petty Siphon reads Steal 1 Fuel instead of Attack 0. Neither is used by an opponent yet.',
       ('Weld A Patch and Close The Gates now show the armor they add (Armor 15, Armor 47) instead of Armor 0. ' +
         'Early Escape Hatch now says Drive off, with a hover tip explaining the battle ends and the opponent keeps what it took.'),
       ('World 7 and 8 opponent multipliers are rounded to match the rest of the game (like \u00d72.2 instead of ' +

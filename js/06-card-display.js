@@ -166,7 +166,9 @@ function renderStandardItemCard(item, opts = {}) {
       ? `<div class="note" style="margin:0">${
           item.opponentEffect === 'earlyEscape'
             ? `<span class="hoverTip" data-title="Battle ends. The opponent keeps everything it took in battle.">Drive off</span>`
-            : item.opponentEffect === 'reinforceArmor'
+            : item.opponentEffect === 'stealFuel' && !item.flatAmount && !(item.baseMult > 0)
+              ? `<span class="hoverTip" data-title="Deals no damage. Steals 1 Fuel from your tank.">Steal 1 Fuel</span>`
+              : item.opponentEffect === 'reinforceArmor'
               ? formatKindAmount(item, kindTag, item.reinforceAmount || 15)
               : formatKindAmount(item, kindTag, opponentFlatShown(item, scaleOpp))
         }</div>`

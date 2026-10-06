@@ -170,10 +170,11 @@ function musicPlay(key) {
 function musicSync() {
   const app = document.getElementById('app');
   const onHome = !!(app && app.querySelector('#startRunBtn, #continueRunBtn'));
-  if (onHome) {
-    musicShowCredits();
-    musicPlay('home');
-  } else if (typeof RUN !== 'undefined' && RUN && RUN.world) musicPlay(RUN.world);
+  if (onHome) musicPlay('home');
+  else if (typeof RUN !== 'undefined' && RUN && RUN.world) {
+    musicShowMapCredit();
+    musicPlay(RUN.world);
+  }
 }
 
 function musicCreditText() {
@@ -182,15 +183,17 @@ function musicCreditText() {
     .filter(Boolean)
     .join(' | ');
 }
-function musicShowCredits() {
-  const text = musicCreditText();
-  const footer = document.querySelector('#app .homeFooter');
-  if (!text || !footer || document.getElementById('musicCredit')) return;
+// The credit for a world's track shows at the bottom of that world's map screen.
+function musicShowMapCredit() {
+  const caption = document.querySelector('#app .regionCaption');
+  if (!caption || document.getElementById('musicCredit')) return;
+  const track = typeof RUN !== 'undefined' && RUN ? MUSIC_TRACKS[RUN.world] : null;
+  if (!track || !track.credit) return;
   const line = document.createElement('div');
   line.id = 'musicCredit';
   line.className = 'musicCredit';
-  line.textContent = 'Music: ' + text;
-  footer.insertAdjacentElement('afterend', line);
+  line.textContent = 'Music: ' + track.credit;
+  caption.insertAdjacentElement('afterend', line);
 }
 
 // ---- Controls: a small round button that opens a panel with on/off, volume and a sound test ----

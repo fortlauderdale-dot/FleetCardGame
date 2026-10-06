@@ -616,4 +616,4 @@ body {
 .musicVolRow { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
 .musicVolRow input { flex: 1; min-width: 0; }
 .musicSmall { font-size: 11px; opacity: 0.8; margin-top: 4px; word-break: break-word; }
-.musicCredit { font-size: 11px; opacity: 0.7; text-align: center; margin-top: 6px; }
+.musicCredit { font-size: 11px; opacity: 0.7; text-align: center; margin: 4px 0 2px; }

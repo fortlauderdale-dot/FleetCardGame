@@ -347,13 +347,27 @@ function itemModBaseValue(id, index) {
     (converted ? itemKindConvertCost() : 0)
   );
 }
-// One sell price used for both the number on the card and the coins you get. Never NaN.
+// What an Item would cost to buy. Items sold in the Dealership use their real cost. Items with no cost (opponent
+// Items you can still win, such as a Dungeon prize) get a made-up price from their power, rounded to 5, so they sell
+// for something fair. This never changes the Item's `cost`, so these Items still do not show up in shops or prizes.
+const UNPRICED_KIND_MULT = { hex: 1.5, lightning: 1.5, poison: 1.5, defense: 0.8 };
+const UNPRICED_DEFAULT_PRICE = 50;
+function itemBuyPrice(it) {
+  if (!it) return 0;
+  if (Number(it.cost) > 0) return Number(it.cost);
+  const power = typeof itemPowerScore === 'function' ? itemPowerScore(it) : 0;
+  if (!(power > 0)) return UNPRICED_DEFAULT_PRICE;
+  const mult = UNPRICED_KIND_MULT[it.kind] || 1;
+  return Math.round(Math.min(150, Math.max(35, power * 3 * mult)) / 5) * 5;
+}
+// One sell price used for both the number on the card and the coins you get: half the buy price, plus half the base
+// price of any upgrades on the Item. Never NaN.
 function itemSellPrice(id, index) {
   const it = ITEMS[id];
   if (!it) return 0;
   const mod = itemModBaseValue(id, index);
   const raw =
-    it.sellValue != null ? Number(it.sellValue) + Math.floor(mod / 2) : Math.floor(((Number(it.cost) || 0) + mod) / 2);
+    it.sellValue != null ? Number(it.sellValue) + Math.floor(mod / 2) : Math.floor((itemBuyPrice(it) + mod) / 2);
   return Number.isFinite(raw) ? Math.max(0, raw) : 0;
 }
 function itemTuneCost(item, lvl, owned) {

@@ -537,6 +537,7 @@ const UPDATE_LOG = [
       'Items with no shop price, like some Dungeon prizes, now have a made-up price based on their power, so they sell for half of it instead of nothing.',
       ('Fixed selling an Item showing one price and paying another, and a bug where some sales gave NaN coins ' +
         'and left your coins broken. Coins can no longer become NaN.'),
+      'Dent Repair now tops out at 25 coins per visit instead of climbing forever.',
       'Healing during a battle is now 5 health instead of 10 for the same cost, so Service Stations and the Body Shop are the better deal.',
     ],
   } },

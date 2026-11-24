@@ -556,7 +556,7 @@ function render(html) {
   const castleRestBtn = document.getElementById('castleRestBtn');
   if (castleRestBtn) {
     castleRestBtn.onclick = () => {
-      const cost = RUN.innSleeps === 0 ? 0 : 20 * RUN.innSleeps;
+      const cost = dentRepairCost(RUN.innSleeps || 0);
       if (RUN.chips < cost || RUN.health >= RUN.maxHealth) return;
       RUN.chips -= cost;
       RUN.innSleeps = (RUN.innSleeps || 0) + 1;

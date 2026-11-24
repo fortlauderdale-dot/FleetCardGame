@@ -748,6 +748,12 @@ function castleDungeonScreen(message = '') {
   </div>`
   );
 }
+// Dent Repair (+30 health) is free the first time each world, then 20 coins, then stays at 25 coins. It is capped
+// there so it always beats healing in battle (5 health for 1 fuel, about 1 coin per health).
+const DENT_REPAIR_PRICE_CAP = 25;
+function dentRepairCost(timesUsed) {
+  return timesUsed <= 0 ? 0 : Math.min(DENT_REPAIR_PRICE_CAP, 20 * timesUsed);
+}
 const SERVICE_STATION_FUEL_COST_PER_UNIT = 5;
 const SERVICE_STATION_MAX_FUEL_PER_VISIT = 10;
 // Fuel gets pricier (the Body Shop and the Service Station each keep their own count) the more you buy in one
@@ -786,7 +792,7 @@ function castleInnScreen(message = '') {
   const fuelQuote = bodyShopFuelQuote();
   const fuelPurchase = fuelQuote.units;
   const fuelCost = fuelQuote.cost;
-  const sleepCost = RUN.innSleeps === 0 ? 0 : 20 * RUN.innSleeps;
+  const sleepCost = dentRepairCost(RUN.innSleeps || 0);
   return (
     `${noticeHTML()}
   <div class="wo bodyShopWo">

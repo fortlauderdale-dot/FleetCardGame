@@ -516,4 +516,9 @@ const UPDATE_LOG = [
       'Hex Items show up much less often in the Dealership for now.',
     ],
   } },
+  { date: '2026-11-23', categories: {
+    Visual: [
+      'Added a shoutout on the Home Screen congratulating Joziah for beating Worlds 3 and 4.',
+    ],
+  } },
 ];

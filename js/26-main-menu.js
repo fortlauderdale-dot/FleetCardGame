@@ -167,6 +167,7 @@ function metaScreen() {
     <div class="homeShoutouts">
       <div>🏆 JJ was first to beat World 1!</div>
       <div>🏆 Haley was first to beat World 2!</div>
+      <div>🏆 Congrats to Joziah for beating Worlds 3 and 4!</div>
     </div>
     ${updateLogHTML()}
     ${META.hideSaveBox ? `<div class="homeSaveShowRow"><button class="homeSaveShow" id="homeSaveShowBtn">Show save transfer box</button></div>` : `<div class="homeSaveWrap">

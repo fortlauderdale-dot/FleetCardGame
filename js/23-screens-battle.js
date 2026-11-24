@@ -1089,12 +1089,7 @@ function shopScreen(fromCastle = false) {
     .map((id, i) => {
       const it = ITEMS[id];
       if (!it) return '';
-      const modCost =
-        (itemLevel(id) > 0 ? itemTuneCost(it, Math.max(0, itemLevel(id) - 1)) : 0) +
-        (itemUsesLevel(id) > 0 ? itemUsesTuneCost(itemUsesLevel(id) - 1) : 0) +
-        (itemMaxCardsLevel(id) > 0 ? itemMaxCardsTuneCost(itemMaxCardsLevel(id) - 1) : 0) +
-        (RUN.itemKindOverride[`${id}_${i}`] || RUN.itemKindOverride[id] ? itemKindConvertCost() : 0);
-      const sell = it.sellValue != null ? it.sellValue + Math.floor(modCost / 2) : Math.floor((it.cost + modCost) / 2);
+      const sell = itemSellPrice(id, i);
       return dealerItemCardHTML(it, { mode: 'sell', sell, index: i });
     })
     .join('');

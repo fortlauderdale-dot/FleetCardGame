@@ -517,8 +517,20 @@ const UPDATE_LOG = [
     ],
   } },
   { date: '2026-11-23', categories: {
+    'Item cards': [
+      'Diamond Draw now draws 1 card and gains 1 more per upgrade, up to 3 (it was up to 4).',
+    ],
+    'Card tuning': [
+      ('Upgrades cost more the more of them you own, on any Item. The first two are cheap, the third costs a lot more, ' +
+        'and every one after that keeps climbing, so expect one or two per world. Refunds return what you paid.'),
+    ],
     Visual: [
       'Added a shoutout on the Home Screen congratulating Joziah for beating Worlds 3 and 4.',
+    ],
+    Misc: [
+      ('Fixed selling an Item showing one price and paying another, and a bug where some sales gave NaN coins ' +
+        'and left your coins broken. Coins can no longer become NaN.'),
+      'Healing during a battle is now 5 health instead of 10 for the same cost, so Service Stations and the Body Shop are the better deal.',
     ],
   } },
 ];

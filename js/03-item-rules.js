@@ -316,8 +316,48 @@ function computeItemAmountBase(item, cards, level, condResult, isOpponent) {
 function itemLevel(itemId) {
   return (RUN && RUN.itemLevels && RUN.itemLevels[itemId]) || 0;
 }
-function itemTuneCost(item, lvl) {
-  return 40 * Math.pow(2, lvl);
+// Upgrade prices. Every upgrade you own, on any Item (bonus, uses or card slots), makes the next one cost more, so a
+// run affords one or two per world. The first two upgrades are cheap, then the price spikes and keeps climbing.
+// Dials: UPGRADE_BASE_COST per upgrade type, UPGRADE_FIRST_TWO_STEP for the second upgrade, UPGRADE_SPIKE_START for
+// the third, UPGRADE_SPIKE_GROWTH for each one after that.
+const UPGRADE_BASE_COST = { bonus: 60, uses: 80, cards: 80 };
+const UPGRADE_FIRST_TWO_STEP = 1.5;
+const UPGRADE_SPIKE_START = 3;
+const UPGRADE_SPIKE_GROWTH = 1.6;
+function totalItemUpgrades() {
+  if (!RUN) return 0;
+  const sum = (o) => Object.values(o || {}).reduce((a, v) => a + (Number(v) || 0), 0);
+  return sum(RUN.itemLevels) + sum(RUN.itemUsesLevels) + sum(RUN.itemMaxCardsLevels);
+}
+function upgradePrice(type, owned) {
+  const n = owned == null ? totalItemUpgrades() : owned;
+  let mult = 1;
+  if (n === 1) mult = UPGRADE_FIRST_TWO_STEP;
+  else if (n >= 2) mult = UPGRADE_SPIKE_START * Math.pow(UPGRADE_SPIKE_GROWTH, n - 2);
+  return Math.round((UPGRADE_BASE_COST[type] * mult) / 5) * 5;
+}
+// The coins an Item's upgrades and kind change are worth when sold (base prices, no spike).
+function itemModBaseValue(id, index) {
+  const lvl = (o) => Number(o && o[id]) || 0;
+  const converted = RUN.itemKindOverride && (RUN.itemKindOverride[`${id}_${index}`] || RUN.itemKindOverride[id]);
+  return (
+    lvl(RUN.itemLevels) * UPGRADE_BASE_COST.bonus +
+    lvl(RUN.itemUsesLevels) * UPGRADE_BASE_COST.uses +
+    lvl(RUN.itemMaxCardsLevels) * UPGRADE_BASE_COST.cards +
+    (converted ? itemKindConvertCost() : 0)
+  );
+}
+// One sell price used for both the number on the card and the coins you get. Never NaN.
+function itemSellPrice(id, index) {
+  const it = ITEMS[id];
+  if (!it) return 0;
+  const mod = itemModBaseValue(id, index);
+  const raw =
+    it.sellValue != null ? Number(it.sellValue) + Math.floor(mod / 2) : Math.floor(((Number(it.cost) || 0) + mod) / 2);
+  return Number.isFinite(raw) ? Math.max(0, raw) : 0;
+}
+function itemTuneCost(item, lvl, owned) {
+  return upgradePrice('bonus', owned);
 }
 function itemLevelCap(item) {
   if (item.bonus) return item.bonus.maxLevel ?? 0;
@@ -327,8 +367,8 @@ function itemLevelCap(item) {
 function itemUsesLevel(itemId) {
   return (RUN.itemUsesLevels && RUN.itemUsesLevels[itemId]) || 0;
 }
-function itemUsesTuneCost(lvl) {
-  return Math.round(50 * Math.pow(2.5, lvl));
+function itemUsesTuneCost(lvl, owned) {
+  return upgradePrice('uses', owned);
 }
 const ITEM_MAX_USES_LEVEL = 2;
 function itemMaxCardsLevel(itemId) {
@@ -337,8 +377,8 @@ function itemMaxCardsLevel(itemId) {
 function utilityLevel(id) {
   return (RUN?.itemUtilityLevels && RUN.itemUtilityLevels[id]) || 0;
 }
-function itemMaxCardsTuneCost(lvl) {
-  return Math.round(60 * Math.pow(2.5, lvl));
+function itemMaxCardsTuneCost(lvl, owned) {
+  return upgradePrice('cards', owned);
 }
 const ITEM_MAX_CARDS_BONUS_CAP = 2;
 const POKER_TIER_CARD_COUNT = { 0: 1, 1: 2, 2: 4, 3: 3, 5: 5, 6: 5, 7: 4 };

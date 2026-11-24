@@ -252,6 +252,7 @@ const ELITE_KILL_CP = 5;
 const RUN_KEY = 'fleetduel-run-v82-worldcp';
 function saveRun() {
   try {
+    if (RUN && !Number.isFinite(RUN.chips)) RUN.chips = 0;
     localStorage.setItem(RUN_KEY, JSON.stringify(RUN));
   } catch (e) {}
 }
@@ -466,7 +467,11 @@ function repairCompoundRow(run) {
 function loadRunSave() {
   try {
     const raw = localStorage.getItem(RUN_KEY);
-    if (raw) return repairCompoundRow(migrateOppIds(JSON.parse(raw)));
+    if (raw) {
+      const saved = JSON.parse(raw);
+      if (saved && !Number.isFinite(saved.chips)) saved.chips = 0;
+      return repairCompoundRow(migrateOppIds(saved));
+    }
   } catch (e) {}
   return null;
 }

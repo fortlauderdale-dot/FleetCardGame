@@ -531,7 +531,7 @@ const ITEMS = {
   diamond_draw: {
     id: 'diamond_draw', name: 'Diamond Draw', cost: 55, maxCards: 1, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'suitCount', suit: '♦', count: 1 }, flatAmount: 10, drawAmount: 1, drawPerLevel: 1,
-    levelCap: 3, note: `Needs a Diamond. Flat 10 damage, then draws 1 card immediately (draws 1 more per upgrade).`
+    levelCap: 2, note: `Needs a Diamond. Flat 10 damage, then draws 1 card immediately (draws 1 more per upgrade, up to 3).`
   },
   guard_rail: { id: 'guard_rail', name: 'Guard Rail', cost: 55, maxCards: 3, usesPerTurn: 1, usesPerTurnPerLevel: 1,
     condition: { type: 'any' }, baseMult: 1, kind: 'defense',

@@ -338,7 +338,7 @@ function fuelChipHTML(n, plus = false) {
 }
 const GEM_DRAW_COST = 1;
 const FUEL_HESTORE_COST = 1;
-const FUEL_HEAL_AMOUNT = 10;
+const FUEL_HEAL_AMOUNT = 5;
 const OPPONENT_FUEL_HEAL_MODIFIER_DEFAULT = 0;
 const ENERGY_PER_MOVE = 2;
 

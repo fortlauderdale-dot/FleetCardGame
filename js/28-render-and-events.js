@@ -596,7 +596,7 @@ function render(html) {
         const item = ITEMS[el.dataset.bonusdown];
         const lvl = itemLevel(item.id);
         if (lvl <= 0) return;
-        const refund = itemTuneCost(item, lvl - 1);
+        const refund = itemTuneCost(item, lvl - 1, totalItemUpgrades() - 1);
         RUN.itemLevels[item.id] = lvl - 1;
         RUN.chips += refund;
         saveRun();
@@ -623,7 +623,7 @@ function render(html) {
         const item = ITEMS[el.dataset.usesdown];
         const lvl = itemUsesLevel(item.id);
         if (lvl <= 0) return;
-        const refund = itemUsesTuneCost(lvl - 1);
+        const refund = itemUsesTuneCost(lvl - 1, totalItemUpgrades() - 1);
         RUN.itemUsesLevels[item.id] = lvl - 1;
         RUN.chips += refund;
         saveRun();
@@ -650,7 +650,7 @@ function render(html) {
         const item = ITEMS[el.dataset.cardsdown];
         const lvl = itemMaxCardsLevel(item.id);
         if (lvl <= 0) return;
-        const refund = itemMaxCardsTuneCost(lvl - 1);
+        const refund = itemMaxCardsTuneCost(lvl - 1, totalItemUpgrades() - 1);
         RUN.itemMaxCardsLevels[item.id] = lvl - 1;
         RUN.chips += refund;
         saveRun();
@@ -1192,12 +1192,7 @@ function render(html) {
         const id = RUN.hero.items[i];
         const it = ITEMS[id];
         if (!it) return;
-        const modCost =
-          (itemLevel(id) > 0 ? itemTuneCost(it, Math.max(0, itemLevel(id) - 1)) : 0) +
-          (itemUsesLevel(id) > 0 ? itemUsesTuneCost(itemUsesLevel(id) - 1) : 0) +
-          (itemMaxCardsLevel(id) > 0 ? itemMaxCardsTuneCost(itemMaxCardsLevel(id) - 1) : 0) +
-          (RUN.itemKindOverride[`${id}_${i}`] || RUN.itemKindOverride[id] ? itemKindConvertCost() : 0);
-        const sellValue = Math.floor((it.cost + modCost) / 2);
+        const sellValue = itemSellPrice(id, i);
         RUN.chips += sellValue;
         RUN.hero.items.splice(i, 1);
         playSfx('sell');

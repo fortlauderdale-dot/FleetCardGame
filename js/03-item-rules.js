@@ -362,12 +362,20 @@ function itemBuyPrice(it) {
 }
 // One sell price used for both the number on the card and the coins you get: half the buy price, plus half the base
 // price of any upgrades on the Item. Never NaN.
+// Storage Items (stashes, trunks, gloveboxes) only hold cards, so they sell for a flat 10 coins when they hold 2 or
+// fewer cards and 20 coins when they hold more, whatever they cost to buy.
+const STORAGE_SELL_SMALL = 10;
+const STORAGE_SELL_LARGE = 20;
 function itemSellPrice(id, index) {
   const it = ITEMS[id];
   if (!it) return 0;
   const mod = itemModBaseValue(id, index);
+  const storageBase =
+    it.kind === 'storage' ? ((it.maxStore ?? it.maxCards) <= 2 ? STORAGE_SELL_SMALL : STORAGE_SELL_LARGE) : null;
   const raw =
-    it.sellValue != null ? Number(it.sellValue) + Math.floor(mod / 2) : Math.floor((itemBuyPrice(it) + mod) / 2);
+    storageBase != null
+      ? storageBase + Math.floor(mod / 2)
+      : it.sellValue != null ? Number(it.sellValue) + Math.floor(mod / 2) : Math.floor((itemBuyPrice(it) + mod) / 2);
   return Number.isFinite(raw) ? Math.max(0, raw) : 0;
 }
 function itemTuneCost(item, lvl, owned) {

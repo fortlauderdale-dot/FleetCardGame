@@ -39,8 +39,15 @@ function opponentHandMix(def, castleStage, row) {
   }
   return { ...def, drawRate: Math.max(1, draw + delta), startPoolBonus: bonus };
 }
+// Fleet Compound Dungeon fighters are authored at World 1 strength. Their HP grows 35% of that per world after the
+// first (World 4 is about double, World 8 about 3.5x). Turn DUNGEON_HP_PER_WORLD to tune it.
+const DUNGEON_HP_PER_WORLD = 0.35;
 function effectiveOpponentDef(opponentDef, castleStage = 0, row = 0) {
   let def = opponentDef;
+  if (castleStage > 0) {
+    const hpScale = 1 + DUNGEON_HP_PER_WORLD * (Math.max(1, RUN.world || 1) - 1);
+    def = { ...opponentDef, hp: Math.round(opponentDef.hp * hpScale) };
+  }
   if (RUN.world === 1 && castleStage === 0) {
     // The cap rises with each stop on the map: 40 on the first row, 80 at the Fleet Compound, 116 on the last
     // row. Elites and the boss get 1.5x that, so they stay clearly tougher than regular fights.

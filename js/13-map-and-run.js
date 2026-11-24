@@ -10,6 +10,7 @@
 // visit is allowed to stock hex items at all. Elites and bosses are not affected.
 const HEX_REGULAR_KEEP = 0.35;
 const HEX_SHOP_CHANCE = 0.25;
+const HEX_SHOP_MIN_WORLD = 5;
 function opponentHasHex(o) {
   return (o.items || []).some((id) => ITEMS[id] && ITEMS[id].kind === 'hex');
 }

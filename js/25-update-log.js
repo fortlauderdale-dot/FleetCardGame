@@ -527,6 +527,12 @@ const UPDATE_LOG = [
     Visual: [
       'Added a shoutout on the Home Screen congratulating Joziah for beating Worlds 3 and 4.',
     ],
+    Opponents: [
+      'Fleet Compound Dungeon fighters now get tougher with each world instead of staying the same HP.',
+    ],
+    Dealership: [
+      'Hex Items no longer appear in the Dealership until World 5.',
+    ],
     Misc: [
       ('Fixed selling an Item showing one price and paying another, and a bug where some sales gave NaN coins ' +
         'and left your coins broken. Coins can no longer become NaN.'),

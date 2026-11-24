@@ -975,7 +975,7 @@ function pickShopStock() {
   const SUIT_INFERNO_IDS = ['spade_inferno', 'heart_inferno', 'club_inferno', 'diamond_inferno'];
   const ownedIds = new Set(RUN.hero?.items || []);
   const starterIds = new Set(RUN.starterItemIds || []);
-  const allowHexItems = Math.random() < HEX_SHOP_CHANCE;
+  const allowHexItems = (RUN.world || 1) >= HEX_SHOP_MIN_WORLD && Math.random() < HEX_SHOP_CHANCE;
   const pool = Object.values(ITEMS).filter(
     (it) =>
       it.cost > 0 &&
